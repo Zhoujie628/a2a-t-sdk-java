@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "task_target": {
+      "type": "string",
+      "description": "Define the quantitative or qualitative goals the task must achieve, such as energy efficiency goals and rate guarantee goals.",
+      "examples": [
+        "The goal is to achieve a 30% energy consumption reduction while ensuring the rate guarantee is no less than 50Mbps."
+      ],
+      "x-a2at-value-constraint": "Energy consumption goal: the gain target of energy saving. The target value format must be a percentage, such as the percentage by which total power consumption is reduced. Rate guarantee goal: the minimum downlink throughput target that must be guaranteed."
+    },
+    "task_object": {
+      "type": "string",
+      "description": "Explicitly specify the energy saving area information, a geographic or logical area (e.g., district-level administrative unit) or longitude/latitude coordinates.",
+      "examples": [
+        "The area is the Songshanhu Administration Committee."
+      ],
+      "x-a2at-value-constraint": "Geographic/logical area name. The area information (important) must be a concrete physical address."
+    },
+    "task_context": {
+      "type": "string",
+      "description": "Provide the background and context information for task execution.",
+      "examples": [
+        ""
+      ],
+      "x-a2at-value-constraint": ""
+    },
+    "constraints": {
+      "type": "string",
+      "description": "List the rules, restrictions, and boundary conditions that must be observed during task execution. Constraints apply to all scenarios within the area by default; constraints applicable only to specified scenarios within the area should be stated separately.",
+      "examples": [
+        "Adopt an NR cell energy saving plan, and set the 1650 frequency as the base layer for carrier shutdown. For the energy saving strategy, the system will take an aggressive energy saving mode, provided that experience-lossless is ensured, i.e., performed without affecting user perception. This energy saving task recurs daily, with the effective time range from 08:00:00 to 12:00:00 each day. In addition, the plan includes two scenario-specific constraints: in the business district scenario, the 1300 frequency is forbidden to serve as the capacity layer; in the black forest scenario, enabling sleep is forbidden between 0:00 and 6:00."
+      ],
+      "x-a2at-value-constraint": "1. Cell type to apply energy saving (indoor/outdoor/all) 2. Cell radio access technology for energy saving (LTE/NR/all) 3. Frequency requirements for the base layer and capacity layer, frequencies must be expressed as downlink frequency numbers 4. Whether the energy saving aggressiveness is aggressive or conservative 5. Whether experience-lossless energy saving is required 6. The time range for executing energy saving, recurring daily 7. Constraints applicable to specified scenarios within the area (e.g., railway/black forest/business district/residential area) 8. Whether turning off carrier frequencies is allowed during energy saving"
+    }
+  },
+  "required": []
+}
