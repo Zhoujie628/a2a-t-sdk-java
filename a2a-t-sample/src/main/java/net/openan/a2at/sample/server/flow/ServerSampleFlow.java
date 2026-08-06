@@ -21,6 +21,9 @@ import org.a2aproject.sdk.spec.Part;
  * @since 2026-05
  */
 public final class ServerSampleFlow {
+    static final String NOTIFICATION_T_EXTENSION_URI_NL =
+            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Notification-T/NL/v1";
+
     static final String NOTIFICATION_T_EXTENSION_URI =
             "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Notification-T/v1";
 
@@ -108,7 +111,9 @@ public final class ServerSampleFlow {
         Map<String, String> headers = extractHeaders(callContext);
         String modernValue = headers.get("A2A-Extensions");
         String legacyValue = headers.get("X-A2A-Extensions");
-        if (!NOTIFICATION_T_EXTENSION_URI.equals(modernValue) && !NOTIFICATION_T_EXTENSION_URI.equals(legacyValue)) {
+        String extensionValue = modernValue != null ? modernValue : legacyValue;
+        if (!NOTIFICATION_T_EXTENSION_URI_NL.equals(extensionValue)
+                && !NOTIFICATION_T_EXTENSION_URI.equals(extensionValue)) {
             throw new ValueErrorException("a2a client extensions is not exist.");
         }
     }
@@ -118,7 +123,11 @@ public final class ServerSampleFlow {
         if (message == null || message.metadata() == null) {
             throw new ValueErrorException("Expected message metadata for Notification-T prompt");
         }
-        return stringValue(message.metadata().get(NOTIFICATION_T_EXTENSION_URI));
+        String promptText = stringValue(message.metadata().get(NOTIFICATION_T_EXTENSION_URI_NL));
+        if (promptText.isEmpty()) {
+            promptText = stringValue(message.metadata().get(NOTIFICATION_T_EXTENSION_URI));
+        }
+        return promptText;
     }
 
     @SuppressWarnings("unchecked")

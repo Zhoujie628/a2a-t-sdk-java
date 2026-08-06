@@ -130,24 +130,23 @@ class A2ATClientTest {
         Map<String, Object> startResult = client.startNegotiation(
                 NegotiationType.CLARIFICATION, "Please clarify the target.", Map.of("site", "A"));
         @SuppressWarnings("unchecked")
-        Map<String, Object> context = (Map<String, Object>)
-                startResult.get(net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler.NEGOTIATION_CONTEXT_KEY);
+        Map<String, Object> startData = (Map<String, Object>)
+                startResult.get(net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler.NEGOTIATION_T_URI_NL);
 
         Map<String, Object> continueResult = client.continueNegotiation(
                 new NegotiationContext(
                         NegotiationType.CLARIFICATION,
-                        String.valueOf(context.get("negotiationId")),
+                        String.valueOf(startData.get("negotiationId")),
                         1,
                         NegotiationStatus.IN_PROGRESS),
                 NegotiationStatus.IN_PROGRESS,
                 "Site A");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> continueData = (Map<String, Object>)
+                continueResult.get(net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler.NEGOTIATION_T_URI_NL);
 
-        assertEquals(
-                "Please clarify the target.",
-                startResult.get(net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler.NEGOTIATION_TEXT_KEY));
-        assertEquals(
-                "Site A",
-                continueResult.get(net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler.NEGOTIATION_TEXT_KEY));
+        assertEquals("Please clarify the target.", startData.get("message"));
+        assertEquals("Site A", continueData.get("message"));
     }
 
     @Test

@@ -17,11 +17,17 @@ import net.openan.a2at.sdk.negotiation.types.model.*;
  */
 public final class NegotiationHandler {
 
-    public static final String NEGOTIATION_CONTEXT_KEY =
-            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/DATA-NEGOTIATION-T/v1";
+    public static final String NEGOTIATION_T_URI_NL =
+            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/NL/v1";
 
-    public static final String NEGOTIATION_TEXT_KEY =
-            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/NEGOTIATION-T";
+    public static final String NEGOTIATION_T_URI =
+            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1";
+
+    /**
+     * @deprecated Use {@link #NEGOTIATION_T_URI_NL} instead.
+     */
+    @Deprecated
+    public static final String NEGOTIATION_TEXT_KEY = NEGOTIATION_T_URI_NL;
 
     private final NegotiationRuntime runtime;
 

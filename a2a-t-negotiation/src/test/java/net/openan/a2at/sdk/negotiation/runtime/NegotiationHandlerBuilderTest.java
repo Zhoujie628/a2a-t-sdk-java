@@ -23,7 +23,7 @@ class NegotiationHandlerBuilderTest {
                 .build();
 
         Map<String, Object> startPayload = handler.start(NegotiationType.INFORMATION, "latest prompt", Map.of());
-        Map<String, Object> context = castStringObjectMap(startPayload.get(NegotiationHandler.NEGOTIATION_CONTEXT_KEY));
+        Map<String, Object> context = castStringObjectMap(startPayload.get(NegotiationHandler.NEGOTIATION_T_URI_NL));
         Map<String, Object> result = handler.receive("latest prompt", context);
 
         assertTrue(booleanValue(result.get("needResponse")));
