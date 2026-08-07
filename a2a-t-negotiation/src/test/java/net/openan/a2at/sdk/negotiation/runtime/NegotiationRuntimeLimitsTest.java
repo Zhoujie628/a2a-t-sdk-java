@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 
 import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
-import net.openan.a2at.sdk.negotiation.handler.ClarificationNegotiation;
+import net.openan.a2at.sdk.negotiation.handler.TargetNegotiation;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationReceiveResult;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationRecord;
@@ -21,18 +21,18 @@ class NegotiationRuntimeLimitsTest {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         store.save(new NegotiationRecord(
                 new NegotiationContext(
-                        NegotiationType.CLARIFICATION,
+                        NegotiationType.TARGET,
                         "neg-round-limit",
                         NegotiationRuntime.MAX_IN_PROGRESS_NEGOTIATION_ROUND - 1,
                         NegotiationStatus.IN_PROGRESS),
                 "old"));
         NegotiationRuntime runtime = new NegotiationRuntime(
-                Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()), store);
+                Map.of(NegotiationType.TARGET, new TargetNegotiation()), store);
 
         NegotiationReceiveResult result = runtime.receive(
                 "Clarify intent",
                 new NegotiationContext(
-                        NegotiationType.CLARIFICATION,
+                        NegotiationType.TARGET,
                         "neg-round-limit",
                         NegotiationRuntime.MAX_IN_PROGRESS_NEGOTIATION_ROUND,
                         NegotiationStatus.IN_PROGRESS));

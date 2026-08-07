@@ -14,7 +14,7 @@ class NegotiationPayloadMapperValidationTest {
         assertThrows(
                 NegotiationStateException.class,
                 () -> NegotiationPayloadMapper.contextFromMap(Map.of(
-                        "negotiationType", "clarification",
+                        "negotiationType", "target",
                         "negotiationId", "neg-invalid-round",
                         "round", 0,
                         "status", "in-progress",

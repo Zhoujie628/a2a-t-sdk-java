@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
 import net.openan.a2at.sdk.negotiation.types.exception.NegotiationStateException;
-import net.openan.a2at.sdk.negotiation.handler.ClarificationNegotiation;
+import net.openan.a2at.sdk.negotiation.handler.TargetNegotiation;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationRecord;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationStatus;
@@ -20,19 +20,19 @@ class NegotiationHandlerStateTest {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         store.save(new NegotiationRecord(
                 new NegotiationContext(
-                        NegotiationType.CLARIFICATION, "neg-continue-mismatch", 2, NegotiationStatus.IN_PROGRESS),
+                        NegotiationType.TARGET, "neg-continue-mismatch", 2, NegotiationStatus.IN_PROGRESS),
                 "old"));
-        NegotiationHandler handler = new NegotiationHandler(Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()), store);
+        NegotiationHandler handler = new NegotiationHandler(Map.of(NegotiationType.TARGET, new TargetNegotiation()), store);
 
         assertThrows(
                 NegotiationStateException.class,
                 () -> handler.continueMessage(
                         new NegotiationContext(
-                                NegotiationType.CLARIFICATION,
+                                NegotiationType.TARGET,
                                 "neg-continue-mismatch",
                                 1,
                                 NegotiationStatus.IN_PROGRESS),
                         NegotiationStatus.IN_PROGRESS,
-                        "Here is the clarification."));
+                        "Here is the target."));
     }
 }

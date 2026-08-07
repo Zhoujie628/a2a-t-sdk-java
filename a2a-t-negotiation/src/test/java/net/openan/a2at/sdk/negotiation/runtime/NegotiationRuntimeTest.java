@@ -8,7 +8,7 @@ import java.util.Map;
 
 import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
 import net.openan.a2at.sdk.negotiation.types.exception.NegotiationStateException;
-import net.openan.a2at.sdk.negotiation.handler.ClarificationNegotiation;
+import net.openan.a2at.sdk.negotiation.handler.TargetNegotiation;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationReceiveResult;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationRecord;
@@ -21,12 +21,12 @@ class NegotiationRuntimeTest {
     @Test
     void receiveAllowsFirstRoundWithoutExistingRecord() {
         NegotiationRuntime runtime = new NegotiationRuntime(
-                Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()),
+                Map.of(NegotiationType.TARGET, new TargetNegotiation()),
                 new InMemoryNegotiationStore());
 
         NegotiationReceiveResult result = runtime.receive(
                 "Clarify intent",
-                new NegotiationContext(NegotiationType.CLARIFICATION, "neg-receive", 1, NegotiationStatus.IN_PROGRESS));
+                new NegotiationContext(NegotiationType.TARGET, "neg-receive", 1, NegotiationStatus.IN_PROGRESS));
 
         assertTrue(result.needResponse());
         assertEquals("Clarify intent", result.message());
@@ -37,9 +37,9 @@ class NegotiationRuntimeTest {
     void continueMessageReturnsIncrementedRound() {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         NegotiationRuntime runtime = new NegotiationRuntime(
-                Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()), store);
+                Map.of(NegotiationType.TARGET, new TargetNegotiation()), store);
         NegotiationContext context =
-                new NegotiationContext(NegotiationType.CLARIFICATION, "neg-continue", 1, NegotiationStatus.IN_PROGRESS);
+                new NegotiationContext(NegotiationType.TARGET, "neg-continue", 1, NegotiationStatus.IN_PROGRESS);
         store.save(new NegotiationRecord(context, "old"));
 
         NegotiationContext nextContext = runtime.continueMessage(context, NegotiationStatus.IN_PROGRESS);
@@ -52,16 +52,16 @@ class NegotiationRuntimeTest {
     void receiveRejectsIncomingRoundThatSkipsLocalProgress() {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         store.save(new NegotiationRecord(
-                new NegotiationContext(NegotiationType.CLARIFICATION, "neg-skip", 2, NegotiationStatus.IN_PROGRESS),
+                new NegotiationContext(NegotiationType.TARGET, "neg-skip", 2, NegotiationStatus.IN_PROGRESS),
                 "old"));
         NegotiationRuntime runtime = new NegotiationRuntime(
-                Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()), store);
+                Map.of(NegotiationType.TARGET, new TargetNegotiation()), store);
 
         assertThrows(
                 NegotiationStateException.class,
                 () -> runtime.receive(
                         "Clarify intent",
                         new NegotiationContext(
-                                NegotiationType.CLARIFICATION, "neg-skip", 4, NegotiationStatus.IN_PROGRESS)));
+                                NegotiationType.TARGET, "neg-skip", 4, NegotiationStatus.IN_PROGRESS)));
     }
 }

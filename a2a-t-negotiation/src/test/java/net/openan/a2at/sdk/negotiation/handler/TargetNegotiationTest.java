@@ -10,29 +10,28 @@ import net.openan.a2at.sdk.negotiation.types.model.NegotiationStatus;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationType;
 import org.junit.jupiter.api.Test;
 
-class FulfillmentNegotiationTest {
+class TargetNegotiationTest {
 
-    private final FulfillmentNegotiation negotiationType = new FulfillmentNegotiation();
+    private final TargetNegotiation negotiationType = new TargetNegotiation();
 
     @Test
     void processReceivedMessagePassesThroughFactsAndMessage() {
         NegotiationReceiveResult result = negotiationType.processReceivedMessage(
-                "deliver the final task output",
-                new NegotiationContext(
-                        NegotiationType.FULFILLMENT, "neg-fulfillment", 1, NegotiationStatus.IN_PROGRESS));
+                "clarify this",
+                new NegotiationContext(NegotiationType.TARGET, "neg-1", 1, NegotiationStatus.IN_PROGRESS));
 
         assertTrue(result.needResponse());
-        assertEquals("deliver the final task output", result.message());
+        assertEquals("clarify this", result.message());
         assertTrue(result.facts().isEmpty());
     }
 
     @Test
     void processReceivedMessageStopsResponseWhenNegotiationIsTerminal() {
         NegotiationReceiveResult result = negotiationType.processReceivedMessage(
-                "fulfillment reached",
-                new NegotiationContext(NegotiationType.FULFILLMENT, "neg-fulfillment", 2, NegotiationStatus.REJECTED));
+                "clarify this",
+                new NegotiationContext(NegotiationType.TARGET, "neg-2", 2, NegotiationStatus.AGREED));
 
         assertFalse(result.needResponse());
-        assertEquals("fulfillment reached", result.message());
+        assertEquals("clarify this", result.message());
     }
 }

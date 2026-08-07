@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
-import net.openan.a2at.sdk.negotiation.handler.ClarificationNegotiation;
+import net.openan.a2at.sdk.negotiation.handler.TargetNegotiation;
 import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationStatus;
@@ -18,12 +18,12 @@ class NegotiationHandlerTest {
     void startReturnsFixedKeyMapAndSavesRecord() {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         NegotiationHandler handler =
-                new NegotiationHandler(Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()), store);
+                new NegotiationHandler(Map.of(NegotiationType.TARGET, new TargetNegotiation()), store);
 
         Map<String, Object> payload = handler.start(
-                NegotiationType.CLARIFICATION,
+                NegotiationType.TARGET,
                 "Please clarify the request.",
-                Map.of("clarificationItems", new Object[] {"intent"}));
+                Map.of("targetItems", new Object[] {"intent"}));
 
         Map<String, Object> negotiationData = cast(payload.get(NegotiationHandler.NEGOTIATION_T_URI_NL));
         assertEquals("Please clarify the request.", negotiationData.get("message"));
@@ -35,30 +35,30 @@ class NegotiationHandlerTest {
     void continueMessageReturnsPayloadWithIncrementedRound() {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         NegotiationHandler handler =
-                new NegotiationHandler(Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()), store);
+                new NegotiationHandler(Map.of(NegotiationType.TARGET, new TargetNegotiation()), store);
         Map<String, Object> startPayload =
-                handler.start(NegotiationType.CLARIFICATION, "Please clarify the request.", Map.of());
+                handler.start(NegotiationType.TARGET, "Please clarify the request.", Map.of());
         Map<String, Object> startData = cast(startPayload.get(NegotiationHandler.NEGOTIATION_T_URI_NL));
         NegotiationContext context = new NegotiationContext(
-                NegotiationType.CLARIFICATION,
+                NegotiationType.TARGET,
                 stringValue(startData.get("negotiationId")),
                 numberValue(startData.get("round")).intValue(),
                 NegotiationStatus.IN_PROGRESS);
 
         Map<String, Object> payload =
-                handler.continueMessage(context, NegotiationStatus.IN_PROGRESS, "Here is the clarification.");
+                handler.continueMessage(context, NegotiationStatus.IN_PROGRESS, "Here is the target.");
 
         Map<String, Object> nextData = cast(payload.get(NegotiationHandler.NEGOTIATION_T_URI_NL));
         assertEquals(2, numberValue(nextData.get("round")).intValue());
-        assertEquals("Here is the clarification.", nextData.get("message"));
+        assertEquals("Here is the target.", nextData.get("message"));
     }
 
     @Test
     void receiveReturnsNegotiationPayloadMap() {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         NegotiationHandler handler =
-                new NegotiationHandler(Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()), store);
-        Map<String, Object> startPayload = handler.start(NegotiationType.CLARIFICATION, "Please clarify", Map.of());
+                new NegotiationHandler(Map.of(NegotiationType.TARGET, new TargetNegotiation()), store);
+        Map<String, Object> startPayload = handler.start(NegotiationType.TARGET, "Please clarify", Map.of());
         Map<String, Object> context = cast(startPayload.get(NegotiationHandler.NEGOTIATION_T_URI_NL));
 
         Map<String, Object> result = handler.receive("Clarify intent", context);

@@ -4,10 +4,9 @@ import net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
 import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
 import net.openan.a2at.sdk.negotiation.store.NegotiationStore;
-import net.openan.a2at.sdk.negotiation.handler.ClarificationNegotiation;
 import net.openan.a2at.sdk.negotiation.handler.FeasibilityNegotiation;
-import net.openan.a2at.sdk.negotiation.handler.FulfillmentNegotiation;
 import net.openan.a2at.sdk.negotiation.handler.InformationNegotiation;
+import net.openan.a2at.sdk.negotiation.handler.TargetNegotiation;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationRole;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationType;
 import net.openan.a2at.sdk.negotiation.types.model.TaskPromptComplianceFailure;
@@ -68,9 +67,8 @@ public final class ServerNegotiationOrchestratorBuilder {
                             : TaskPromptComplianceResult.failure(new TaskPromptComplianceFailure(
                                     result.failure().code(), result.failure().message()));
                 }))
-                .register(NegotiationType.CLARIFICATION, new ClarificationNegotiation())
+                .register(NegotiationType.TARGET, new TargetNegotiation())
                 .register(NegotiationType.FEASIBILITY, new FeasibilityNegotiation())
-                .register(NegotiationType.FULFILLMENT, new FulfillmentNegotiation())
                 .build();
         return new RoleBoundNegotiationOrchestrator(handler, NegotiationRole.SERVER);
     }

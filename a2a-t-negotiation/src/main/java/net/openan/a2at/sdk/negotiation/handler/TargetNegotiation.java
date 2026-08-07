@@ -7,11 +7,11 @@ import net.openan.a2at.sdk.negotiation.types.model.NegotiationStatus;
 import java.util.Map;
 
 /**
- * Minimal clarification negotiation behavior.
+ * Minimal target negotiation behavior.
  *
  * @since 2026-06
  */
-public final class ClarificationNegotiation implements Negotiation {
+public final class TargetNegotiation implements Negotiation {
 
     @Override
     public NegotiationReceiveResult processReceivedMessage(String message, NegotiationContext context) {

@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import net.openan.a2at.sdk.negotiation.handler.ClarificationNegotiation;
+import net.openan.a2at.sdk.negotiation.handler.TargetNegotiation;
 import net.openan.a2at.sdk.negotiation.handler.InformationNegotiation;
 import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationType;
@@ -18,7 +18,7 @@ class NegotiationHandlerBuilderTest {
     void builderCreatesHandlerWithStoreAndMultipleNegotiationTypes() {
         NegotiationHandler handler = NegotiationHandler.builder()
                 .store(new InMemoryNegotiationStore())
-                .register(NegotiationType.CLARIFICATION, new ClarificationNegotiation())
+                .register(NegotiationType.TARGET, new TargetNegotiation())
                 .register(NegotiationType.INFORMATION, new InformationNegotiation())
                 .build();
 
