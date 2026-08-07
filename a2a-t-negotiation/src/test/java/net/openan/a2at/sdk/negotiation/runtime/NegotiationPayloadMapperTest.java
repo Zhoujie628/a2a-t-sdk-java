@@ -30,7 +30,9 @@ class NegotiationPayloadMapperTest {
         Map<String, Object> payload =
                 NegotiationPayloadMapper.payload(context, "latest prompt", Map.of("source", "server"));
 
-        assertEquals("latest prompt", payload.get(NegotiationHandler.NEGOTIATION_TEXT_KEY));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> negotiationData = (Map<String, Object>) payload.get(NegotiationHandler.NEGOTIATION_T_URI_NL);
+        assertEquals("latest prompt", negotiationData.get("message"));
         assertEquals("server", ((Map<?, ?>) payload.get("facts")).get("source"));
     }
 }

@@ -9,11 +9,11 @@ import java.util.Map;
  * @since 2026-05
  */
 public final class ServerSampleAgentCardBuilder {
-    static final String TASK_T_EXTENSION_URI =
-            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Task-T/v1";
+    static final String TASK_T_EXTENSION_URI_NL =
+            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Task-T/NL/v1";
 
-    static final String NOTIFICATION_T_EXTENSION_URI =
-            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Notification-T/v1";
+    static final String NOTIFICATION_T_EXTENSION_URI_NL =
+            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Notification-T/NL/v1";
 
     private ServerSampleAgentCardBuilder() {
     }
@@ -38,10 +38,10 @@ public final class ServerSampleAgentCardBuilder {
                         "pushNotifications", false,
                         "extensions", List.of(
                                 Map.of(
-                                        "uri", TASK_T_EXTENSION_URI,
+                                        "uri", TASK_T_EXTENSION_URI_NL,
                                         "description", "Extension of structured prompt Task-T requests."),
                                 Map.of(
-                                        "uri", NOTIFICATION_T_EXTENSION_URI,
+                                        "uri", NOTIFICATION_T_EXTENSION_URI_NL,
                                         "description", "Extension of structured prompt Notification-T requests."))),
                 "supportedInterfaces", List.of(Map.of(
                         "protocolBinding", "HTTP+JSON",

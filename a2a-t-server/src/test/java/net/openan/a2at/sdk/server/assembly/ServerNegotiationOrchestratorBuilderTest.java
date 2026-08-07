@@ -30,7 +30,7 @@ class ServerNegotiationOrchestratorBuilderTest {
 
         Map<String, Object> started =
                 orchestrator.startNegotiation(NegotiationType.INFORMATION, "Need full task prompt.", Map.of());
-        Map<String, Object> context = cast(started.get(NegotiationHandler.NEGOTIATION_CONTEXT_KEY));
+        Map<String, Object> context = cast(started.get(NegotiationHandler.NEGOTIATION_T_URI_NL));
 
         Map<String, Object> received = orchestrator.receiveNegotiation("latest full task prompt", context);
 
@@ -48,7 +48,7 @@ class ServerNegotiationOrchestratorBuilderTest {
 
         Map<String, Object> result = orchestrator.startNegotiation(
                 NegotiationType.CLARIFICATION, "Please clarify the target.", Map.of("site", "A"));
-        Map<String, Object> context = cast(result.get(NegotiationHandler.NEGOTIATION_CONTEXT_KEY));
+        Map<String, Object> context = cast(result.get(NegotiationHandler.NEGOTIATION_T_URI_NL));
 
         assertEquals("clarification", context.get("negotiationType"));
         assertEquals("in-progress", context.get("status"));

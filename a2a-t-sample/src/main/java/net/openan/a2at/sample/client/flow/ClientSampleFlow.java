@@ -25,8 +25,8 @@ import org.a2aproject.sdk.client.ClientEvent;
  * @since 2026-05
  */
 public final class ClientSampleFlow {
-    static final String NOTIFICATION_T_EXTENSION_URI =
-            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Notification-T/v1";
+    static final String NOTIFICATION_T_EXTENSION_URI_NL =
+            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Notification-T/NL/v1";
 
     static final String NATURAL_LANGUAGE_PROMPT_INPUT =
             "通知主题为Incident的，订阅条件为：订阅级别为critical的ETH-LOS的故障，上报通知数据格式为：DataPart";
@@ -59,7 +59,7 @@ public final class ClientSampleFlow {
         String promptText = requirePromptText(promptResult);
 
         BuiltA2AJavaRequest builtRequest = A2AJavaRequestBuilder.buildStreamRequest(
-                promptText, NOTIFICATION_T_EXTENSION_URI, buildRequestMetadata(scenarioPayload));
+                promptText, NOTIFICATION_T_EXTENSION_URI_NL, buildRequestMetadata(scenarioPayload));
         emit(logSink, SampleLoggingFormatter.formatPayloadLog("client", "a2a-request-body", builtRequest.request()));
         emit(logSink, SampleLoggingFormatter.formatPayloadLog("client", "request-headers", builtRequest.callContext().getHeaders()));
         emit(logSink, SampleLoggingFormatter.formatStageLog(

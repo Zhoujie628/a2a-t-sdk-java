@@ -17,9 +17,12 @@ public final class NegotiationPayloadMapper {
 
     public static Map<String, Object> payload(
             NegotiationContext context, String contentText, Map<String, Object> facts) {
+        Map<String, Object> negotiationData = new LinkedHashMap<>();
+        negotiationData.put("message", contentText);
+        negotiationData.putAll(contextPayload(context));
+
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put(NegotiationHandler.NEGOTIATION_TEXT_KEY, contentText);
-        payload.put(NegotiationHandler.NEGOTIATION_CONTEXT_KEY, contextPayload(context));
+        payload.put(NegotiationHandler.NEGOTIATION_T_URI_NL, negotiationData);
         if (!facts.isEmpty()) {
             payload.put("facts", facts);
         }
@@ -36,6 +39,19 @@ public final class NegotiationPayloadMapper {
         payload.put("status", context.status().name().toLowerCase().replace('_', '-'));
         payload.put("extra", Map.of());
         return payload;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> extractContextMap(Map<String, Object> payload) {
+        Object primary = payload.get(NegotiationHandler.NEGOTIATION_T_URI_NL);
+        if (primary instanceof Map<?, ?> data) {
+            return (Map<String, Object>) data;
+        }
+        Object legacy = payload.get(NegotiationHandler.NEGOTIATION_T_URI);
+        if (legacy instanceof Map<?, ?> data) {
+            return (Map<String, Object>) data;
+        }
+        throw new NegotiationStateException("Negotiation-T extension key not found in payload.");
     }
 
     public static NegotiationContext contextFromMap(Map<String, Object> contextMap) {
