@@ -16,7 +16,7 @@ class InMemoryNegotiationStoreTest {
     void storeSavesGetsAndDeletesRecords() {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         NegotiationRecord record = new NegotiationRecord(
-                new NegotiationContext(NegotiationType.FULFILLMENT, "neg-store", 1, NegotiationStatus.IN_PROGRESS),
+                new NegotiationContext(NegotiationType.TARGET, "neg-store", 1, NegotiationStatus.IN_PROGRESS),
                 "message");
 
         store.save(record);

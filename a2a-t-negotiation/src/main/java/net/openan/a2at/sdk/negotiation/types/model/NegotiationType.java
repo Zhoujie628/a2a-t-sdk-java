@@ -7,7 +7,6 @@ package net.openan.a2at.sdk.negotiation.types.model;
  */
 public enum NegotiationType {
     INFORMATION,
-    CLARIFICATION,
-    FEASIBILITY,
-    FULFILLMENT
+    TARGET,
+    FEASIBILITY
 }

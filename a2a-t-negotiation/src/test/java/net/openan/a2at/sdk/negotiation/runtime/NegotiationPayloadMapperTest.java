@@ -14,7 +14,7 @@ class NegotiationPayloadMapperTest {
     @Test
     void contextPayloadRoundTripsBetweenMapAndContext() {
         NegotiationContext context =
-                new NegotiationContext(NegotiationType.CLARIFICATION, "neg-map", 2, NegotiationStatus.IN_PROGRESS);
+                new NegotiationContext(NegotiationType.TARGET, "neg-map", 2, NegotiationStatus.IN_PROGRESS);
 
         Map<String, Object> payload = NegotiationPayloadMapper.contextPayload(context);
         NegotiationContext rebuilt = NegotiationPayloadMapper.contextFromMap(payload);

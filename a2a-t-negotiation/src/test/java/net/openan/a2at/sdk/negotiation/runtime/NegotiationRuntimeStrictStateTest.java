@@ -7,7 +7,7 @@ import java.util.Map;
 
 import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
 import net.openan.a2at.sdk.negotiation.types.exception.NegotiationStateException;
-import net.openan.a2at.sdk.negotiation.handler.ClarificationNegotiation;
+import net.openan.a2at.sdk.negotiation.handler.TargetNegotiation;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationRecord;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationStatus;
@@ -21,17 +21,17 @@ class NegotiationRuntimeStrictStateTest {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         store.save(new NegotiationRecord(
                 new NegotiationContext(
-                        NegotiationType.CLARIFICATION, "neg-round-regress", 3, NegotiationStatus.IN_PROGRESS),
+                        NegotiationType.TARGET, "neg-round-regress", 3, NegotiationStatus.IN_PROGRESS),
                 "latest"));
         NegotiationRuntime runtime = new NegotiationRuntime(
-                Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()), store);
+                Map.of(NegotiationType.TARGET, new TargetNegotiation()), store);
 
         NegotiationStateException error = assertThrows(
                 NegotiationStateException.class,
                 () -> runtime.receive(
                         "stale",
                         new NegotiationContext(
-                                NegotiationType.CLARIFICATION, "neg-round-regress", 2, NegotiationStatus.IN_PROGRESS)));
+                                NegotiationType.TARGET, "neg-round-regress", 2, NegotiationStatus.IN_PROGRESS)));
 
         assertEquals("Incoming negotiation round is older than local progress.", error.getMessage());
     }
@@ -41,17 +41,17 @@ class NegotiationRuntimeStrictStateTest {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         store.save(new NegotiationRecord(
                 new NegotiationContext(
-                        NegotiationType.CLARIFICATION, "neg-terminal-regress", 2, NegotiationStatus.AGREED),
+                        NegotiationType.TARGET, "neg-terminal-regress", 2, NegotiationStatus.AGREED),
                 "done"));
         NegotiationRuntime runtime = new NegotiationRuntime(
-                Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()), store);
+                Map.of(NegotiationType.TARGET, new TargetNegotiation()), store);
 
         assertThrows(
                 NegotiationStateException.class,
                 () -> runtime.receive(
                         "Clarify intent",
                         new NegotiationContext(
-                                NegotiationType.CLARIFICATION,
+                                NegotiationType.TARGET,
                                 "neg-terminal-regress",
                                 3,
                                 NegotiationStatus.IN_PROGRESS)));
@@ -62,17 +62,17 @@ class NegotiationRuntimeStrictStateTest {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         store.save(new NegotiationRecord(
                 new NegotiationContext(
-                        NegotiationType.CLARIFICATION, "neg-terminal-switch", 2, NegotiationStatus.AGREED),
+                        NegotiationType.TARGET, "neg-terminal-switch", 2, NegotiationStatus.AGREED),
                 "done"));
         NegotiationRuntime runtime = new NegotiationRuntime(
-                Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()), store);
+                Map.of(NegotiationType.TARGET, new TargetNegotiation()), store);
 
         NegotiationStateException error = assertThrows(
                 NegotiationStateException.class,
                 () -> runtime.receive(
                         "switch terminal",
                         new NegotiationContext(
-                                NegotiationType.CLARIFICATION, "neg-terminal-switch", 3, NegotiationStatus.REJECTED)));
+                                NegotiationType.TARGET, "neg-terminal-switch", 3, NegotiationStatus.REJECTED)));
 
         assertEquals("Terminal negotiation status cannot change once finalized.", error.getMessage());
     }
@@ -82,16 +82,16 @@ class NegotiationRuntimeStrictStateTest {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         store.save(new NegotiationRecord(
                 new NegotiationContext(
-                        NegotiationType.CLARIFICATION, "neg-terminal-repeat", 3, NegotiationStatus.REJECTED),
+                        NegotiationType.TARGET, "neg-terminal-repeat", 3, NegotiationStatus.REJECTED),
                 "done"));
         NegotiationRuntime runtime = new NegotiationRuntime(
-                Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()), store);
+                Map.of(NegotiationType.TARGET, new TargetNegotiation()), store);
 
         assertThrows(
                 NegotiationStateException.class,
                 () -> runtime.continueMessage(
                         new NegotiationContext(
-                                NegotiationType.CLARIFICATION, "neg-terminal-repeat", 3, NegotiationStatus.REJECTED),
+                                NegotiationType.TARGET, "neg-terminal-repeat", 3, NegotiationStatus.REJECTED),
                         NegotiationStatus.REJECTED));
     }
 
@@ -100,16 +100,16 @@ class NegotiationRuntimeStrictStateTest {
         InMemoryNegotiationStore store = new InMemoryNegotiationStore();
         store.save(new NegotiationRecord(
                 new NegotiationContext(
-                        NegotiationType.CLARIFICATION, "neg-continue-mismatch", 3, NegotiationStatus.IN_PROGRESS),
+                        NegotiationType.TARGET, "neg-continue-mismatch", 3, NegotiationStatus.IN_PROGRESS),
                 "latest"));
         NegotiationRuntime runtime = new NegotiationRuntime(
-                Map.of(NegotiationType.CLARIFICATION, new ClarificationNegotiation()), store);
+                Map.of(NegotiationType.TARGET, new TargetNegotiation()), store);
 
         NegotiationStateException error = assertThrows(
                 NegotiationStateException.class,
                 () -> runtime.continueMessage(
                         new NegotiationContext(
-                                NegotiationType.CLARIFICATION,
+                                NegotiationType.TARGET,
                                 "neg-continue-mismatch",
                                 2,
                                 NegotiationStatus.IN_PROGRESS),

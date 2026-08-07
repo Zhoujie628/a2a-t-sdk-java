@@ -128,14 +128,14 @@ class A2ATClientTest {
         A2ATClient client = new A2ATClient(envFile);
 
         Map<String, Object> startResult = client.startNegotiation(
-                NegotiationType.CLARIFICATION, "Please clarify the target.", Map.of("site", "A"));
+                NegotiationType.TARGET, "Please clarify the target.", Map.of("site", "A"));
         @SuppressWarnings("unchecked")
         Map<String, Object> startData = (Map<String, Object>)
                 startResult.get(net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler.NEGOTIATION_T_URI_NL);
 
         Map<String, Object> continueResult = client.continueNegotiation(
                 new NegotiationContext(
-                        NegotiationType.CLARIFICATION,
+                        NegotiationType.TARGET,
                         String.valueOf(startData.get("negotiationId")),
                         1,
                         NegotiationStatus.IN_PROGRESS),

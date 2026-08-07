@@ -47,10 +47,10 @@ class ServerNegotiationOrchestratorBuilderTest {
                 .build();
 
         Map<String, Object> result = orchestrator.startNegotiation(
-                NegotiationType.CLARIFICATION, "Please clarify the target.", Map.of("site", "A"));
+                NegotiationType.TARGET, "Please clarify the target.", Map.of("site", "A"));
         Map<String, Object> context = cast(result.get(NegotiationHandler.NEGOTIATION_T_URI_NL));
 
-        assertEquals("clarification", context.get("negotiationType"));
+        assertEquals("target", context.get("negotiationType"));
         assertEquals("in-progress", context.get("status"));
     }
 
