@@ -21,5 +21,13 @@ jobs:
           java-version: '17'
           cache: maven
 
+      - name: Set up Python for template lint
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Lint bundled A2A-T templates
+        run: python tools/template_lint.py --resource-root a2a-t-resources/src/main/resources/prompt_resources
+
       - name: Build and run tests
         run: mvn -B clean verify
