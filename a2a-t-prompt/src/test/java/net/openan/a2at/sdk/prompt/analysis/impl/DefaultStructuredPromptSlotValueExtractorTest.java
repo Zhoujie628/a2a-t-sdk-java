@@ -119,7 +119,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 "site", "The target site name",
                 "severity", "The severity level");
 
-        extractor.extractSlots("Analyze Site A.", "energy_saving", "en-US", dataSchema);
+        extractor.extractSlots("Analyze Site A.", "energy-saving", "en-US", dataSchema);
 
         String userMessage = llmClient.lastUserContent();
         assertTrue(userMessage.contains("[data_schema]"));
@@ -147,7 +147,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
-        extractor.extractSlots("Analyze Site A.", "energy_saving", "en-US", null);
+        extractor.extractSlots("Analyze Site A.", "energy-saving", "en-US", null);
 
         String userMessage = llmClient.lastUserContent();
         assertFalse(userMessage.contains("[data_schema]"));
@@ -173,7 +173,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
-        extractor.extractSlots("Analyze Site A.", "energy_saving", "en-US", Map.of());
+        extractor.extractSlots("Analyze Site A.", "energy-saving", "en-US", Map.of());
 
         String userMessage = llmClient.lastUserContent();
         assertFalse(userMessage.contains("[data_schema]"));
@@ -203,7 +203,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 extractor.extractSlots(input, code, lang);
 
         StructuredSlotExtractionResult result = lambdaExtractor.extractSlots(
-                "Analyze Site A.", "energy_saving", "en-US", Map.of("site", "desc"));
+                "Analyze Site A.", "energy-saving", "en-US", Map.of("site", "desc"));
 
         String userMessage = llmClient.lastUserContent();
         assertFalse(userMessage.contains("[data_schema]"));

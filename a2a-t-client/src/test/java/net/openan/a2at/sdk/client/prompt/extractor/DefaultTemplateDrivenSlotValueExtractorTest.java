@@ -171,7 +171,7 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
 
         Map<String, String> slots = extractor.extractSlotsWithSchema(
                 Map.of("site", "Site A", "additional_notes", "critical", "ignored", "value"),
-                "energy_saving",
+                "energy-saving",
                 "en-US",
                 "Site: {site}\nNotes: {additional_notes}",
                 Map.of("ignored_field", "some description"));

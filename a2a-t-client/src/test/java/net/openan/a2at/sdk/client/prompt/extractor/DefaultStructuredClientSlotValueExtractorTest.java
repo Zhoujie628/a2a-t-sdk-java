@@ -89,7 +89,7 @@ class DefaultStructuredClientSlotValueExtractorTest {
         Map<String, Object> dataSchema = Map.of("site", "site description", "severity", "severity description");
         Map<String, String> slots = extractor.extractSlotsWithSchema(
                 "Analyze Site A with critical severity.",
-                "energy_saving",
+                "energy-saving",
                 "en-US",
                 "Site: {site}\nNotes: {additional_notes}\nLimit: {limit}\nSeverity: {severity}",
                 dataSchema);
