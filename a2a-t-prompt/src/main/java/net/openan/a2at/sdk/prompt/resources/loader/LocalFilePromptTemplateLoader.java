@@ -3,6 +3,7 @@ package net.openan.a2at.sdk.prompt.resources.loader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.exception.SdkException;
 
@@ -21,18 +22,35 @@ public final class LocalFilePromptTemplateLoader implements PromptTemplateTextLo
 
     @Override
     public String loadTemplate(String scenarioCode, String language) {
-        Path templatePath = promptRootDir
-                .resolve("templates")
-                .resolve(scenarioCode)
-                .resolve(language)
-                .resolve("template.md");
-        if (!Files.exists(templatePath)) {
-            throw new ResourceNotFoundException("Prompt resource file does not exist.", templatePath.toString());
+        Path templatesRoot = promptRootDir.resolve("templates");
+        if (!Files.exists(templatesRoot)) {
+            throw notFound(scenarioCode, language);
+        }
+        Path templatePath;
+        try (var typePaths = Files.list(templatesRoot)) {
+            Optional<Path> match = typePaths
+                    .filter(Files::isDirectory)
+                    .map(typeDir -> typeDir.resolve("v1").resolve(scenarioCode).resolve(language).resolve("template.md"))
+                    .filter(Files::exists)
+                    .findFirst();
+            templatePath = match.orElse(null);
+        } catch (IOException exception) {
+            throw new SdkException("Failed to scan prompt template resources: " + templatesRoot, exception);
+        }
+        if (templatePath == null) {
+            throw notFound(scenarioCode, language);
         }
         try {
             return Files.readString(templatePath);
         } catch (IOException exception) {
             throw new SdkException("Failed to read template resource: " + templatePath, exception);
         }
+    }
+
+    private ResourceNotFoundException notFound(String scenarioCode, String language) {
+        return new ResourceNotFoundException(
+                "Prompt resource file does not exist.",
+                promptRootDir.resolve("templates").toString()
+                        + "/*/v1/" + scenarioCode + "/" + language + "/template.md");
     }
 }

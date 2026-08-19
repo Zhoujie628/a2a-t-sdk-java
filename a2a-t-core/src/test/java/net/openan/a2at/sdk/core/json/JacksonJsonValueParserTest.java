@@ -13,10 +13,10 @@ class JacksonJsonValueParserTest {
     void parseObjectReturnsJsonObjectFields() {
         JsonValueParser parser = new JacksonJsonValueParser();
 
-        Map<String, Object> parsed = parser.parseObject("{\"matched\":true,\"scenario_code\":\"energy_saving\"}");
+        Map<String, Object> parsed = parser.parseObject("{\"matched\":true,\"scenario_code\":\"energy-saving\"}");
 
         assertEquals(true, parsed.get("matched"));
-        assertEquals("energy_saving", parsed.get("scenario_code"));
+        assertEquals("energy-saving", parsed.get("scenario_code"));
     }
 
     @Test

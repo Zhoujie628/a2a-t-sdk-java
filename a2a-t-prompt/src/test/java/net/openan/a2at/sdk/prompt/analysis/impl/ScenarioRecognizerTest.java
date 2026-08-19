@@ -20,21 +20,21 @@ class ScenarioRecognizerTest {
     @Test
     void recognizeBuildsStructuredMessagesAndReturnsMatchedScenario() {
         RecordingClient llmClient =
-                new RecordingClient("{\"matched\":true,\"scenario_code\":\"energy_saving\",\"error_message\":null}");
+                new RecordingClient("{\"matched\":true,\"scenario_code\":\"energy-saving\",\"error_message\":null}");
 
         ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient);
         ScenarioRecognitionResult result = recognizer.recognize(
                 "Please analyze site A energy usage.",
                 List.of(new ScenarioDefinition(
-                        "energy_saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.");
 
         assertTrue(result.matched());
-        assertEquals("energy_saving", result.scenarioCode());
+        assertEquals("energy-saving", result.scenarioCode());
         assertEquals(2, llmClient.lastMessages().size());
         assertEquals("system", llmClient.lastMessages().get(0).get("role"));
-        assertTrue(llmClient.lastMessages().get(1).get("content").contains("energy_saving"));
+        assertTrue(llmClient.lastMessages().get(1).get("content").contains("energy-saving"));
         assertTrue(llmClient.lastSchema().containsKey("required"));
     }
 
@@ -50,7 +50,7 @@ class ScenarioRecognizerTest {
                 () -> recognizer.recognize(
                         "Analyze site A energy usage.",
                         List.of(new ScenarioDefinition(
-                                "energy_saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                                "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                         "Identify the best matching scenario.",
                         "Choose from the provided scenario list."));
     }
@@ -60,7 +60,7 @@ class ScenarioRecognizerTest {
         LLMClient llmClient = new RecordingClient("ignored");
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("matched", true);
-        payload.put("scenario_code", "energy_saving");
+        payload.put("scenario_code", "energy-saving");
         payload.put("error_message", null);
         RecordingJsonValueParser parser = new RecordingJsonValueParser(payload);
 
@@ -68,12 +68,12 @@ class ScenarioRecognizerTest {
         ScenarioRecognitionResult result = recognizer.recognize(
                 "Please analyze site A energy usage.",
                 List.of(new ScenarioDefinition(
-                        "energy_saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.");
 
         assertTrue(result.matched());
-        assertEquals("energy_saving", result.scenarioCode());
+        assertEquals("energy-saving", result.scenarioCode());
         assertEquals("ignored", parser.lastPayload);
     }
 

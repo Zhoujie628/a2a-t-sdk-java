@@ -18,14 +18,14 @@ class ClientPromptAssemblyPackageStructureTest {
     @Test
     void defaultAssemblyStillBuildsAndGeneratesPrompt() {
         LLMClient llmClient = new RecordingClient(
-                "{\"matched\":true,\"scenario_code\":\"energy_saving\",\"error_message\":null}",
+                "{\"matched\":true,\"scenario_code\":\"energy-saving\",\"error_message\":null}",
                 "{\"slots\":{\"site\":\"Site A\",\"additional_notes\":\"critical\",\"limit\":\"5\",\"severity\":\"high\"},\"slot_errors\":[]}");
 
         DefaultClientPromptGenerationOrchestrator orchestrator =
                 DefaultClientPromptGenerationOrchestratorFactory.create(
                         llmClient,
                         List.of(new ScenarioDefinition(
-                                "energy_saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                                "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                         new PromptGenerationConfig(
                                 "en-US",
                                 "Identify the best matching scenario.",

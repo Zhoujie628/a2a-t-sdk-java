@@ -42,7 +42,7 @@ class DefaultStructuredClientSlotValueExtractorTest {
 
         Map<String, String> slots = extractor.extractSlots(
                 "Analyze Site A with critical severity.",
-                "energy_saving",
+                "energy-saving",
                 "en-US",
                 "Site: {site}\nNotes: {additional_notes}\nLimit: {limit}\nSeverity: {severity}");
 
@@ -55,7 +55,7 @@ class DefaultStructuredClientSlotValueExtractorTest {
                 slots);
         assertEquals(2, llmClient.lastMessages().size());
         assertEquals("system", llmClient.lastMessages().get(0).get("role"));
-        assertTrue(llmClient.lastMessages().get(1).get("content").contains("energy_saving"));
+        assertTrue(llmClient.lastMessages().get(1).get("content").contains("energy-saving"));
         assertTrue(llmClient.lastMessages().get(1).get("content").contains("Analyze Site A with critical severity."));
         assertTrue(llmClient.lastSchema().containsKey("required"));
     }
@@ -89,7 +89,7 @@ class DefaultStructuredClientSlotValueExtractorTest {
         Map<String, Object> dataSchema = Map.of("site", "site description", "severity", "severity description");
         Map<String, String> slots = extractor.extractSlotsWithSchema(
                 "Analyze Site A with critical severity.",
-                "energy_saving",
+                "energy-saving",
                 "en-US",
                 "Site: {site}\nNotes: {additional_notes}\nLimit: {limit}\nSeverity: {severity}",
                 dataSchema);

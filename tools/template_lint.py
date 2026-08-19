@@ -12,11 +12,12 @@ from pathlib import Path
 
 HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 SLOT = re.compile(r"{{\s*([^{}\s]+)\s*}}")
-TASK = {"Task Description", "Task Type", "Task Target", "Task Object", "Task Context", "Constraints", "Expected Output"}
+TASK = {"Task Description", "Task Type", "Task Target", "Task Object", "Task Context", "Constraints", "Expected Output", "Operation Type"}
 NOTIFICATION = {"Subscription Description", "Notification Topic", "Subscribe Condition", "Notification Data Format", "Expected Output"}
 ALIASES = {
     "任务描述": "Task Description", "任务类型": "Task Type", "任务目标": "Task Target", "任务对象": "Task Object",
     "目标对象": "Task Object", "任务上下文": "Task Context", "约束条件": "Constraints", "预期输出": "Expected Output",
+    "操作类型": "Operation Type",
     "订阅描述": "Subscription Description", "通知主题": "Notification Topic", "订阅条件": "Subscribe Condition",
     "通知数据格式": "Notification Data Format", "上报通知数据格式": "Notification Data Format",
 }
@@ -109,13 +110,13 @@ def lint_root(root: Path) -> list[str]:
     if not slots.is_dir():
         return [error(slots, 1, "resource-root", "Missing slots directory.")]
     errors: list[str] = []
-    for template_path in sorted(templates.glob("*/*/template.md")):
+    for template_path in sorted(templates.glob("*/v1/*/*/template.md")):
         schema_path = slots / template_path.relative_to(templates).parent / "slot.json"
         if schema_path.is_file():
             errors.extend(lint_pair(template_path, schema_path))
         else:
             errors.append(error(template_path, 1, "slot-schema-missing", f"Missing paired slot schema: {schema_path}"))
-    for schema_path in sorted(slots.glob("*/*/slot.json")):
+    for schema_path in sorted(slots.glob("*/v1/*/*/slot.json")):
         template_path = templates / schema_path.relative_to(slots).parent / "template.md"
         if not template_path.is_file():
             errors.append(error(schema_path, 1, "template-missing", f"Missing paired template: {template_path}"))

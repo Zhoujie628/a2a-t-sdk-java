@@ -16,8 +16,8 @@ class LocalFileClientScenarioCatalogLoaderTest {
 
         List<ScenarioDefinition> scenarios = loader.load("zh-CN");
 
-        assertEquals(4, scenarios.size());
-        assertEquals("subscribe_incident", scenarios.get(0).scenarioCode());
-        assertEquals("energy_saving", scenarios.get(1).scenarioCode());
+        assertEquals(3, scenarios.size());
+        assertEquals("subscribe-incident", scenarios.get(0).scenarioCode());
+        assertEquals("energy-saving", scenarios.get(1).scenarioCode());
     }
 }

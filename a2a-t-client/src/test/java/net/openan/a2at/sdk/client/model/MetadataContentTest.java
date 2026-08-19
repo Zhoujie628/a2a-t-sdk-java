@@ -36,7 +36,7 @@ class MetadataContentTest {
     @Test
     void buildMetadataContentReturnsMapWithExtensionUriAndTemplateUri() {
         MetadataContent content = new MetadataContent(
-                "energy_saving", "Site: Site A",
+                "energy-saving", "Site: Site A",
                 "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Task-T/v1");
 
         Map<String, String> result = content.buildMetadataContent();
@@ -44,7 +44,7 @@ class MetadataContentTest {
         assertEquals(2, result.size());
         assertEquals("Site: Site A", result.get(
                 "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Task-T/v1"));
-        assertEquals("energy_saving", result.get("template_uri"));
+        assertEquals("energy-saving", result.get("template_uri"));
     }
 
     @Test

@@ -21,7 +21,7 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
 
         Map<String, String> slots = extractor.extractSlots(
                 Map.of("site", "Site A", "additional_notes", "critical", "ignored", "value"),
-                "energy_saving",
+                "energy-saving",
                 "en-US",
                 "Site: {site}\nNotes: {additional_notes}");
 
@@ -34,7 +34,7 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
                 new DefaultTemplateDrivenSlotValueExtractor((scenarioCode, language) -> schema(
                         scenarioCode, new PromptSlotDefinition("input", true, "string", null, null, null, null, null)));
 
-        Map<String, String> slots = extractor.extractSlots("Analyze Site A.", "free_text", "en-US", "Input: {input}");
+        Map<String, String> slots = extractor.extractSlots("Analyze Site A.", "free-text", "en-US", "Input: {input}");
 
         assertEquals(Map.of("input", "Analyze Site A."), slots);
     }
@@ -53,7 +53,7 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
                         "topic", "Incident",
                         "condition", "Severity is critical",
                         "report_format", "Report incident data through DataPart"),
-                "subscribe_incident",
+                "subscribe-incident",
                 "en-US",
                 "Topic: {{topic}}\nCondition: {{condition}}\nReport Format: {{report_format}}");
 
@@ -75,7 +75,7 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
 
         Map<String, String> slots = extractor.extractSlots(
                 Map.of("site", "invalid", "additional_notes", "critical"),
-                "energy_saving",
+                "energy-saving",
                 "en-US",
                 "Site: {site}\nNotes: {additional_notes}");
 
@@ -106,7 +106,7 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
                         "additional_notes", "critical",
                         "limit", "5",
                         "severity", "high"),
-                "energy_saving",
+                "energy-saving",
                 "en-US",
                 "Site: {site}\nNotes: {additional_notes}\nLimit: {limit}\nSeverity: {severity}");
 
@@ -143,7 +143,7 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
                         "additional_notes", "",
                         "limit", "50",
                         "severity", "urgent"),
-                "energy_saving",
+                "energy-saving",
                 "en-US",
                 "Site: {site}\nNotes: {additional_notes}\nLimit: {limit}\nSeverity: {severity}");
 
@@ -171,7 +171,7 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
 
         Map<String, String> slots = extractor.extractSlotsWithSchema(
                 Map.of("site", "Site A", "additional_notes", "critical", "ignored", "value"),
-                "energy_saving",
+                "energy-saving",
                 "en-US",
                 "Site: {site}\nNotes: {additional_notes}",
                 Map.of("ignored_field", "some description"));

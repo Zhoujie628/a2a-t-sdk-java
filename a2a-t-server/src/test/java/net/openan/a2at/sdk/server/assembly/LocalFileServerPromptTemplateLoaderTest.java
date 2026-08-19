@@ -19,10 +19,10 @@ class LocalFileServerPromptTemplateLoaderTest {
         LocalFileServerPromptTemplateLoader loader = new LocalFileServerPromptTemplateLoader(
                 Path.of("..", "a2a-t-resources", "src", "main", "resources", "prompt_resources"));
 
-        PromptTemplateDefinition definition = loader.load("energy_saving", "zh-CN");
+        PromptTemplateDefinition definition = loader.load("energy-saving", "zh-CN");
 
-        assertEquals("energy_saving", definition.scenarioCode());
-        assertEquals(4, definition.slotDefinitions().size());
+        assertEquals("energy-saving", definition.scenarioCode());
+        assertEquals(6, definition.slotDefinitions().size());
         assertEquals(false, definition.slotDefinitions().get(0).required());
     }
 
@@ -31,6 +31,8 @@ class LocalFileServerPromptTemplateLoaderTest {
         write(
                 promptRootDir
                         .resolve("templates")
+                        .resolve("Task-T")
+                        .resolve("v1")
                         .resolve("incident_triage")
                         .resolve("en")
                         .resolve("template.md"),
@@ -43,6 +45,8 @@ class LocalFileServerPromptTemplateLoaderTest {
         write(
                 promptRootDir
                         .resolve("slots")
+                        .resolve("Task-T")
+                        .resolve("v1")
                         .resolve("incident_triage")
                         .resolve("en")
                         .resolve("slot.json"),

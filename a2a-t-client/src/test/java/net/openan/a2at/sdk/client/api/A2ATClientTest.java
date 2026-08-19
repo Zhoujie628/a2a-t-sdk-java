@@ -159,10 +159,12 @@ class A2ATClientTest {
         Path scenariosDir = promptRoot.resolve("scenarios").resolve("zh-CN");
         Path templatesDir = promptRoot
                 .resolve("templates")
-                .resolve("private_line_complaint")
+                .resolve("Task-T")
+                .resolve("v1")
+                .resolve("private-line-complaint")
                 .resolve("zh-CN");
         Path slotsDir =
-                promptRoot.resolve("slots").resolve("private_line_complaint").resolve("zh-CN");
+                promptRoot.resolve("slots").resolve("Task-T").resolve("v1").resolve("private-line-complaint").resolve("zh-CN");
         Files.createDirectories(scenariosDir);
         Files.createDirectories(templatesDir);
         Files.createDirectories(slotsDir);
@@ -173,7 +175,7 @@ class A2ATClientTest {
                 {
                   "scenarios": [
                     {
-                      "scenario_code": "private_line_complaint",
+                      "scenario_code": "private-line-complaint",
                       "scenario_name": "Private Line Complaint",
                       "description": "Complaint analysis",
                       "example": "Analyze private line fault"
@@ -222,11 +224,11 @@ class A2ATClientTest {
         A2ATClient client = new A2ATClient(envFile);
         Map<String, Object> inputData = Map.of("site", "Site A", "target", "Reduce power by 10%");
 
-        PromptGenerationResult taskResult = client.generateTaskPromptFromJsonData(inputData, "energy_saving");
+        PromptGenerationResult taskResult = client.generateTaskPromptFromJsonData(inputData, "energy-saving");
         PromptGenerationResult authorizationResult =
-                client.generateAuthorizationPromptFromJsonData(inputData, "energy_saving");
+                client.generateAuthorizationPromptFromJsonData(inputData, "energy-saving");
         PromptGenerationResult notificationResult =
-                client.generateNotificationPromptFromJsonData(inputData, "energy_saving");
+                client.generateNotificationPromptFromJsonData(inputData, "energy-saving");
 
         assertTrue(taskResult.success());
         assertTrue(authorizationResult.success());
@@ -242,7 +244,7 @@ class A2ATClientTest {
         A2ATClient client = new A2ATClient(envFile);
 
         PromptGenerationResult result =
-                client.generateTaskPromptFromNl("Please analyze Site A power usage.", "energy_saving");
+                client.generateTaskPromptFromNl("Please analyze Site A power usage.", "energy-saving");
 
         assertTrue(result.success());
         assertEquals("Site: \\nTarget: ", result.promptText());
@@ -274,24 +276,24 @@ class A2ATClientTest {
         A2ATClient client = new A2ATClient(envFile);
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromText("Please analyze Site A.", "energy_saving");
+                client.generateTaskPromptFromText("Please analyze Site A.", "energy-saving");
         MetadataContent authResult =
-                client.generateAuthPromptFromText("Authorize access.", "energy_saving");
+                client.generateAuthPromptFromText("Authorize access.", "energy-saving");
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromText("Report finished.", "energy_saving");
+                client.generateNotificationPromptFromText("Report finished.", "energy-saving");
 
         assertNotNull(taskResult);
-        assertEquals("energy_saving", taskResult.templateUri());
+        assertEquals("energy-saving", taskResult.templateUri());
         assertNotNull(taskResult.promptText());
         assertNotNull(taskResult.extensionUri());
 
         assertNotNull(authResult);
-        assertEquals("energy_saving", authResult.templateUri());
+        assertEquals("energy-saving", authResult.templateUri());
         assertNotNull(authResult.promptText());
         assertNotNull(authResult.extensionUri());
 
         assertNotNull(notificationResult);
-        assertEquals("energy_saving", notificationResult.templateUri());
+        assertEquals("energy-saving", notificationResult.templateUri());
         assertNotNull(notificationResult.promptText());
         assertNotNull(notificationResult.extensionUri());
     }
@@ -304,24 +306,24 @@ class A2ATClientTest {
         Map<String, Object> schema = Map.of("type", "object");
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromDataWithSchema(data, schema, "energy_saving");
+                client.generateTaskPromptFromDataWithSchema(data, schema, "energy-saving");
         MetadataContent authResult =
-                client.generateAuthPromptFromDataWithSchema(data, schema, "energy_saving");
+                client.generateAuthPromptFromDataWithSchema(data, schema, "energy-saving");
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromDataWithSchema(data, schema, "energy_saving");
+                client.generateNotificationPromptFromDataWithSchema(data, schema, "energy-saving");
 
         assertNotNull(taskResult);
-        assertEquals("energy_saving", taskResult.templateUri());
+        assertEquals("energy-saving", taskResult.templateUri());
         assertNotNull(taskResult.promptText());
         assertNotNull(taskResult.extensionUri());
 
         assertNotNull(authResult);
-        assertEquals("energy_saving", authResult.templateUri());
+        assertEquals("energy-saving", authResult.templateUri());
         assertNotNull(authResult.promptText());
         assertNotNull(authResult.extensionUri());
 
         assertNotNull(notificationResult);
-        assertEquals("energy_saving", notificationResult.templateUri());
+        assertEquals("energy-saving", notificationResult.templateUri());
         assertNotNull(notificationResult.promptText());
         assertNotNull(notificationResult.extensionUri());
     }
@@ -332,11 +334,11 @@ class A2ATClientTest {
         A2ATClient client = new A2ATClient(envFile);
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromText("Please analyze Site A.", "energy_saving");
+                client.generateTaskPromptFromText("Please analyze Site A.", "energy-saving");
         MetadataContent authResult =
-                client.generateAuthPromptFromText("Authorize access.", "energy_saving");
+                client.generateAuthPromptFromText("Authorize access.", "energy-saving");
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromText("Report finished.", "energy_saving");
+                client.generateNotificationPromptFromText("Report finished.", "energy-saving");
 
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskResult.extensionUri());
         assertEquals(ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI, authResult.extensionUri());
@@ -351,11 +353,11 @@ class A2ATClientTest {
         Map<String, Object> schema = Map.of("type", "object");
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromDataWithSchema(data, schema, "energy_saving");
+                client.generateTaskPromptFromDataWithSchema(data, schema, "energy-saving");
         MetadataContent authResult =
-                client.generateAuthPromptFromDataWithSchema(data, schema, "energy_saving");
+                client.generateAuthPromptFromDataWithSchema(data, schema, "energy-saving");
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromDataWithSchema(data, schema, "energy_saving");
+                client.generateNotificationPromptFromDataWithSchema(data, schema, "energy-saving");
 
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskResult.extensionUri());
         assertEquals(ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI, authResult.extensionUri());
@@ -402,9 +404,9 @@ class A2ATClientTest {
         A2ATClient client = new A2ATClient(envFile);
 
         MetadataContent result =
-                client.generateTaskPromptFromText("Please analyze Site A power usage.", "energy_saving");
+                client.generateTaskPromptFromText("Please analyze Site A power usage.", "energy-saving");
 
-        assertEquals("energy_saving", result.templateUri());
+        assertEquals("energy-saving", result.templateUri());
         assertEquals("Site: \\nTarget: ", result.promptText());
     }
 
@@ -416,9 +418,9 @@ class A2ATClientTest {
         Map<String, Object> schema = Map.of("type", "object", "required", Arrays.asList("site", "target"));
 
         MetadataContent result =
-                client.generateTaskPromptFromDataWithSchema(data, schema, "energy_saving");
+                client.generateTaskPromptFromDataWithSchema(data, schema, "energy-saving");
 
-        assertEquals("energy_saving", result.templateUri());
+        assertEquals("energy-saving", result.templateUri());
         assertEquals("Site: Site A\\nTarget: Reduce power by 10%", result.promptText());
     }
 
@@ -429,17 +431,17 @@ class A2ATClientTest {
         Map<String, Object> data = Map.of("site", "Site A", "target", "Reduce power by 10%");
 
         PromptGenerationResult taskFromNl =
-                client.generateTaskPromptFromNl("Please analyze Site A.", "energy_saving");
+                client.generateTaskPromptFromNl("Please analyze Site A.", "energy-saving");
         PromptGenerationResult taskFromJson =
-                client.generateTaskPromptFromJsonData(data, "energy_saving");
+                client.generateTaskPromptFromJsonData(data, "energy-saving");
         PromptGenerationResult authFromNl =
-                client.generateAuthorizationPromptFromNl("Authorize access.", "energy_saving");
+                client.generateAuthorizationPromptFromNl("Authorize access.", "energy-saving");
         PromptGenerationResult authFromJson =
-                client.generateAuthorizationPromptFromJsonData(data, "energy_saving");
+                client.generateAuthorizationPromptFromJsonData(data, "energy-saving");
         PromptGenerationResult notificationFromNl =
-                client.generateNotificationPromptFromNl("Report finished.", "energy_saving");
+                client.generateNotificationPromptFromNl("Report finished.", "energy-saving");
         PromptGenerationResult notificationFromJson =
-                client.generateNotificationPromptFromJsonData(data, "energy_saving");
+                client.generateNotificationPromptFromJsonData(data, "energy-saving");
 
         assertTrue(taskFromNl.success());
         assertTrue(taskFromJson.success());
@@ -486,8 +488,8 @@ class A2ATClientTest {
                 promptRoot.resolve("prompts").resolve("slot_extraction").resolve("zh-CN");
         Path scenariosDir = promptRoot.resolve("scenarios").resolve("zh-CN");
         Path templatesDir =
-                promptRoot.resolve("templates").resolve("energy_saving").resolve("zh-CN");
-        Path slotsDir = promptRoot.resolve("slots").resolve("energy_saving").resolve("zh-CN");
+                promptRoot.resolve("templates").resolve("Task-T").resolve("v1").resolve("energy-saving").resolve("zh-CN");
+        Path slotsDir = promptRoot.resolve("slots").resolve("Task-T").resolve("v1").resolve("energy-saving").resolve("zh-CN");
         Files.createDirectories(scenarioPromptDir);
         Files.createDirectories(slotPromptDir);
         Files.createDirectories(scenariosDir);
@@ -500,7 +502,7 @@ class A2ATClientTest {
                 {
                   "scenarios": [
                     {
-                      "scenario_code": "energy_saving",
+                      "scenario_code": "energy-saving",
                       "scenario_name": "Energy Saving",
                       "description": "Energy analysis",
                       "example": "Analyze site power"

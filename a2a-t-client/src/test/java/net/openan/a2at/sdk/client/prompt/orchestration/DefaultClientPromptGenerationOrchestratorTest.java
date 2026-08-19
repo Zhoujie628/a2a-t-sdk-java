@@ -30,9 +30,9 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 new FakeSlotValueExtractor(Map.of("site", "Site A", "additional_notes", "critical"));
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 (normalizedInput, scenarios, systemPrompt, userPrompt) ->
-                        new ScenarioRecognitionResult(true, "energy_saving", null),
+                        new ScenarioRecognitionResult(true, "energy-saving", null),
                 List.of(new ScenarioDefinition(
-                        "energy_saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -45,10 +45,10 @@ class DefaultClientPromptGenerationOrchestratorTest {
         assertTrue(result.success());
         assertEquals("Site: Site A\nNotes: critical", result.promptText());
         assertEquals("Analyze Site A.", orchestrator.lastNormalizedInput());
-        assertEquals("energy_saving", templateLoader.lastScenarioCode);
+        assertEquals("energy-saving", templateLoader.lastScenarioCode);
         assertEquals("en-US", templateLoader.lastLanguage);
         assertEquals("Analyze Site A.", slotValueExtractor.lastUserInput);
-        assertEquals("energy_saving", slotValueExtractor.lastScenarioCode);
+        assertEquals("energy-saving", slotValueExtractor.lastScenarioCode);
         assertEquals("en-US", slotValueExtractor.lastLanguage);
         assertEquals("Site: {site}\nNotes: {additional_notes}", slotValueExtractor.lastTemplateText);
     }
@@ -59,7 +59,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 (normalizedInput, scenarios, systemPrompt, userPrompt) ->
                         new ScenarioRecognitionResult(false, null, "No scenario matched."),
                 List.of(new ScenarioDefinition(
-                        "energy_saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -80,9 +80,9 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void generateTaskPromptReturnsFailureWhenTemplateIsMissing() {
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 (normalizedInput, scenarios, systemPrompt, userPrompt) ->
-                        new ScenarioRecognitionResult(true, "energy_saving", null),
+                        new ScenarioRecognitionResult(true, "energy-saving", null),
                 List.of(new ScenarioDefinition(
-                        "energy_saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -105,9 +105,9 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void generateTaskPromptReturnsFailureWhenRenderingFails() {
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 (normalizedInput, scenarios, systemPrompt, userPrompt) ->
-                        new ScenarioRecognitionResult(true, "energy_saving", null),
+                        new ScenarioRecognitionResult(true, "energy-saving", null),
                 List.of(new ScenarioDefinition(
-                        "energy_saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -132,7 +132,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                             "prompt_resources/prompts/scenario_recognition/zh-CN/system.md");
                 },
                 List.of(new ScenarioDefinition(
-                        "energy_saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "zh-CN",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -157,17 +157,17 @@ class DefaultClientPromptGenerationOrchestratorTest {
         DefaultClientPromptGenerationOrchestrator orchestrator =
                 newTemplateUriOrchestrator(recognizer, templateLoader, slotValueExtractor);
 
-        PromptGenerationResult taskNl = orchestrator.generateTaskPromptFromNl("Analyze Site A.", "energy_saving");
+        PromptGenerationResult taskNl = orchestrator.generateTaskPromptFromNl("Analyze Site A.", "energy-saving");
         PromptGenerationResult taskJson =
-                orchestrator.generateTaskPromptFromJsonData(Map.of("site", "Site A"), "energy_saving");
+                orchestrator.generateTaskPromptFromJsonData(Map.of("site", "Site A"), "energy-saving");
         PromptGenerationResult authorizationNl =
                 orchestrator.generateAuthorizationPromptFromNl("Grant access.", "database_read");
         PromptGenerationResult authorizationJson =
                 orchestrator.generateAuthorizationPromptFromJsonData(Map.of("site", "Site A"), "database_read");
         PromptGenerationResult notificationNl =
-                orchestrator.generateNotificationPromptFromNl("Report finished.", "energy_saving");
+                orchestrator.generateNotificationPromptFromNl("Report finished.", "energy-saving");
         PromptGenerationResult notificationJson =
-                orchestrator.generateNotificationPromptFromJsonData(Map.of("site", "Site A"), "energy_saving");
+                orchestrator.generateNotificationPromptFromJsonData(Map.of("site", "Site A"), "energy-saving");
 
         assertTrue(taskNl.success());
         assertTrue(taskJson.success());
@@ -237,7 +237,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 },
                 new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
-        PromptGenerationResult result = orchestrator.generateTaskPromptFromNl("Analyze Site A.", "energy_saving");
+        PromptGenerationResult result = orchestrator.generateTaskPromptFromNl("Analyze Site A.", "energy-saving");
 
         assertFalse(result.success());
         assertNotNull(result.failure());
@@ -253,7 +253,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
         PromptGenerationResult result =
-                orchestrator.generateNotificationPromptFromJsonData(Map.of("site", "Site A"), "energy_saving");
+                orchestrator.generateNotificationPromptFromJsonData(Map.of("site", "Site A"), "energy-saving");
 
         assertFalse(result.success());
         assertNotNull(result.failure());
@@ -268,7 +268,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
             DefaultClientPromptGenerationOrchestrator orchestrator = newTemplateUriOrchestrator(
                     new RecordingScenarioRecognizer(), new FakeTemplateLoader("Site: {site}"), slotValueExtractor);
 
-            PromptGenerationResult result = orchestrator.generateTaskPromptFromNl(userInput, "energy_saving");
+            PromptGenerationResult result = orchestrator.generateTaskPromptFromNl(userInput, "energy-saving");
 
             assertTrue(result.success());
             assertEquals("Site: Site A", result.promptText());
@@ -283,7 +283,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
         return new DefaultClientPromptGenerationOrchestrator(
                 recognizer,
                 List.of(new ScenarioDefinition(
-                        "energy_saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -299,7 +299,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
         public ScenarioRecognitionResult recognize(
                 String normalizedInput, List<ScenarioDefinition> scenarios, String systemPrompt, String userPrompt) {
             this.invocationCount++;
-            return new ScenarioRecognitionResult(true, "energy_saving", null);
+            return new ScenarioRecognitionResult(true, "energy-saving", null);
         }
     }
 
@@ -417,9 +417,9 @@ class DefaultClientPromptGenerationOrchestratorTest {
         DefaultClientPromptGenerationOrchestrator orchestrator =
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
-        MetadataContent result = orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy_saving");
+        MetadataContent result = orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy-saving");
 
-        assertEquals("energy_saving", result.templateUri());
+        assertEquals("energy-saving", result.templateUri());
         assertEquals("Site: Site A", result.promptText());
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, result.extensionUri());
     }
@@ -431,7 +431,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
         DefaultClientPromptGenerationOrchestrator orchestrator =
                 newTemplateUriOrchestrator(recognizer, templateLoader, new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
-        orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy_saving");
+        orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy-saving");
 
         assertEquals(0, recognizer.invocationCount);
     }
@@ -461,7 +461,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
         assertThrows(ResourceNotFoundException.class,
-                () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy_saving"));
+                () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy-saving"));
     }
 
     @Test
@@ -472,7 +472,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
         assertThrows(net.openan.a2at.sdk.prompt.taskrendering.exception.TaskPromptRenderException.class,
-                () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy_saving"));
+                () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy-saving"));
     }
 
     @Test
@@ -485,7 +485,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 });
 
         assertThrows(LLMRuntimeError.class,
-                () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy_saving"));
+                () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy-saving"));
     }
 
     // --- MetadataContent pipeline tests (generateFromDataWithSchema) ---
@@ -499,9 +499,9 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
         MetadataContent result = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of("site", "string"), "energy_saving");
+                Map.of("site", "Site A"), Map.of("site", "string"), "energy-saving");
 
-        assertEquals("energy_saving", result.templateUri());
+        assertEquals("energy-saving", result.templateUri());
         assertEquals("Site: Site A", result.promptText());
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, result.extensionUri());
     }
@@ -515,10 +515,10 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
         Map<String, Object> schema = Map.of("site", "string", "count", "number");
-        orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), schema, "energy_saving");
+        orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), schema, "energy-saving");
 
         assertEquals(schema, slotValueExtractor.lastSchema);
-        assertEquals("energy_saving", slotValueExtractor.lastScenarioCode);
+        assertEquals("energy-saving", slotValueExtractor.lastScenarioCode);
         assertEquals("Site: {site}", slotValueExtractor.lastTemplateText);
     }
 
@@ -531,7 +531,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
         MetadataContent result = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), null, "energy_saving");
+                Map.of("site", "Site A"), null, "energy-saving");
 
         assertEquals("Site: Site A", result.promptText());
         assertEquals(null, slotValueExtractor.lastSchema);
@@ -546,7 +546,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
         MetadataContent result = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), "energy_saving");
+                Map.of("site", "Site A"), Map.of(), "energy-saving");
 
         assertEquals("Site: Site A", result.promptText());
         assertEquals(Map.of(), slotValueExtractor.lastSchema);
@@ -575,7 +575,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 new FakeSlotValueExtractorWithSchema(Map.of("site", "Site A")));
 
         assertThrows(ResourceNotFoundException.class,
-                () -> orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), Map.of(), "energy_saving"));
+                () -> orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), Map.of(), "energy-saving"));
     }
 
     @Test
@@ -586,7 +586,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 new FakeSlotValueExtractorWithSchema(Map.of("site", "Site A")));
 
         assertThrows(net.openan.a2at.sdk.prompt.taskrendering.exception.TaskPromptRenderException.class,
-                () -> orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), Map.of(), "energy_saving"));
+                () -> orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), Map.of(), "energy-saving"));
     }
 
     @Test
@@ -597,7 +597,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 new FailingExtractSlotsWithSchema(new LLMRuntimeError("LLM invocation failed.")));
 
         assertThrows(LLMRuntimeError.class,
-                () -> orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), Map.of(), "energy_saving"));
+                () -> orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), Map.of(), "energy-saving"));
     }
 
     @Test
@@ -606,10 +606,10 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 new RecordingScenarioRecognizer(),
                 new FakeTemplateLoader("Site: {site}"),
                 new FailingExtractSlotsWithSchema(
-                        new ResourceNotFoundException("Slot schema file does not exist.", "energy_saving")));
+                        new ResourceNotFoundException("Slot schema file does not exist.", "energy-saving")));
 
         assertThrows(ResourceNotFoundException.class,
-                () -> orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), Map.of(), "energy_saving"));
+                () -> orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), Map.of(), "energy-saving"));
     }
 
     // --- Public entry point tests ---
@@ -622,15 +622,15 @@ class DefaultClientPromptGenerationOrchestratorTest {
         DefaultClientPromptGenerationOrchestrator orchestrator =
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
-        MetadataContent taskText = orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy_saving");
+        MetadataContent taskText = orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy-saving");
         MetadataContent taskData = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), "energy_saving");
+                Map.of("site", "Site A"), Map.of(), "energy-saving");
         MetadataContent authText = orchestrator.generateAuthPromptFromText("Grant access.", "database_read");
         MetadataContent authData = orchestrator.generateAuthPromptFromDataWithSchema(
                 Map.of("site", "Site A"), Map.of(), "database_read");
-        MetadataContent notifText = orchestrator.generateNotificationPromptFromText("Report finished.", "energy_saving");
+        MetadataContent notifText = orchestrator.generateNotificationPromptFromText("Report finished.", "energy-saving");
         MetadataContent notifData = orchestrator.generateNotificationPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), "energy_saving");
+                Map.of("site", "Site A"), Map.of(), "energy-saving");
 
         assertTrue(taskText.promptText().contains("Site A"));
         assertTrue(taskData.promptText().contains("Site A"));
@@ -646,15 +646,15 @@ class DefaultClientPromptGenerationOrchestratorTest {
         DefaultClientPromptGenerationOrchestrator orchestrator = newTemplateUriOrchestrator(
                 new RecordingScenarioRecognizer(), templateLoader, new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
-        MetadataContent taskText = orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy_saving");
+        MetadataContent taskText = orchestrator.generateTaskPromptFromText("Analyze Site A.", "energy-saving");
         MetadataContent taskData = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), "energy_saving");
+                Map.of("site", "Site A"), Map.of(), "energy-saving");
         MetadataContent authText = orchestrator.generateAuthPromptFromText("Grant access.", "database_read");
         MetadataContent authData = orchestrator.generateAuthPromptFromDataWithSchema(
                 Map.of("site", "Site A"), Map.of(), "database_read");
-        MetadataContent notifText = orchestrator.generateNotificationPromptFromText("Report finished.", "energy_saving");
+        MetadataContent notifText = orchestrator.generateNotificationPromptFromText("Report finished.", "energy-saving");
         MetadataContent notifData = orchestrator.generateNotificationPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), "energy_saving");
+                Map.of("site", "Site A"), Map.of(), "energy-saving");
 
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskText.extensionUri());
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskData.extensionUri());
