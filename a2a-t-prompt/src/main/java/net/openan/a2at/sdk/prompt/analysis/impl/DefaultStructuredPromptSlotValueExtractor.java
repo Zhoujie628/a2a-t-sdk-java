@@ -44,10 +44,21 @@ public final class DefaultStructuredPromptSlotValueExtractor implements PromptSl
 
     @Override
     public StructuredSlotExtractionResult extractSlots(Object userInput, String scenarioCode, String language) {
+        return doExtractSlots(userInput, scenarioCode, language, null);
+    }
+
+    @Override
+    public StructuredSlotExtractionResult extractSlots(
+            Object userInput, String scenarioCode, String language, Map<String, Object> dataSchema) {
+        return doExtractSlots(userInput, scenarioCode, language, dataSchema);
+    }
+
+    private StructuredSlotExtractionResult doExtractSlots(
+            Object userInput, String scenarioCode, String language, Map<String, Object> dataSchema) {
         PromptSlotSchema slotSchema = slotSchemaLoader.loadSlotSchema(scenarioCode, language);
         String payload = llmClient
                 .structured(
-                        toStructuredMessages(buildMessages(userInput, scenarioCode, language, slotSchema)),
+                        toStructuredMessages(buildMessages(userInput, scenarioCode, language, slotSchema, dataSchema)),
                         buildSchema(slotSchema),
                         null,
                         null)
@@ -56,7 +67,8 @@ public final class DefaultStructuredPromptSlotValueExtractor implements PromptSl
     }
 
     private List<PromptMessage> buildMessages(
-            Object userInput, String scenarioCode, String language, PromptSlotSchema slotSchema) {
+            Object userInput, String scenarioCode, String language, PromptSlotSchema slotSchema,
+            Map<String, Object> dataSchema) {
         String slotLines = slotSchema.slotDefinitions().stream()
                 .map(slot -> "- name: " + slot.name() + "\n  required: " + slot.required())
                 .collect(Collectors.joining("\n"));
@@ -69,6 +81,12 @@ public final class DefaultStructuredPromptSlotValueExtractor implements PromptSl
                 + String.valueOf(userInput)
                 + "\n\n[slots]\n"
                 + slotLines;
+        if (dataSchema != null && !dataSchema.isEmpty()) {
+            content += "\n\n[data_schema]\n";
+            for (Map.Entry<String, Object> entry : dataSchema.entrySet()) {
+                content += "- " + entry.getKey() + ": " + String.valueOf(entry.getValue()) + "\n";
+            }
+        }
         return List.of(new PromptMessage("system", systemPrompt), new PromptMessage("user", content));
     }
 

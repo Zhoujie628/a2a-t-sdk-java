@@ -39,4 +39,12 @@ public final class DefaultStructuredClientSlotValueExtractor implements ClientSl
         StructuredSlotExtractionResult result = delegate.extractSlots(userInput, scenarioCode, language);
         return new LinkedHashMap<>(result.slots());
     }
+
+    @Override
+    public Map<String, String> extractSlotsWithSchema(
+            Object userInput, String scenarioCode, String language, String templateText,
+            Map<String, Object> dataSchema) {
+        StructuredSlotExtractionResult result = delegate.extractSlots(userInput, scenarioCode, language, dataSchema);
+        return new LinkedHashMap<>(result.slots());
+    }
 }

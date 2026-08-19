@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.client.prompt.extractor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -57,6 +58,70 @@ class DefaultStructuredClientSlotValueExtractorTest {
         assertTrue(llmClient.lastMessages().get(1).get("content").contains("energy_saving"));
         assertTrue(llmClient.lastMessages().get(1).get("content").contains("Analyze Site A with critical severity."));
         assertTrue(llmClient.lastSchema().containsKey("required"));
+    }
+
+    @Test
+    void extractSlotsWithSchemaCallsDelegateFourArgMethod() {
+        RecordingClient llmClient = new RecordingClient(
+                "{\"slots\":{\"site\":\"Site A\",\"additional_notes\":null,\"limit\":\"5\",\"severity\":\"high\"},"
+                        + "\"slot_errors\":[]}");
+        DefaultStructuredClientSlotValueExtractor extractor = new DefaultStructuredClientSlotValueExtractor(
+                llmClient,
+                (scenarioCode, language) -> new PromptSlotSchema(
+                        scenarioCode,
+                        List.of(
+                                new PromptSlotDefinition("site", true, "string", "^Site .+", null, null, null, null),
+                                new PromptSlotDefinition(
+                                        "additional_notes", false, "string", null, null, null, null, null),
+                                new PromptSlotDefinition("limit", false, "integer", null, 1.0d, 10.0d, null, null),
+                                new PromptSlotDefinition(
+                                        "severity",
+                                        false,
+                                        "string",
+                                        null,
+                                        null,
+                                        null,
+                                        List.of("low", "medium", "high"),
+                                        null))),
+                "Extract slots from the input.",
+                "Return slots as JSON.");
+
+        Map<String, Object> dataSchema = Map.of("site", "site description", "severity", "severity description");
+        Map<String, String> slots = extractor.extractSlotsWithSchema(
+                "Analyze Site A with critical severity.",
+                "energy_saving",
+                "en-US",
+                "Site: {site}\nNotes: {additional_notes}\nLimit: {limit}\nSeverity: {severity}",
+                dataSchema);
+
+        assertEquals(
+                Map.of(
+                        "site", "Site A",
+                        "additional_notes", "",
+                        "limit", "5",
+                        "severity", "high"),
+                slots);
+        assertTrue(llmClient.lastMessages().get(1).get("content").contains("[data_schema]"));
+        assertTrue(llmClient.lastMessages().get(1).get("content").contains("site: site description"));
+    }
+
+    @Test
+    void extractSlotsWithSchemaWithNullSchemaStillWorks() {
+        RecordingClient llmClient = new RecordingClient(
+                "{\"slots\":{\"site\":\"Site A\"},\"slot_errors\":[]}");
+        DefaultStructuredClientSlotValueExtractor extractor = new DefaultStructuredClientSlotValueExtractor(
+                llmClient,
+                (scenarioCode, language) -> new PromptSlotSchema(
+                        scenarioCode,
+                        List.of(new PromptSlotDefinition("site", true, "string", "^Site .+", null, null, null, null))),
+                "Extract slots.",
+                "Return slots.");
+
+        Map<String, String> slots = extractor.extractSlotsWithSchema(
+                "Analyze Site A.", "scenario", "en", "Site: {site}", null);
+
+        assertEquals(Map.of("site", "Site A"), slots);
+        assertFalse(llmClient.lastMessages().get(1).get("content").contains("[data_schema]"));
     }
 
     private static final class RecordingClient implements LLMClient {
