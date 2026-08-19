@@ -19,15 +19,15 @@ class LocalFileClientSlotSchemaLoaderTest {
         PromptSlotSchema schema = loader.loadSlotSchema("energy_saving", "zh-CN");
 
         assertEquals("energy_saving", schema.scenarioCode());
-        assertEquals(4, schema.slotDefinitions().size());
+        assertEquals(6, schema.slotDefinitions().size());
 
-        PromptSlotDefinition taskObject = schema.slotDefinitions().get(1);
+        PromptSlotDefinition taskObject = schema.slotDefinitions().get(2);
         assertFalse(taskObject.name().isBlank());
         assertEquals("string", taskObject.jsonType());
         assertTrue(taskObject.description().length() > 10);
 
-        PromptSlotDefinition constraints = schema.slotDefinitions().get(3);
-        assertFalse(constraints.name().isBlank());
-        assertTrue(constraints.description().length() > 10);
+        PromptSlotDefinition taskContext = schema.slotDefinitions().get(4);
+        assertFalse(taskContext.name().isBlank());
+        assertTrue(taskContext.description().length() > 10);
     }
 }

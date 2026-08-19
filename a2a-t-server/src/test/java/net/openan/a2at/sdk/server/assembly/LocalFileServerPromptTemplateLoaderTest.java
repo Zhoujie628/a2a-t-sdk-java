@@ -22,7 +22,7 @@ class LocalFileServerPromptTemplateLoaderTest {
         PromptTemplateDefinition definition = loader.load("energy_saving", "zh-CN");
 
         assertEquals("energy_saving", definition.scenarioCode());
-        assertEquals(4, definition.slotDefinitions().size());
+        assertEquals(6, definition.slotDefinitions().size());
         assertEquals(false, definition.slotDefinitions().get(0).required());
     }
 

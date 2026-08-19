@@ -21,7 +21,7 @@ class DefaultClasspathClientSlotSchemaLoaderTest {
         PromptSlotSchema schema = loader.loadSlotSchema("energy_saving", "zh-CN");
 
         assertEquals("energy_saving", schema.scenarioCode());
-        assertEquals(4, schema.slotDefinitions().size());
+        assertEquals(6, schema.slotDefinitions().size());
         assertFalse(schema.slotDefinitions().get(0).name().isBlank());
         assertFalse(schema.slotDefinitions().get(0).required());
         assertEquals("string", schema.slotDefinitions().get(0).jsonType());
