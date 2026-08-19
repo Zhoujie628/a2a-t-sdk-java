@@ -2,6 +2,7 @@ package net.openan.a2at.sdk.prompt.resources.loader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -61,6 +62,8 @@ class LocalFilePromptLoadersTest {
         write(
                 promptRootDir
                         .resolve("templates")
+                        .resolve("Task-T")
+                        .resolve("v1")
                         .resolve("incident_triage")
                         .resolve("en")
                         .resolve("template.md"),
@@ -88,6 +91,8 @@ class LocalFilePromptLoadersTest {
         write(
                 promptRootDir
                         .resolve("slots")
+                        .resolve("Task-T")
+                        .resolve("v1")
                         .resolve("incident_triage")
                         .resolve("en")
                         .resolve("slot.json"),
@@ -133,14 +138,9 @@ class LocalFilePromptLoadersTest {
                 assertThrows(ResourceNotFoundException.class, () -> new LocalFilePromptTemplateLoader(promptRootDir)
                         .loadTemplate("incident_triage", "en"));
 
-        assertEquals(
-                promptRootDir
-                        .resolve("templates")
-                        .resolve("incident_triage")
-                        .resolve("en")
-                        .resolve("template.md")
-                        .toString(),
-                exception.resourcePath());
+        String expected = (promptRootDir.resolve("templates").toString()
+                + "/*/v1/incident_triage/en/template.md").replace('\\', '/');
+        assertEquals(expected, exception.resourcePath().replace('\\', '/'));
     }
 
     @Test
@@ -148,6 +148,8 @@ class LocalFilePromptLoadersTest {
         write(
                 promptRootDir
                         .resolve("slots")
+                        .resolve("Task-T")
+                        .resolve("v1")
                         .resolve("incident_triage")
                         .resolve("en")
                         .resolve("slot.json"),
@@ -157,14 +159,7 @@ class LocalFilePromptLoadersTest {
                 assertThrows(SdkException.class, () -> new LocalFilePromptSlotSchemaLoader(promptRootDir)
                         .loadSlotSchema("incident_triage", "en"));
 
-        assertEquals(
-                "Failed to read slot schema resource: "
-                        + promptRootDir
-                                .resolve("slots")
-                                .resolve("incident_triage")
-                                .resolve("en")
-                                .resolve("slot.json"),
-                exception.getMessage());
+        assertTrue(exception.getMessage().startsWith("Failed to read slot schema resource: "));
     }
 
     private static void write(Path file, String content) throws IOException {

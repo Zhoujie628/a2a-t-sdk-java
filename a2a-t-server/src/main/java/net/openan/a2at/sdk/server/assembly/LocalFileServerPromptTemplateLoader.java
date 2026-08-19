@@ -3,9 +3,10 @@ package net.openan.a2at.sdk.server.assembly;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
 import net.openan.a2at.sdk.prompt.resources.loader.LocalFilePromptSlotSchemaLoader;
 import net.openan.a2at.sdk.prompt.resources.loader.LocalFilePromptTemplateLoader;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptSlotSchemaLoader;
@@ -64,15 +65,27 @@ public final class LocalFileServerPromptTemplateLoader {
             throw new ResourceNotFoundException("Prompt resource file does not exist.", templatesRoot.toString());
         }
 
-        try (var paths = Files.list(templatesRoot)) {
-            return paths
-                    .filter(Files::isDirectory)
-                    .map(path -> path.getFileName().toString())
-                    .map(scenarioCode -> load(scenarioCode, language))
-                    .toList();
+        List<String> scenarioCodes = new ArrayList<>();
+        try (var typePaths = Files.list(templatesRoot)) {
+            for (Path typeDir : (Iterable<Path>) typePaths.filter(Files::isDirectory)::iterator) {
+                Path versionDir = typeDir.resolve("v1");
+                if (!Files.isDirectory(versionDir)) {
+                    continue;
+                }
+                try (Stream<Path> scenarioPaths = Files.list(versionDir)) {
+                    scenarioPaths.filter(Files::isDirectory)
+                            .map(path -> path.getFileName().toString())
+                            .forEach(scenarioCodes::add);
+                }
+            }
         } catch (IOException exception) {
-            throw new SdkException("Failed to scan prompt template resources: " + templatesRoot, exception);
+            throw new net.openan.a2at.sdk.core.exception.SdkException(
+                    "Failed to scan prompt template resources: " + templatesRoot, exception);
         }
+
+        return scenarioCodes.stream()
+                .map(scenarioCode -> load(scenarioCode, language))
+                .toList();
     }
 
     private static List<PromptTemplateSlotDefinition> toSlotDefinitions(PromptSlotSchema slotSchema) {

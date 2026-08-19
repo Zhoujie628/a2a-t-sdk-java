@@ -156,10 +156,12 @@ class A2ATClientTest {
         Path scenariosDir = promptRoot.resolve("scenarios").resolve("zh-CN");
         Path templatesDir = promptRoot
                 .resolve("templates")
+                .resolve("Task-T")
+                .resolve("v1")
                 .resolve("private_line_complaint")
                 .resolve("zh-CN");
         Path slotsDir =
-                promptRoot.resolve("slots").resolve("private_line_complaint").resolve("zh-CN");
+                promptRoot.resolve("slots").resolve("Task-T").resolve("v1").resolve("private_line_complaint").resolve("zh-CN");
         Files.createDirectories(scenariosDir);
         Files.createDirectories(templatesDir);
         Files.createDirectories(slotsDir);
@@ -244,8 +246,8 @@ class A2ATClientTest {
                 promptRoot.resolve("prompts").resolve("slot_extraction").resolve("zh-CN");
         Path scenariosDir = promptRoot.resolve("scenarios").resolve("zh-CN");
         Path templatesDir =
-                promptRoot.resolve("templates").resolve("energy_saving").resolve("zh-CN");
-        Path slotsDir = promptRoot.resolve("slots").resolve("energy_saving").resolve("zh-CN");
+                promptRoot.resolve("templates").resolve("Task-T").resolve("v1").resolve("energy_saving").resolve("zh-CN");
+        Path slotsDir = promptRoot.resolve("slots").resolve("Task-T").resolve("v1").resolve("energy_saving").resolve("zh-CN");
         Files.createDirectories(scenarioPromptDir);
         Files.createDirectories(slotPromptDir);
         Files.createDirectories(scenariosDir);

@@ -31,6 +31,8 @@ class LocalFileServerPromptTemplateLoaderTest {
         write(
                 promptRootDir
                         .resolve("templates")
+                        .resolve("Task-T")
+                        .resolve("v1")
                         .resolve("incident_triage")
                         .resolve("en")
                         .resolve("template.md"),
@@ -43,6 +45,8 @@ class LocalFileServerPromptTemplateLoaderTest {
         write(
                 promptRootDir
                         .resolve("slots")
+                        .resolve("Task-T")
+                        .resolve("v1")
                         .resolve("incident_triage")
                         .resolve("en")
                         .resolve("slot.json"),

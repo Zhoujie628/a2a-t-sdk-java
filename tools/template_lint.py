@@ -110,13 +110,13 @@ def lint_root(root: Path) -> list[str]:
     if not slots.is_dir():
         return [error(slots, 1, "resource-root", "Missing slots directory.")]
     errors: list[str] = []
-    for template_path in sorted(templates.glob("*/*/template.md")):
+    for template_path in sorted(templates.glob("*/v1/*/*/template.md")):
         schema_path = slots / template_path.relative_to(templates).parent / "slot.json"
         if schema_path.is_file():
             errors.extend(lint_pair(template_path, schema_path))
         else:
             errors.append(error(template_path, 1, "slot-schema-missing", f"Missing paired slot schema: {schema_path}"))
-    for schema_path in sorted(slots.glob("*/*/slot.json")):
+    for schema_path in sorted(slots.glob("*/v1/*/*/slot.json")):
         template_path = templates / schema_path.relative_to(slots).parent / "template.md"
         if not template_path.is_file():
             errors.append(error(schema_path, 1, "template-missing", f"Missing paired template: {template_path}"))
