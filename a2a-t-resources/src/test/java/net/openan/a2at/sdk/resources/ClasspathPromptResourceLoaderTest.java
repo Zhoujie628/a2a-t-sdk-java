@@ -56,36 +56,4 @@ class ClasspathPromptResourceLoaderTest {
         assertTrue(text.contains("medium"));
         assertTrue(text.contains("low"));
     }
-
-    @Test
-    void loadsPackagedFaultDiagnosisScenarioCatalogWithLatestShortExample() {
-        String text = loader.loadText(new PromptResourceKey("scenarios", "catalog", "zh-CN", "scenarios.json"));
-
-        assertTrue(text.contains("\"scenario_code\": \"fault_diagnosis\""));
-        assertTrue(text.contains("1856365516_2839324485_2130908106_4130674041"));
-        assertFalse(text.contains("task_request_id"));
-    }
-
-    @Test
-    void loadsPackagedFaultDiagnosisSlotSchemaWithLatestConciseDescriptions() {
-        String text = loader.loadText(new PromptResourceKey("slots", "fault_diagnosis", "zh-CN", "slot.json"));
-
-        assertTrue(text.contains("\"type\": \"string\""));
-        assertTrue(text.contains("\"required\": ["));
-        assertTrue(text.contains("DataPart"));
-        assertTrue(text.contains("TextPart"));
-        assertFalse(text.contains("task_request_id"));
-    }
-
-    @Test
-    void loadsPackagedFaultDiagnosisTemplateWithoutLegacyLongExamples() {
-        String text = loader.loadText(new PromptResourceKey("templates", "fault_diagnosis", "zh-CN", "template.md"));
-
-        assertTrue(text.contains("Task Type"));
-        assertTrue(text.contains("Task Target"));
-        assertTrue(text.contains("DataPart"));
-        assertTrue(text.contains("TextPart"));
-        assertFalse(text.contains("Full request example"));
-        assertFalse(text.contains("Full response example"));
-    }
 }

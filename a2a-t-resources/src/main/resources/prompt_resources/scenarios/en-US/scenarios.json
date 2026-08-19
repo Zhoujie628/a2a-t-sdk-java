@@ -17,12 +17,6 @@
       "scenario_name": "Private Line Complaint",
       "description": "Used to generate an A2A-T task request for network-side fault root cause diagnosis in a private line complaint scenario in a telecom network management system.",
       "example": "Please confirm the root cause of fault fault-id-1-328-20260510-58489 that occurred on the Guangdong enterprise private line at 2026-05-10T18:25:30Z, and provide repair suggestions."
-    },
-    {
-      "scenario_code": "fault_diagnosis",
-      "scenario_name": "Fault Root Cause Diagnosis",
-      "description": "Based on event information output by event recognition and preliminary demarcation analysis, preliminary root cause analysis, and preliminary impact analysis, output root cause localization information and recommended handling plans.",
-      "example": "Please perform root cause localization for the fault event based on the following information, and output repair suggestions and service impact analysis: the event sequence number is 1856365516_2839324485_2130908106_4130674041, titled 5G base station outage event, the alarm vendor internal sequence number associated with the event is 123211121244, the unique identifier of the associated alarm in the NMS is 0108-007-012-10-000003, the associated alarm title is gNodeB outage alarm, the event generation time is 2025-05-22 08:40:44, the alarm severity is level 4, and the network element name is QZHA-HAZBYSDGG-HRHH."
     }
   ]
 }
