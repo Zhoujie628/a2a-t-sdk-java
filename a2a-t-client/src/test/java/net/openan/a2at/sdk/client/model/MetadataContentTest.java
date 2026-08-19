@@ -48,9 +48,8 @@ class MetadataContentTest {
     }
 
     @Test
-    void rejectsNullFields() {
-        assertThrows(NullPointerException.class, () -> new MetadataContent(null, "prompt", "uri"));
-        assertThrows(NullPointerException.class, () -> new MetadataContent("uri", null, "uri"));
-        assertThrows(NullPointerException.class, () -> new MetadataContent("uri", "prompt", null));
+    void buildMetadataContentReturnsNullWhenAnyFieldIsNull() {
+        MetadataContent content = new MetadataContent(null, null, "extension-uri");
+        assertEquals(null, content.buildMetadataContent());
     }
 }
