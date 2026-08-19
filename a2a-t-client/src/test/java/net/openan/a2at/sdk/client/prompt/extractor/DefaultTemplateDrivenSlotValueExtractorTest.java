@@ -159,4 +159,23 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
     private static PromptSlotSchema schema(String scenarioCode, PromptSlotDefinition... definitions) {
         return new PromptSlotSchema(scenarioCode, List.of(definitions));
     }
+
+    @Test
+    void extractSlotsWithSchemaIgnoresSchemaAndBehavesIdenticallyToExtractSlots() {
+        DefaultTemplateDrivenSlotValueExtractor extractor =
+                new DefaultTemplateDrivenSlotValueExtractor((scenarioCode, language) -> schema(
+                        scenarioCode,
+                        new PromptSlotDefinition("site", true, "string", null, null, null, null, null),
+                        new PromptSlotDefinition("additional_notes", false, "string", null, null, null, null, null),
+                        new PromptSlotDefinition("ignored", false, "string", null, null, null, null, null)));
+
+        Map<String, String> slots = extractor.extractSlotsWithSchema(
+                Map.of("site", "Site A", "additional_notes", "critical", "ignored", "value"),
+                "energy_saving",
+                "en-US",
+                "Site: {site}\nNotes: {additional_notes}",
+                Map.of("ignored_field", "some description"));
+
+        assertEquals(Map.of("site", "Site A", "additional_notes", "critical"), slots);
+    }
 }

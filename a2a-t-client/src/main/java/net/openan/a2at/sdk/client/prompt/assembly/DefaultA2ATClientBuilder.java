@@ -290,5 +290,12 @@ public final class DefaultA2ATClientBuilder {
             }
             return llmExtractor.extractSlots(userInput, scenarioCode, language, templateText);
         }
+
+        @Override
+        public Map<String, String> extractSlotsWithSchema(
+                Object userInput, String scenarioCode, String language, String templateText,
+                Map<String, Object> dataSchema) {
+            return llmExtractor.extractSlotsWithSchema(userInput, scenarioCode, language, templateText, dataSchema);
+        }
     }
 }
