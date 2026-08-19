@@ -28,7 +28,7 @@ class LlmBackedPromptMetadataExtractorTest {
     @Test
     void extractResolvesScenarioLoadsTemplateAndReturnsExtractedSlots() {
         LLMClient llmClient =
-                new RecordingClient("{\"matched\":true,\"scenario_code\":\"subscribe_incident\",\"error_message\":null}");
+                new RecordingClient("{\"matched\":true,\"scenario_code\":\"subscribe-incident\",\"error_message\":null}");
         PromptTemplateTextLoader templateLoader = (scenarioCode, language) ->
                 "## notification_topic\n{{notification_topic}}\n";
         PromptSlotSchemaLoader slotSchemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
@@ -38,7 +38,7 @@ class LlmBackedPromptMetadataExtractorTest {
         LlmBackedPromptMetadataExtractor extractor = new LlmBackedPromptMetadataExtractor(
                 new ScenarioRecognizer(llmClient),
                 List.of(new ScenarioDefinition(
-                        "subscribe_incident", "Incident subscription", "Subscribe incident", "Subscribe Incident")),
+                        "subscribe-incident", "Incident subscription", "Subscribe incident", "Subscribe Incident")),
                 "zh-CN",
                 "Identify scenario.",
                 "Choose scenario.",
@@ -48,7 +48,7 @@ class LlmBackedPromptMetadataExtractorTest {
 
         ProcessedPromptMetadata metadata = extractor.extract("## notification_topic\nIncident\n");
 
-        assertEquals("subscribe_incident", metadata.scenarioCode());
+        assertEquals("subscribe-incident", metadata.scenarioCode());
         assertEquals("zh-CN", metadata.language());
         assertEquals("## notification_topic\n{{notification_topic}}\n", metadata.templateText());
         assertEquals(Map.of(SLOT_NAME, "Incident"), metadata.slots());
@@ -61,7 +61,7 @@ class LlmBackedPromptMetadataExtractorTest {
         LlmBackedPromptMetadataExtractor extractor = new LlmBackedPromptMetadataExtractor(
                 new ScenarioRecognizer(llmClient),
                 List.of(new ScenarioDefinition(
-                        "subscribe_incident", "Incident subscription", "Subscribe incident", "Subscribe Incident")),
+                        "subscribe-incident", "Incident subscription", "Subscribe incident", "Subscribe Incident")),
                 "zh-CN",
                 "Identify scenario.",
                 "Choose scenario.",
@@ -79,11 +79,11 @@ class LlmBackedPromptMetadataExtractorTest {
     @Test
     void extractReturnsSlotValidationErrorWhenStructuredExtractionReportsSlotErrors() {
         LLMClient llmClient =
-                new RecordingClient("{\"matched\":true,\"scenario_code\":\"subscribe_incident\",\"error_message\":null}");
+                new RecordingClient("{\"matched\":true,\"scenario_code\":\"subscribe-incident\",\"error_message\":null}");
         LlmBackedPromptMetadataExtractor extractor = new LlmBackedPromptMetadataExtractor(
                 new ScenarioRecognizer(llmClient),
                 List.of(new ScenarioDefinition(
-                        "subscribe_incident", "Incident subscription", "Subscribe incident", "Subscribe Incident")),
+                        "subscribe-incident", "Incident subscription", "Subscribe incident", "Subscribe Incident")),
                 "zh-CN",
                 "Identify scenario.",
                 "Choose scenario.",
@@ -105,11 +105,11 @@ class LlmBackedPromptMetadataExtractorTest {
     @Test
     void extractPropagatesTemplateLoadErrorsAsGenerationFailures() {
         LLMClient llmClient =
-                new RecordingClient("{\"matched\":true,\"scenario_code\":\"subscribe_incident\",\"error_message\":null}");
+                new RecordingClient("{\"matched\":true,\"scenario_code\":\"subscribe-incident\",\"error_message\":null}");
         LlmBackedPromptMetadataExtractor extractor = new LlmBackedPromptMetadataExtractor(
                 new ScenarioRecognizer(llmClient),
                 List.of(new ScenarioDefinition(
-                        "subscribe_incident", "Incident subscription", "Subscribe incident", "Subscribe Incident")),
+                        "subscribe-incident", "Incident subscription", "Subscribe incident", "Subscribe Incident")),
                 "zh-CN",
                 "Identify scenario.",
                 "Choose scenario.",

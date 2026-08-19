@@ -15,7 +15,7 @@ class DefaultClasspathClientTemplateLoaderTest {
         DefaultClasspathClientTemplateLoader loader =
                 new DefaultClasspathClientTemplateLoader(new ClasspathPromptResourceLoader());
 
-        String templateText = loader.loadTemplate("energy_saving", "en-US");
+        String templateText = loader.loadTemplate("energy-saving", "en-US");
 
         assertFalse(templateText.isBlank());
         assertTrue(templateText.contains("{site}"));

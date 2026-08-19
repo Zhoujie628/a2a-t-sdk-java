@@ -50,7 +50,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 "Return slots as JSON.");
 
         StructuredSlotExtractionResult result =
-                extractor.extractSlots("Analyze Site A with critical severity.", "energy_saving", "en-US");
+                extractor.extractSlots("Analyze Site A with critical severity.", "energy-saving", "en-US");
 
         assertEquals(
                 Map.of(
@@ -87,7 +87,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 "Return slots as JSON.");
 
         StructuredSlotExtractionResult result =
-                extractor.extractSlots("Analyze Site A with fallback note.", "energy_saving", "en-US");
+                extractor.extractSlots("Analyze Site A with fallback note.", "energy-saving", "en-US");
 
         assertEquals(Map.of("site", "Site A", "additional_notes", "Need } fallback"), result.slots());
         assertEquals(List.of(), result.slotErrors());

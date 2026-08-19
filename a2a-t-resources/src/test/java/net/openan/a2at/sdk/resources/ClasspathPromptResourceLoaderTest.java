@@ -41,13 +41,13 @@ class ClasspathPromptResourceLoaderTest {
     void loadsPackagedScenarioCatalogForZhCn() {
         String text = loader.loadText(new PromptResourceKey("scenarios", "catalog", "zh-CN", "scenarios.json"));
 
-        org.junit.jupiter.api.Assertions.assertTrue(text.contains("subscribe_incident"));
-        org.junit.jupiter.api.Assertions.assertTrue(text.contains("energy_saving"));
+        org.junit.jupiter.api.Assertions.assertTrue(text.contains("subscribe-incident"));
+        org.junit.jupiter.api.Assertions.assertTrue(text.contains("energy-saving"));
     }
 
     @Test
     void loadsPackagedSubscribeIncidentSlotSchemaWithSemanticHint() {
-        String text = loader.loadText(new PromptResourceKey("slots", "Notification-T", "subscribe_incident", "zh-CN", "slot.json"));
+        String text = loader.loadText(new PromptResourceKey("slots", "Notification-T", "subscribe-incident", "zh-CN", "slot.json"));
 
         assertTrue(text.contains("\"required\": []"));
         assertTrue(text.contains("x-a2at-value-constraint"));

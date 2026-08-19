@@ -31,7 +31,7 @@ class LlmBackedPromptSemanticValidatorTest {
         assertDoesNotThrow(() -> validator.validate(
                 "## notification_topic\nIncident\n",
                 new ProcessedPromptMetadata(
-                        "subscribe_incident",
+                        "subscribe-incident",
                         "zh-CN",
                         "## notification_topic\n{{notification_topic}}\n",
                         Map.of(SLOT_NAME, "Incident"))));
@@ -52,7 +52,7 @@ class LlmBackedPromptSemanticValidatorTest {
         assertDoesNotThrow(() -> validator.validate(
                 "## notification_topic\nIncident\n",
                 new ProcessedPromptMetadata(
-                        "subscribe_incident",
+                        "subscribe-incident",
                         "zh-CN",
                         "## notification_topic\n{{notification_topic}}\n",
                         Map.of(SLOT_NAME, "Incident"))));
@@ -71,7 +71,7 @@ class LlmBackedPromptSemanticValidatorTest {
                 () -> validator.validate(
                         "## notification_topic\nIncident\n",
                         new ProcessedPromptMetadata(
-                                "subscribe_incident",
+                                "subscribe-incident",
                                 "zh-CN",
                                 "## notification_topic\n{{notification_topic}}\n",
                                 Map.of(SLOT_NAME, "Incident"))));

@@ -19,9 +19,9 @@ class LocalFileServerPromptTemplateLoaderTest {
         LocalFileServerPromptTemplateLoader loader = new LocalFileServerPromptTemplateLoader(
                 Path.of("..", "a2a-t-resources", "src", "main", "resources", "prompt_resources"));
 
-        PromptTemplateDefinition definition = loader.load("energy_saving", "zh-CN");
+        PromptTemplateDefinition definition = loader.load("energy-saving", "zh-CN");
 
-        assertEquals("energy_saving", definition.scenarioCode());
+        assertEquals("energy-saving", definition.scenarioCode());
         assertEquals(6, definition.slotDefinitions().size());
         assertEquals(false, definition.slotDefinitions().get(0).required());
     }

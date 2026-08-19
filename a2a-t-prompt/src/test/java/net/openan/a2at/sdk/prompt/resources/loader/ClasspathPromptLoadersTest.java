@@ -24,13 +24,13 @@ class ClasspathPromptLoadersTest {
         List<ScenarioDefinition> scenarios = new ClasspathPromptScenarioCatalogLoader(resourceLoader).load("en");
 
         assertEquals(3, scenarios.size());
-        assertEquals("handoff_planning", scenarios.get(0).scenarioCode());
+        assertEquals("handoff-planning", scenarios.get(0).scenarioCode());
         assertEquals("Cross-Team Handoff Planning", scenarios.get(0).scenarioName());
     }
 
     @Test
     void loadTemplateReturnsExactMarkdownPayload() {
-        String template = new ClasspathPromptTemplateLoader(resourceLoader).loadTemplate("handoff_planning", "en");
+        String template = new ClasspathPromptTemplateLoader(resourceLoader).loadTemplate("handoff-planning", "en");
         template = normalizeLineEndings(template);
         assertEquals(
                 """
@@ -62,9 +62,9 @@ class ClasspathPromptLoadersTest {
     @Test
     void loadSlotSchemaMapsJacksonAnnotatedRecords() {
         PromptSlotSchema schema =
-                new ClasspathPromptSlotSchemaLoader(resourceLoader).loadSlotSchema("handoff_planning", "en");
+                new ClasspathPromptSlotSchemaLoader(resourceLoader).loadSlotSchema("handoff-planning", "en");
 
-        assertEquals("handoff_planning", schema.scenarioCode());
+        assertEquals("handoff-planning", schema.scenarioCode());
         assertEquals(7, schema.slotDefinitions().size());
         assertEquals("task_id", schema.slotDefinitions().get(0).name());
         assertEquals(true, schema.slotDefinitions().get(0).required());

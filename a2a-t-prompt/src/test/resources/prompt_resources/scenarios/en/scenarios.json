@@ -3,7 +3,7 @@
   "default_language": "en",
   "scenarios": [
     {
-      "scenario_code": "handoff_planning",
+      "scenario_code": "handoff-planning",
       "scenario_name": "Cross-Team Handoff Planning",
       "description": "Create a structured handoff plan for work that spans product, engineering, security, and operations ownership.",
       "example": "Prepare a staged migration plan for moving the billing workflow from the legacy scheduler to the event-driven orchestrator."

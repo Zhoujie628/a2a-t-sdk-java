@@ -16,9 +16,9 @@ class LocalFileClientSlotSchemaLoaderTest {
         LocalFileClientSlotSchemaLoader loader = new LocalFileClientSlotSchemaLoader(
                 Path.of("..", "a2a-t-resources", "src", "main", "resources", "prompt_resources"));
 
-        PromptSlotSchema schema = loader.loadSlotSchema("energy_saving", "zh-CN");
+        PromptSlotSchema schema = loader.loadSlotSchema("energy-saving", "zh-CN");
 
-        assertEquals("energy_saving", schema.scenarioCode());
+        assertEquals("energy-saving", schema.scenarioCode());
         assertEquals(6, schema.slotDefinitions().size());
 
         PromptSlotDefinition taskObject = schema.slotDefinitions().get(2);

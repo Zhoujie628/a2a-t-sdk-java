@@ -18,9 +18,9 @@ class DefaultClasspathClientSlotSchemaLoaderTest {
         DefaultClasspathClientSlotSchemaLoader loader =
                 new DefaultClasspathClientSlotSchemaLoader(new ClasspathPromptResourceLoader());
 
-        PromptSlotSchema schema = loader.loadSlotSchema("energy_saving", "zh-CN");
+        PromptSlotSchema schema = loader.loadSlotSchema("energy-saving", "zh-CN");
 
-        assertEquals("energy_saving", schema.scenarioCode());
+        assertEquals("energy-saving", schema.scenarioCode());
         assertEquals(6, schema.slotDefinitions().size());
         assertFalse(schema.slotDefinitions().get(0).name().isBlank());
         assertFalse(schema.slotDefinitions().get(0).required());
@@ -43,9 +43,9 @@ class DefaultClasspathClientSlotSchemaLoaderTest {
         DefaultClasspathClientSlotSchemaLoader loader =
                 new DefaultClasspathClientSlotSchemaLoader(new ClasspathPromptResourceLoader());
 
-        PromptSlotSchema schema = loader.loadSlotSchema("subscribe_incident", "zh-CN");
+        PromptSlotSchema schema = loader.loadSlotSchema("subscribe-incident", "zh-CN");
 
-        assertEquals("subscribe_incident", schema.scenarioCode());
+        assertEquals("subscribe-incident", schema.scenarioCode());
         assertEquals(3, schema.slotDefinitions().size());
         assertTrue(schema.slotDefinitions().stream().noneMatch(PromptSlotDefinition::required));
     }

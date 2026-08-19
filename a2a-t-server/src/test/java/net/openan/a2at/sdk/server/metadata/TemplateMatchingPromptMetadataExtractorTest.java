@@ -20,7 +20,7 @@ class TemplateMatchingPromptMetadataExtractorTest {
     void extractReturnsScenarioLanguageTemplateAndSlotsForMatchedTemplate() {
         TemplateMatchingPromptMetadataExtractor extractor =
                 new TemplateMatchingPromptMetadataExtractor(List.of(new PromptTemplateDefinition(
-                        "energy_saving",
+                        "energy-saving",
                         "en-US",
                         "Site: {site}\nNotes: {additional_notes}",
                         List.of(
@@ -29,7 +29,7 @@ class TemplateMatchingPromptMetadataExtractorTest {
 
         ProcessedPromptMetadata metadata = extractor.extract("Site: Site A\nNotes: critical");
 
-        assertEquals("energy_saving", metadata.scenarioCode());
+        assertEquals("energy-saving", metadata.scenarioCode());
         assertEquals("en-US", metadata.language());
         assertEquals("Site: {site}\nNotes: {additional_notes}", metadata.templateText());
         assertEquals(Map.of("site", "Site A", "additional_notes", "critical"), metadata.slots());
@@ -39,7 +39,7 @@ class TemplateMatchingPromptMetadataExtractorTest {
     void extractRejectsPromptThatDoesNotMatchAnyKnownTemplate() {
         TemplateMatchingPromptMetadataExtractor extractor =
                 new TemplateMatchingPromptMetadataExtractor(List.of(new PromptTemplateDefinition(
-                        "energy_saving",
+                        "energy-saving",
                         "en-US",
                         "Site: {site}",
                         List.of(new PromptTemplateSlotDefinition("site", true)))));
@@ -55,7 +55,7 @@ class TemplateMatchingPromptMetadataExtractorTest {
     void extractRejectsMissingRequiredSlotValueAfterTemplateMatch() {
         TemplateMatchingPromptMetadataExtractor extractor =
                 new TemplateMatchingPromptMetadataExtractor(List.of(new PromptTemplateDefinition(
-                        "energy_saving",
+                        "energy-saving",
                         "en-US",
                         "Site: {site}",
                         List.of(new PromptTemplateSlotDefinition("site", true)))));
@@ -71,7 +71,7 @@ class TemplateMatchingPromptMetadataExtractorTest {
     void extractMatchesTemplateWithDoubleBracedPlaceholders() {
         TemplateMatchingPromptMetadataExtractor extractor =
                 new TemplateMatchingPromptMetadataExtractor(List.of(new PromptTemplateDefinition(
-                        "subscribe_incident",
+                        "subscribe-incident",
                         "en-US",
                         "Topic: {{topic}}\nCondition: {{condition}}",
                         List.of(
@@ -81,7 +81,7 @@ class TemplateMatchingPromptMetadataExtractorTest {
         ProcessedPromptMetadata metadata = extractor.extract(
                 "Topic: Incident\nCondition: Severity is critical; alert type is flash");
 
-        assertEquals("subscribe_incident", metadata.scenarioCode());
+        assertEquals("subscribe-incident", metadata.scenarioCode());
         assertEquals("en-US", metadata.language());
         assertEquals(
                 Map.of(
@@ -143,7 +143,7 @@ class TemplateMatchingPromptMetadataExtractorTest {
 
         TemplateMatchingPromptMetadataExtractor extractor =
                 new TemplateMatchingPromptMetadataExtractor(List.of(new PromptTemplateDefinition(
-                        "subscribe_incident",
+                        "subscribe-incident",
                         "en-US",
                         originalTemplate,
                         List.of(
@@ -153,7 +153,7 @@ class TemplateMatchingPromptMetadataExtractorTest {
 
         ProcessedPromptMetadata metadata = extractor.extract(processedPrompt);
 
-        assertEquals("subscribe_incident", metadata.scenarioCode());
+        assertEquals("subscribe-incident", metadata.scenarioCode());
         assertEquals("en-US", metadata.language());
         assertEquals(
                 Map.of(
