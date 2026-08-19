@@ -5,7 +5,7 @@ package net.openan.a2at.sdk.negotiation.content;
  *
  * @since 2026-06
  */
-public sealed interface NegotiationEndingContent
+public sealed interface NegotiationEndingContent extends NegotiationContent
         permits InfoEndingContent, TargetEndingContent, FeasibilityEndingContent {
 
     /**
