@@ -122,12 +122,12 @@
                                         value="${project.build.directory}${file.separator}${project.build.finalName}.jar" />
                                 <echo file="${project.build.directory}/server.javaargs.txt">-cp
 ${sample.jar.path}${path.separator}${sample.runtime.classpath}
-net.openan.a2at.sample.server.ServerSampleMain
+net.openan.a2at.sample.subscribe_incident.server.ServerSampleMain
 server.env
 </echo>
                                 <echo file="${project.build.directory}/client.javaargs.txt">-cp
 ${sample.jar.path}${path.separator}${sample.runtime.classpath}
-net.openan.a2at.sample.client.ClientSampleMain
+net.openan.a2at.sample.subscribe_incident.client.ClientSampleMain
 client.env
 </echo>
                             </target>

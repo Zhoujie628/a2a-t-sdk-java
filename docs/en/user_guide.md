@@ -140,7 +140,7 @@ java @a2a-t-sample/target/client.javaargs.txt
 
 The client will:
 
-1. Read sample input from `sample/client/scenario.json`.
+1. Read sample input from `sample/subscribe_incident/client/scenario.json`.
 2. Query the target AgentCard directly from the sample server root path `GET /` when `A2AT_SAMPLE_HOST` and `A2AT_SAMPLE_PORT` are configured; otherwise query it from registry-center.
 3. Generate processed task prompt using `A2ATClient`.
 4. Construct an A2A HTTP+JSON/REST request.

@@ -8,26 +8,26 @@
 
 ## 入口类
 
-- 客户端：`net.openan.a2at.sample.client.ClientSampleMain`
-- 服务端：`net.openan.a2at.sample.server.ServerSampleMain`
+- 客户端：`net.openan.a2at.sample.subscribe_incident.client.ClientSampleMain`
+- 服务端：`net.openan.a2at.sample.subscribe_incident.server.ServerSampleMain`
 
 ## 模块内资源
 
-- 客户端环境模板：`sample/client/client.env.example`
-- 服务端环境模板：`sample/server/server.env.example`
-- 客户端场景输入：`sample/client/scenario.json`
+- 客户端环境模板：`sample/subscribe_incident/client/client.env`
+- 服务端环境模板：`sample/subscribe_incident/server/server.env`
+- 客户端场景输入：`sample/subscribe_incident/client/scenario.json`
 
 ## 客户端启动
 
 1. 修改仓库根目录下的 `client.env`，补充可用的 `A2AT_LLM_API_KEY`
-2. 如需修改默认请求内容，可编辑 `sample/client/scenario.json`
+2. 如需修改默认请求内容，可编辑 `sample/subscribe_incident/client/scenario.json`
 3. 启动客户端：
 
 ```bash
 java @a2a-t-sample/target/client.javaargs.txt
 ```
 
-如果不传参数，`ClientSampleMain` 会回退到包内的 `sample/client/client.env.example`。
+如果不传参数，`ClientSampleMain` 会回退到包内的 `sample/subscribe_incident/client/client.env`。
 
 ## 服务端启动
 
@@ -38,7 +38,7 @@ java @a2a-t-sample/target/client.javaargs.txt
 java @a2a-t-sample/target/server.javaargs.txt
 ```
 
-如果不传参数，`ServerSampleMain` 会回退到包内的 `sample/server/server.env.example`。
+如果不传参数，`ServerSampleMain` 会回退到包内的 `sample/subscribe_incident/server/server.env`。
 
 ## Git Bash 本地调试
 

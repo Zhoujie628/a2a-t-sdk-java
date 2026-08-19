@@ -185,7 +185,7 @@ Recommended Client Agent flow:
 5. Send an A2A request based on the interface address in the AgentCard.
 6. If negotiation context is received, continue the interaction through `receiveNegotiation` and `continueNegotiation`.
 
-`ClientSampleFlow` in `a2a-t-sample` demonstrates the full flow: reading scenarios, querying AgentCard directly from the sample server or from registry-center, generating prompt, constructing A2A requests, and handling streaming events.
+`ClientSampleFlow` in the `subscribe_incident` case of `a2a-t-sample` demonstrates the full flow: reading scenarios, querying AgentCard directly from the sample server or from registry-center, generating prompt, constructing A2A requests, and handling streaming events.
 
 ### 1.7.2 Server Agent
 
@@ -198,7 +198,7 @@ Recommended Server Agent flow:
 5. After validation passes, execute business logic.
 6. When validation fails or information is insufficient, return supplementary information requirements through the negotiation interface.
 
-`ServerSampleMain` and `ServerSampleFlow` in `a2a-t-sample` demonstrate AgentCard exposure at the HTTP root path, optional registry-center registration, HTTP service startup, prompt extraction, validation, and task event pushing.
+`ServerSampleMain` and `ServerSampleFlow` in the `subscribe_incident` case of `a2a-t-sample` demonstrate AgentCard exposure at the HTTP root path, optional registry-center registration, HTTP service startup, prompt extraction, validation, and task event pushing.
 
 ## 1.8 Prompt Resource Extension
 ### 1.8.1 Resource Source
