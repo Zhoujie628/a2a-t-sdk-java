@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,8 +11,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
+import net.openan.a2at.sdk.client.model.MetadataContent;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrchestrator;
+import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationStatus;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationType;
@@ -127,8 +130,8 @@ class A2ATClientTest {
         Path envFile = writeMinimalLocalClientEnv();
         A2ATClient client = new A2ATClient(envFile);
 
-        Map<String, Object> startResult = client.startNegotiation(
-                NegotiationType.TARGET, "Please clarify the target.", Map.of("site", "A"));
+        Map<String, Object> startResult =
+                client.startNegotiation(NegotiationType.TARGET, "Please clarify the target.", Map.of("site", "A"));
         @SuppressWarnings("unchecked")
         Map<String, Object> startData = (Map<String, Object>)
                 startResult.get(net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler.NEGOTIATION_T_URI_NL);
@@ -211,6 +214,245 @@ class A2ATClientTest {
 
         assertTrue(result.success());
         assertEquals("Line: line-1\\nFault: fault-9", result.promptText());
+    }
+
+    @Test
+    void templateUriEntryPointsGeneratePromptsFromStructuredInput() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+        Map<String, Object> inputData = Map.of("site", "Site A", "target", "Reduce power by 10%");
+
+        PromptGenerationResult taskResult = client.generateTaskPromptFromJsonData(inputData, "energy_saving");
+        PromptGenerationResult authorizationResult =
+                client.generateAuthorizationPromptFromJsonData(inputData, "energy_saving");
+        PromptGenerationResult notificationResult =
+                client.generateNotificationPromptFromJsonData(inputData, "energy_saving");
+
+        assertTrue(taskResult.success());
+        assertTrue(authorizationResult.success());
+        assertTrue(notificationResult.success());
+        assertEquals("Site: Site A\\nTarget: Reduce power by 10%", taskResult.promptText());
+        assertEquals("Site: Site A\\nTarget: Reduce power by 10%", authorizationResult.promptText());
+        assertEquals("Site: Site A\\nTarget: Reduce power by 10%", notificationResult.promptText());
+    }
+
+    @Test
+    void templateUriEntryPointRendersEmptySlotValuesForNlInputUnderLocalRuleProvider() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+
+        PromptGenerationResult result =
+                client.generateTaskPromptFromNl("Please analyze Site A power usage.", "energy_saving");
+
+        assertTrue(result.success());
+        assertEquals("Site: \\nTarget: ", result.promptText());
+    }
+
+    @Test
+    void templateUriEntryPointsReturnFailuresForInvalidAndUnknownIdentifiers() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+
+        PromptGenerationResult invalidResult =
+                client.generateTaskPromptFromJsonData(Map.of("site", "Site A"), "../etc/passwd");
+        PromptGenerationResult unknownResult =
+                client.generateNotificationPromptFromNl("Report finished.", "no_such_template");
+
+        assertFalse(invalidResult.success());
+        assertNotNull(invalidResult.failure());
+        assertEquals("invalid_template_uri", invalidResult.failure().code());
+        assertEquals("generation", invalidResult.failure().stage());
+        assertFalse(unknownResult.success());
+        assertNotNull(unknownResult.failure());
+        assertEquals("template_not_found", unknownResult.failure().code());
+        assertEquals("generation", unknownResult.failure().stage());
+    }
+
+    @Test
+    void fromTextEntryPointsReturnMetadataContent() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+
+        MetadataContent taskResult =
+                client.generateTaskPromptFromText("Please analyze Site A.", "energy_saving");
+        MetadataContent authResult =
+                client.generateAuthPromptFromText("Authorize access.", "energy_saving");
+        MetadataContent notificationResult =
+                client.generateNotificationPromptFromText("Report finished.", "energy_saving");
+
+        assertNotNull(taskResult);
+        assertEquals("energy_saving", taskResult.templateUri());
+        assertNotNull(taskResult.promptText());
+        assertNotNull(taskResult.extensionUri());
+
+        assertNotNull(authResult);
+        assertEquals("energy_saving", authResult.templateUri());
+        assertNotNull(authResult.promptText());
+        assertNotNull(authResult.extensionUri());
+
+        assertNotNull(notificationResult);
+        assertEquals("energy_saving", notificationResult.templateUri());
+        assertNotNull(notificationResult.promptText());
+        assertNotNull(notificationResult.extensionUri());
+    }
+
+    @Test
+    void fromDataWithSchemaEntryPointsReturnMetadataContent() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+        Map<String, Object> data = Map.of("site", "Site A", "target", "Reduce power by 10%");
+        Map<String, Object> schema = Map.of("type", "object");
+
+        MetadataContent taskResult =
+                client.generateTaskPromptFromDataWithSchema(data, schema, "energy_saving");
+        MetadataContent authResult =
+                client.generateAuthPromptFromDataWithSchema(data, schema, "energy_saving");
+        MetadataContent notificationResult =
+                client.generateNotificationPromptFromDataWithSchema(data, schema, "energy_saving");
+
+        assertNotNull(taskResult);
+        assertEquals("energy_saving", taskResult.templateUri());
+        assertNotNull(taskResult.promptText());
+        assertNotNull(taskResult.extensionUri());
+
+        assertNotNull(authResult);
+        assertEquals("energy_saving", authResult.templateUri());
+        assertNotNull(authResult.promptText());
+        assertNotNull(authResult.extensionUri());
+
+        assertNotNull(notificationResult);
+        assertEquals("energy_saving", notificationResult.templateUri());
+        assertNotNull(notificationResult.promptText());
+        assertNotNull(notificationResult.extensionUri());
+    }
+
+    @Test
+    void fromTextReturnsCorrectExtensionUriPerContentType() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+
+        MetadataContent taskResult =
+                client.generateTaskPromptFromText("Please analyze Site A.", "energy_saving");
+        MetadataContent authResult =
+                client.generateAuthPromptFromText("Authorize access.", "energy_saving");
+        MetadataContent notificationResult =
+                client.generateNotificationPromptFromText("Report finished.", "energy_saving");
+
+        assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskResult.extensionUri());
+        assertEquals(ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI, authResult.extensionUri());
+        assertEquals(ExtensionUriConstants.NOTIFICATION_T_EXTENSION_URI, notificationResult.extensionUri());
+    }
+
+    @Test
+    void fromDataWithSchemaReturnsCorrectExtensionUriPerContentType() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+        Map<String, Object> data = Map.of("site", "Site A", "target", "Reduce power by 10%");
+        Map<String, Object> schema = Map.of("type", "object");
+
+        MetadataContent taskResult =
+                client.generateTaskPromptFromDataWithSchema(data, schema, "energy_saving");
+        MetadataContent authResult =
+                client.generateAuthPromptFromDataWithSchema(data, schema, "energy_saving");
+        MetadataContent notificationResult =
+                client.generateNotificationPromptFromDataWithSchema(data, schema, "energy_saving");
+
+        assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskResult.extensionUri());
+        assertEquals(ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI, authResult.extensionUri());
+        assertEquals(ExtensionUriConstants.NOTIFICATION_T_EXTENSION_URI, notificationResult.extensionUri());
+    }
+
+    @Test
+    void fromTextThrowsOnInvalidTemplateUri() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> client.generateTaskPromptFromText("Please analyze Site A.", "../etc/passwd"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> client.generateAuthPromptFromText("Authorize access.", "../etc/passwd"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> client.generateNotificationPromptFromText("Report finished.", "../etc/passwd"));
+    }
+
+    @Test
+    void fromDataWithSchemaThrowsOnInvalidTemplateUri() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+        Map<String, Object> data = Map.of("site", "Site A");
+        Map<String, Object> schema = Map.of("type", "object");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> client.generateTaskPromptFromDataWithSchema(data, schema, "../etc/passwd"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> client.generateAuthPromptFromDataWithSchema(data, schema, "../etc/passwd"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> client.generateNotificationPromptFromDataWithSchema(data, schema, "../etc/passwd"));
+    }
+
+    @Test
+    void fromTextUnderLocalRuleRendersEmptySlotsForNlInput() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+
+        MetadataContent result =
+                client.generateTaskPromptFromText("Please analyze Site A power usage.", "energy_saving");
+
+        assertEquals("energy_saving", result.templateUri());
+        assertEquals("Site: \\nTarget: ", result.promptText());
+    }
+
+    @Test
+    void fromDataWithSchemaUnderLocalRuleIgnoresSchema() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+        Map<String, Object> data = Map.of("site", "Site A", "target", "Reduce power by 10%");
+        Map<String, Object> schema = Map.of("type", "object", "required", Arrays.asList("site", "target"));
+
+        MetadataContent result =
+                client.generateTaskPromptFromDataWithSchema(data, schema, "energy_saving");
+
+        assertEquals("energy_saving", result.templateUri());
+        assertEquals("Site: Site A\\nTarget: Reduce power by 10%", result.promptText());
+    }
+
+    @Test
+    void existingFromNlAndFromJsonDataMethodsStillReturnPromptGenerationResult() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+        Map<String, Object> data = Map.of("site", "Site A", "target", "Reduce power by 10%");
+
+        PromptGenerationResult taskFromNl =
+                client.generateTaskPromptFromNl("Please analyze Site A.", "energy_saving");
+        PromptGenerationResult taskFromJson =
+                client.generateTaskPromptFromJsonData(data, "energy_saving");
+        PromptGenerationResult authFromNl =
+                client.generateAuthorizationPromptFromNl("Authorize access.", "energy_saving");
+        PromptGenerationResult authFromJson =
+                client.generateAuthorizationPromptFromJsonData(data, "energy_saving");
+        PromptGenerationResult notificationFromNl =
+                client.generateNotificationPromptFromNl("Report finished.", "energy_saving");
+        PromptGenerationResult notificationFromJson =
+                client.generateNotificationPromptFromJsonData(data, "energy_saving");
+
+        assertTrue(taskFromNl.success());
+        assertTrue(taskFromJson.success());
+        assertTrue(authFromNl.success());
+        assertTrue(authFromJson.success());
+        assertTrue(notificationFromNl.success());
+        assertTrue(notificationFromJson.success());
+        assertNotNull(taskFromNl.promptText());
+        assertNotNull(taskFromJson.promptText());
+        assertNotNull(authFromNl.promptText());
+        assertNotNull(authFromJson.promptText());
+        assertNotNull(notificationFromNl.promptText());
+        assertNotNull(notificationFromJson.promptText());
     }
 
     private static Path writeMinimalLocalClientEnv() throws IOException {
