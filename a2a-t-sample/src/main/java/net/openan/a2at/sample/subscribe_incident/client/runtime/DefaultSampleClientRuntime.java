@@ -61,7 +61,7 @@ public final class DefaultSampleClientRuntime implements SampleClientRuntime, A2
     }
 
     public static Path resolveDefaultEnvPath() {
-        Path sampleEnvDir = Path.of("a2a-t-sample", "src", "main", "resources", "sample", "subscribe_incident", "client");
+        Path sampleEnvDir = Path.of("a2a-t-sample", "src", "main", "resources", "sample", "subscribe-incident", "client");
         return SampleEnvironmentPathResolver.resolve(sampleEnvDir, "client.env", "client.env");
     }
 
@@ -172,9 +172,9 @@ public final class DefaultSampleClientRuntime implements SampleClientRuntime, A2
                 }
                 throw new ValueErrorException("Registry query by name returned no AgentCard entries");
             } catch (IOException exception) {
-                throw new ValueErrorException("Registry query by name failed: " + exception.getMessage());
+                throw new ValueErrorException("Registry query by name failed: " + errorMessage(exception));
             } catch (InterruptedException exception) {
-                throw new ValueErrorException("Registry query by name was interrupted: " + exception.getMessage());
+                throw new ValueErrorException("Registry query by name was interrupted: " + errorMessage(exception));
             }
         }
 
@@ -195,9 +195,10 @@ public final class DefaultSampleClientRuntime implements SampleClientRuntime, A2
                 }
                 return parseObject(response.body());
             } catch (IOException exception) {
-                throw new ValueErrorException("AgentCard query from server root failed: " + exception.getMessage());
+                throw new ValueErrorException("AgentCard query from server root failed: " + errorMessage(exception));
             } catch (InterruptedException exception) {
-                throw new ValueErrorException("AgentCard query from server root was interrupted: " + exception.getMessage());
+                throw new ValueErrorException(
+                        "AgentCard query from server root was interrupted: " + errorMessage(exception));
             }
         }
     }
@@ -214,6 +215,11 @@ public final class DefaultSampleClientRuntime implements SampleClientRuntime, A2
         } catch (java.net.URISyntaxException exception) {
             throw new ValueErrorException("Unsupported registry path segment: " + value);
         }
+    }
+
+    private static String errorMessage(Throwable throwable) {
+        String message = throwable.getMessage();
+        return message == null || message.isBlank() ? throwable.getClass().getSimpleName() : message;
     }
 
     private Object createStreamingClient(Map<String, Object> agentCard) {

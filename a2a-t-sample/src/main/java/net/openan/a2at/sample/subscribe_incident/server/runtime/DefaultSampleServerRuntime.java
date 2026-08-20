@@ -128,7 +128,7 @@ public final class DefaultSampleServerRuntime implements SampleServerRuntime, A2
     }
 
     public static Path resolveDefaultEnvPath() {
-        Path sampleEnvDir = Path.of("a2a-t-sample", "src", "main", "resources", "sample", "subscribe_incident", "server");
+        Path sampleEnvDir = Path.of("a2a-t-sample", "src", "main", "resources", "sample", "subscribe-incident", "server");
         return SampleEnvironmentPathResolver.resolve(sampleEnvDir, "server.env", "server.env");
     }
 

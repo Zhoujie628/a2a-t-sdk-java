@@ -102,11 +102,17 @@ public final class SampleLoggingFormatter {
     private static boolean isSecretKey(String keyName) {
         String normalizedKeyName = keyName.toLowerCase(Locale.ROOT);
         for (String keyword : SECRET_KEYWORDS) {
-            if (normalizedKeyName.contains(keyword)) {
+            if (normalizedKeyName.equals(keyword)) {
                 return true;
             }
         }
-        return false;
+        if (normalizedKeyName.endsWith("_key")
+                || normalizedKeyName.endsWith("_secret")
+                || normalizedKeyName.endsWith("_password")) {
+            return true;
+        }
+        // Avoid masking the harmless max_tokens field while still masking api_token etc.
+        return normalizedKeyName.endsWith("_token") && !normalizedKeyName.endsWith("max_tokens");
     }
 }
 
