@@ -1,10 +1,8 @@
 package net.openan.a2at.sdk.negotiation.generation;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import net.openan.a2at.sdk.prompt.taskrendering.api.DropBlankSlotSectionRenderer;
+import net.openan.a2at.sdk.prompt.taskrendering.api.SectionedTemplateRenderer;
 
 /**
  * Renders a negotiation template by filling slot sections and dropping empty ones.
@@ -17,16 +15,15 @@ import java.util.regex.Pattern;
  * placeholder substitution applied. Rendered sections are joined with a single blank line and the result carries no
  * trailing newline.
  *
+ * <p>The rendering itself delegates to the shared {@link DropBlankSlotSectionRenderer} of the prompt kernel, which
+ * owns the drop policy of the sectioned template grammar; this class keeps the negotiation-specific null-template
+ * contract.
+ *
  * @since 2026-06
  */
-public class NegotiationPromptRenderer {
+public class NegotiationPromptRenderer implements SectionedTemplateRenderer {
 
-    private static final String SECTION_TITLE_PREFIX = "## ";
-
-    private static final Pattern SLOT_LINE_PATTERN =
-            Pattern.compile("^\\{\\{([^{}]+)\\}\\}\\s*(（必填）|（选填）|\\(required\\)|\\(optional\\))$");
-
-    private static final Pattern SLOT_TOKEN_PATTERN = Pattern.compile("\\{\\{([^{}]+)\\}\\}");
+    private final DropBlankSlotSectionRenderer delegate = new DropBlankSlotSectionRenderer();
 
     /**
      * Renders one template text with the given slot values.
@@ -37,80 +34,11 @@ public class NegotiationPromptRenderer {
      *     no section remains
      * @throws NegotiationRenderException if the template text is null
      */
+    @Override
     public String render(String templateText, Map<String, String> slots) {
         if (templateText == null) {
             throw new NegotiationRenderException("Negotiation template text must not be null.");
         }
-        Map<String, String> safeSlots = slots == null ? Map.of() : slots;
-        List<Section> sections = splitSections(templateText);
-        List<String> renderedSections = new ArrayList<>();
-        for (Section section : sections) {
-            String slotName = slotNameOf(section);
-            if (slotName != null) {
-                String value = safeSlots.get(slotName);
-                if (value == null || value.isBlank()) {
-                    // An unfilled slot drops the whole section, title included.
-                    continue;
-                }
-                renderedSections.add(SECTION_TITLE_PREFIX + section.title() + "\n" + value.strip());
-            } else {
-                renderedSections.add(SECTION_TITLE_PREFIX
-                        + section.title()
-                        + "\n"
-                        + substitute(section.body(), safeSlots).stripTrailing());
-            }
-        }
-        return String.join("\n\n", renderedSections);
+        return delegate.render(templateText, slots);
     }
-
-    private static List<Section> splitSections(String templateText) {
-        List<Section> sections = new ArrayList<>();
-        String currentTitle = null;
-        List<String> currentBody = new ArrayList<>();
-        for (String line : templateText.split("\n", -1)) {
-            if (line.startsWith(SECTION_TITLE_PREFIX)) {
-                if (currentTitle != null) {
-                    sections.add(new Section(currentTitle, String.join("\n", currentBody)));
-                }
-                currentTitle = line.substring(SECTION_TITLE_PREFIX.length()).strip();
-                currentBody = new ArrayList<>();
-            } else if (currentTitle != null) {
-                currentBody.add(line);
-            }
-            // Lines before the first title, such as the leading HTML comment, are discarded.
-        }
-        if (currentTitle != null) {
-            sections.add(new Section(currentTitle, String.join("\n", currentBody)));
-        }
-        return sections;
-    }
-
-    private static String slotNameOf(Section section) {
-        for (String line : section.body().split("\n", -1)) {
-            if (line.isBlank()) {
-                continue;
-            }
-            Matcher matcher = SLOT_LINE_PATTERN.matcher(line.strip());
-            if (matcher.matches()) {
-                return matcher.group(1);
-            }
-            return null;
-        }
-        return null;
-    }
-
-    private static String substitute(String body, Map<String, String> slots) {
-        Matcher matcher = SLOT_TOKEN_PATTERN.matcher(body);
-        StringBuilder result = new StringBuilder();
-        while (matcher.find()) {
-            String value = slots.get(matcher.group(1));
-            if (value != null && !value.isBlank()) {
-                matcher.appendReplacement(result, Matcher.quoteReplacement(value));
-            }
-        }
-        matcher.appendTail(result);
-        return result.toString();
-    }
-
-    private record Section(String title, String body) {}
 }

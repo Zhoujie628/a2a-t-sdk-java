@@ -9,9 +9,12 @@ import net.openan.a2at.sdk.prompt.taskrendering.exception.TaskPromptRenderExcept
 /**
  * Renders plain prompt bodies from lightweight template placeholders.
  *
+ * <p>This renderer carries the <b>collapse</b> blank-slot policy of {@link SectionedTemplateRenderer}: a slot section
+ * keeps its scaffolding and its standalone slot line collapses to the bare slot placeholder.
+ *
  * @since 2026-06
  */
-public final class TaskPromptRenderer {
+public final class TaskPromptRenderer implements SectionedTemplateRenderer {
 
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{?\\s*([^{}]+?)\\s*\\}\\}?");
     private static final Pattern SECTION_HEADER_PATTERN = Pattern.compile("^##\\s+.+$");
@@ -25,6 +28,7 @@ public final class TaskPromptRenderer {
      * @param slots normalized slot values keyed by slot name
      * @return rendered prompt text
      */
+    @Override
     public String render(String templateText, Map<String, String> slots) {
         if (templateText == null || !balancedBraces(templateText)) {
             throw new TaskPromptRenderException("Template text is invalid.");
