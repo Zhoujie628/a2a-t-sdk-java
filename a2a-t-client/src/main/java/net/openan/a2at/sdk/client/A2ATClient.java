@@ -90,6 +90,10 @@ public final class A2ATClient {
      * Generates an authorization prompt with metadata from natural-language input using the template identified by the
      * authorization type, bypassing scenario recognition.
      *
+     * <p><b>Experimental:</b> the SDK does not yet bundle Authorization-T template resources, so this method answers
+     * {@code template_not_found} under the classpath source until Authorization-T templates are added or provided
+     * through the local resource root.
+     *
      * @param text natural-language authorization input
      * @param authorizationType authorization type used as the template identifier
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
@@ -102,6 +106,10 @@ public final class A2ATClient {
     /**
      * Generates an authorization prompt with metadata from structured input and an optional data schema using the
      * template identified by the authorization type, bypassing scenario recognition.
+     *
+     * <p><b>Experimental:</b> the SDK does not yet bundle Authorization-T template resources, so this method answers
+     * {@code template_not_found} under the classpath source until Authorization-T templates are added or provided
+     * through the local resource root.
      *
      * @param data structured authorization input as a string-to-object map
      * @param schema optional data schema map for schema-guided extraction

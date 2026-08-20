@@ -403,7 +403,7 @@ mvn -pl a2a-t-sample -am -DskipTests package
 
 ## 1.10 Negotiation-T Content Layer
 
-This section describes the Negotiation-T content layer: a template-driven API set for generating negotiation messages, checking their compliance, and extracting parameters from them. Both `A2ATClient` and `A2ATServer` expose the same eleven methods for this purpose.
+This section describes the Negotiation-T content layer: a template-driven API set for generating negotiation messages, checking their compliance, and extracting parameters from them. Both `A2ATClient` and `A2ATServer` expose the same thirteen methods for this purpose.
 
 ### 1.10.1 Overview and SDK Boundary
 
@@ -411,13 +411,13 @@ The content layer covers three capabilities:
 
 1. **Message generation** — renders a structured negotiation message from typed data (`generateNegotiation*PromptFromData`, deterministic, no LLM) or from free text (`generateNegotiation*PromptFromText`, one LLM content-extraction step followed by deterministic rendering).
 2. **Compliance checking and parameter extraction** — `validateAndFilling*Data` checks that a received message is a well-formed negotiation message and extracts its parameters per a caller-provided JSON schema.
-3. **Template queries** — `getNegotiationPrompts` / `getNegotiationPrompt` list and load the negotiation templates available for the configured language.
+3. **Template queries** — `getPrompts` / `getPrompt` list and load the templates available for the configured language across **all** A2A-T extensions (Task-T, Notification-T, Authorization-T, Negotiation-T); `getNegotiationPrompts` / `getNegotiationPrompt` restrict the same queries to the negotiation templates.
 
 The content layer is stateless. It deliberately does not own a session state machine: session identity, round tracking beyond what the message itself carries, and role binding stay with the caller. The pre-existing `startNegotiation` / `receiveNegotiation` / `continueNegotiation` API (see 1.6.3) is unchanged and remains the stateful entry point; the content layer can be combined with it or used standalone.
 
 ### 1.10.2 Facade Methods
 
-All eleven methods exist on both `A2ATClient` and `A2ATServer` with identical signatures and semantics.
+All thirteen methods exist on both `A2ATClient` and `A2ATServer` with identical signatures and semantics.
 
 **Generation from typed data — deterministic, never calls an LLM:**
 
@@ -457,11 +457,14 @@ The pipeline runs in a fixed order:
 **Template queries — never throw:**
 
 ```java
-List<PromptTemplate> getNegotiationPrompts()   // all templates of the configured language, fixed order
-Optional<PromptTemplate> getNegotiationPrompt(String templateUri)  // one template by URI; empty on miss
+List<PromptTemplate> getPrompts()   // templates of ALL extensions for the configured language, sorted by URI
+Optional<PromptTemplate> getPrompt(String templateUri)  // one template by URI across all extensions; empty on miss
+
+List<PromptTemplate> getNegotiationPrompts()   // negotiation templates of the configured language, fixed order
+Optional<PromptTemplate> getNegotiationPrompt(String templateUri)  // one negotiation template by URI; empty on miss
 ```
 
-A missing template or an unusable URI yields an empty result with a warning log. `PromptTemplate` is a record `(uri, description, content)`.
+A missing template or an unusable URI yields an empty result with a warning log. `PromptTemplate` is a record `(uri, description, content)`. The generic pair discovers the extension directories from the bundled resource tree itself — a template directory added under `prompt_resources/templates/` (for example a future `Authorization-T/`) is listed automatically without code changes. Local templates under the configured local resource root override built-in templates of the same path. Note that the SDK does not yet bundle Authorization-T template resources; `generateAuthPromptFromText` / `generateAuthPromptFromDataWithSchema` answer `template_not_found` under the classpath source until such templates are added or provided through the local resource root.
 
 ### 1.10.3 Template URIs and Custom Templates
 
