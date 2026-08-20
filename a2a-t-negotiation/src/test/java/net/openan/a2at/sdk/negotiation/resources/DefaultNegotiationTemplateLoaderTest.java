@@ -50,12 +50,11 @@ class DefaultNegotiationTemplateLoaderTest {
                 loader.load(new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "en-US"));
 
         assertEquals("Negotiation-T/v1/information-negotiation/propose", template.uri());
-        assertTrue(template.content().startsWith("<!--"));
-        assertTrue(template.content().contains("## Negotiation Context"));
+        assertTrue(template.content().startsWith("## Negotiation Context"));
     }
 
     @Test
-    void descriptionIsHtmlCommentContentForEnglishAndEmptyForChinese() {
+    void builtinTemplatesCarryNoDescriptionCommentForEitherLanguage() {
         DefaultNegotiationTemplateLoader zhCnLoader = new DefaultNegotiationTemplateLoader("zh-CN", null);
         DefaultNegotiationTemplateLoader enUsLoader = new DefaultNegotiationTemplateLoader("en-US", null);
 
@@ -64,7 +63,7 @@ class DefaultNegotiationTemplateLoaderTest {
         PromptTemplate chineseTemplate = zhCnLoader.load(
                 new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN"));
 
-        assertEquals("Information negotiation — propose phase template", englishTemplate.description());
+        assertEquals("", englishTemplate.description());
         assertEquals("", chineseTemplate.description());
     }
 

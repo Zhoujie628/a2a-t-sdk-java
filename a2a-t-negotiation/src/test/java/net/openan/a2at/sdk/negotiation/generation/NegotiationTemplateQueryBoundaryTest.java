@@ -93,19 +93,9 @@ class NegotiationTemplateQueryBoundaryTest {
                 template.orElseThrow().uri());
         String contextTitle = "zh-CN".equals(language) ? "## 协商上下文" : "## Negotiation Context";
         assertTrue(template.orElseThrow().content().contains(contextTitle));
-        if ("en-US".equals(language)) {
-            assertTrue(
-                    template.orElseThrow().content().startsWith("<!--"),
-                    "en-US templates start with their description comment");
-            assertTrue(
-                    template.orElseThrow().description().startsWith("Feasibility negotiation"),
-                    "en-US descriptions come from the leading HTML comment");
-        } else {
-            assertTrue(
-                    template.orElseThrow().content().startsWith("## "),
-                    "zh-CN templates start directly with the first section");
-            assertEquals("", template.orElseThrow().description());
-        }
+        assertTrue(
+                template.orElseThrow().content().startsWith("## "), "templates start directly with the first section");
+        assertEquals("", template.orElseThrow().description(), "templates carry no description comment");
     }
 
     @Test
@@ -130,17 +120,17 @@ class NegotiationTemplateQueryBoundaryTest {
     }
 
     /**
-     * Locks the description convention per language: en-US templates carry a leading HTML comment that becomes the
-     * description, zh-CN templates carry none and report an empty description.
+     * Locks the description convention: the built-in templates carry no leading HTML comment, so every template reports
+     * an empty description regardless of language.
      */
     @Test
-    void enUsDescriptionsComeFromTheLeadingHtmlComment() {
+    void builtinTemplatesReportAnEmptyDescription() {
         NegotiationGenerationOrchestrator orchestrator = orchestrator("en-US");
 
         List<PromptTemplate> templates = orchestrator.getNegotiationPrompts();
 
         for (PromptTemplate template : templates) {
-            assertFalse(template.description().isBlank(), "en-US templates carry a description comment");
+            assertTrue(template.description().isBlank(), "built-in templates carry no description comment");
         }
     }
 

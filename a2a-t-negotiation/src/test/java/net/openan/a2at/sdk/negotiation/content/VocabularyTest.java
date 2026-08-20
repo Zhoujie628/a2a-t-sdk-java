@@ -27,8 +27,20 @@ class VocabularyTest {
             "section.feasibility_infeasible",
             "section.feasibility_conclusion",
             "section.feasibility_confirm",
+            "slot.context",
+            "slot.info_items",
+            "slot.info_conclusion",
+            "slot.info_result_content",
             "slot.feasibility",
             "slot.target",
+            "slot.target_intent",
+            "slot.target_alignment",
+            "slot.target_clarification",
+            "slot.target_conclusion",
+            "slot.target_result_content",
+            "slot.feasibility_evaluate",
+            "slot.feasibility_infeasible",
+            "slot.feasibility_conclusion",
             "slot.feasibility_confirm",
             "label.relationship",
             "punct.list_colon");
@@ -41,20 +53,32 @@ class VocabularyTest {
         assertEquals(CANONICAL_KEYS, zhCn.canonicalKeys());
         assertEquals(CANONICAL_KEYS, enUs.canonicalKeys());
         assertEquals(new TreeSet<>(zhCn.canonicalKeys()), new TreeSet<>(enUs.canonicalKeys()));
-        assertEquals(21, zhCn.canonicalKeys().size());
+        assertEquals(33, zhCn.canonicalKeys().size());
     }
 
     @Test
-    void slotExceptionValuesMatchTemplatePlaceholders() {
+    void slotPlaceholdersAreSnakeCaseForEnglishAndCjkForChinese() {
+        Vocabulary zhCn = Vocabulary.forLanguage("zh-CN");
+        Vocabulary enUs = Vocabulary.forLanguage("en-US");
+
+        // The context placeholder is snake_case for en-US and the matching CJK section title for zh-CN.
+        assertEquals("协商上下文", zhCn.get("slot.context"));
+        assertEquals("negotiation_context", enUs.get("slot.context"));
+        assertEquals("意图理解陈述", zhCn.get("slot.target_intent"));
+        assertEquals("intent_understanding_statement", enUs.get("slot.target_intent"));
+    }
+
+    @Test
+    void summaryAndConfirmSlotsDifferFromTheirSectionTitle() {
         Vocabulary zhCn = Vocabulary.forLanguage("zh-CN");
         Vocabulary enUs = Vocabulary.forLanguage("en-US");
 
         assertEquals("可行性协商概述", zhCn.get("slot.feasibility"));
-        assertEquals("Feasibility Negotiation Summary", enUs.get("slot.feasibility"));
+        assertEquals("feasibility_negotiation_summary", enUs.get("slot.feasibility"));
         assertEquals("目标协商概述", zhCn.get("slot.target"));
-        assertEquals("Target Negotiation Summary", enUs.get("slot.target"));
+        assertEquals("target_negotiation_summary", enUs.get("slot.target"));
         assertEquals("评估结果确认", zhCn.get("slot.feasibility_confirm"));
-        assertEquals("Feasibility Result", enUs.get("slot.feasibility_confirm"));
+        assertEquals("evaluation_result_confirmation", enUs.get("slot.feasibility_confirm"));
     }
 
     @Test
@@ -67,7 +91,7 @@ class VocabularyTest {
         assertEquals("目标协商结果内容", zhCn.get("section.target_result_content"));
         assertEquals("Target Negotiation Result Content", enUs.get("section.target_result_content"));
         assertEquals("可行性评估结果确认", zhCn.get("section.feasibility_confirm"));
-        assertEquals("Feasibility Result Confirmation", enUs.get("section.feasibility_confirm"));
+        assertEquals("Feasibility Assessment Result Confirmation", enUs.get("section.feasibility_confirm"));
     }
 
     @Test

@@ -36,10 +36,13 @@ import org.junit.jupiter.params.provider.ValueSource;
  * Guards the integrity of the bundled negotiation resources from the Java side.
  *
  * <p>The checks mirror the resource contract of the negotiation content layer: the twelve built-in templates must exist
- * and be non-empty, every slot marker line of every template must resolve against the vocabulary of its language (with
- * exactly the three pinned exception slots whose name differs from their section title), the marker script must match
- * the template language, the four LLM prompt categories must exist non-empty for both languages, and no golden fixture
- * may contain a template requirements line or an unreplaced placeholder.
+ * and be non-empty, every slot marker line of every template must resolve against the vocabulary of its language, the
+ * marker script must match the template language, the four LLM prompt categories must exist non-empty for both
+ * languages, and no golden fixture may contain a template requirements line or an unreplaced placeholder.
+ *
+ * <p>The slot-name-vs-section-title invariant is language-specific: zh-CN placeholders equal their section titles
+ * except for the three summary/confirm exception slots, while en-US placeholders are snake_case identifiers that differ
+ * from their English section titles by design.
  */
 class NegotiationResourceIntegrityTest {
 
@@ -78,7 +81,8 @@ class NegotiationResourceIntegrityTest {
         Vocabulary vocabulary = Vocabulary.forLanguage(language);
         Map<String, String> valuesToKeys = valuesToKeys(vocabulary);
         Pattern slotLinePattern = GoldenInputs.ZH_CN.equals(language) ? ZH_SLOT_LINE : EN_SLOT_LINE;
-        String requirementsMarker = GoldenInputs.ZH_CN.equals(language) ? "要求：" : "Requirements:";
+        String requirementsMarker = GoldenInputs.ZH_CN.equals(language) ? "要求：" : "Requirement:";
+        List<String> allSlotNames = new ArrayList<>();
         List<String> slotsDifferingFromTheirTitle = new ArrayList<>();
 
         for (PromptTemplate template : new DefaultNegotiationTemplateLoader(language, null).loadAll()) {
@@ -101,6 +105,7 @@ class NegotiationResourceIntegrityTest {
                         valuesToKeys.containsKey(section.title),
                         "the section title " + section.title + " of " + template.uri()
                                 + " must be a vocabulary value of " + language);
+                allSlotNames.add(slotName);
                 if (!slotName.equals(section.title)) {
                     slotsDifferingFromTheirTitle.add(slotName);
                 }
@@ -111,14 +116,23 @@ class NegotiationResourceIntegrityTest {
             }
         }
 
-        List<String> expectedExceptionSlots =
-                EXCEPTION_SLOT_KEYS.stream().map(vocabulary::get).sorted().toList();
-        List<String> actualExceptionSlots =
+        List<String> actualDifferingSlots =
                 slotsDifferingFromTheirTitle.stream().distinct().sorted().toList();
+        List<String> expectedDifferingSlots;
+        String invariantMessage;
+        if (GoldenInputs.ZH_CN.equals(language)) {
+            // zh-CN: the placeholder equals the section title except for the three summary/confirm exception slots.
+            expectedDifferingSlots =
+                    EXCEPTION_SLOT_KEYS.stream().map(vocabulary::get).sorted().toList();
+            invariantMessage = "exactly the three pinned exception slots may differ from their section title";
+        } else {
+            // en-US: every placeholder is a snake_case identifier distinct from its English section title.
+            expectedDifferingSlots = allSlotNames.stream().distinct().sorted().toList();
+            invariantMessage = "every en-US slot placeholder must differ from its English section title";
+        }
         assertTrue(
-                expectedExceptionSlots.equals(actualExceptionSlots),
-                "exactly the three pinned exception slots may differ from their section title but were "
-                        + actualExceptionSlots);
+                expectedDifferingSlots.equals(actualDifferingSlots),
+                invariantMessage + " but were " + actualDifferingSlots);
     }
 
     @Test
@@ -163,7 +177,7 @@ class NegotiationResourceIntegrityTest {
 
         for (String line : promptText.split("\n")) {
             assertFalse(
-                    line.equals("要求：") || line.equals("Requirements:"),
+                    line.equals("要求：") || line.equals("Requirement:"),
                     "a template requirements line must not enter a rendered message: " + line);
         }
         assertFalse(promptText.contains("{{"), "no unreplaced placeholder may remain in a rendered message");

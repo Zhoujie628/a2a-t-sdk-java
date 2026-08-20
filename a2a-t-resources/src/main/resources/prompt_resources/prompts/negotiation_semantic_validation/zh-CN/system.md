@@ -41,16 +41,16 @@
 - section.info_conclusion：信息协商结果（Information Negotiation Result）
 - section.info_result_content：信息协商结果内容（Information Negotiation Result Content）
 - section.target：目标协商（Target Negotiation）
-- section.target_intent：意图理解陈述（Intent Understanding）
-- section.target_alignment：理解对齐与疑问澄清（Alignment and Clarification）
-- section.target_clarification：待澄清内容（Clarification Required）
+- section.target_intent：意图理解陈述（Intent Understanding Statement）
+- section.target_alignment：理解对齐与疑问澄清（Understanding Alignment and Clarification）
+- section.target_clarification：待澄清内容（Content to Clarify）
 - section.target_conclusion：目标协商结果（Target Negotiation Result）
 - section.target_result_content：目标协商结果内容（Target Negotiation Result Content）
 - section.feasibility：可行性协商（Feasibility Negotiation）
-- section.feasibility_evaluate：待评估内容说明（Contents to Evaluate）
-- section.feasibility_infeasible：评估不可行时的详情和提案（Infeasibility Details and Proposal）
+- section.feasibility_evaluate：待评估内容说明（Under Evaluation Description）
+- section.feasibility_infeasible：评估不可行时的详情和提案（Infeasible Evaluation Details and Proposal）
 - section.feasibility_conclusion：可行性协商结果（Feasibility Negotiation Result）
-- section.feasibility_confirm：可行性评估结果确认（Feasibility Result Confirmation）
+- section.feasibility_confirm：可行性评估结果确认（Feasibility Assessment Result Confirmation）
 
 类型或阶段一致性错误属于报文整体时，slot_name 使用蕴含出错板块的规范键（例如可行性报文类型不符时使用 section.feasibility）。
 code 使用简短的类别标识，例如：invalid_time_interval、constraint_conflict、conclusion_content_mismatch、field_inconsistency、invalid_conclusion、missing_result_content、mutually_exclusive_sections、template_type_mismatch、template_phase_mismatch。

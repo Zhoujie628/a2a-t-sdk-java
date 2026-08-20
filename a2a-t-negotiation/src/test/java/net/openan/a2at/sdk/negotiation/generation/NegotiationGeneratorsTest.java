@@ -352,12 +352,12 @@ class NegotiationGeneratorsTest {
                 "Negotiation-T/v1/information-negotiation/propose",
                 """
                 ## Negotiation Context
-                {{Negotiation Context}} (required)
-                Requirements: context.
+                {{negotiation_context}} (required)
+                Requirement: context.
 
                 ## Required Information Items
-                {{Required Information Items}} (required)
-                Requirements: items.
+                {{required_information_items}} (required)
+                Requirement: items.
                 """);
 
         String rendered = new InformationProposeGenerator().generate(context(1), content, enTemplate, enVocabulary);

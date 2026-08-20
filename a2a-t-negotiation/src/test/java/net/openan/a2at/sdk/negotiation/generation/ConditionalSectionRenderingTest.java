@@ -159,22 +159,22 @@ class ConditionalSectionRenderingTest {
     }
 
     private static String evaluateTitle(String language) {
-        return "zh-CN".equals(language) ? "## 待评估内容说明" : "## Contents to Evaluate";
+        return "zh-CN".equals(language) ? "## 待评估内容说明" : "## Under Evaluation Description";
     }
 
     private static String infeasibleTitle(String language) {
-        return "zh-CN".equals(language) ? "## 评估不可行时的详情和提案" : "## Infeasibility Details and Proposal";
+        return "zh-CN".equals(language) ? "## 评估不可行时的详情和提案" : "## Infeasible Evaluation Details and Proposal";
     }
 
     private static String intentTitle(String language) {
-        return "zh-CN".equals(language) ? "## 意图理解陈述" : "## Intent Understanding";
+        return "zh-CN".equals(language) ? "## 意图理解陈述" : "## Intent Understanding Statement";
     }
 
     private static String alignmentTitle(String language) {
-        return "zh-CN".equals(language) ? "## 理解对齐与疑问澄清" : "## Alignment and Clarification";
+        return "zh-CN".equals(language) ? "## 理解对齐与疑问澄清" : "## Understanding Alignment and Clarification";
     }
 
     private static String clarificationTitle(String language) {
-        return "zh-CN".equals(language) ? "## 待澄清内容" : "## Clarification Required";
+        return "zh-CN".equals(language) ? "## 待澄清内容" : "## Content to Clarify";
     }
 }

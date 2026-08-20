@@ -24,8 +24,8 @@ Output exactly one JSON object containing exactly the following 4 required keys;
 4. Field self-consistency: field values within the same message must not contradict each other (for example, the conclusion is Accept while the body states a rejection; or the same numeric target differs across sections).
 5. Structural semantics:
    - The conclusion value must be either Accept or Reject; Abort is a protocol-reserved value not carried by the current templates, and its presence is a structural semantics error.
-   - An ending-phase (accept-reject) message must contain the result content section (Information Negotiation Result Content / Target Negotiation Result Content / Feasibility Result Confirmation).
-   - The two conditional sections of a feasibility negotiation propose message (Contents to Evaluate and Infeasibility Details and Proposal) are mutually exclusive and must not both appear.
+   - An ending-phase (accept-reject) message must contain the result content section (Information Negotiation Result Content / Target Negotiation Result Content / Feasibility Assessment Result Confirmation).
+   - The two conditional sections of a feasibility negotiation propose message (Under Evaluation Description and Infeasible Evaluation Details and Proposal) are mutually exclusive and must not both appear.
 6. Template consistency: the negotiation type and phase implied by the message sections must match the template identifier (template_uri) declared in the user prompt and its declared negotiation type. A type mismatch is a type consistency error; a phase mismatch (for example, the declared template identifier is for the propose phase while the message is an ending message, or vice versa) is a phase consistency error.
 
 ## Parameter Extraction Task
@@ -41,16 +41,16 @@ The slot_name of semantic and structural semantics errors must use the following
 - section.info_conclusion: Information Negotiation Result
 - section.info_result_content: Information Negotiation Result Content
 - section.target: Target Negotiation
-- section.target_intent: Intent Understanding
-- section.target_alignment: Alignment and Clarification
-- section.target_clarification: Clarification Required
+- section.target_intent: Intent Understanding Statement
+- section.target_alignment: Understanding Alignment and Clarification
+- section.target_clarification: Content to Clarify
 - section.target_conclusion: Target Negotiation Result
 - section.target_result_content: Target Negotiation Result Content
 - section.feasibility: Feasibility Negotiation
-- section.feasibility_evaluate: Contents to Evaluate
-- section.feasibility_infeasible: Infeasibility Details and Proposal
+- section.feasibility_evaluate: Under Evaluation Description
+- section.feasibility_infeasible: Infeasible Evaluation Details and Proposal
 - section.feasibility_conclusion: Feasibility Negotiation Result
-- section.feasibility_confirm: Feasibility Result Confirmation
+- section.feasibility_confirm: Feasibility Assessment Result Confirmation
 
 When a type or phase consistency error concerns the message as a whole, use the canonical key of the section implying the fault (for example, section.feasibility when a feasibility message mismatches the declared type).
 Use a short category identifier for code, for example: invalid_time_interval, constraint_conflict, conclusion_content_mismatch, field_inconsistency, invalid_conclusion, missing_result_content, mutually_exclusive_sections, template_type_mismatch, template_phase_mismatch.

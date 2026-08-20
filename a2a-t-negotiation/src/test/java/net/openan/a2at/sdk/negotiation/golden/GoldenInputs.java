@@ -100,8 +100,8 @@ public final class GoldenInputs {
             public NegotiationContent content() {
                 return new TargetProposeContent(
                         "The intent understanding of the wireless energy-saving optimization task is listed in"
-                                + " <Intent Understanding>; open questions remain about the area and the time range,"
-                                + " see <Clarification Required>; please clarify and confirm.",
+                                + " <Intent Understanding Statement>; open questions remain about the area and the"
+                                + " time range, see <Content to Clarify>; please clarify and confirm.",
                         List.of(
                                 new NegotiationItem(
                                         "task intent",
@@ -128,7 +128,7 @@ public final class GoldenInputs {
             public NegotiationContent content() {
                 return new FeasibilityProposeContent(
                         "Please assess whether the adjusted rate guarantee target of the site-level energy-saving"
-                                + " task can be achieved, see <Contents to Evaluate>; please assess.",
+                                + " task can be achieved, see <Under Evaluation Description>; please assess.",
                         NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
                         List.of(
                                 new NegotiationItem(

@@ -32,21 +32,33 @@ NEGOTIATION_SECTIONS = {
     "info_conclusion": ("信息协商结果", "Information Negotiation Result"),
     "info_result_content": ("信息协商结果内容", "Information Negotiation Result Content"),
     "target": ("目标协商", "Target Negotiation"),
-    "target_intent": ("意图理解陈述", "Intent Understanding"),
-    "target_alignment": ("理解对齐与疑问澄清", "Alignment and Clarification"),
-    "target_clarification": ("待澄清内容", "Clarification Required"),
+    "target_intent": ("意图理解陈述", "Intent Understanding Statement"),
+    "target_alignment": ("理解对齐与疑问澄清", "Understanding Alignment and Clarification"),
+    "target_clarification": ("待澄清内容", "Content to Clarify"),
     "target_conclusion": ("目标协商结果", "Target Negotiation Result"),
     "target_result_content": ("目标协商结果内容", "Target Negotiation Result Content"),
     "feasibility": ("可行性协商", "Feasibility Negotiation"),
-    "feasibility_evaluate": ("待评估内容说明", "Contents to Evaluate"),
-    "feasibility_infeasible": ("评估不可行时的详情和提案", "Infeasibility Details and Proposal"),
+    "feasibility_evaluate": ("待评估内容说明", "Under Evaluation Description"),
+    "feasibility_infeasible": ("评估不可行时的详情和提案", "Infeasible Evaluation Details and Proposal"),
     "feasibility_conclusion": ("可行性协商结果", "Feasibility Negotiation Result"),
-    "feasibility_confirm": ("可行性评估结果确认", "Feasibility Result Confirmation"),
+    "feasibility_confirm": ("可行性评估结果确认", "Feasibility Assessment Result Confirmation"),
 }
-NEGOTIATION_SLOT_EXCEPTIONS = {
-    "target": ("目标协商概述", "Target Negotiation Summary"),
-    "feasibility": ("可行性协商概述", "Feasibility Negotiation Summary"),
-    "feasibility_confirm": ("评估结果确认", "Feasibility Result"),
+NEGOTIATION_SLOT_NAMES = {
+    "context": ("协商上下文", "negotiation_context"),
+    "info_items": ("所需信息项", "required_information_items"),
+    "info_conclusion": ("信息协商结果", "information_negotiation_result"),
+    "info_result_content": ("信息协商结果内容", "information_negotiation_result_content"),
+    "target": ("目标协商概述", "target_negotiation_summary"),
+    "target_intent": ("意图理解陈述", "intent_understanding_statement"),
+    "target_alignment": ("理解对齐与疑问澄清", "understanding_alignment_and_clarification"),
+    "target_clarification": ("待澄清内容", "content_to_clarify"),
+    "target_conclusion": ("目标协商结果", "target_negotiation_result"),
+    "target_result_content": ("目标协商结果内容", "target_negotiation_result_content"),
+    "feasibility": ("可行性协商概述", "feasibility_negotiation_summary"),
+    "feasibility_evaluate": ("待评估内容说明", "under_evaluation_description"),
+    "feasibility_infeasible": ("评估不可行时的详情和提案", "infeasible_evaluation_details_and_proposal"),
+    "feasibility_conclusion": ("可行性协商结果", "feasibility_negotiation_result"),
+    "feasibility_confirm": ("评估结果确认", "evaluation_result_confirmation"),
 }
 NEGOTIATION_STATIC_SECTIONS = {"info_static"}
 NEGOTIATION_PROFILES = {
@@ -63,7 +75,7 @@ NEGOTIATION_TITLE_LOOKUP = {
     for language, title in zip(NEGOTIATION_LANGUAGES, titles)
 }
 NEGOTIATION_MARKER = re.compile(
-    r"^\{\{(?P<slot>[^{}]+)\}\}(?:(?P<zh>（(?P<zh_kind>必填|选填)）)| \((?P<en_kind>required|optional)\))$"
+    r"^\{\{(?P<slot>[^{}]+)\}\}(?:(?P<zh>（(?P<zh_kind>必填|选填)）)| \((?P<en_kind>required|optional)\))\s*$"
 )
 
 
@@ -153,12 +165,12 @@ def negotiation_section_title(key: str, language: str) -> str:
 
 
 def negotiation_slot_name(key: str, language: str) -> str:
-    titles = NEGOTIATION_SLOT_EXCEPTIONS.get(key, NEGOTIATION_SECTIONS[key])
+    titles = NEGOTIATION_SLOT_NAMES[key]
     return titles[0] if language == "zh-CN" else titles[1]
 
 
 def negotiation_requirements_label(language: str) -> str:
-    return "要求：" if language == "zh-CN" else "Requirements:"
+    return "要求：" if language == "zh-CN" else "Requirement:"
 
 
 def parse_negotiation_sections(lines: list[str]) -> list[dict]:
@@ -185,11 +197,9 @@ def lint_negotiation_file(
     profile = NEGOTIATION_PROFILES[(type_segment, phase_segment)]
     requirements_label = negotiation_requirements_label(language)
     first_line = next((line for line in lines if line.strip()), "")
-    if language == "en-US":
-        if not (first_line.startswith("<!--") and first_line.rstrip().endswith("-->")):
-            errors.append(error(path, 1, "negotiation-comment", "en-US template must start with an HTML comment '<!-- ... -->'."))
-    elif first_line.startswith("<!--"):
-        errors.append(error(path, 1, "negotiation-comment", "zh-CN template must not start with an HTML comment."))
+    if first_line.startswith("<!--"):
+        if not first_line.rstrip().endswith("-->"):
+            errors.append(error(path, 1, "negotiation-comment", "HTML comment header must be well-formed '<!-- ... -->'."))
     sections = parse_negotiation_sections(lines)
     if not sections:
         errors.append(error(path, 1, "negotiation-section-missing", "Template must contain sections marked with '## '."))
@@ -258,8 +268,8 @@ def lint_negotiation_alignment(
     if len(zh_shape) != len(en_shape):
         errors.append(error(en_path, 1, "negotiation-alignment", f"Section count differs from zh-CN counterpart: {len(en_shape)} vs {len(zh_shape)}."))
     for index, (zh_entry, en_entry) in enumerate(zip(zh_shape, en_shape)):
-        zh_key, zh_required, zh_slot_match, _ = zh_entry
-        en_key, en_required, en_slot_match, en_line = en_entry
+        zh_key, zh_required, _, _ = zh_entry
+        en_key, en_required, _, en_line = en_entry
         differences = []
         if zh_key != en_key:
             differences.append(f"section '{en_key}' vs zh-CN '{zh_key}'")
@@ -270,8 +280,6 @@ def lint_negotiation_alignment(
                 differences.append("has slot marker while zh-CN does not")
             else:
                 differences.append(f"marker {'required' if en_required else 'optional'} vs zh-CN {'required' if zh_required else 'optional'}")
-        if zh_slot_match != en_slot_match:
-            differences.append("slot-name exception pattern differs from zh-CN")
         if differences:
             errors.append(error(en_path, en_line, "negotiation-alignment", f"Section {index + 1} diverges from zh-CN template ({'; '.join(differences)})."))
     return errors

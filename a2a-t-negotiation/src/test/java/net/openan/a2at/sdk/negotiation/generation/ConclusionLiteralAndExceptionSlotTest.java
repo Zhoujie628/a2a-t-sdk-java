@@ -135,8 +135,9 @@ class ConclusionLiteralAndExceptionSlotTest {
                         "Negotiation-T/v1/feasibility-negotiation/accept-reject")
                 .promptText();
 
-        String sectionTitle = "zh-CN".equals(language) ? "## 可行性评估结果确认" : "## Feasibility Result Confirmation";
-        String rawSlotNameLine = "zh-CN".equals(language) ? "## 评估结果确认\n" : "## Feasibility Result\n";
+        String sectionTitle =
+                "zh-CN".equals(language) ? "## 可行性评估结果确认" : "## Feasibility Assessment Result Confirmation";
+        String rawSlotNameLine = "zh-CN".equals(language) ? "## 评估结果确认\n" : "## evaluation_result_confirmation\n";
         for (String promptText : List.of(acceptText, rejectText)) {
             assertTrue(promptText.contains(sectionTitle + "\n" + summary));
             assertFalse(promptText.contains(rawSlotNameLine), "the raw slot name must not surface as a section title");
