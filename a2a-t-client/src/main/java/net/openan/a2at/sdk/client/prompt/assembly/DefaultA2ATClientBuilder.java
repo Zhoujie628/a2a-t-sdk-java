@@ -13,13 +13,14 @@ import net.openan.a2at.sdk.client.prompt.loader.DefaultClasspathClientTemplateLo
 import net.openan.a2at.sdk.client.prompt.loader.LocalFileClientSlotSchemaLoader;
 import net.openan.a2at.sdk.client.prompt.loader.LocalFileClientTemplateLoader;
 import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrchestrator;
-import net.openan.a2at.sdk.client.prompt.orchestration.DefaultClientPromptGenerationOrchestrator;
 import net.openan.a2at.sdk.client.prompt.recognition.ClientScenarioRecognizer;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
 import net.openan.a2at.sdk.llm.LLMConfigLoader;
+import net.openan.a2at.sdk.negotiation.content.NegotiationContentService;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
 import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
@@ -103,14 +104,13 @@ public final class DefaultA2ATClientBuilder {
         boolean isLocalRule = LOCAL_RULE_PROVIDER.equals(config.llm().provider());
         LLMClient llmClient = isLocalRule ? null : createLlmClient();
 
-        String scenarioSystemPrompt = isLocalRule
-                ? "" : resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "system.md");
-        String scenarioUserPrompt = isLocalRule
-                ? "" : resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "user.md");
-        String slotSystemPrompt = isLocalRule
-                ? "" : resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "system.md");
-        String slotUserPrompt = isLocalRule
-                ? "" : resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "user.md");
+        String scenarioSystemPrompt =
+                isLocalRule ? "" : resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "system.md");
+        String scenarioUserPrompt =
+                isLocalRule ? "" : resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "user.md");
+        String slotSystemPrompt =
+                isLocalRule ? "" : resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "system.md");
+        String slotUserPrompt = isLocalRule ? "" : resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "user.md");
 
         ClientScenarioRecognizer scenarioRecognizer;
         ClientSlotValueExtractor slotValueExtractor;
@@ -161,6 +161,27 @@ public final class DefaultA2ATClientBuilder {
                         .store(new InMemoryNegotiationStore())
                         .build(),
                 NegotiationRole.CLIENT);
+    }
+
+    /**
+     * Builds the default negotiation content-layer orchestrator from the configured unified SDK config.
+     *
+     * <p>The wiring is shared with the server side through
+     * {@link NegotiationContentService#buildOrchestrator(A2ATConfig, LLMClient)}: the message language and the local
+     * template root come from the prompt runtime config, the retry attempt limit comes from the LLM config, and the LLM
+     * client is only created when the provider is not {@code local_rule}.
+     *
+     * @return assembled negotiation generation orchestrator
+     */
+    public NegotiationGenerationOrchestrator buildNegotiationGenerationOrchestrator() {
+        require(config, "Unified SDK config must be configured.");
+        requireSupportedConfig();
+        LLMClient llmClient = null;
+        if (!LOCAL_RULE_PROVIDER.equals(config.llm().provider())) {
+            require(envPath, "Unified SDK env path must be configured.");
+            llmClient = createLlmClient();
+        }
+        return NegotiationContentService.buildOrchestrator(config, llmClient);
     }
 
     private void requireSupportedConfig() {
@@ -243,7 +264,10 @@ public final class DefaultA2ATClientBuilder {
 
         @Override
         public Map<String, String> extractSlotsWithSchema(
-                Object userInput, String scenarioCode, String language, String templateText,
+                Object userInput,
+                String scenarioCode,
+                String language,
+                String templateText,
                 Map<String, Object> dataSchema) {
             return llmExtractor.extractSlotsWithSchema(userInput, scenarioCode, language, templateText, dataSchema);
         }

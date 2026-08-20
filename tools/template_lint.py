@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static CI gate for A2A-T prompt templates and their slot JSON Schemas."""
+"""Static CI gate for A2A-T prompt templates, their slot JSON Schemas, and Negotiation-T templates."""
 
 from __future__ import annotations
 
@@ -21,6 +21,62 @@ ALIASES = {
     "订阅描述": "Subscription Description", "通知主题": "Notification Topic", "订阅条件": "Subscribe Condition",
     "通知数据格式": "Notification Data Format", "上报通知数据格式": "Notification Data Format",
 }
+
+NEGOTIATION_TYPE_SEGMENTS = ("information-negotiation", "target-negotiation", "feasibility-negotiation")
+NEGOTIATION_PHASE_SEGMENTS = ("propose", "accept-reject")
+NEGOTIATION_LANGUAGES = ("zh-CN", "en-US")
+NEGOTIATION_SECTIONS = {
+    "context": ("协商上下文", "Negotiation Context"),
+    "info_static": ("信息协商", "Information Negotiation"),
+    "info_items": ("所需信息项", "Required Information Items"),
+    "info_conclusion": ("信息协商结果", "Information Negotiation Result"),
+    "info_result_content": ("信息协商结果内容", "Information Negotiation Result Content"),
+    "target": ("目标协商", "Target Negotiation"),
+    "target_intent": ("意图理解陈述", "Intent Understanding Statement"),
+    "target_alignment": ("理解对齐与疑问澄清", "Understanding Alignment and Clarification"),
+    "target_clarification": ("待澄清内容", "Content to Clarify"),
+    "target_conclusion": ("目标协商结果", "Target Negotiation Result"),
+    "target_result_content": ("目标协商结果内容", "Target Negotiation Result Content"),
+    "feasibility": ("可行性协商", "Feasibility Negotiation"),
+    "feasibility_evaluate": ("待评估内容说明", "Under Evaluation Description"),
+    "feasibility_infeasible": ("评估不可行时的详情和提案", "Infeasible Evaluation Details and Proposal"),
+    "feasibility_conclusion": ("可行性协商结果", "Feasibility Negotiation Result"),
+    "feasibility_confirm": ("可行性评估结果确认", "Feasibility Assessment Result Confirmation"),
+}
+NEGOTIATION_SLOT_NAMES = {
+    "context": ("协商上下文", "negotiation_context"),
+    "info_items": ("所需信息项", "required_information_items"),
+    "info_conclusion": ("信息协商结果", "information_negotiation_result"),
+    "info_result_content": ("信息协商结果内容", "information_negotiation_result_content"),
+    "target": ("目标协商概述", "target_negotiation_summary"),
+    "target_intent": ("意图理解陈述", "intent_understanding_statement"),
+    "target_alignment": ("理解对齐与疑问澄清", "understanding_alignment_and_clarification"),
+    "target_clarification": ("待澄清内容", "content_to_clarify"),
+    "target_conclusion": ("目标协商结果", "target_negotiation_result"),
+    "target_result_content": ("目标协商结果内容", "target_negotiation_result_content"),
+    "feasibility": ("可行性协商概述", "feasibility_negotiation_summary"),
+    "feasibility_evaluate": ("待评估内容说明", "under_evaluation_description"),
+    "feasibility_infeasible": ("评估不可行时的详情和提案", "infeasible_evaluation_details_and_proposal"),
+    "feasibility_conclusion": ("可行性协商结果", "feasibility_negotiation_result"),
+    "feasibility_confirm": ("评估结果确认", "evaluation_result_confirmation"),
+}
+NEGOTIATION_STATIC_SECTIONS = {"info_static"}
+NEGOTIATION_PROFILES = {
+    ("information-negotiation", "propose"): ("context", "info_static", "info_items"),
+    ("information-negotiation", "accept-reject"): ("context", "info_conclusion", "info_result_content"),
+    ("target-negotiation", "propose"): ("context", "target", "target_intent", "target_alignment", "target_clarification"),
+    ("target-negotiation", "accept-reject"): ("context", "target_conclusion", "target_result_content"),
+    ("feasibility-negotiation", "propose"): ("context", "feasibility", "feasibility_evaluate", "feasibility_infeasible"),
+    ("feasibility-negotiation", "accept-reject"): ("context", "feasibility_conclusion", "feasibility_confirm"),
+}
+NEGOTIATION_TITLE_LOOKUP = {
+    title: (key, language)
+    for key, titles in NEGOTIATION_SECTIONS.items()
+    for language, title in zip(NEGOTIATION_LANGUAGES, titles)
+}
+NEGOTIATION_MARKER = re.compile(
+    r"^\{\{(?P<slot>[^{}]+)\}\}(?:(?P<zh>（(?P<zh_kind>必填|选填)）)| \((?P<en_kind>required|optional)\))\s*$"
+)
 
 
 def error(path: Path, line: int, rule: str, message: str) -> str:
@@ -103,6 +159,168 @@ def lint_pair(template_path: Path, schema_path: Path) -> list[str]:
     return errors
 
 
+def negotiation_section_title(key: str, language: str) -> str:
+    titles = NEGOTIATION_SECTIONS[key]
+    return titles[0] if language == "zh-CN" else titles[1]
+
+
+def negotiation_slot_name(key: str, language: str) -> str:
+    titles = NEGOTIATION_SLOT_NAMES[key]
+    return titles[0] if language == "zh-CN" else titles[1]
+
+
+def negotiation_requirements_label(language: str) -> str:
+    return "要求：" if language == "zh-CN" else "Requirement:"
+
+
+def parse_negotiation_sections(lines: list[str]) -> list[dict]:
+    sections: list[dict] = []
+    current: dict | None = None
+    for line_no, line in enumerate(lines, 1):
+        heading = re.match(r"^## (.+?)\s*$", line)
+        if heading:
+            current = {"title": heading.group(1), "line": line_no, "body": []}
+            sections.append(current)
+        elif current is not None:
+            current["body"].append((line_no, line))
+    return sections
+
+
+def lint_negotiation_file(
+    path: Path, language: str, type_segment: str, phase_segment: str
+) -> tuple[list[str], list[tuple[str, bool | None, bool, int]] | None]:
+    errors: list[str] = []
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        return [error(path, 1, "negotiation-template-read", f"Cannot read template: {exc}")], None
+    profile = NEGOTIATION_PROFILES[(type_segment, phase_segment)]
+    requirements_label = negotiation_requirements_label(language)
+    first_line = next((line for line in lines if line.strip()), "")
+    if first_line.startswith("<!--"):
+        if not first_line.rstrip().endswith("-->"):
+            errors.append(error(path, 1, "negotiation-comment", "HTML comment header must be well-formed '<!-- ... -->'."))
+    sections = parse_negotiation_sections(lines)
+    if not sections:
+        errors.append(error(path, 1, "negotiation-section-missing", "Template must contain sections marked with '## '."))
+        return errors, None
+    shape: list[tuple[str, bool | None, bool, int]] = []
+    seen: set[str] = set()
+    for section in sections:
+        title, line_no, body = section["title"], section["line"], section["body"]
+        lookup = NEGOTIATION_TITLE_LOOKUP.get(title)
+        if lookup is None:
+            errors.append(error(path, line_no, "negotiation-section-name", f"'{title}' is not a recognized Negotiation-T section title."))
+            continue
+        key, title_language = lookup
+        if key not in profile:
+            errors.append(
+                error(path, line_no, "negotiation-section-name", f"'{title}' is not valid for the {type_segment}/{phase_segment} Negotiation-T template.")
+            )
+            continue
+        if title_language != language:
+            errors.append(error(path, line_no, "negotiation-section-name", f"Section title '{title}' is not the {language} title of section '{key}'."))
+            continue
+        if key in seen:
+            errors.append(error(path, line_no, "negotiation-section-duplicate", f"Section '{title}' is repeated."))
+            continue
+        seen.add(key)
+        if key in NEGOTIATION_STATIC_SECTIONS:
+            if any(NEGOTIATION_MARKER.match(text) for _, text in body):
+                errors.append(error(path, line_no, "negotiation-slot-structure", f"Static section '{title}' must not contain a slot line."))
+            if any(text.rstrip() == requirements_label for _, text in body):
+                errors.append(error(path, line_no, "negotiation-requirements", f"Static section '{title}' must not contain a '{requirements_label}' line."))
+            shape.append((key, None, True, line_no))
+            continue
+        marker_line = next(((no, text) for no, text in body if text.strip()), None)
+        marker = NEGOTIATION_MARKER.match(marker_line[1]) if marker_line else None
+        if marker is None:
+            errors.append(
+                error(path, line_no, "negotiation-slot-structure", f"Slot section '{title}' must be followed by a standalone slot line such as '{{{{slot}}}}（必填）'.")
+            )
+            shape.append((key, None, True, line_no))
+            continue
+        marker_line_no = marker_line[0]
+        marker_language = "zh-CN" if marker.group("zh") is not None else "en-US"
+        required = marker.group("zh_kind") == "必填" if marker_language == "zh-CN" else marker.group("en_kind") == "required"
+        if marker_language != language:
+            errors.append(
+                error(path, marker_line_no, "negotiation-slot-marker", f"Slot marker in {language} template must use {language} punctuation (full-width for zh-CN, ' (required)'/' (optional)' for en-US).")
+            )
+        expected_slot = negotiation_slot_name(key, language)
+        if marker.group("slot") != expected_slot:
+            errors.append(error(path, marker_line_no, "negotiation-slot-name", f"Slot name '{{{{{marker.group('slot')}}}}}' must be '{expected_slot}'."))
+        if not any(text.rstrip() == requirements_label for _, text in body):
+            errors.append(error(path, line_no, "negotiation-requirements", f"Slot section '{title}' must contain a '{requirements_label}' line."))
+        if key == "context" and required is not True:
+            errors.append(error(path, marker_line_no, "negotiation-context", "The negotiation context section must be marked as required."))
+        shape.append((key, required, marker.group("slot") == expected_slot, line_no))
+    for key in profile:
+        if key not in seen:
+            errors.append(error(path, 1, "negotiation-section-missing", f"Missing required section '{negotiation_section_title(key, language)}'."))
+    return errors, shape
+
+
+def lint_negotiation_alignment(
+    zh_path: Path, en_path: Path, zh_shape: list[tuple], en_shape: list[tuple]
+) -> list[str]:
+    errors: list[str] = []
+    if len(zh_shape) != len(en_shape):
+        errors.append(error(en_path, 1, "negotiation-alignment", f"Section count differs from zh-CN counterpart: {len(en_shape)} vs {len(zh_shape)}."))
+    for index, (zh_entry, en_entry) in enumerate(zip(zh_shape, en_shape)):
+        zh_key, zh_required, _, _ = zh_entry
+        en_key, en_required, _, en_line = en_entry
+        differences = []
+        if zh_key != en_key:
+            differences.append(f"section '{en_key}' vs zh-CN '{zh_key}'")
+        if zh_required != en_required:
+            if en_required is None:
+                differences.append("missing slot marker (zh-CN has one)")
+            elif zh_required is None:
+                differences.append("has slot marker while zh-CN does not")
+            else:
+                differences.append(f"marker {'required' if en_required else 'optional'} vs zh-CN {'required' if zh_required else 'optional'}")
+        if differences:
+            errors.append(error(en_path, en_line, "negotiation-alignment", f"Section {index + 1} diverges from zh-CN template ({'; '.join(differences)})."))
+    return errors
+
+
+def lint_negotiation(templates_dir: Path) -> list[str]:
+    negotiation_root = templates_dir / "Negotiation-T"
+    if not negotiation_root.is_dir():
+        return [error(negotiation_root, 1, "negotiation-file-set", "Missing Negotiation-T templates directory.")]
+    expected = {
+        Path("v1") / type_segment / phase_segment / language / "template.md"
+        for type_segment in NEGOTIATION_TYPE_SEGMENTS
+        for phase_segment in NEGOTIATION_PHASE_SEGMENTS
+        for language in NEGOTIATION_LANGUAGES
+    }
+    errors: list[str] = []
+    shapes: dict[tuple[str, str, str], list[tuple] | None] = {}
+    found: set[Path] = set()
+    for path in sorted(negotiation_root.rglob("template.md")):
+        relative = path.relative_to(negotiation_root)
+        if relative not in expected:
+            errors.append(error(path, 1, "negotiation-file-set", f"Unexpected Negotiation-T template location: {relative}"))
+            continue
+        found.add(relative)
+        _, type_segment, phase_segment, language, _ = relative.parts
+        file_errors, shape = lint_negotiation_file(path, language, type_segment, phase_segment)
+        errors.extend(file_errors)
+        shapes[(type_segment, phase_segment, language)] = shape
+    for relative in sorted(expected - found):
+        errors.append(error(negotiation_root / relative, 1, "negotiation-file-set", f"Missing Negotiation-T template: {negotiation_root / relative}"))
+    for type_segment in NEGOTIATION_TYPE_SEGMENTS:
+        for phase_segment in NEGOTIATION_PHASE_SEGMENTS:
+            zh_shape = shapes.get((type_segment, phase_segment, "zh-CN"))
+            en_shape = shapes.get((type_segment, phase_segment, "en-US"))
+            if zh_shape is None or en_shape is None:
+                continue
+            base = negotiation_root / "v1" / type_segment / phase_segment
+            errors.extend(lint_negotiation_alignment(base / "zh-CN" / "template.md", base / "en-US" / "template.md", zh_shape, en_shape))
+    return errors
+
+
 def lint_root(root: Path) -> list[str]:
     templates, slots = root / "templates", root / "slots"
     if not templates.is_dir():
@@ -120,6 +338,7 @@ def lint_root(root: Path) -> list[str]:
         template_path = templates / schema_path.relative_to(slots).parent / "template.md"
         if not template_path.is_file():
             errors.append(error(schema_path, 1, "template-missing", f"Missing paired template: {template_path}"))
+    errors.extend(lint_negotiation(templates))
     return errors
 
 

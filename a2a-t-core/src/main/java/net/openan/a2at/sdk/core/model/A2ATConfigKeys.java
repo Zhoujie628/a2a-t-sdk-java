@@ -4,17 +4,15 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 /**
- * Centralized configuration key constants for A2A-T SDK environment variables.
- * These keys correspond to entries in the {@code .env} file loaded by {@link DotEnvConfigSource}.
+ * Centralized configuration key constants for A2A-T SDK environment variables. These keys correspond to entries in the
+ * {@code .env} file loaded by {@link DotEnvConfigSource}.
  *
  * @since 2026-06
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class A2ATConfigKeys {
 
-    /**
-     * Prompt runtime configuration keys.
-     */
+    /** Prompt runtime configuration keys. */
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class PromptRuntime {
 
@@ -28,9 +26,7 @@ public final class A2ATConfigKeys {
         public static final String LOCAL_ROOT_DIR = "A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR";
     }
 
-    /**
-     * LLM runtime configuration keys.
-     */
+    /** LLM runtime configuration keys. */
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class Llm {
 
@@ -63,11 +59,12 @@ public final class A2ATConfigKeys {
 
         /** Maximum number of tracked sessions per provider. */
         public static final String SESSION_MAX_PER_PROVIDER = "A2AT_LLM_SESSION_MAX_PER_PROVIDER";
+
+        /** Maximum number of attempts for retryable LLM steps (range 1-10, default 3). */
+        public static final String MAX_ATTEMPTS = "A2AT_LLM_MAX_ATTEMPTS";
     }
 
-    /**
-     * Negotiation runtime configuration keys.
-     */
+    /** Negotiation runtime configuration keys. */
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class Negotiation {
 
@@ -75,9 +72,7 @@ public final class A2ATConfigKeys {
         public static final String STATE_STORE_TYPE = "A2AT_NEGOTIATION_STATE_STORE_TYPE";
     }
 
-    /**
-     * Prompt compliance configuration keys.
-     */
+    /** Prompt compliance configuration keys. */
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class PromptCompliance {
 

@@ -400,3 +400,220 @@ When modifying sample:
 ```bash
 mvn -pl a2a-t-sample -am -DskipTests package
 ```
+
+## 1.10 Negotiation-T Content Layer
+
+This section describes the Negotiation-T content layer: a template-driven API set for generating negotiation messages, checking their compliance, and extracting parameters from them. Both `A2ATClient` and `A2ATServer` expose the same thirteen methods for this purpose.
+
+### 1.10.1 Overview and SDK Boundary
+
+The content layer covers three capabilities:
+
+1. **Message generation** — renders a structured negotiation message from typed data (`generateNegotiation*PromptFromData`, deterministic, no LLM) or from free text (`generateNegotiation*PromptFromText`, one LLM content-extraction step followed by deterministic rendering).
+2. **Compliance checking and parameter extraction** — `validateAndFilling*Data` checks that a received message is a well-formed negotiation message and extracts its parameters per a caller-provided JSON schema.
+3. **Template queries** — `getPrompts` / `getPrompt` list and load the templates available for the configured language across **all** A2A-T extensions (Task-T, Notification-T, Authorization-T, Negotiation-T); `getNegotiationPrompts` / `getNegotiationPrompt` restrict the same queries to the negotiation templates.
+
+The content layer is stateless. It deliberately does not own a session state machine: session identity, round tracking beyond what the message itself carries, and role binding stay with the caller. The pre-existing `startNegotiation` / `receiveNegotiation` / `continueNegotiation` API (see 1.6.3) is unchanged and remains the stateful entry point; the content layer can be combined with it or used standalone.
+
+### 1.10.2 Facade Methods
+
+All thirteen methods exist on both `A2ATClient` and `A2ATServer` with identical signatures and semantics.
+
+**Generation from typed data — deterministic, never calls an LLM:**
+
+```java
+MetadataContent generateNegotiationProposePromptFromData(NegotiationProposeData data, String templateUri)
+MetadataContent generateNegotiationAcceptPromptFromData(NegotiationEndingData data, String templateUri)
+MetadataContent generateNegotiationRejectPromptFromData(NegotiationEndingData data, String templateUri)
+```
+
+The typed content is validated, dispatched to the generator of the negotiation type addressed by the template URI, and rendered from that template. The accept variant requires `content.conclusion() == ACCEPT`, the reject variant `REJECT`; a mismatched conclusion (including `ABORT`) is a content error.
+
+**Generation from free text — one LLM extraction step with configurable retry:**
+
+```java
+MetadataContent generateNegotiationProposePromptFromText(String text, NegotiationContext context, String templateUri)
+MetadataContent generateNegotiationAcceptPromptFromText(String text, NegotiationContext context, String templateUri)
+MetadataContent generateNegotiationRejectPromptFromText(String text, NegotiationContext context, String templateUri)
+```
+
+The template is loaded before the LLM call; a missing template fails fast without consuming an LLM request. The LLM step extracts the typed content from the free text constrained by the template URI, then rendering proceeds deterministically like the from-data variant. The `NegotiationContext` is injected into the rendered message without any LLM involvement. The extraction step is retried up to the configured attempt limit on the retryable failure codes (see 1.10.5).
+
+**Compliance checking and parameter extraction:**
+
+```java
+FilledParamData validateAndFillingProposeData(String prompt, Map<String, Object> schema, String templateUri)
+FilledParamData validateAndFillingAcceptData(String prompt, Map<String, Object> schema, String templateUri)
+FilledParamData validateAndFillingRejectData(String prompt, Map<String, Object> schema, String templateUri)
+```
+
+The pipeline runs in a fixed order:
+
+1. Template URI format check (phase segment must match the method: `propose` vs `accept-reject`).
+2. Deterministic rule gate — recognition of the negotiation context section and its structural rules, before any LLM call.
+3. One LLM semantic validation call that also extracts the parameters, retried up to the configured attempt limit on the retryable LLM infrastructure failure code.
+4. Merge of the extracted parameters with the rule-level context parameters — **context parameters take precedence** on key conflict.
+
+**Template queries — never throw:**
+
+```java
+List<PromptTemplate> getPrompts()   // templates of ALL extensions for the configured language, sorted by URI
+Optional<PromptTemplate> getPrompt(String templateUri)  // one template by URI across all extensions; empty on miss
+
+List<PromptTemplate> getNegotiationPrompts()   // negotiation templates of the configured language, fixed order
+Optional<PromptTemplate> getNegotiationPrompt(String templateUri)  // one negotiation template by URI; empty on miss
+```
+
+A missing template or an unusable URI yields an empty result with a warning log. `PromptTemplate` is a record `(uri, description, content)`. The generic pair discovers the extension directories from the bundled resource tree itself — a template directory added under `prompt_resources/templates/` (for example a future `Authorization-T/`) is listed automatically without code changes. Local templates under the configured local resource root override built-in templates of the same path. Note that the SDK does not yet bundle Authorization-T template resources; `generateAuthPromptFromText` / `generateAuthPromptFromDataWithSchema` answer `template_not_found` under the classpath source until such templates are added or provided through the local resource root.
+
+### 1.10.3 Template URIs and Custom Templates
+
+The template URI format is:
+
+```text
+Negotiation-T/v1/{type}-negotiation/{phase}
+```
+
+where `{type}` is `information`, `target`, or `feasibility`, and `{phase}` is `propose` or `accept-reject`. Six built-in templates ship with the SDK, one per combination, each in `zh-CN` and `en-US`:
+
+| Template URI | Purpose |
+|--|--|
+| `Negotiation-T/v1/information-negotiation/propose` | Request missing information |
+| `Negotiation-T/v1/information-negotiation/accept-reject` | Accept or reject an information negotiation |
+| `Negotiation-T/v1/target-negotiation/propose` | Propose a target negotiation |
+| `Negotiation-T/v1/target-negotiation/accept-reject` | Accept or reject a target negotiation |
+| `Negotiation-T/v1/feasibility-negotiation/propose` | Request a feasibility evaluation or propose an alternative |
+| `Negotiation-T/v1/feasibility-negotiation/accept-reject` | Accept or reject a feasibility negotiation |
+
+Negotiation templates are resolved with a **dual-root fallback** that is independent of `A2AT_PROMPT_SOURCE_TYPE`: a template file that exists under the local resource root configured by `A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR` wins, otherwise the built-in classpath template of the same URI is used. The built-in templates therefore always remain available as a safety net. Only templates are taken from the local root; LLM prompt resources always come from the classpath.
+
+To override one template (for example the information propose template in Chinese), place a file under the local root following the bundled layout:
+
+```text
+{A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR}/
+  templates/Negotiation-T/v1/information-negotiation/propose/zh-CN/template.md
+```
+
+### 1.10.4 Data Models
+
+All types live in `net.openan.a2at.sdk.negotiation.content`.
+
+**NegotiationContext** — the session context carried by every message: `record NegotiationContext(String id, int round, int maxRounds)`. It is immutable; `nextRound()` returns a context with the round incremented, and `isExhausted()` reports whether the round is strictly greater than `maxRounds`. `NegotiationContext.of(id, round)` applies the default round budget of `DEFAULT_MAX_ROUNDS = 5`.
+
+**Input bundles** — `NegotiationProposeData(context, content)` and `NegotiationEndingData(context, content)` pair the context with the typed content. The content types are sealed hierarchies per negotiation type:
+
+| Negotiation type | Propose content | Ending content |
+|--|--|--|
+| Information | `InfoProposeContent(List<NegotiationItem> items, String relationship)` | `InfoEndingContent(conclusion, items)` |
+| Target | `TargetProposeContent(description, intentUnderstanding, alignmentAndClarification, requestForClarification)` | `TargetEndingContent(conclusion, confirmedIntent, failureReason)` |
+| Feasibility | `FeasibilityProposeContent(description, action, contentsToEvaluate, infeasibilityDetailsAndProposal)` | `FeasibilityEndingContent(conclusion, feasibilitySummary)` |
+
+`NegotiationItem(name, value)` is one named entry of an item list. `NegotiationConclusion` carries `ACCEPT`, `REJECT`, and `ABORT`; only `Accept` and `Reject` are renderable — generation methods reject `ABORT` as a programming error. `NegotiationAction` (`REQUEST_FEASIBILITY_EVALUATION`, `PROPOSE_ALTERNATIVE_ON_FAILURE`) selects the conditional sections of the feasibility propose template.
+
+**MetadataContent** — the generation result: `record MetadataContent(String templateUri, String promptText, String extensionUri)`. `buildMetadataContent()` returns exactly two keys: the TMF extension URI (`https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1`) mapping to the rendered message, and `template_uri` mapping to the template URI. This map is what travels in the A2A message metadata.
+
+**FilledParamData** — the extraction result: `record FilledParamData(Map<String, Object> data)` holding the context parameters merged with the schema-extracted parameters.
+
+### 1.10.5 Error Handling
+
+The exception tree has two branches under the SDK root:
+
+- `A2ATError` — the processing-failure root of the whole SDK.
+  - `NegotiationProcessingException` — a negotiation processing failure carrying a machine-readable code; `getCode()` returns it.
+    - `NegotiationGenerationException` — raised by generation calls.
+  - `A2ATParamExtractionError` — a parameter-extraction failure carrying a code and structured per-slot errors (`getCode()`, `getErrors()`).
+    - `NegotiationParamExtractionException` — raised by `validateAndFilling*Data` calls.
+- `NegotiationContentException` — a **programming error** (blank context id, null data, malformed template URI, phase or conclusion mismatch). It extends `RuntimeException` directly, not `A2ATError`, and exposes `getField()` pointing at the offending input such as `templateUri` or `context.id`.
+
+Error codes and their meaning:
+
+| Code | Meaning | Retryable |
+|--|--|--|
+| `template_not_found` | No template (or prompt resource) exists for the URI in any resource root | No |
+| `negotiation_content_extract_failed` | Structured content could not be extracted from free text | Yes |
+| `negotiation_llm_infrastructure_error` | An LLM infrastructure failure (network, provider error, malformed response) | Yes |
+| `negotiation_semantic_rejected` | Semantic validation rejected the message | No |
+| `negotiation_rule_violation` | The negotiation context section violates a structural rule | No |
+| `negotiation_slot_missing` | A required slot is missing when rendering | No |
+| `negotiation_invalid_input` | The input is not valid for the operation (blank text, not a negotiation message, wrong conclusion) | No |
+| `param_extraction_failed` | Default code for extraction failures without a more specific code | No |
+
+Retry semantics: a failing LLM step carrying a retryable code is re-run up to the attempt limit configured by `A2AT_LLM_MAX_ATTEMPTS`; failures carrying any other code are rethrown immediately. When the attempts are exhausted, the original failure is rethrown with its original code. `A2AT_LLM_MAX_ATTEMPTS` defaults to 3 and is clamped to the range 1–10 (out-of-range values are clamped with a warning log).
+
+### 1.10.6 Language Configuration
+
+The negotiation templates and the vocabulary used for rendering and section recognition are keyed by `A2AT_LANGUAGE`. Supported values are exactly `zh-CN` and `en-US`; there is no fallback — any other value fails with a `NegotiationContentException` when the vocabulary is resolved. Set the language explicitly in `client.env` / `server.env`:
+
+```properties
+A2AT_LANGUAGE=zh-CN
+```
+
+### 1.10.7 End-to-End Example
+
+An information negotiation between a client that proposes (asking for missing data) and a server that accepts and returns the data, using the content layer on both sides:
+
+```java
+import java.util.List;
+import java.util.Map;
+import net.openan.a2at.sdk.client.A2ATClient;
+import net.openan.a2at.sdk.core.exception.A2ATParamExtractionError;
+import net.openan.a2at.sdk.negotiation.content.*;
+import net.openan.a2at.sdk.server.A2ATServer;
+
+// --- Client side: propose, asking for two missing fields ---
+A2ATClient client = new A2ATClient(Path.of("client.env"));
+
+NegotiationContext context = NegotiationContext.of("neg-0001-uuid", 1);
+InfoProposeContent content = new InfoProposeContent(
+        List.of(
+                new NegotiationItem("subscription_condition.incident_level", "critical or warning"),
+                new NegotiationItem("notification_data.format", "DataPart or raw JSON")),
+        null);
+
+MetadataContent propose = client.generateNegotiationProposePromptFromData(
+        new NegotiationProposeData(context, content),
+        "Negotiation-T/v1/information-negotiation/propose");
+
+// This two-key map travels in the A2A message metadata.
+Map<String, String> metadata = propose.buildMetadataContent();
+// metadata.get("template_uri")  -> "Negotiation-T/v1/information-negotiation/propose"
+// metadata.get(propose.extensionUri()) -> the rendered message text
+
+// --- Server side: validate the received message and extract parameters ---
+A2ATServer server = new A2ATServer(Path.of("server.env"));
+
+Map<String, Object> schema = Map.of(
+        "type", "object",
+        "properties", Map.of(
+                "subscription_condition.incident_level", Map.of("type", "string"),
+                "notification_data.format", Map.of("type", "string")),
+        "required", List.of("subscription_condition.incident_level"));
+
+try {
+    FilledParamData params = server.validateAndFillingProposeData(
+            propose.promptText(), schema, "Negotiation-T/v1/information-negotiation/propose");
+    // params.data() holds the extracted parameters plus the context parameters.
+} catch (A2ATParamExtractionError failure) {
+    // Branch on failure.getCode(): negotiation_invalid_input, negotiation_rule_violation,
+    // negotiation_semantic_rejected, negotiation_llm_infrastructure_error, template_not_found.
+}
+
+// --- Server side: accept and return the requested information ---
+InfoEndingContent ending = new InfoEndingContent(
+        NegotiationConclusion.ACCEPT,
+        List.of(new NegotiationItem("subscription_condition.incident_level", "critical")));
+
+MetadataContent accept = server.generateNegotiationAcceptPromptFromData(
+        new NegotiationEndingData(context, ending),
+        "Negotiation-T/v1/information-negotiation/accept-reject");
+
+// The client validates the accept message the same way, with the accept-reject URI:
+// client.validateAndFillingAcceptData(accept.promptText(), schema,
+//         "Negotiation-T/v1/information-negotiation/accept-reject");
+```
+
+When modifying the negotiation content layer, run:
+
+```bash
+mvn -pl a2a-t-negotiation -am test
+```
