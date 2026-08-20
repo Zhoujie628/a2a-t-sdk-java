@@ -1,0 +1,115 @@
+package net.openan.a2at.sdk.server.api;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.MetadataContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
+import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
+import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
+import net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler;
+import net.openan.a2at.sdk.negotiation.types.model.NegotiationType;
+import net.openan.a2at.sdk.server.A2ATServer;
+import net.openan.a2at.sdk.server.model.PromptComplianceResult;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+/**
+ * Task-T and Negotiation-T coexistence regression: one server instance answers both the Task-T compliance API and the
+ * negotiation content-layer APIs without interference, and the pre-existing negotiation state machine keeps working
+ * next to the new APIs.
+ */
+class TaskPromptNegotiationCoexistenceTest {
+
+    private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
+
+    private static final String INFORMATION_PROPOSE_URI = "Negotiation-T/v1/information-negotiation/propose";
+
+    private static final String TASK_T_MESSAGE = "## 任务类型(Task Type)\n"
+            + "无线能效优化\n\n"
+            + "## 任务对象(Task Object)\n"
+            + "松山湖管委会\n\n"
+            + "## 任务目标(Task Target)\n"
+            + "总功耗降低30%\n";
+
+    @TempDir
+    Path tempDir;
+
+    @Test
+    void checkTaskPromptAndValidateAndFillingCoexistOnOneServerInstance() throws IOException {
+        A2ATServer server = new A2ATServer(writeEnv());
+
+        PromptComplianceResult complianceResult = server.checkTaskPrompt(TASK_T_MESSAGE);
+
+        assertFalse(complianceResult.success());
+        assertEquals("processed_prompt_parse_error", complianceResult.failure().code());
+        assertEquals("prompt_parse", complianceResult.failure().stage());
+
+        NegotiationParamExtractionException negotiationFailure = assertThrows(
+                NegotiationParamExtractionException.class,
+                () -> server.validateAndFillingProposeData(
+                        TASK_T_MESSAGE,
+                        Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
+                        INFORMATION_PROPOSE_URI));
+
+        assertEquals("negotiation_invalid_input", negotiationFailure.getCode());
+        assertTrue(negotiationFailure.getMessage().contains("checkTaskPrompt"));
+        assertFalse(negotiationFailure.getMessage().contains("协商上下文"));
+
+        MetadataContent negotiationMessage = server.generateNegotiationProposePromptFromData(
+                new NegotiationProposeData(
+                        new NegotiationContext(UUID, 1, 5),
+                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                INFORMATION_PROPOSE_URI);
+        assertEquals(INFORMATION_PROPOSE_URI, negotiationMessage.templateUri());
+        assertTrue(negotiationMessage.promptText().contains("- id: " + UUID));
+    }
+
+    @Test
+    void oldNegotiationStateMachineKeepsWorkingNextToTheContentLayerApis() throws IOException {
+        A2ATServer server = new A2ATServer(writeEnv());
+
+        Map<String, Object> started = server.startNegotiation(
+                NegotiationType.INFORMATION, "需要完整的任务提示词。", Map.of("source", "coexistence-test"));
+        Map<?, ?> context = (Map<?, ?>) started.get(NegotiationHandler.NEGOTIATION_T_URI_NL);
+        assertEquals("information", context.get("negotiationType"));
+        assertEquals("in-progress", context.get("status"));
+        assertEquals("coexistence-test", ((Map<?, ?>) started.get("facts")).get("source"));
+
+        MetadataContent negotiationMessage = server.generateNegotiationProposePromptFromData(
+                new NegotiationProposeData(
+                        new NegotiationContext(UUID, 2, 5),
+                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                INFORMATION_PROPOSE_URI);
+        assertTrue(negotiationMessage.promptText().contains("- round: 2"));
+
+        Map<String, Object> startedAgain = server.startNegotiation(NegotiationType.TARGET, "请澄清目标。", Map.of());
+        assertEquals(
+                "target",
+                ((Map<?, ?>) startedAgain.get(NegotiationHandler.NEGOTIATION_T_URI_NL)).get("negotiationType"));
+    }
+
+    private Path writeEnv() throws IOException {
+        Path envFile = tempDir.resolve("server.env");
+        Files.writeString(
+                envFile,
+                """
+                A2AT_LANGUAGE=zh-CN
+                A2AT_PROMPT_SOURCE_TYPE=classpath
+                A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR=
+                A2AT_LLM_PROVIDER=local_rule
+                A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
+                """
+                        .formatted());
+        return envFile;
+    }
+}
