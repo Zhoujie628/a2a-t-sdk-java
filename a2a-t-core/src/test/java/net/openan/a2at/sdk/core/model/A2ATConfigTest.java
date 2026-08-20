@@ -92,7 +92,7 @@ class A2ATConfigTest {
         Files.writeString(
                 envFile,
                 """
-                A2AT_LLM_PROVIDER=local_rule
+                A2AT_LLM_PROVIDER=openai
                 A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
                 """);
 

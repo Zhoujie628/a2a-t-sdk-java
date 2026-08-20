@@ -18,10 +18,7 @@ import net.openan.a2at.sdk.prompt.resources.loader.PromptTemplateTextLoader;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import net.openan.a2at.sdk.server.compliance.DefaultServerPromptComplianceOrchestrator;
 import net.openan.a2at.sdk.server.metadata.LlmBackedPromptMetadataExtractor;
-import net.openan.a2at.sdk.server.metadata.TemplateMatchingPromptMetadataExtractor;
-import net.openan.a2at.sdk.server.model.PromptTemplateDefinition;
 import net.openan.a2at.sdk.server.validation.LlmBackedPromptSemanticValidator;
-import net.openan.a2at.sdk.server.validation.TemplateRoundTripPromptSemanticValidator;
 
 /**
  * Default builder that assembles one high-level A2AT server runtime from unified config.
@@ -29,10 +26,6 @@ import net.openan.a2at.sdk.server.validation.TemplateRoundTripPromptSemanticVali
  * @since 2026-06
  */
 public final class DefaultA2ATServerBuilder {
-
-    private static final String LOCAL_RULE_PROVIDER = "local_rule";
-
-    private static final String OPENAI_PROVIDER = "openai";
 
     private static final String SCENARIO_RECOGNITION_PROMPT = "scenario_recognition";
 
@@ -86,30 +79,6 @@ public final class DefaultA2ATServerBuilder {
         requireSupportedConfig();
 
         PromptResourceAccess resources = PromptResourceAccess.create(config.prompt());
-        if (LOCAL_RULE_PROVIDER.equals(config.llm().provider())) {
-            return buildLocalRulePromptComplianceOrchestrator(resources);
-        }
-
-        return buildLlmBackedPromptComplianceOrchestrator(resources);
-    }
-
-    private DefaultServerPromptComplianceOrchestrator buildLocalRulePromptComplianceOrchestrator(
-            PromptResourceAccess resources) {
-        String language = config.prompt().language();
-        List<PromptTemplateDefinition> templates;
-        if (resources.classpath()) {
-            List<ScenarioDefinition> scenarios = resources.loadScenarios(language);
-            templates = new ClasspathServerPromptTemplateLoader(resources.classpathResourceLoader())
-                    .loadAll(scenarios, language);
-        } else {
-            templates = new LocalFileServerPromptTemplateLoader(resources.localRootDir()).loadAll(language);
-        }
-        return new DefaultServerPromptComplianceOrchestrator(
-                new TemplateMatchingPromptMetadataExtractor(templates), new TemplateRoundTripPromptSemanticValidator());
-    }
-
-    private DefaultServerPromptComplianceOrchestrator buildLlmBackedPromptComplianceOrchestrator(
-            PromptResourceAccess resources) {
         String language = config.prompt().language();
         List<ScenarioDefinition> scenarios = resources.loadScenarios(language);
         PromptTemplateTextLoader templateLoader = resources.templateLoader();
@@ -156,20 +125,15 @@ public final class DefaultA2ATServerBuilder {
      *
      * <p>The wiring is shared with the client side through
      * {@link NegotiationContentService#buildOrchestrator(A2ATConfig, LLMClient)}: the message language and the local
-     * template root come from the prompt runtime config, the retry attempt limit comes from the LLM config, and the LLM
-     * client is only created when the provider is not {@code local_rule}.
+     * template root come from the prompt runtime config, the retry attempt limit comes from the LLM config.
      *
      * @return assembled negotiation generation orchestrator
      */
     public NegotiationGenerationOrchestrator buildNegotiationGenerationOrchestrator() {
         require(config, "Unified SDK config must be configured.");
         requireSupportedConfig();
-        LLMClient llmClient = null;
-        if (!LOCAL_RULE_PROVIDER.equals(config.llm().provider())) {
-            require(envPath, "Unified SDK env path must be configured.");
-            llmClient = createLlmClient();
-        }
-        return NegotiationContentService.buildOrchestrator(config, llmClient);
+        require(envPath, "Unified SDK env path must be configured.");
+        return NegotiationContentService.buildOrchestrator(config, createLlmClient());
     }
 
     private static void require(Object value, String message) {
@@ -180,19 +144,16 @@ public final class DefaultA2ATServerBuilder {
 
     private void requireSupportedConfig() {
         if (!PromptResourceAccess.CLASSPATH_SOURCE_TYPE.equals(config.prompt().sourceType())
-                && !PromptResourceAccess.LOCAL_FILE_SOURCE_TYPE.equals(
-                        config.prompt().sourceType())) {
+                && !PromptResourceAccess.LOCAL_FILE_SOURCE_TYPE.equals(config.prompt().sourceType())) {
             throw new UnsupportedOperationException(
                     "Unsupported prompt source type: " + config.prompt().sourceType());
         }
-        if (!LOCAL_RULE_PROVIDER.equals(config.llm().provider())
-                && !OPENAI_PROVIDER.equals(config.llm().provider())) {
-            throw new UnsupportedOperationException(
-                    "Unsupported LLM provider: " + config.llm().provider());
+        if (!LLMClientFactory.availableProviders().contains(config.llm().provider())) {
+            throw new UnsupportedOperationException("Unsupported LLM provider: " + config.llm().provider());
         }
         if (!"in_memory".equals(config.negotiation().stateStoreType())) {
-            throw new UnsupportedOperationException("Unsupported negotiation state store type: "
-                    + config.negotiation().stateStoreType());
+            throw new UnsupportedOperationException(
+                    "Unsupported negotiation state store type: " + config.negotiation().stateStoreType());
         }
     }
 
@@ -200,4 +161,5 @@ public final class DefaultA2ATServerBuilder {
         LLMClientConfig loadedConfig = LLMConfigLoader.load(envPath);
         return LLMClientFactory.create(loadedConfig.provider(), loadedConfig);
     }
+
 }

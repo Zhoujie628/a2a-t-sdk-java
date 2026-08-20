@@ -38,10 +38,6 @@ import net.openan.a2at.sdk.prompt.taskrendering.api.TaskPromptRenderer;
  */
 public final class DefaultA2ATClientBuilder {
 
-    private static final String LOCAL_RULE_PROVIDER = "local_rule";
-
-    private static final String OPENAI_PROVIDER = "openai";
-
     private static final String SCENARIO_RECOGNITION_PROMPT = "scenario_recognition";
 
     private static final String SLOT_EXTRACTION_PROMPT = "slot_extraction";
@@ -101,36 +97,19 @@ public final class DefaultA2ATClientBuilder {
                 newClientTemplateLoader(resources, config.prompt().sourceType());
         String language = config.prompt().language();
 
-        boolean isLocalRule = LOCAL_RULE_PROVIDER.equals(config.llm().provider());
-        LLMClient llmClient = isLocalRule ? null : createLlmClient();
+        LLMClient llmClient = createLlmClient();
 
-        String scenarioSystemPrompt =
-                isLocalRule ? "" : resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "system.md");
-        String scenarioUserPrompt =
-                isLocalRule ? "" : resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "user.md");
-        String slotSystemPrompt =
-                isLocalRule ? "" : resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "system.md");
-        String slotUserPrompt = isLocalRule ? "" : resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "user.md");
+        String scenarioSystemPrompt = resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "system.md");
+        String scenarioUserPrompt = resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "user.md");
+        String slotSystemPrompt = resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "system.md");
+        String slotUserPrompt = resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "user.md");
 
-        ClientScenarioRecognizer scenarioRecognizer;
-        ClientSlotValueExtractor slotValueExtractor;
-
-        if (isLocalRule) {
-            scenarioRecognizer = (normalizedInput, ignoredScenarios, systemPrompt, userPrompt) -> {
-                if (scenarios.isEmpty()) {
-                    return new ScenarioRecognitionResult(false, null, "No scenarios configured.");
-                }
-                return new ScenarioRecognitionResult(true, scenarios.get(0).scenarioCode(), null);
-            };
-            slotValueExtractor = new DefaultTemplateDrivenSlotValueExtractor(slotSchemaLoader);
-        } else {
-            scenarioRecognizer =
-                    new SingleScenarioAwareRecognizer(scenarios, new ScenarioRecognizer(llmClient)::recognize);
-            slotValueExtractor = new StructuredInputAwareSlotValueExtractor(
-                    new DefaultTemplateDrivenSlotValueExtractor(slotSchemaLoader),
-                    new DefaultStructuredClientSlotValueExtractor(
-                            llmClient, slotSchemaLoader, slotSystemPrompt, slotUserPrompt));
-        }
+        ClientScenarioRecognizer scenarioRecognizer =
+                new SingleScenarioAwareRecognizer(scenarios, new ScenarioRecognizer(llmClient)::recognize);
+        ClientSlotValueExtractor slotValueExtractor = new StructuredInputAwareSlotValueExtractor(
+                new DefaultTemplateDrivenSlotValueExtractor(slotSchemaLoader),
+                new DefaultStructuredClientSlotValueExtractor(
+                        llmClient, slotSchemaLoader, slotSystemPrompt, slotUserPrompt));
 
         return ClientPromptGenerationOrchestratorBuilder.builder()
                 .llmClient(llmClient)
@@ -168,20 +147,15 @@ public final class DefaultA2ATClientBuilder {
      *
      * <p>The wiring is shared with the server side through
      * {@link NegotiationContentService#buildOrchestrator(A2ATConfig, LLMClient)}: the message language and the local
-     * template root come from the prompt runtime config, the retry attempt limit comes from the LLM config, and the LLM
-     * client is only created when the provider is not {@code local_rule}.
+     * template root come from the prompt runtime config, the retry attempt limit comes from the LLM config.
      *
      * @return assembled negotiation generation orchestrator
      */
     public NegotiationGenerationOrchestrator buildNegotiationGenerationOrchestrator() {
         require(config, "Unified SDK config must be configured.");
         requireSupportedConfig();
-        LLMClient llmClient = null;
-        if (!LOCAL_RULE_PROVIDER.equals(config.llm().provider())) {
-            require(envPath, "Unified SDK env path must be configured.");
-            llmClient = createLlmClient();
-        }
-        return NegotiationContentService.buildOrchestrator(config, llmClient);
+        require(envPath, "Unified SDK env path must be configured.");
+        return NegotiationContentService.buildOrchestrator(config, createLlmClient());
     }
 
     private void requireSupportedConfig() {
@@ -191,8 +165,7 @@ public final class DefaultA2ATClientBuilder {
             throw new UnsupportedOperationException(
                     "Unsupported prompt source type: " + config.prompt().sourceType());
         }
-        if (!LOCAL_RULE_PROVIDER.equals(config.llm().provider())
-                && !OPENAI_PROVIDER.equals(config.llm().provider())) {
+        if (!LLMClientFactory.availableProviders().contains(config.llm().provider())) {
             throw new UnsupportedOperationException(
                     "Unsupported LLM provider: " + config.llm().provider());
         }
@@ -264,10 +237,7 @@ public final class DefaultA2ATClientBuilder {
 
         @Override
         public Map<String, String> extractSlotsWithSchema(
-                Object userInput,
-                String scenarioCode,
-                String language,
-                String templateText,
+                Object userInput, String scenarioCode, String language, String templateText,
                 Map<String, Object> dataSchema) {
             return llmExtractor.extractSlotsWithSchema(userInput, scenarioCode, language, templateText, dataSchema);
         }

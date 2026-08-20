@@ -1,7 +1,6 @@
 package net.openan.a2at.sdk.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,18 +9,33 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrchestrator;
 import net.openan.a2at.sdk.core.exception.PromptGenerationException;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
+import net.openan.a2at.sdk.llm.LLMClient;
+import net.openan.a2at.sdk.llm.LLMClientConfig;
+import net.openan.a2at.sdk.llm.LLMClientFactory;
+import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationStatus;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationType;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class A2ATClientTest {
+
+    private static final String TEST_MOCK_PROVIDER = "test-a2at-mock";
+
+    @BeforeAll
+    static void registerMockProvider() {
+        if (!LLMClientFactory.availableProviders().contains(TEST_MOCK_PROVIDER)) {
+            LLMClientFactory.register(TEST_MOCK_PROVIDER, RecordingClient.class);
+        }
+    }
 
     @Test
     void onlyExposesPathBasedPublicConstructor() throws NoSuchMethodException {
@@ -93,7 +107,7 @@ class A2ATClientTest {
     void pathBasedConstructorAcceptsRelativeEnvPath() throws IOException {
         Path targetDir = Files.createDirectories(Path.of("target"));
         Path tempDir = Files.createTempDirectory(targetDir, "a2at-client-relative-env");
-        writeMinimalClientEnv(tempDir, "local_rule");
+        writeMinimalClientEnv(tempDir, "openai");
         Path relativeEnvPath =
                 targetDir.getFileName().resolve(tempDir.getFileName()).resolve("client.env");
 
@@ -170,6 +184,15 @@ class A2ATClientTest {
         Files.createDirectories(templatesDir);
         Files.createDirectories(slotsDir);
 
+        Path scenarioPromptDir = promptRoot.resolve("prompts").resolve("scenario_recognition").resolve("zh-CN");
+        Path slotPromptDir = promptRoot.resolve("prompts").resolve("slot_extraction").resolve("zh-CN");
+        Files.createDirectories(scenarioPromptDir);
+        Files.createDirectories(slotPromptDir);
+        Files.writeString(scenarioPromptDir.resolve("system.md"), "Identify the best matching scenario.");
+        Files.writeString(scenarioPromptDir.resolve("user.md"), "Choose from the provided scenario list.");
+        Files.writeString(slotPromptDir.resolve("system.md"), "Extract slots from the input.");
+        Files.writeString(slotPromptDir.resolve("user.md"), "Return slots as JSON.");
+
         Files.writeString(
                 scenariosDir.resolve("scenarios.json"),
                 """
@@ -208,8 +231,11 @@ class A2ATClientTest {
                 A2AT_LANGUAGE=zh-CN
                 A2AT_PROMPT_SOURCE_TYPE=local_file
                 A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR=prompt_resources
-                A2AT_LLM_PROVIDER=local_rule
-                A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
+A2AT_LLM_PROVIDER=openai
+A2AT_LLM_MODEL=example-model
+A2AT_LLM_BASE_URL=https://llm.example.test/v1
+A2AT_LLM_API_KEY=test-key
+A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
                 """);
 
         A2ATClient client = new A2ATClient(envFile);
@@ -221,7 +247,7 @@ class A2ATClientTest {
 
     @Test
     void fromTextEntryPointsReturnMetadataContent() throws IOException {
-        Path envFile = writeMinimalClientEnvWithoutRequiredSlots("local_rule");
+        Path envFile = writeMinimalClientEnvWithoutRequiredSlots(TEST_MOCK_PROVIDER);
         A2ATClient client = new A2ATClient(envFile);
 
         MetadataContent taskResult =
@@ -279,7 +305,7 @@ class A2ATClientTest {
 
     @Test
     void fromTextReturnsCorrectExtensionUriPerContentType() throws IOException {
-        Path envFile = writeMinimalClientEnvWithoutRequiredSlots("local_rule");
+        Path envFile = writeMinimalClientEnvWithoutRequiredSlots(TEST_MOCK_PROVIDER);
         A2ATClient client = new A2ATClient(envFile);
 
         MetadataContent taskResult =
@@ -353,43 +379,6 @@ class A2ATClientTest {
         assertEquals("invalid_template_uri", notifEx.code());
     }
 
-    @Test
-    void fromTextUnderLocalRuleRendersEmptySlotsForNlInput() throws IOException {
-        Path envFile = writeMinimalClientEnvWithoutRequiredSlots("local_rule");
-        A2ATClient client = new A2ATClient(envFile);
-
-        MetadataContent result =
-                client.generateTaskPromptFromText("Please analyze Site A power usage.", "Task-T/v1/unconstrained");
-
-        assertEquals("Task-T/v1/unconstrained", result.templateUri());
-        assertEquals("Notes: \\nFault: ", result.promptText());
-    }
-
-    @Test
-    void fromDataWithSchemaUnderLocalRuleIgnoresSchema() throws IOException {
-        Path envFile = writeMinimalLocalClientEnv();
-        A2ATClient client = new A2ATClient(envFile);
-        Map<String, Object> data = Map.of("site", "Site A", "target", "Reduce power by 10%");
-        Map<String, Object> schema = Map.of("type", "object", "required", Arrays.asList("site", "target"));
-
-        MetadataContent result =
-                client.generateTaskPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
-
-        assertEquals("Task-T/v1/energy-saving", result.templateUri());
-        assertEquals("Site: Site A\\nTarget: Reduce power by 10%", result.promptText());
-    }
-
-    @Test
-    void fromTextThrowsSlotValidationErrorWhenRequiredSlotsMissing() throws IOException {
-        Path envFile = writeMinimalLocalClientEnv();
-        A2ATClient client = new A2ATClient(envFile);
-
-PromptGenerationException ex = assertThrows(PromptGenerationException.class,
-                () -> client.generateTaskPromptFromText("Some text without site or target.", "Task-T/v1/energy-saving"));
-        assertEquals("slot_validation_error", ex.code());
-        assertFalse(ex.failedParameters().isEmpty());
-    }
-
     private static Path writeMinimalClientEnvWithoutRequiredSlots(String provider) throws IOException {
         Path tempDir = Files.createTempDirectory("a2at-client-env-no-required");
         Path promptRoot = tempDir.resolve("prompt_resources");
@@ -460,7 +449,7 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
     }
 
     private static Path writeMinimalLocalClientEnv() throws IOException {
-        return writeMinimalClientEnv("local_rule");
+        return writeMinimalClientEnv(TEST_MOCK_PROVIDER);
     }
 
     private static Path writeMinimalClasspathClientEnv() throws IOException {
@@ -472,7 +461,10 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 A2AT_LANGUAGE=zh-CN
                 A2AT_PROMPT_SOURCE_TYPE=classpath
                 A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR=
-                A2AT_LLM_PROVIDER=local_rule
+                A2AT_LLM_PROVIDER=openai
+A2AT_LLM_MODEL=example-model
+A2AT_LLM_BASE_URL=https://llm.example.test/v1
+A2AT_LLM_API_KEY=test-key
                 A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
                 """);
         return envFile;
@@ -548,5 +540,38 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 """
                         .formatted(provider));
         return envFile;
+    }
+
+    public static final class RecordingClient implements LLMClient {
+
+        private final LLMClientConfig config;
+
+        public RecordingClient(LLMClientConfig config) {
+            this.config = config;
+        }
+
+        @Override
+        public LLMResponse structured(
+                List<Map<String, String>> messages,
+                Map<String, Object> jsonSchema,
+                Double temperature,
+                Integer maxTokens) {
+            return new LLMResponse(buildResponse(jsonSchema), config.model(), Map.of(), Map.of());
+        }
+
+        private static String buildResponse(Map<String, Object> jsonSchema) {
+            Object slotNames = jsonSchema.get("slotNames");
+            StringBuilder slots = new StringBuilder("{");
+            if (slotNames instanceof List<?> names) {
+                for (int i = 0; i < names.size(); i++) {
+                    if (i > 0) {
+                        slots.append(",");
+                    }
+                    slots.append("\"").append(names.get(i)).append("\":\"placeholder\"");
+                }
+            }
+            slots.append("}");
+            return "{\"slots\":" + slots + ",\"slot_errors\":[]}";
+        }
     }
 }
