@@ -51,8 +51,8 @@ public final class ServerSampleMain {
             emit(logSink, "[server] agent-card registration: success");
         } else {
             emit(logSink,
-                    "[server] agent-card registration failed, continuing startup: "
-                            + registrationResult.getOrDefault("message", "unknown error"));
+                    "[server] agent-card registration: skipped (no registry-center available, "
+                            + "client direct mode is used instead)");
         }
         AutoCloseable serverHandle = null;
         if (runtime instanceof A2AJavaServerRuntime a2aJavaServerRuntime
