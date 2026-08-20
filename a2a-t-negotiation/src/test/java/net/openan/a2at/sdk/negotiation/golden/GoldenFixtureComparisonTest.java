@@ -70,7 +70,7 @@ class GoldenFixtureComparisonTest {
         InputStream stream = GoldenFixtureComparisonTest.class.getResourceAsStream(resourcePath);
         assertNotNull(stream, "Golden fixture must exist on the test classpath: " + resourcePath);
         try (stream) {
-            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+            return new String(stream.readAllBytes(), StandardCharsets.UTF_8).replace("\r\n", "\n");
         } catch (IOException exception) {
             throw new AssertionError("Failed to read golden fixture " + resourcePath, exception);
         }

@@ -15,8 +15,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
+import net.openan.a2at.sdk.llm.LLMClient;
+import net.openan.a2at.sdk.llm.LLMClientConfig;
+import net.openan.a2at.sdk.llm.LLMClientFactory;
+import net.openan.a2at.sdk.llm.LLMRuntimeError;
+import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -24,6 +30,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -37,6 +44,15 @@ import org.junit.jupiter.api.io.TempDir;
  * built-in resources) work out of the box.
  */
 class A2ATClientNegotiationEnvConfigTest {
+
+    private static final String TEST_MOCK_PROVIDER = "test-negotiation-failing-mock";
+
+    @BeforeAll
+    static void registerMockProvider() {
+        if (!LLMClientFactory.availableProviders().contains(TEST_MOCK_PROVIDER)) {
+            LLMClientFactory.register(TEST_MOCK_PROVIDER, FailingClient.class);
+        }
+    }
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
@@ -73,7 +89,10 @@ class A2ATClientNegotiationEnvConfigTest {
                 "A2AT_LANGUAGE=zh-CN",
                 "A2AT_PROMPT_SOURCE_TYPE=classpath",
                 "A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR=" + customRoot.toString().replace('\\', '/'),
-                "A2AT_LLM_PROVIDER=local_rule",
+                "A2AT_LLM_PROVIDER=" + TEST_MOCK_PROVIDER,
+                "A2AT_LLM_MODEL=example-model",
+                "A2AT_LLM_BASE_URL=https://llm.example.test/v1",
+                "A2AT_LLM_API_KEY=test-key",
                 "A2AT_LLM_MAX_ATTEMPTS=2",
                 "A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory");
         A2ATClient client = new A2ATClient(envFile);
@@ -103,7 +122,11 @@ class A2ATClientNegotiationEnvConfigTest {
 
     @Test
     void zeroConfigDefaultsWorkOutOfTheBox() throws IOException {
-        Path envFile = writeEnvFile("A2AT_LLM_PROVIDER=local_rule");
+        Path envFile = writeEnvFile(
+                "A2AT_LLM_PROVIDER=" + TEST_MOCK_PROVIDER,
+                "A2AT_LLM_MODEL=example-model",
+                "A2AT_LLM_BASE_URL=https://llm.example.test/v1",
+                "A2AT_LLM_API_KEY=test-key");
         A2ATClient client = new A2ATClient(envFile);
 
         MetadataContent result = client.generateNegotiationProposePromptFromData(
@@ -179,5 +202,23 @@ class A2ATClientNegotiationEnvConfigTest {
                 .map(ILoggingEvent::getFormattedMessage)
                 .filter(message -> message.startsWith(eventName + " "))
                 .count();
+    }
+
+    public static final class FailingClient implements LLMClient {
+
+        private final LLMClientConfig config;
+
+        public FailingClient(LLMClientConfig config) {
+            this.config = config;
+        }
+
+        @Override
+        public LLMResponse structured(
+                List<Map<String, String>> messages,
+                Map<String, Object> jsonSchema,
+                Double temperature,
+                Integer maxTokens) {
+            throw new LLMRuntimeError("test mock failure");
+        }
     }
 }
