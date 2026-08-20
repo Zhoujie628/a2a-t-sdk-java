@@ -22,7 +22,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionExcepti
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationTemplateLoader;
-import net.openan.a2at.sdk.negotiation.resources.PromptTemplate;
+import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler;
 import org.junit.jupiter.api.Test;
 

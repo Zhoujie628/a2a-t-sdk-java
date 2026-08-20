@@ -8,7 +8,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
-import net.openan.a2at.sdk.negotiation.resources.PromptTemplate;
+import net.openan.a2at.sdk.core.model.PromptTemplate;
 
 /**
  * Shared plumbing of the six negotiation generators.

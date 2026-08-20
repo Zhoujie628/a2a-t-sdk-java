@@ -14,6 +14,8 @@ import net.openan.a2at.sdk.core.resources.PathSegments;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
+import net.openan.a2at.sdk.core.model.PromptTemplate;
+import net.openan.a2at.sdk.prompt.resources.catalog.TemplateDescriptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,3 +149,5 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
     }
 
 }
+
+

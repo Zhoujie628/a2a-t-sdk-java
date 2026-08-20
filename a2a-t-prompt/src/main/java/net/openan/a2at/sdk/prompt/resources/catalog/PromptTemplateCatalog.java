@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.resources;
+package net.openan.a2at.sdk.prompt.resources.catalog;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,9 +18,9 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 import net.openan.a2at.sdk.core.resources.PathSegments;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,10 +34,9 @@ import org.slf4j.LoggerFactory;
  * and is addressed by the URI formed from the segments before the language, for example
  * {@code Negotiation-T/v1/information-negotiation/propose} or {@code Task-T/v1/energy-saving}.
  *
- * <p>Like the negotiation template loader, the catalog prefers a local file under the configured local resource
- * root over the built-in classpath template of the same path, and falls back to the classpath otherwise. Both query
- * methods never throw: a template or a root that cannot be loaded is skipped or answered with an empty result and a
- * warning log.
+ * <p>A local file under the configured local resource root overrides the built-in classpath template of the same
+ * path, and the classpath is the fallback otherwise. Both query methods never throw: a template or a root that cannot
+ * be loaded is skipped or answered with an empty result and a warning log.
  *
  * @since 2026-08
  */
@@ -65,14 +64,13 @@ public final class PromptTemplateCatalog {
      * @param language locale identifier such as {@code zh-CN} or {@code en-US}
      * @param localRootDir local prompt resource root containing the {@code templates/} tree; null or blank disables
      *     local template overrides
-     * @throws NegotiationContentException if the language is not a simple path segment
+     * @throws IllegalArgumentException if the language is not a simple path segment
      */
     public PromptTemplateCatalog(String language, String localRootDir) {
         if (!PathSegments.isSimpleSegment(language)) {
-            throw new NegotiationContentException(
+            throw new IllegalArgumentException(
                     "Prompt template catalog language must be a non-blank simple path segment but was " + language
-                            + ".",
-                    "language");
+                            + ".");
         }
         this.language = language;
         this.localRootDir = localRootDir == null || localRootDir.isBlank() ? null : Path.of(localRootDir);

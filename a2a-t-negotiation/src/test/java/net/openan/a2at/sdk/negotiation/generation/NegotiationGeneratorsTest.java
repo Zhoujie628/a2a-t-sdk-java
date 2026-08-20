@@ -21,7 +21,7 @@ import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.negotiation.resources.DefaultNegotiationTemplateLoader;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
-import net.openan.a2at.sdk.negotiation.resources.PromptTemplate;
+import net.openan.a2at.sdk.core.model.PromptTemplate;
 import org.junit.jupiter.api.Test;
 
 class NegotiationGeneratorsTest {

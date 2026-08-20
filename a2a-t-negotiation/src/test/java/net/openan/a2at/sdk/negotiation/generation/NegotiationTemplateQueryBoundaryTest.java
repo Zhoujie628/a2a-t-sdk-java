@@ -11,7 +11,7 @@ import ch.qos.logback.core.read.ListAppender;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import net.openan.a2at.sdk.negotiation.resources.PromptTemplate;
+import net.openan.a2at.sdk.core.model.PromptTemplate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

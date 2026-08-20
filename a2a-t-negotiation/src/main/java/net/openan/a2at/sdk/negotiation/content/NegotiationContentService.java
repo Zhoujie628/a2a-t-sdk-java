@@ -8,10 +8,10 @@ import java.util.Optional;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.PromptRuntimeConfig;
+import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
-import net.openan.a2at.sdk.negotiation.resources.PromptTemplate;
 
 /**
  * Shared service for the negotiation content layer consumed by both the client and the server facade.
@@ -176,28 +176,6 @@ public final class NegotiationContentService {
      */
     public MetadataContent generateRejectFromText(String text, NegotiationContext context, String templateUri) {
         return orchestrator.generateRejectFromText(text, context, templateUri);
-    }
-
-    /**
-     * Lists every template available for the configured language across all A2A-T extensions; never throws.
-     *
-     * @return loadable templates of the configured language across all extensions, sorted by template URI; empty when
-     *     none can be loaded
-     */
-    public List<PromptTemplate> getPrompts() {
-        return orchestrator.getPrompts();
-    }
-
-    /**
-     * Loads one template by its URI regardless of the extension; never throws.
-     *
-     * @param templateUri template URI such as {@code Negotiation-T/v1/target-negotiation/propose} or
-     *     {@code Task-T/v1/energy-saving}
-     * @return the addressed template, or an empty optional when the URI is malformed or no template exists for it in
-     *     the configured language
-     */
-    public Optional<PromptTemplate> getPrompt(String templateUri) {
-        return orchestrator.getPrompt(templateUri);
     }
 
     /**

@@ -6,15 +6,16 @@ import java.util.Map;
 import java.util.Optional;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.negotiation.content.FilledParamData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContentService;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
-import net.openan.a2at.sdk.negotiation.resources.PromptTemplate;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationStatus;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationType;
+import net.openan.a2at.sdk.prompt.resources.catalog.TemplateQueryService;
 import net.openan.a2at.sdk.server.assembly.DefaultA2ATServerBuilder;
 import net.openan.a2at.sdk.server.compliance.ServerPromptComplianceOrchestrator;
 import net.openan.a2at.sdk.server.model.PromptComplianceResult;
@@ -33,6 +34,8 @@ public final class A2ATServer {
 
     private final NegotiationContentService negotiationContentService;
 
+    private final TemplateQueryService templateQueryService;
+
     /**
      * Creates a server facade from one user-supplied `.env` path.
      *
@@ -47,6 +50,7 @@ public final class A2ATServer {
         this.promptComplianceOrchestrator = builder.buildPromptComplianceOrchestrator();
         this.negotiationOrchestrator = builder.buildNegotiationOrchestrator();
         this.negotiationContentService = new NegotiationContentService(builder.buildNegotiationGenerationOrchestrator());
+        this.templateQueryService = builder.buildTemplateQueryService();
     }
 
     /**
@@ -247,7 +251,7 @@ public final class A2ATServer {
      *     none can be loaded
      */
     public List<PromptTemplate> getPrompts() {
-        return negotiationContentService.getPrompts();
+        return templateQueryService.getPrompts();
     }
 
     /**
@@ -262,7 +266,7 @@ public final class A2ATServer {
      *     the configured language
      */
     public Optional<PromptTemplate> getPrompt(String templateUri) {
-        return negotiationContentService.getPrompt(templateUri);
+        return templateQueryService.getPrompt(templateUri);
     }
 
     /**

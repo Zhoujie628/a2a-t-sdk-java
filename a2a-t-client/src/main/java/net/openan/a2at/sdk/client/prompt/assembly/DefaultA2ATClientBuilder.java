@@ -25,6 +25,7 @@ import net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
 import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationRole;
+import net.openan.a2at.sdk.prompt.resources.catalog.TemplateQueryService;
 import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
@@ -156,6 +157,20 @@ public final class DefaultA2ATClientBuilder {
         requireSupportedConfig();
         require(envPath, "Unified SDK env path must be configured.");
         return NegotiationContentService.buildOrchestrator(config, createLlmClient());
+    }
+
+    /**
+     * Builds the generic template query service from the configured unified SDK config.
+     *
+     * <p>The service answers the extension-agnostic template queries: the message language and the local template
+     * root come from the prompt runtime config, exactly like the negotiation generation orchestrator wiring.
+     *
+     * @return assembled template query service
+     */
+    public TemplateQueryService buildTemplateQueryService() {
+        require(config, "Unified SDK config must be configured.");
+        requireSupportedConfig();
+        return new TemplateQueryService(config.prompt().language(), config.prompt().localRootDir());
     }
 
     private void requireSupportedConfig() {
