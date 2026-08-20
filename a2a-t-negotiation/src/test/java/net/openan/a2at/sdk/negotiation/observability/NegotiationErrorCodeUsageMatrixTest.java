@@ -1,0 +1,367 @@
+package net.openan.a2at.sdk.negotiation.observability;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
+import net.openan.a2at.sdk.core.exception.A2ATError;
+import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
+import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
+import net.openan.a2at.sdk.llm.LLMClient;
+import net.openan.a2at.sdk.llm.LLMError;
+import net.openan.a2at.sdk.llm.LLMResponse;
+import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
+import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
+import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
+import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
+import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
+import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
+import net.openan.a2at.sdk.negotiation.resources.NegotiationTemplateLoader;
+import net.openan.a2at.sdk.negotiation.resources.PromptTemplate;
+import net.openan.a2at.sdk.negotiation.validation.NegotiationSemanticValidator;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
+
+/**
+ * Drives every row of the negotiation error-code usage matrix through the real pipelines.
+ *
+ * <p>Each row triggers one failure condition of the documented matrix and asserts the exception type, the public error
+ * code, the number of LLM calls (encoding retryability: a retryable failure consumes all attempts, a non-retryable
+ * failure exactly one or zero), and that a structured detail identifying the problem field or slot is carried.
+ */
+class NegotiationErrorCodeUsageMatrixTest {
+
+    private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
+
+    private static final String INFORMATION_PROPOSE_URI = "Negotiation-T/v1/information-negotiation/propose";
+
+    private static final String INFORMATION_ENDING_URI = "Negotiation-T/v1/information-negotiation/accept-reject";
+
+    private static final String VALID_CONTEXT_PROMPT = "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5";
+
+    private static final Map<String, Object> SCHEMA = Map.of("type", "object");
+
+    @TestFactory
+    Stream<DynamicTest> everyErrorCodeRowOfTheMatrixBehavesAsPinned() {
+        return Stream.of(
+                row(
+                        "generation_template_missing",
+                        "not-a-json",
+                        0,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .templateLoader(missingTemplateLoader())
+                                .build()
+                                .generateProposeFromData(proposeData(), INFORMATION_PROPOSE_URI),
+                        NegotiationGenerationException.class,
+                        A2ATErrorCodes.TEMPLATE_NOT_FOUND),
+                row(
+                        "generation_content_extract_failed_is_retryable",
+                        "not-a-json-object",
+                        2,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .maxAttempts(2)
+                                .build()
+                                .generateProposeFromText(
+                                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI),
+                        NegotiationGenerationException.class,
+                        A2ATErrorCodes.NEGOTIATION_CONTENT_EXTRACT_FAILED),
+                row(
+                        "generation_slot_missing_is_not_retryable",
+                        "{}",
+                        1,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .maxAttempts(3)
+                                .build()
+                                .generateProposeFromText(
+                                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI),
+                        NegotiationGenerationException.class,
+                        A2ATErrorCodes.NEGOTIATION_SLOT_MISSING),
+                row(
+                        "generation_phase_content_mismatch_is_invalid_input",
+                        "{\"conclusion\":\"Reject\",\"items\":[{\"name\":\"区域\",\"value\":\"松山湖\"}]}",
+                        1,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .maxAttempts(3)
+                                .build()
+                                .generateAcceptFromText(
+                                        "确认提供区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_ENDING_URI),
+                        NegotiationGenerationException.class,
+                        A2ATErrorCodes.NEGOTIATION_INVALID_INPUT),
+                row(
+                        "generation_llm_infrastructure_failure_is_retryable",
+                        null,
+                        2,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .maxAttempts(2)
+                                .build()
+                                .generateProposeFromText(
+                                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI),
+                        NegotiationGenerationException.class,
+                        A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR),
+                row(
+                        "param_non_negotiation_input",
+                        semanticPayload("information"),
+                        0,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .build()
+                                .validateAndFillingProposeData(
+                                        "plain text without any negotiation section", SCHEMA, INFORMATION_PROPOSE_URI),
+                        NegotiationParamExtractionException.class,
+                        A2ATErrorCodes.NEGOTIATION_INVALID_INPUT),
+                row(
+                        "param_rule_violation",
+                        semanticPayload("information"),
+                        0,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .build()
+                                .validateAndFillingProposeData(
+                                        "## 协商上下文\n- id: " + UUID + "\n- round: 9\n- maxRounds: 5",
+                                        SCHEMA,
+                                        INFORMATION_PROPOSE_URI),
+                        NegotiationParamExtractionException.class,
+                        A2ATErrorCodes.NEGOTIATION_RULE_VIOLATION),
+                row(
+                        "param_semantic_rejection",
+                        "{\"semantic_verdict\":false,\"negotiation_type\":null,\"errors\":[{\"slot_name\":"
+                                + "\"section.info_static\",\"code\":\"template_type_mismatch\",\"message\":"
+                                + "\"inconsistent\"}],\"params\":{}}",
+                        1,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .maxAttempts(3)
+                                .build()
+                                .validateAndFillingProposeData(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                        NegotiationParamExtractionException.class,
+                        A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED),
+                row(
+                        "param_llm_infrastructure_failure_is_retryable",
+                        null,
+                        2,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .maxAttempts(2)
+                                .build()
+                                .validateAndFillingProposeData(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                        NegotiationParamExtractionException.class,
+                        A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR),
+                row(
+                        "entry_programming_error_carries_no_code_but_a_field",
+                        "not-a-json",
+                        0,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .build()
+                                .generateProposeFromData(proposeData(), "malformed-template-uri"),
+                        NegotiationContentException.class,
+                        null),
+                row(
+                        "internal_render_failure_is_wrapped_as_slot_missing",
+                        "not-a-json",
+                        0,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .templateLoader(nullContentTemplateLoader())
+                                .build()
+                                .generateProposeFromData(proposeData(), INFORMATION_PROPOSE_URI),
+                        NegotiationGenerationException.class,
+                        A2ATErrorCodes.NEGOTIATION_SLOT_MISSING),
+                row(
+                        "internal_semantic_shape_violation_is_retryable_infrastructure",
+                        "{\"semantic_verdict\":true,\"errors\":[],\"params\":{}}",
+                        2,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .maxAttempts(2)
+                                .build()
+                                .validateAndFillingProposeData(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                        NegotiationParamExtractionException.class,
+                        A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR),
+                row(
+                        "param_prompt_resource_missing_is_template_not_found",
+                        semanticPayload("information"),
+                        0,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .semanticValidator(throwingSemanticValidator())
+                                .build()
+                                .validateAndFillingProposeData(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                        NegotiationParamExtractionException.class,
+                        A2ATErrorCodes.TEMPLATE_NOT_FOUND));
+    }
+
+    private static DynamicTest row(
+            String name,
+            String llmPayload,
+            int expectedLlmCalls,
+            Scenario scenario,
+            Class<? extends RuntimeException> expectedType,
+            String expectedCode) {
+        return DynamicTest.dynamicTest(
+                name, () -> verify(name, llmPayload, expectedLlmCalls, scenario, expectedType, expectedCode));
+    }
+
+    private static void verify(
+            String name,
+            String llmPayload,
+            int expectedLlmCalls,
+            Scenario scenario,
+            Class<? extends RuntimeException> expectedType,
+            String expectedCode) {
+        CountingClient llm = new CountingClient(llmPayload);
+        RuntimeException failure = runExpectingFailure(scenario.action(llm), name, expectedType);
+
+        assertTrue(
+                expectedType.isInstance(failure),
+                "row " + name + " must fail with " + expectedType.getSimpleName() + " but failed with "
+                        + failure.getClass().getSimpleName());
+        assertEquals(expectedLlmCalls, llm.calls.get(), "row " + name + " LLM call count");
+        assertTrue(
+                failure.getMessage() != null && !failure.getMessage().isBlank(),
+                "row " + name + " must carry a non-blank message");
+
+        if (failure instanceof NegotiationContentException contentFailure) {
+            assertFalse(A2ATError.class.isInstance(contentFailure), "row " + name + " must stay outside A2ATError");
+            assertNotNull(contentFailure.getField(), "row " + name + " must carry a problem field");
+            return;
+        }
+        if (failure instanceof NegotiationGenerationException generationFailure) {
+            assertEquals(expectedCode, generationFailure.getCode(), "row " + name + " public code");
+            return;
+        }
+        if (failure instanceof NegotiationParamExtractionException extractionFailure) {
+            assertEquals(expectedCode, extractionFailure.getCode(), "row " + name + " public code");
+            boolean expectsSlotDetails = A2ATErrorCodes.NEGOTIATION_RULE_VIOLATION.equals(expectedCode)
+                    || A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED.equals(expectedCode)
+                    || A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR.equals(expectedCode);
+            if (expectsSlotDetails) {
+                assertFalse(
+                        extractionFailure.getErrors().isEmpty(),
+                        "row " + name + " must carry non-empty structured error details");
+                assertTrue(
+                        extractionFailure.getErrors().stream()
+                                .allMatch(error -> error.slotName() != null
+                                        && !error.slotName().isBlank()),
+                        "row " + name + " error details must carry slot names");
+            }
+            return;
+        }
+        fail("row " + name + " failed with an unexpected exception type: "
+                + failure.getClass().getName());
+    }
+
+    private static RuntimeException runExpectingFailure(
+            Runnable action, String name, Class<? extends RuntimeException> expectedType) {
+        try {
+            action.run();
+        } catch (RuntimeException failure) {
+            return failure;
+        }
+        fail("row " + name + " was expected to fail with " + expectedType.getSimpleName() + " but completed");
+        return null;
+    }
+
+    private static NegotiationProposeData proposeData() {
+        return new NegotiationProposeData(
+                new NegotiationContext(UUID, 1, 5),
+                new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null));
+    }
+
+    private static String semanticPayload(String negotiationType) {
+        return "{\"semantic_verdict\":true,\"negotiation_type\":\"" + negotiationType + "\",\"errors\":[],"
+                + "\"params\":{\"region\":\"松山湖\"}}";
+    }
+
+    private static NegotiationTemplateLoader missingTemplateLoader() {
+        return new NegotiationTemplateLoader() {
+            @Override
+            public PromptTemplate load(NegotiationReference reference) {
+                throw new ResourceNotFoundException("Negotiation template does not exist.", reference.uri());
+            }
+
+            @Override
+            public List<PromptTemplate> loadAll() {
+                return List.of();
+            }
+        };
+    }
+
+    private static NegotiationTemplateLoader nullContentTemplateLoader() {
+        return new NegotiationTemplateLoader() {
+            @Override
+            public PromptTemplate load(NegotiationReference reference) {
+                return new PromptTemplate(reference.uri(), "broken template", null);
+            }
+
+            @Override
+            public List<PromptTemplate> loadAll() {
+                return List.of();
+            }
+        };
+    }
+
+    private static NegotiationSemanticValidator throwingSemanticValidator() {
+        return (prompt, callerSchema, reference) -> {
+            throw new ResourceNotFoundException(
+                    "Semantic validation prompt does not exist.", "prompt_resources/prompts");
+        };
+    }
+
+    @FunctionalInterface
+    private interface Scenario {
+
+        Runnable action(CountingClient llm);
+    }
+
+    private static final class CountingClient implements LLMClient {
+
+        private final AtomicInteger calls = new AtomicInteger();
+
+        private final String payload;
+
+        private CountingClient(String payload) {
+            this.payload = payload;
+        }
+
+        @Override
+        public LLMResponse structured(
+                List<Map<String, String>> messages,
+                Map<String, Object> jsonSchema,
+                Double temperature,
+                Integer maxTokens) {
+            calls.incrementAndGet();
+            if (payload == null) {
+                throw new LLMError("LLM endpoint unavailable.");
+            }
+            return new LLMResponse(payload, "test-model", Map.of("prompt_tokens", 1, "completion_tokens", 1), Map.of());
+        }
+    }
+}

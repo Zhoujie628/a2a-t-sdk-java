@@ -1,0 +1,183 @@
+package net.openan.a2at.sdk.client.api;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import net.openan.a2at.sdk.client.A2ATClient;
+import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
+import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.MetadataContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
+import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
+import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+/**
+ * Drives the env-configured negotiation behavior of the client facade end to end.
+ *
+ * <p>All three negotiation-relevant env keys must become observable in the facade behavior: the language selects the
+ * Chinese templates, the local resource root overrides one template, and the LLM attempt limit bounds the retry loop of
+ * the from-text generation. A second test proves the zero-configuration defaults (English templates, three attempts,
+ * built-in resources) work out of the box.
+ */
+class A2ATClientNegotiationEnvConfigTest {
+
+    private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
+
+    private static final String INFORMATION_PROPOSE_URI = "Negotiation-T/v1/information-negotiation/propose";
+
+    private static final String CUSTOM_TEMPLATE_MARKER = "CUSTOM-TEMPLATE-MARKER-7d31";
+
+    @TempDir
+    Path tempDir;
+
+    private Logger rootLogger;
+
+    private ListAppender<ILoggingEvent> appender;
+
+    @BeforeEach
+    void attachAppender() {
+        rootLogger =
+                (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        appender = new ListAppender<>();
+        appender.start();
+        rootLogger.addAppender(appender);
+    }
+
+    @AfterEach
+    void detachAppender() {
+        rootLogger.detachAppender(appender);
+        appender.stop();
+    }
+
+    @Test
+    void languageLocalRootAndMaxAttemptsAreAllObservableInFacadeBehavior() throws IOException {
+        Path customRoot = writeCustomRootWithMarkeredTemplate();
+        Path envFile = writeEnvFile(
+                "A2AT_LANGUAGE=zh-CN",
+                "A2AT_PROMPT_SOURCE_TYPE=classpath",
+                "A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR=" + customRoot.toString().replace('\\', '/'),
+                "A2AT_LLM_PROVIDER=local_rule",
+                "A2AT_LLM_MAX_ATTEMPTS=2",
+                "A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory");
+        A2ATClient client = new A2ATClient(envFile);
+
+        MetadataContent result = client.generateNegotiationProposePromptFromData(
+                new NegotiationProposeData(
+                        new NegotiationContext(UUID, 1, 5),
+                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                INFORMATION_PROPOSE_URI);
+
+        assertTrue(result.promptText().contains("协商上下文"), "the zh-CN language must select the Chinese templates");
+        assertTrue(
+                result.promptText().contains(CUSTOM_TEMPLATE_MARKER),
+                "the local resource root template must win over the built-in template");
+
+        NegotiationGenerationException failure = assertThrows(
+                NegotiationGenerationException.class,
+                () -> client.generateNegotiationProposePromptFromText(
+                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI));
+        assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, failure.getCode());
+        assertEquals(
+                1,
+                retryEventCount(),
+                "A2AT_LLM_MAX_ATTEMPTS=2 must allow exactly one retry before surfacing the failure");
+        assertEquals(1, exhaustedEventCount(), "the retry loop must report exhaustion exactly once");
+    }
+
+    @Test
+    void zeroConfigDefaultsWorkOutOfTheBox() throws IOException {
+        Path envFile = writeEnvFile("A2AT_LLM_PROVIDER=local_rule");
+        A2ATClient client = new A2ATClient(envFile);
+
+        MetadataContent result = client.generateNegotiationProposePromptFromData(
+                new NegotiationProposeData(
+                        new NegotiationContext(UUID, 1, 5),
+                        new InfoProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
+                INFORMATION_PROPOSE_URI);
+
+        assertTrue(result.promptText().contains("Negotiation Context"), "the default language must be en-US");
+        assertTrue(result.promptText().contains("Required Information Items"));
+        assertEquals(6, client.getNegotiationPrompts().size(), "the built-in resources must be used by default");
+        assertTrue(client.getNegotiationPrompt(INFORMATION_PROPOSE_URI).isPresent());
+
+        assertThrows(
+                NegotiationGenerationException.class,
+                () -> client.generateNegotiationProposePromptFromText(
+                        "Provide the energy-saving region.",
+                        new NegotiationContext(UUID, 1, 5),
+                        INFORMATION_PROPOSE_URI));
+        assertEquals(
+                2,
+                retryEventCount(),
+                "the default attempt limit of 3 must allow exactly two retries before surfacing the failure");
+        assertEquals(1, exhaustedEventCount());
+    }
+
+    private Path writeEnvFile(String... lines) throws IOException {
+        Path envFile = tempDir.resolve("client.env");
+        Files.writeString(envFile, String.join("\n", lines) + "\n", StandardCharsets.UTF_8);
+        return envFile;
+    }
+
+    private Path writeCustomRootWithMarkeredTemplate() throws IOException {
+        Path customTemplate = tempDir.resolve("custom-root")
+                .resolve("templates")
+                .resolve("Negotiation-T")
+                .resolve("v1")
+                .resolve("information-negotiation")
+                .resolve("propose")
+                .resolve("zh-CN")
+                .resolve("template.md");
+        Files.createDirectories(customTemplate.getParent());
+        Files.writeString(
+                customTemplate,
+                builtinTemplate(INFORMATION_PROPOSE_URI, "zh-CN") + "\n\n## 自定义标记\n" + CUSTOM_TEMPLATE_MARKER + "\n",
+                StandardCharsets.UTF_8);
+        return tempDir.resolve("custom-root");
+    }
+
+    private static String builtinTemplate(String templateUri, String language) throws IOException {
+        String typeSegment = templateUri.split("/")[2];
+        String phaseSegment = templateUri.split("/")[3];
+        String classpathPath = "prompt_resources/templates/Negotiation-T/v1/" + typeSegment + "/" + phaseSegment + "/"
+                + language + "/template.md";
+        InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(classpathPath);
+        assertFalse(stream == null, "the built-in template must exist on the classpath: " + classpathPath);
+        try (stream) {
+            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    private long retryEventCount() {
+        return countEvents("negotiation_llm_retry");
+    }
+
+    private long exhaustedEventCount() {
+        return countEvents("negotiation_llm_retry_exhausted");
+    }
+
+    private long countEvents(String eventName) {
+        return appender.list.stream()
+                .filter(event -> event.getLevel() == Level.WARN)
+                .map(ILoggingEvent::getFormattedMessage)
+                .filter(message -> message.startsWith(eventName + " "))
+                .count();
+    }
+}
