@@ -47,11 +47,11 @@ public final class FeasibilityProposeGenerator extends AbstractNegotiationGenera
                     "content.action");
         }
         Map<String, String> slots = new LinkedHashMap<>();
-        slots.put(vocabulary.get("section.context"), contextSlotValue(context, vocabulary));
+        slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(vocabulary.get("slot.feasibility"), proposeContent.feasibilityNegotiationDescription());
         if (action == NegotiationAction.REQUEST_FEASIBILITY_EVALUATION) {
             slots.put(
-                    vocabulary.get("section.feasibility_evaluate"),
+                    vocabulary.get("slot.feasibility_evaluate"),
                     formatItems(
                             requiredItems(
                                     proposeContent.contentsToEvaluate(),
@@ -60,7 +60,7 @@ public final class FeasibilityProposeGenerator extends AbstractNegotiationGenera
                             vocabulary));
         } else {
             slots.put(
-                    vocabulary.get("section.feasibility_infeasible"),
+                    vocabulary.get("slot.feasibility_infeasible"),
                     formatItems(
                             requiredItems(
                                     proposeContent.infeasibilityDetailsAndProposal(),

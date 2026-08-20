@@ -38,19 +38,19 @@ public final class TargetProposeGenerator extends AbstractNegotiationGenerator {
                 "content.targetNegotiationDescription",
                 "Target negotiation description");
         Map<String, String> slots = new LinkedHashMap<>();
-        slots.put(vocabulary.get("section.context"), contextSlotValue(context, vocabulary));
+        slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(vocabulary.get("slot.target"), proposeContent.targetNegotiationDescription());
         if (context.round() == 1) {
             slots.put(
-                    vocabulary.get("section.target_intent"),
+                    vocabulary.get("slot.target_intent"),
                     formatItems(proposeContent.intentUnderstanding(), vocabulary));
         } else {
             slots.put(
-                    vocabulary.get("section.target_alignment"),
+                    vocabulary.get("slot.target_alignment"),
                     formatItems(proposeContent.alignmentAndClarification(), vocabulary));
         }
         slots.put(
-                vocabulary.get("section.target_clarification"),
+                vocabulary.get("slot.target_clarification"),
                 formatItems(proposeContent.requestForClarification(), vocabulary));
         return render(template, slots);
     }

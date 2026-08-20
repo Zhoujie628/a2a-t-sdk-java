@@ -34,9 +34,9 @@ public final class TargetEndingGenerator extends AbstractNegotiationGenerator {
         TargetEndingContent endingContent = contentOf(content, TargetEndingContent.class, "Target ending generator");
         NegotiationConclusion conclusion = renderableConclusion(endingContent.conclusion());
         Map<String, String> slots = new LinkedHashMap<>();
-        slots.put(vocabulary.get("section.context"), contextSlotValue(context, vocabulary));
-        slots.put(vocabulary.get("section.target_conclusion"), conclusion.literal());
-        slots.put(vocabulary.get("section.target_result_content"), resultContentSlotValue(endingContent, conclusion));
+        slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
+        slots.put(vocabulary.get("slot.target_conclusion"), conclusion.literal());
+        slots.put(vocabulary.get("slot.target_result_content"), resultContentSlotValue(endingContent, conclusion));
         return render(template, slots);
     }
 
