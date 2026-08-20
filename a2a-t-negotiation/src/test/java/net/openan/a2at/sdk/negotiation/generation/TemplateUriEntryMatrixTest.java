@@ -187,7 +187,7 @@ class TemplateUriEntryMatrixTest {
             throw new AssertionError("Classpath resource must exist: " + resourcePath);
         }
         try (stream) {
-            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+            return new String(stream.readAllBytes(), StandardCharsets.UTF_8).replace("\r\n", "\n");
         } catch (IOException exception) {
             throw new AssertionError("Failed to read classpath resource " + resourcePath, exception);
         }

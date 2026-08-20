@@ -281,7 +281,7 @@ class NegotiationContentExtractorTest {
         } catch (NegotiationGenerationException expectedForReject) {
             // The scripted conclusion only satisfies the accept phase; the messages are recorded either way.
         }
-        String userPrompt = client.lastMessages.get(1).get("content");
+        String userPrompt = client.lastMessages.get(1).get("content").replace("\r\n", "\n");
         int start = userPrompt.indexOf("协商阶段：") + "协商阶段：".length();
         return userPrompt.substring(start, userPrompt.indexOf('\n', start));
     }
