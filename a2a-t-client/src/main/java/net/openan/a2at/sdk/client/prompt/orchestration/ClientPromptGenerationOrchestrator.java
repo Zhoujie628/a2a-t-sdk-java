@@ -20,64 +20,6 @@ public interface ClientPromptGenerationOrchestrator {
     PromptGenerationResult generateTaskPrompt(Object userInput);
 
     /**
-     * Generates a processed task prompt from natural-language input using the template identified by the template URI.
-     *
-     * @param taskInputNl natural-language task input
-     * @param promptTemplateUri template URI identifying the target template
-     * @return prompt-generation result
-     */
-    PromptGenerationResult generateTaskPromptFromNl(String taskInputNl, String promptTemplateUri);
-
-    /**
-     * Generates a processed task prompt from structured input using the template identified by the template URI.
-     *
-     * @param taskInputJsonData structured task input as a string-to-object map
-     * @param promptTemplateUri template URI identifying the target template
-     * @return prompt-generation result
-     */
-    PromptGenerationResult generateTaskPromptFromJsonData(
-            Map<String, Object> taskInputJsonData, String promptTemplateUri);
-
-    /**
-     * Generates an authorization prompt from natural-language input using the template identified by the authorization
-     * type.
-     *
-     * @param inputNl natural-language authorization input
-     * @param authorizationType authorization type used as the template identifier
-     * @return prompt-generation result
-     */
-    PromptGenerationResult generateAuthorizationPromptFromNl(String inputNl, String authorizationType);
-
-    /**
-     * Generates an authorization prompt from structured input using the template identified by the authorization type.
-     *
-     * @param inputJsonData structured authorization input as a string-to-object map
-     * @param authorizationType authorization type used as the template identifier
-     * @return prompt-generation result
-     */
-    PromptGenerationResult generateAuthorizationPromptFromJsonData(
-            Map<String, Object> inputJsonData, String authorizationType);
-
-    /**
-     * Generates a notification prompt from natural-language input using the template identified by the template URI.
-     *
-     * @param inputNl natural-language notification input
-     * @param promptTemplateUri template URI identifying the target template
-     * @return prompt-generation result
-     */
-    PromptGenerationResult generateNotificationPromptFromNl(String inputNl, String promptTemplateUri);
-
-    /**
-     * Generates a notification prompt from structured input using the template identified by the template URI.
-     *
-     * @param inputJsonData structured notification input as a string-to-object map
-     * @param promptTemplateUri template URI identifying the target template
-     * @return prompt-generation result
-     */
-    PromptGenerationResult generateNotificationPromptFromJsonData(
-            Map<String, Object> inputJsonData, String promptTemplateUri);
-
-    /**
      * Generates a task prompt with metadata from natural-language input using the template identified by the template
      * URI, bypassing scenario recognition.
      *
