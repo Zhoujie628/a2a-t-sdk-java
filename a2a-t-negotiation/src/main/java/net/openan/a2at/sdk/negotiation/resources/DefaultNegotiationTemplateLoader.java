@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
+import net.openan.a2at.sdk.core.resources.PathSegments;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
@@ -60,11 +62,7 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
      * @throws NegotiationContentException if the language is not a simple path segment
      */
     public DefaultNegotiationTemplateLoader(String language, String localRootDir) {
-        if (language == null
-                || language.isBlank()
-                || language.contains("/")
-                || language.contains("\\")
-                || language.contains("..")) {
+        if (!PathSegments.isSimpleSegment(language)) {
             throw new NegotiationContentException(
                     "Negotiation template loader language must be a non-blank simple path segment but was " + language
                             + ".",
@@ -137,7 +135,7 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
             }
         }
         String classpathPath = CLASSPATH_ROOT + relativePath;
-        InputStream stream = openClasspathResource(classpathPath);
+        InputStream stream = ClasspathResourceStreams.open(classpathPath);
         if (stream == null) {
             throw new ResourceNotFoundException(
                     "Negotiation template does not exist for the configured language; set A2AT_LANGUAGE to a"
@@ -150,17 +148,6 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
         } catch (IOException exception) {
             throw new SdkException("Failed to read negotiation template: " + classpathPath, exception);
         }
-    }
-
-    private static InputStream openClasspathResource(String classpathPath) {
-        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        if (contextClassLoader != null) {
-            InputStream stream = contextClassLoader.getResourceAsStream(classpathPath);
-            if (stream != null) {
-                return stream;
-            }
-        }
-        return DefaultNegotiationTemplateLoader.class.getClassLoader().getResourceAsStream(classpathPath);
     }
 
     /**

@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
+import net.openan.a2at.sdk.core.resources.PathSegments;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 
 /**
@@ -49,12 +51,12 @@ public class NegotiationPromptResourceLoader {
     }
 
     private static String loadPrompt(String fileName, String promptCategory, String language) {
-        if (!isSimpleSegment(promptCategory)) {
+        if (!PathSegments.isSimpleSegment(promptCategory)) {
             throw new NegotiationContentException(
                     "Prompt category must be a non-blank simple path segment but was " + promptCategory + ".",
                     "promptCategory");
         }
-        if (!isSimpleSegment(language)) {
+        if (!PathSegments.isSimpleSegment(language)) {
             throw new NegotiationContentException(
                     "Prompt language must be a non-blank simple path segment but was " + language + ".", "language");
         }
@@ -63,7 +65,7 @@ public class NegotiationPromptResourceLoader {
     }
 
     private static String readResource(String path) {
-        InputStream stream = openClasspathResource(path);
+        InputStream stream = ClasspathResourceStreams.open(path);
         if (stream == null) {
             throw new ResourceNotFoundException(
                     "Negotiation prompt resource does not exist on the classpath: " + path, path);
@@ -73,24 +75,5 @@ public class NegotiationPromptResourceLoader {
         } catch (IOException exception) {
             throw new SdkException("Failed to read negotiation prompt resource: " + path, exception);
         }
-    }
-
-    private static InputStream openClasspathResource(String path) {
-        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        if (contextClassLoader != null) {
-            InputStream stream = contextClassLoader.getResourceAsStream(path);
-            if (stream != null) {
-                return stream;
-            }
-        }
-        return NegotiationPromptResourceLoader.class.getClassLoader().getResourceAsStream(path);
-    }
-
-    private static boolean isSimpleSegment(String value) {
-        return value != null
-                && !value.isBlank()
-                && !value.contains("/")
-                && !value.contains("\\")
-                && !value.contains("..");
     }
 }

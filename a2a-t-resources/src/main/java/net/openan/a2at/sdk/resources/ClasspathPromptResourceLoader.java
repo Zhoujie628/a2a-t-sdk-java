@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 
 /**
  * Loads prompt resources from the classpath bundle packaged with the SDK.
@@ -21,7 +22,7 @@ public final class ClasspathPromptResourceLoader {
      */
     public String loadText(PromptResourceKey key) {
         String relativePath = key.relativePath();
-        InputStream stream = loadResource(relativePath);
+        InputStream stream = ClasspathResourceStreams.open(relativePath);
         if (stream == null) {
             throw new ResourceNotFoundException("Prompt resource file does not exist.", relativePath);
         }
@@ -31,16 +32,5 @@ public final class ClasspathPromptResourceLoader {
         } catch (IOException error) {
             throw new SdkException("Failed to read prompt resource: " + relativePath, error);
         }
-    }
-
-    private static InputStream loadResource(String relativePath) {
-        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        if (contextClassLoader != null) {
-            InputStream stream = contextClassLoader.getResourceAsStream(relativePath);
-            if (stream != null) {
-                return stream;
-            }
-        }
-        return ClasspathPromptResourceLoader.class.getClassLoader().getResourceAsStream(relativePath);
     }
 }

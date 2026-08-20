@@ -15,6 +15,7 @@ import java.util.Objects;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.exception.SdkException;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
+import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
@@ -131,7 +132,7 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
 
     private static String loadPromptResource(String fileName, String language) {
         String classpathPath = PROMPT_RESOURCE_ROOT + language + "/" + fileName;
-        InputStream stream = openClasspathResource(classpathPath);
+        InputStream stream = ClasspathResourceStreams.open(classpathPath);
         if (stream == null) {
             throw new ResourceNotFoundException(
                     "Negotiation semantic validation prompt resource does not exist for language " + language
@@ -144,17 +145,6 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
             throw new SdkException(
                     "Failed to read negotiation semantic validation prompt: " + classpathPath, exception);
         }
-    }
-
-    private static InputStream openClasspathResource(String classpathPath) {
-        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        if (contextClassLoader != null) {
-            InputStream stream = contextClassLoader.getResourceAsStream(classpathPath);
-            if (stream != null) {
-                return stream;
-            }
-        }
-        return DefaultNegotiationSemanticValidator.class.getClassLoader().getResourceAsStream(classpathPath);
     }
 
     private static String toJson(Map<String, Object> callerSchema) {

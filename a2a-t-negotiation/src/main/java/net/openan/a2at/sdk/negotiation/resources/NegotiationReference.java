@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.negotiation.resources;
 
 import java.util.Locale;
+import net.openan.a2at.sdk.core.resources.PathSegments;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
@@ -36,7 +37,7 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
         if (phase == null) {
             throw new NegotiationContentException("Negotiation reference phase must not be null.", "phase");
         }
-        if (!isSimpleSegment(language)) {
+        if (!PathSegments.isSimpleSegment(language)) {
             throw new NegotiationContentException(
                     "Negotiation reference language must be a non-blank simple path segment but was " + language + ".",
                     "language");
@@ -136,13 +137,5 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
                             + " (" + expectedPhase.uriSegment() + "): " + templateUri + ".",
                     "templateUri");
         }
-    }
-
-    private static boolean isSimpleSegment(String value) {
-        return value != null
-                && !value.isBlank()
-                && !value.contains("/")
-                && !value.contains("\\")
-                && !value.contains("..");
     }
 }
