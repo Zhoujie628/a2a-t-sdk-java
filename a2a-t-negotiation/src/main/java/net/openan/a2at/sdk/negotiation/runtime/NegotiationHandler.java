@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
 import net.openan.a2at.sdk.negotiation.handler.Negotiation;
 import net.openan.a2at.sdk.negotiation.runtime.helper.NegotiationPayloadMapper;
 import net.openan.a2at.sdk.negotiation.store.NegotiationStore;
@@ -17,11 +18,9 @@ import net.openan.a2at.sdk.negotiation.types.model.*;
  */
 public final class NegotiationHandler {
 
-    public static final String NEGOTIATION_T_URI_NL =
-            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/NL/v1";
+    public static final String NEGOTIATION_T_URI_NL = ExtensionUriConstants.NEGOTIATION_T_EXTENSION_URI_NL;
 
-    public static final String NEGOTIATION_T_URI =
-            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1";
+    public static final String NEGOTIATION_T_URI = ExtensionUriConstants.NEGOTIATION_T_EXTENSION_URI;
 
     /**
      * @deprecated Use {@link #NEGOTIATION_T_URI_NL} instead.

@@ -24,4 +24,21 @@ public final class ExtensionUriConstants {
     /** URI for the Notification-T extension. */
     public static final String NOTIFICATION_T_EXTENSION_URI =
             "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Notification-T/v1";
+
+    /**
+     * Canonical URI for the Negotiation-T extension.
+     *
+     * <p>This is the URI under which generated negotiation messages travel in A2A-T metadata.
+     */
+    public static final String NEGOTIATION_T_EXTENSION_URI =
+            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1";
+
+    /**
+     * Legacy alias URI for the Negotiation-T extension.
+     *
+     * <p>Kept for runtime compatibility reads of messages emitted under the NL naming; new metadata emission uses
+     * {@link #NEGOTIATION_T_EXTENSION_URI}.
+     */
+    public static final String NEGOTIATION_T_EXTENSION_URI_NL =
+            "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/NL/v1";
 }
