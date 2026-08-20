@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-import net.openan.a2at.sdk.negotiation.content.MetadataContent;
+import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.golden.GoldenInputs;
 import net.openan.a2at.sdk.negotiation.golden.GoldenInputs.GoldenCase;
 import org.junit.jupiter.params.ParameterizedTest;

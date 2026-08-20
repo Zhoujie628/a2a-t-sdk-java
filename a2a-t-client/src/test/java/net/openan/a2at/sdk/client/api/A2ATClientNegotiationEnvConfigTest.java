@@ -18,7 +18,7 @@ import java.util.List;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
-import net.openan.a2at.sdk.negotiation.content.MetadataContent;
+import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;

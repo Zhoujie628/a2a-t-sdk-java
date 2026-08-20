@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.MetadataContent;
+import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
 import net.openan.a2at.sdk.negotiation.golden.GoldenInputs.GoldenCase;

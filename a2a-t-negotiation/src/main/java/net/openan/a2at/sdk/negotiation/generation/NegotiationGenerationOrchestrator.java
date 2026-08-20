@@ -7,9 +7,10 @@ import java.util.function.Supplier;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.A2ATParamExtractionError;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
+import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
+import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.negotiation.content.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -430,7 +431,8 @@ public final class NegotiationGenerationOrchestrator {
                 reference.phase(),
                 context.round(),
                 context.id());
-        return new MetadataContent(reference.uri(), promptText);
+        return new MetadataContent(
+                reference.uri(), promptText, ExtensionUriConstants.NEGOTIATION_T_EXTENSION_URI);
     }
 
     private FilledParamData validateAndFilling(

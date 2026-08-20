@@ -8,9 +8,9 @@ import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.assembly.DefaultA2ATClientBuilder;
 import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrchestrator;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
+import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.PromptRuntimeConfig;
 import net.openan.a2at.sdk.negotiation.content.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
@@ -67,7 +67,7 @@ public final class A2ATClient {
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      */
-    public net.openan.a2at.sdk.client.model.MetadataContent generateTaskPromptFromText(
+    public MetadataContent generateTaskPromptFromText(
             String text, String templateUri) {
         return promptGenerationOrchestrator.generateTaskPromptFromText(text, templateUri);
     }
@@ -81,7 +81,7 @@ public final class A2ATClient {
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      */
-    public net.openan.a2at.sdk.client.model.MetadataContent generateTaskPromptFromDataWithSchema(
+    public MetadataContent generateTaskPromptFromDataWithSchema(
             Map<String, Object> data, Map<String, Object> schema, String templateUri) {
         return promptGenerationOrchestrator.generateTaskPromptFromDataWithSchema(data, schema, templateUri);
     }
@@ -94,7 +94,7 @@ public final class A2ATClient {
      * @param authorizationType authorization type used as the template identifier
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      */
-    public net.openan.a2at.sdk.client.model.MetadataContent generateAuthPromptFromText(
+    public MetadataContent generateAuthPromptFromText(
             String text, String authorizationType) {
         return promptGenerationOrchestrator.generateAuthPromptFromText(text, authorizationType);
     }
@@ -108,7 +108,7 @@ public final class A2ATClient {
      * @param authorizationType authorization type used as the template identifier
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      */
-    public net.openan.a2at.sdk.client.model.MetadataContent generateAuthPromptFromDataWithSchema(
+    public MetadataContent generateAuthPromptFromDataWithSchema(
             Map<String, Object> data, Map<String, Object> schema, String authorizationType) {
         return promptGenerationOrchestrator.generateAuthPromptFromDataWithSchema(data, schema, authorizationType);
     }
@@ -121,7 +121,7 @@ public final class A2ATClient {
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      */
-    public net.openan.a2at.sdk.client.model.MetadataContent generateNotificationPromptFromText(
+    public MetadataContent generateNotificationPromptFromText(
             String text, String templateUri) {
         return promptGenerationOrchestrator.generateNotificationPromptFromText(text, templateUri);
     }
@@ -135,7 +135,7 @@ public final class A2ATClient {
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      */
-    public net.openan.a2at.sdk.client.model.MetadataContent generateNotificationPromptFromDataWithSchema(
+    public MetadataContent generateNotificationPromptFromDataWithSchema(
             Map<String, Object> data, Map<String, Object> schema, String templateUri) {
         return promptGenerationOrchestrator.generateNotificationPromptFromDataWithSchema(data, schema, templateUri);
     }

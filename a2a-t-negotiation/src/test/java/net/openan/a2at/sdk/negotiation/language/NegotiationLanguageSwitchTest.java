@@ -9,7 +9,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Stream;
-import net.openan.a2at.sdk.negotiation.content.MetadataContent;
+import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
 import net.openan.a2at.sdk.negotiation.golden.GoldenInputs;

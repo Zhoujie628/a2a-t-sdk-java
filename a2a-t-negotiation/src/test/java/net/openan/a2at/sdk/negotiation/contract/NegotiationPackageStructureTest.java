@@ -28,7 +28,6 @@ class NegotiationPackageStructureTest {
                         "FilledParamData.java",
                         "InfoEndingContent.java",
                         "InfoProposeContent.java",
-                        "MetadataContent.java",
                         "NegotiationAction.java",
                         "NegotiationConclusion.java",
                         "NegotiationContent.java",

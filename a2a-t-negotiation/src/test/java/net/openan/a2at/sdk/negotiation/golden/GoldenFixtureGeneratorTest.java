@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import net.openan.a2at.sdk.negotiation.content.MetadataContent;
+import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
 import org.junit.jupiter.api.Disabled;

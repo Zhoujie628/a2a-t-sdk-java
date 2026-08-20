@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.client.model.MetadataContent;
+import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.extractor.ClientSlotValueExtractor;
 import net.openan.a2at.sdk.client.prompt.loader.ClientSlotSchemaLoader;

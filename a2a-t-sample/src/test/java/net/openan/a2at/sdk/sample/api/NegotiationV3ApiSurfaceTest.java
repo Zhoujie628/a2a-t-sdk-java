@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.negotiation.content.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.MetadataContent;
+import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.server.A2ATServer;
 import org.junit.jupiter.api.Test;
 

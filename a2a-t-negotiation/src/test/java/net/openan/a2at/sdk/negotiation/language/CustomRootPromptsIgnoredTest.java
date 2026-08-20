@@ -12,7 +12,7 @@ import java.util.Map;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.MetadataContent;
+import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
