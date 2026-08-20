@@ -28,8 +28,15 @@ public final class ClientSampleFlow {
     static final String NOTIFICATION_T_EXTENSION_URI_NL =
             "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Notification-T/NL/v1";
 
-    static final String NATURAL_LANGUAGE_PROMPT_INPUT =
+    static final String NATURAL_LANGUAGE_PROMPT_INPUT_ZH =
             "请生成一个Incident事件订阅任务：通知主题为Incident，订阅条件为订阅级别为critical的ETH-LOS的故障，上报通知数据格式为DataPart";
+
+    static final String NATURAL_LANGUAGE_PROMPT_INPUT_EN =
+            "Generate an Incident event subscription task: notification topic is Incident, "
+                    + "subscription condition is a critical ETH-LOS fault, "
+                    + "and the notification data format is DataPart";
+
+    private static final String LANGUAGE_EN_US = "en-US";
 
     private ClientSampleFlow() {
     }
@@ -41,6 +48,30 @@ public final class ClientSampleFlow {
             A2AJavaClientRuntime a2aRuntime,
             AgentEndpointCache endpointCache,
             Consumer<String> logSink) {
+        return runClientFlow(scenarioPayload, registryClient, promptClient, a2aRuntime, endpointCache, logSink, 0, "zh-CN");
+    }
+
+    public static List<Map<String, Object>> runClientFlow(
+            Map<String, Object> scenarioPayload,
+            SampleRegistryClient registryClient,
+            SamplePromptClient promptClient,
+            A2AJavaClientRuntime a2aRuntime,
+            AgentEndpointCache endpointCache,
+            Consumer<String> logSink,
+            int maxArtifacts) {
+        return runClientFlow(
+                scenarioPayload, registryClient, promptClient, a2aRuntime, endpointCache, logSink, maxArtifacts, "zh-CN");
+    }
+
+    public static List<Map<String, Object>> runClientFlow(
+            Map<String, Object> scenarioPayload,
+            SampleRegistryClient registryClient,
+            SamplePromptClient promptClient,
+            A2AJavaClientRuntime a2aRuntime,
+            AgentEndpointCache endpointCache,
+            Consumer<String> logSink,
+            int maxArtifacts,
+            String language) {
         AgentCardQuery query = resolveAgentCardQuery(scenarioPayload);
         Map<String, Object> agentCard = registryClient.queryAgentCardByName(query.name(), query.organization());
         emit(logSink, SampleLoggingFormatter.formatPayloadLog("client", "agentcard-result", agentCard));
@@ -52,7 +83,7 @@ public final class ClientSampleFlow {
                 SampleLoggingFormatter.formatStageLog(
                         "client", "agentcard-resolved", "url=" + endpoint.url() + " binding=" + endpoint.protocolBinding()));
 
-        String promptInput = buildPromptInput();
+        String promptInput = buildPromptInput(language);
         emit(logSink, SampleLoggingFormatter.formatPayloadLog("client", "prompt-input", promptInput));
         PromptGenerationResult promptResult = promptClient.generateTaskPrompt(promptInput);
         emit(logSink, SampleLoggingFormatter.formatPayloadLog("client", "prompt-generation-result", promptResult));
@@ -66,6 +97,7 @@ public final class ClientSampleFlow {
                 "client", "request-built", "extension=" + builtRequest.callContext().getHeaders().get("A2A-Extensions")));
 
         List<Map<String, Object>> normalizedEvents = new ArrayList<>();
+        int artifactCount = 0;
         for (ClientEvent rawEvent : a2aRuntime.sendMessage(
                 agentCard, builtRequest.request(), builtRequest.callContext(), logSink)) {
             Map<String, Object> payload = A2AJavaClientEventMapper.toPayload(rawEvent);
@@ -80,6 +112,11 @@ public final class ClientSampleFlow {
             } else if ("artifact".equals(normalizedEvent.get("kind"))) {
                 emit(logSink, SampleLoggingFormatter.formatPayloadLog(
                         "client", "task-artifact", normalizedEvent.get("artifact")));
+                artifactCount++;
+                if (maxArtifacts > 0 && artifactCount >= maxArtifacts) {
+                    emit(logSink, "[client] max-artifacts-reached: " + maxArtifacts);
+                    break;
+                }
             }
         }
         return normalizedEvents;
@@ -105,8 +142,8 @@ public final class ClientSampleFlow {
         return String.valueOf(scenarioPayload.getOrDefault("scenario", ""));
     }
 
-    private static String buildPromptInput() {
-        return NATURAL_LANGUAGE_PROMPT_INPUT;
+    private static String buildPromptInput(String language) {
+        return LANGUAGE_EN_US.equalsIgnoreCase(language) ? NATURAL_LANGUAGE_PROMPT_INPUT_EN : NATURAL_LANGUAGE_PROMPT_INPUT_ZH;
     }
 
     private static AgentCardQuery resolveAgentCardQuery(Map<String, Object> scenarioPayload) {

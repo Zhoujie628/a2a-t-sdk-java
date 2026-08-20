@@ -12,6 +12,7 @@ import net.openan.a2at.sample.subscribe_incident.server.runtime.SampleServerRunt
 import net.openan.a2at.sample.subscribe_incident.server.runtime.SampleServerRuntimeFactory;
 import net.openan.a2at.sample.subscribe_incident.server.runtime.ServerBind;
 import net.openan.a2at.sample.subscribe_incident.server.runtime.ServerBootstrapResult;
+import net.openan.a2at.sample.subscribe_incident.shared.mock.SampleMockLlmInstaller;
 import net.openan.a2at.sample.subscribe_incident.shared.registry.RegistryAgentCardMapper;
 import org.a2aproject.sdk.server.requesthandlers.RequestHandler;
 
@@ -21,6 +22,9 @@ import org.a2aproject.sdk.server.requesthandlers.RequestHandler;
  * @since 2026-05
  */
 public final class ServerSampleMain {
+
+    private static final String MOCK_RESOURCE_ROOT =
+            "sample/subscribe-incident/mock_responses";
 
     private ServerSampleMain() {
     }
@@ -33,11 +37,17 @@ public final class ServerSampleMain {
             Path envPath,
             SampleServerRuntimeFactory runtimeFactory,
             Consumer<String> logSink) {
-        SampleServerRuntime runtime = runtimeFactory.create(envPath);
+        boolean mockNeeded = SampleMockLlmInstaller.isMockNeeded(envPath);
+        SampleMockLlmInstaller.installLlmLogger(mockNeeded, "server");
+        Path resolvedEnvPath = SampleMockLlmInstaller.resolveEnvPath(envPath, MOCK_RESOURCE_ROOT);
+        if (!resolvedEnvPath.equals(envPath)) {
+            emit(logSink, "[server] no LLM API key found, using mock LLM responses for e2e");
+        }
+        SampleServerRuntime runtime = runtimeFactory.create(resolvedEnvPath);
         ServerBind bind = runtime.resolveBind();
         emit(logSink, "[server] startup: host=" + bind.host() + " port=" + bind.port());
         Map<String, Object> agentCard = runtime.buildAgentCard(bind.host(), bind.port());
-        PromptComplianceChecker promptChecker = runtime.buildPromptChecker(envPath);
+        PromptComplianceChecker promptChecker = runtime.buildPromptChecker(resolvedEnvPath);
         Object app = runtime.buildApp(agentCard, promptChecker);
         Map<String, Object> registrationPayload;
         if (runtime instanceof A2AJavaServerRuntime a2aJavaServerRuntime
@@ -46,7 +56,7 @@ public final class ServerSampleMain {
         } else {
             registrationPayload = ServerSampleAgentCardBuilder.buildRegistrationPayload(bind.host(), bind.port());
         }
-        Map<String, Object> registrationResult = runtime.registerAgentCard(registrationPayload, envPath);
+        Map<String, Object> registrationResult = runtime.registerAgentCard(registrationPayload, resolvedEnvPath);
         if ("success".equals(registrationResult.get("status"))) {
             emit(logSink, "[server] agent-card registration: success");
         } else {
