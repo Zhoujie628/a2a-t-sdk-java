@@ -4,7 +4,6 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.negotiation.resources.DefaultNegotiationTemplateLoader;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationTemplateLoader;
-import net.openan.a2at.sdk.negotiation.resources.PromptTemplateCatalog;
 import net.openan.a2at.sdk.negotiation.validation.DefaultNegotiationComplianceChecker;
 import net.openan.a2at.sdk.negotiation.validation.DefaultNegotiationSemanticValidator;
 import net.openan.a2at.sdk.negotiation.validation.NegotiationComplianceChecker;
@@ -16,8 +15,8 @@ import org.slf4j.Logger;
 /**
  * Fluent builder assembling one {@link NegotiationGenerationOrchestrator}.
  *
- * <p>The language is required. The LLM client is optional: without one, the from-data generation and the template
- * queries still work, while the LLM steps of the from-text generation and the validation pipeline fail with the
+ * <p>The language is required. The LLM client is optional: without one, the from-data generation still works, while
+ * the LLM steps of the from-text generation and the validation pipeline fail with the
  * {@code negotiation_llm_infrastructure_error} code. Every collaborator has a default implementation wired from the
  * language and the optional local template root, and each of them can be overridden for testing or customization.
  *
@@ -36,8 +35,6 @@ public final class NegotiationGenerationOrchestratorBuilder {
     private int maxAttempts = DEFAULT_MAX_ATTEMPTS;
 
     private NegotiationTemplateLoader templateLoader;
-
-    private PromptTemplateCatalog templateCatalog;
 
     private NegotiationContentExtractor contentExtractor;
 
@@ -114,17 +111,6 @@ public final class NegotiationGenerationOrchestratorBuilder {
     }
 
     /**
-     * Overrides the catalog answering the cross-extension template queries.
-     *
-     * @param templateCatalog directory-driven catalog over the template tree of every extension
-     * @return current builder
-     */
-    public NegotiationGenerationOrchestratorBuilder templateCatalog(PromptTemplateCatalog templateCatalog) {
-        this.templateCatalog = templateCatalog;
-        return this;
-    }
-
-    /**
      * Overrides the content extractor used by the from-text generation.
      *
      * @param contentExtractor extractor turning free text into typed negotiation content
@@ -187,8 +173,6 @@ public final class NegotiationGenerationOrchestratorBuilder {
         Vocabulary vocabulary = Vocabulary.forLanguage(language);
         NegotiationTemplateLoader effectiveTemplateLoader =
                 templateLoader != null ? templateLoader : new DefaultNegotiationTemplateLoader(language, localRootDir);
-        PromptTemplateCatalog effectiveTemplateCatalog =
-                templateCatalog != null ? templateCatalog : new PromptTemplateCatalog(language, localRootDir);
         NegotiationContentExtractor effectiveContentExtractor =
                 contentExtractor != null ? contentExtractor : new DefaultNegotiationContentExtractor(llmClient);
         NegotiationComplianceChecker effectiveComplianceChecker =
@@ -201,7 +185,6 @@ public final class NegotiationGenerationOrchestratorBuilder {
                 language,
                 maxAttempts,
                 effectiveTemplateLoader,
-                effectiveTemplateCatalog,
                 effectiveContentExtractor,
                 paramExtractor,
                 new NegotiationGeneratorRegistry(),

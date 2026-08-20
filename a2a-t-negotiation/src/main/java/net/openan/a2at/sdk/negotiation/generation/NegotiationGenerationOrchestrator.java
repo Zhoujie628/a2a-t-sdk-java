@@ -20,10 +20,9 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionExcepti
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
+import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationTemplateLoader;
-import net.openan.a2at.sdk.negotiation.resources.PromptTemplate;
-import net.openan.a2at.sdk.negotiation.resources.PromptTemplateCatalog;
 import net.openan.a2at.sdk.negotiation.validation.NegotiationValidationException;
 import net.openan.a2at.sdk.negotiation.validation.ParamExtractor;
 import net.openan.a2at.sdk.negotiation.validation.SemanticValidationResult;
@@ -65,8 +64,6 @@ public final class NegotiationGenerationOrchestrator {
 
     private final NegotiationTemplateLoader templateLoader;
 
-    private final PromptTemplateCatalog templateCatalog;
-
     private final NegotiationContentExtractor contentExtractor;
 
     private final ParamExtractor paramExtractor;
@@ -81,7 +78,6 @@ public final class NegotiationGenerationOrchestrator {
             String language,
             int maxAttempts,
             NegotiationTemplateLoader templateLoader,
-            PromptTemplateCatalog templateCatalog,
             NegotiationContentExtractor contentExtractor,
             ParamExtractor paramExtractor,
             NegotiationGeneratorRegistry generatorRegistry,
@@ -90,7 +86,6 @@ public final class NegotiationGenerationOrchestrator {
         this.language = language;
         this.maxAttempts = maxAttempts;
         this.templateLoader = templateLoader;
-        this.templateCatalog = templateCatalog;
         this.contentExtractor = contentExtractor;
         this.paramExtractor = paramExtractor;
         this.generatorRegistry = generatorRegistry;
@@ -235,44 +230,6 @@ public final class NegotiationGenerationOrchestrator {
      */
     public MetadataContent generateRejectFromText(String text, NegotiationContext context, String templateUri) {
         return generateFromText(text, context, templateUri, NegotiationPhase.REJECT);
-    }
-
-    /**
-     * Lists every template available for the configured language across all A2A-T extensions.
-     *
-     * <p>This query never throws: the extension directories are discovered from the resource tree itself, templates
-     * that exist nowhere for the language are skipped, and an empty list is returned when no template can be loaded
-     * at all. The result is sorted by template URI, which orders by extension first.
-     *
-     * @return loadable templates of the configured language across all extensions, sorted by URI; empty when none can
-     *     be loaded
-     */
-    public List<PromptTemplate> getPrompts() {
-        return templateCatalog.loadAll();
-    }
-
-    /**
-     * Loads one template by its URI, regardless of the extension.
-     *
-     * <p>This query never throws: a malformed URI or a template that exists nowhere for the configured language returns
-     * an empty result and logs an actionable warning.
-     *
-     * @param templateUri template URI such as {@code Negotiation-T/v1/target-negotiation/propose} or
-     *     {@code Task-T/v1/energy-saving}
-     * @return the addressed template, or an empty result when the URI is malformed or the template does not exist for
-     *     the configured language
-     */
-    public Optional<PromptTemplate> getPrompt(String templateUri) {
-        Optional<PromptTemplate> template = templateCatalog.load(templateUri);
-        if (template.isEmpty()) {
-            logger.atWarn()
-                    .log(
-                            "prompt_template_not_found uri={} language={} hint={}",
-                            templateUri,
-                            language,
-                            LANGUAGE_HINT);
-        }
-        return template;
     }
 
     /**

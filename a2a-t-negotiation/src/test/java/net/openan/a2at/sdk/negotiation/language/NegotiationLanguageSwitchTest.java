@@ -14,7 +14,7 @@ import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestra
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
 import net.openan.a2at.sdk.negotiation.golden.GoldenInputs;
 import net.openan.a2at.sdk.negotiation.golden.GoldenInputs.GoldenCase;
-import net.openan.a2at.sdk.negotiation.resources.PromptTemplate;
+import net.openan.a2at.sdk.core.model.PromptTemplate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
