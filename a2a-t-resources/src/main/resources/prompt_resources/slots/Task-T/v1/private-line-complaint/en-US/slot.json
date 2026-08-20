@@ -18,14 +18,6 @@
         "Fault phenomenon: private line interruption. Fault sequence number: fault-id-1-017-20230511-09013"
       ],
       "x-a2at-value-constraint": "Fault phenomenon: includes two scenarios, \"private line interruption\" and \"poor private line quality\". Required parameter. Fault occurrence time. Optional parameter. Fault or event sequence number on the OSS side. Optional parameter."
-    },
-    "expected_output": {
-      "type": "string",
-      "description": "Expected output of the private line complaint task.",
-      "examples": [
-        "Return the detailed information and repair suggestions of the private line complaint diagnosis task that was successfully diagnosed."
-      ],
-      "x-a2at-value-constraint": "Include the diagnosis result type, diagnosis result details, and repair suggestions. The allowed values of the diagnosis result type parameter include: diagnosis successful, diagnosis failed, diagnosis not started, or diagnosis not finished. Multiple fault root causes may be included. Each fault root cause includes: the name of the fault root cause, detailed description, repair suggestions, and the identifier, type, name, and detailed location of the resource object where the fault root cause point resides. The detailed description of the overall fault, and the repair suggestions for the fault root cause. If multiple fault root causes exist, the detailed descriptions and repair suggestions across the multiple fault root causes must be summarized and refined into the overall diagnosis result details and repair suggestions."
     }
   },
   "required": [

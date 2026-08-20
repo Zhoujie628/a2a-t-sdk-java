@@ -1,33 +1,32 @@
 ## Task Type
-SPN private line complaint diagnosis
+Transport private line service complaint diagnosis
 
 ## Task Description
-Requirement: Provide an overall overview of the task. Based on <Task Object>, <Task Context>, and <Constraints>, perform network-side fault root cause diagnosis in the complaint scenario, achieve the complaint diagnosis goal defined in <Task Target>, and return the task processing result in the structure defined in <Expected Output>.
+Based on <Task Object> and <Task Context>, perform network-side fault root cause diagnosis in the complaint scenario, achieve the complaint diagnosis goal defined in <Task Target>, and return the task processing result in the structure defined in <Expected Output>.
 
 ## Task Target
-Requirement:
-1. Based on the fault phenomenon of the private line service, diagnose and return the network-side fault root cause
+Diagnose network-side faults and return diagnostic result information such as fault root causes and repair suggestions.
 
 ## Task Object
-{{task_object}} (optional)
-Requirement: Provide the private line service object. Provide one of the following three parameters to identify the private line service object: private line name, access port name, and access port resource ID.
-- Private line name: the private line object identifier in the network-side EMS NMS.
-- Access port name: the access port name in the network-side EMS NMS, in the format: network element name + board number + board model + port number.
-- Access port resource ID: the access port resource object identifier in the network-side EMS NMS.
-Example:
-Access port resource ID: f47ac10b-58cc-4372-a567-0e02b2c3d479
+{{task_object}} (required)
+Requirement: Supports passing in private line service name / private line service identifier / private line service access port name. Choose one of these methods to identify the private line service object
+1. Private line service name: the private line service name on the network side. Example: Huizhou Jiangbei Aggregation Private Line Service_100M_SPN (optional)
+2. Private line service identifier: the unique identifier of the private line service on the network side. Example: 5571d707-5aad-11ea-8629-286ed488cff3 (optional)
+3. Access port name: the access port name of the service, which can be a physical port or a logical port (sub-interface) (optional)
+   - Physical port format: network element name + board number + board model + port number. Example: P781-Zhujiang New Town-PTN7900-23-TPA1EG24-17
+   - Logical port format: network element name + board number + board model + port number (cvlan=access vlan id). Example: P781-Zhujiang New Town-PTN7900-23-TPA1EG24-17(cvlan=100)
 
 ## Task Context
 {{task_context}} (required)
-Requirement: Provide the fault phenomenon description of the private line service and the context information of the diagnosis task.
-1. Fault phenomenon: includes two scenarios, "private line interruption" and "poor private line quality". Required parameter. Example: "private line interruption"
-2. Fault occurrence time. Optional parameter. Example: "2024-01-16T08:21:46Z"
-3. Fault or event sequence number on the OSS side. Optional parameter. Example: "fault-id-1-017-20230511-09013"
+Requirement: Please provide the following information
+1. Complaint category: includes two scenarios, "private line interruption" and "poor private line quality". Example: "poor private line quality" (required)
+2. Problem occurrence time. Example: "2026-05-16T08:21:46Z" (optional)
+3. OSS-side event sequence number: fill in the private line service complaint work order sequence number on the OSS side. Example: "event-id-20260511-09013" (required)
+4. Complaint details: may include the private line user's description of the service complaint and the OSS-side preprocessing information. Example: "Starting from 8:30 this morning, the response latency from Shenzhen to Shanghai suddenly increased from an average of 12ms to 320ms. Accessing the core trading system of the Shanghai data center is very slow. The trading interfaces of the counter and mobile banking frequently report 'connection timeout'. Normal business operations take a dozen seconds or even half a minute to return results!" (optional)
 
 ## Expected Output
-{{expected_output}} (optional)
-Requirement:
-1. Include the diagnosis result type, diagnosis result details, and repair suggestions.
-2. The allowed values of the diagnosis result type parameter include: diagnosis successful, diagnosis failed, diagnosis not started, or diagnosis not finished.
-3. Multiple fault root causes may be included. Each fault root cause includes: the name of the fault root cause, detailed description, repair suggestions, and the identifier, type, name, and detailed location of the resource object where the fault root cause point resides. The detailed description of the overall fault, and the repair suggestions for the fault root cause.
-4. If multiple fault root causes exist, the detailed descriptions and repair suggestions across the multiple fault root causes must be summarized and refined into the overall diagnosis result details and repair suggestions.
+Requirement: The complaint diagnosis task result should include the following information:
+1. Diagnosis result. Allowed values: success, failure (required)
+2. Diagnosis result details (required)
+3. Repair suggestions (optional)
+4. Fault root cause list, where each fault root cause includes fault root cause name, detailed description, repair suggestions, fault root cause point location, etc. (optional)
