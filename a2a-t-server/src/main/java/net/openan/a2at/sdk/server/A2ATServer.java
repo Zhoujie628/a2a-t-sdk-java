@@ -237,6 +237,35 @@ public final class A2ATServer {
     }
 
     /**
+     * Lists every template available for the configured language across all A2A-T extensions.
+     *
+     * <p>This query never throws: the extension directories are discovered from the bundled resource tree itself, so
+     * templates of extensions added later are included automatically. Templates that exist nowhere for the language
+     * are skipped and an empty list is returned when no template can be loaded at all.
+     *
+     * @return loadable templates of the configured language across all extensions, sorted by template URI; empty when
+     *     none can be loaded
+     */
+    public List<PromptTemplate> getPrompts() {
+        return negotiationContentService.getPrompts();
+    }
+
+    /**
+     * Loads one template by its URI, regardless of the extension.
+     *
+     * <p>This query never throws: a malformed URI or a template that exists nowhere for the configured language returns
+     * an empty result and logs an actionable warning.
+     *
+     * @param templateUri template URI such as {@code Negotiation-T/v1/target-negotiation/propose} or
+     *     {@code Task-T/v1/energy-saving}
+     * @return the addressed template, or an empty result when the URI is malformed or the template does not exist for
+     *     the configured language
+     */
+    public Optional<PromptTemplate> getPrompt(String templateUri) {
+        return negotiationContentService.getPrompt(templateUri);
+    }
+
+    /**
      * Lists every negotiation template available for the configured language.
      *
      * <p>This query never throws: templates that exist nowhere for the language are skipped and an empty list is

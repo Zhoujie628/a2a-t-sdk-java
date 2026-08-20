@@ -179,6 +179,28 @@ public final class NegotiationContentService {
     }
 
     /**
+     * Lists every template available for the configured language across all A2A-T extensions; never throws.
+     *
+     * @return loadable templates of the configured language across all extensions, sorted by template URI; empty when
+     *     none can be loaded
+     */
+    public List<PromptTemplate> getPrompts() {
+        return orchestrator.getPrompts();
+    }
+
+    /**
+     * Loads one template by its URI regardless of the extension; never throws.
+     *
+     * @param templateUri template URI such as {@code Negotiation-T/v1/target-negotiation/propose} or
+     *     {@code Task-T/v1/energy-saving}
+     * @return the addressed template, or an empty optional when the URI is malformed or no template exists for it in
+     *     the configured language
+     */
+    public Optional<PromptTemplate> getPrompt(String templateUri) {
+        return orchestrator.getPrompt(templateUri);
+    }
+
+    /**
      * Lists every negotiation template available for the configured language; never throws.
      *
      * @return loadable negotiation templates of the configured language, in a fixed type and phase order; empty when

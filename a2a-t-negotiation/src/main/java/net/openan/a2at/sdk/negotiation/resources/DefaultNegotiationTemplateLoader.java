@@ -39,10 +39,6 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
 
     private static final String TEMPLATE_FILE_NAME = "template.md";
 
-    private static final String COMMENT_OPEN = "<!--";
-
-    private static final String COMMENT_CLOSE = "-->";
-
     private static final List<NegotiationType> LOAD_ALL_TYPE_ORDER =
             List.of(NegotiationType.INFORMATION, NegotiationType.TARGET, NegotiationType.FEASIBILITY);
 
@@ -83,7 +79,7 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
     public PromptTemplate load(NegotiationReference reference) {
         String relativePath = templateRelativePath(reference);
         String content = readTemplate(relativePath);
-        PromptTemplate template = new PromptTemplate(reference.uri(), extractDescription(content), content);
+        PromptTemplate template = new PromptTemplate(reference.uri(), TemplateDescriptions.extract(content), content);
         LOGGER.atDebug().log("negotiation_template_loaded uri={} language={}", reference.uri(), reference.language());
         return template;
     }
@@ -150,24 +146,4 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
         }
     }
 
-    /**
-     * Extracts the template description from a leading HTML comment.
-     *
-     * @param content full template text
-     * @return stripped comment text of the first line when it is an HTML comment, otherwise an empty string
-     */
-    private static String extractDescription(String content) {
-        int firstLineBreak = content.indexOf('\n');
-        String firstLine = firstLineBreak < 0 ? content : content.substring(0, firstLineBreak);
-        firstLine = firstLine.strip();
-        if (firstLine.startsWith(COMMENT_OPEN)
-                && firstLine.endsWith(COMMENT_CLOSE)
-                && firstLine.length() >= COMMENT_OPEN.length() + COMMENT_CLOSE.length()) {
-            String description = firstLine
-                    .substring(COMMENT_OPEN.length(), firstLine.length() - COMMENT_CLOSE.length())
-                    .strip();
-            return description;
-        }
-        return "";
-    }
 }

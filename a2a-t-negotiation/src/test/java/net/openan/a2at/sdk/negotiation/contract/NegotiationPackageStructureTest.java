@@ -60,6 +60,8 @@ class NegotiationPackageStructureTest {
                         "NegotiationReference.java",
                         "NegotiationTemplateLoader.java",
                         "PromptTemplate.java",
+                        "PromptTemplateCatalog.java",
+                        "TemplateDescriptions.java",
                         "package-info.java"),
                 topLevelJavaFiles(negotiationRoot().resolve("resources")));
         assertEquals(List.of(), topLevelDirectories(negotiationRoot().resolve("resources")));
