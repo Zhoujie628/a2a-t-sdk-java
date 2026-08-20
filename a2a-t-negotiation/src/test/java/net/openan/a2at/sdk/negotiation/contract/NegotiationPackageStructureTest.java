@@ -32,6 +32,7 @@ class NegotiationPackageStructureTest {
                         "NegotiationConclusion.java",
                         "NegotiationContent.java",
                         "NegotiationContentException.java",
+                        "NegotiationContentService.java",
                         "NegotiationContext.java",
                         "NegotiationEndingContent.java",
                         "NegotiationEndingData.java",

@@ -7,9 +7,9 @@ import java.util.Optional;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.FilledParamData;
+import net.openan.a2at.sdk.negotiation.content.NegotiationContentService;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
-import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.resources.PromptTemplate;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationContext;
@@ -31,7 +31,7 @@ public final class A2ATServer {
 
     private final RoleBoundNegotiationOrchestrator negotiationOrchestrator;
 
-    private final NegotiationGenerationOrchestrator negotiationGenerationOrchestrator;
+    private final NegotiationContentService negotiationContentService;
 
     /**
      * Creates a server facade from one user-supplied `.env` path.
@@ -40,12 +40,13 @@ public final class A2ATServer {
      */
     public A2ATServer(Path envPath) {
         Path resolvedEnvPath = envPath.toAbsolutePath().normalize();
-        A2ATConfig config = resolvePromptResourceLocalRootDir(A2ATConfig.load(resolvedEnvPath), resolvedEnvPath);
+        A2ATConfig config =
+                NegotiationContentService.resolvePromptResourceLocalRootDir(A2ATConfig.load(resolvedEnvPath), resolvedEnvPath);
         DefaultA2ATServerBuilder builder =
                 DefaultA2ATServerBuilder.builder().envPath(resolvedEnvPath).config(config);
         this.promptComplianceOrchestrator = builder.buildPromptComplianceOrchestrator();
         this.negotiationOrchestrator = builder.buildNegotiationOrchestrator();
-        this.negotiationGenerationOrchestrator = builder.buildNegotiationGenerationOrchestrator();
+        this.negotiationContentService = new NegotiationContentService(builder.buildNegotiationGenerationOrchestrator());
     }
 
     /**
@@ -111,7 +112,7 @@ public final class A2ATServer {
      *     {@code negotiation_slot_missing} when rendering the template fails
      */
     public MetadataContent generateNegotiationProposePromptFromData(NegotiationProposeData data, String templateUri) {
-        return negotiationGenerationOrchestrator.generateProposeFromData(data, templateUri);
+        return negotiationContentService.generateProposeFromData(data, templateUri);
     }
 
     /**
@@ -132,7 +133,7 @@ public final class A2ATServer {
      *     {@code negotiation_slot_missing} when rendering the template fails
      */
     public MetadataContent generateNegotiationAcceptPromptFromData(NegotiationEndingData data, String templateUri) {
-        return negotiationGenerationOrchestrator.generateAcceptFromData(data, templateUri);
+        return negotiationContentService.generateAcceptFromData(data, templateUri);
     }
 
     /**
@@ -153,7 +154,7 @@ public final class A2ATServer {
      *     {@code negotiation_slot_missing} when rendering the template fails
      */
     public MetadataContent generateNegotiationRejectPromptFromData(NegotiationEndingData data, String templateUri) {
-        return negotiationGenerationOrchestrator.generateRejectFromData(data, templateUri);
+        return negotiationContentService.generateRejectFromData(data, templateUri);
     }
 
     /**
@@ -180,7 +181,7 @@ public final class A2ATServer {
      */
     public MetadataContent generateNegotiationProposePromptFromText(
             String text, net.openan.a2at.sdk.negotiation.content.NegotiationContext context, String templateUri) {
-        return negotiationGenerationOrchestrator.generateProposeFromText(text, context, templateUri);
+        return negotiationContentService.generateProposeFromText(text, context, templateUri);
     }
 
     /**
@@ -206,7 +207,7 @@ public final class A2ATServer {
      */
     public MetadataContent generateNegotiationAcceptPromptFromText(
             String text, net.openan.a2at.sdk.negotiation.content.NegotiationContext context, String templateUri) {
-        return negotiationGenerationOrchestrator.generateAcceptFromText(text, context, templateUri);
+        return negotiationContentService.generateAcceptFromText(text, context, templateUri);
     }
 
     /**
@@ -232,7 +233,7 @@ public final class A2ATServer {
      */
     public MetadataContent generateNegotiationRejectPromptFromText(
             String text, net.openan.a2at.sdk.negotiation.content.NegotiationContext context, String templateUri) {
-        return negotiationGenerationOrchestrator.generateRejectFromText(text, context, templateUri);
+        return negotiationContentService.generateRejectFromText(text, context, templateUri);
     }
 
     /**
@@ -245,7 +246,7 @@ public final class A2ATServer {
      *     none can be loaded
      */
     public List<PromptTemplate> getNegotiationPrompts() {
-        return negotiationGenerationOrchestrator.getNegotiationPrompts();
+        return negotiationContentService.getNegotiationPrompts();
     }
 
     /**
@@ -259,7 +260,7 @@ public final class A2ATServer {
      *     the configured language
      */
     public Optional<PromptTemplate> getNegotiationPrompt(String templateUri) {
-        return negotiationGenerationOrchestrator.getNegotiationPrompt(templateUri);
+        return negotiationContentService.getNegotiationPrompt(templateUri);
     }
 
     /**
@@ -285,7 +286,7 @@ public final class A2ATServer {
      */
     public FilledParamData validateAndFillingProposeData(
             String prompt, Map<String, Object> schema, String templateUri) {
-        return negotiationGenerationOrchestrator.validateAndFillingProposeData(prompt, schema, templateUri);
+        return negotiationContentService.validateAndFillingProposeData(prompt, schema, templateUri);
     }
 
     /**
@@ -310,7 +311,7 @@ public final class A2ATServer {
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateAndFillingAcceptData(String prompt, Map<String, Object> schema, String templateUri) {
-        return negotiationGenerationOrchestrator.validateAndFillingAcceptData(prompt, schema, templateUri);
+        return negotiationContentService.validateAndFillingAcceptData(prompt, schema, templateUri);
     }
 
     /**
@@ -335,20 +336,6 @@ public final class A2ATServer {
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateAndFillingRejectData(String prompt, Map<String, Object> schema, String templateUri) {
-        return negotiationGenerationOrchestrator.validateAndFillingRejectData(prompt, schema, templateUri);
-    }
-
-    private A2ATConfig resolvePromptResourceLocalRootDir(A2ATConfig config, Path envPath) {
-        String localRootDir = config.prompt().localRootDir();
-        Path localRootPath = Path.of(localRootDir);
-        Path resolvedLocalRootPath = localRootPath.isAbsolute()
-                ? localRootPath.normalize()
-                : envPath.getParent().resolve(localRootPath).toAbsolutePath().normalize();
-        return new A2ATConfig(
-                new net.openan.a2at.sdk.core.model.PromptRuntimeConfig(
-                        config.prompt().language(), config.prompt().sourceType(), resolvedLocalRootPath.toString()),
-                config.llm(),
-                config.negotiation(),
-                config.promptCompliance());
+        return negotiationContentService.validateAndFillingRejectData(prompt, schema, templateUri);
     }
 }

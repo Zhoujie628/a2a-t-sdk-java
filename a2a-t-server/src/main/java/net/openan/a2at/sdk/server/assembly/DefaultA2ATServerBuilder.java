@@ -7,8 +7,8 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
 import net.openan.a2at.sdk.llm.LLMConfigLoader;
+import net.openan.a2at.sdk.negotiation.content.NegotiationContentService;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
-import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
 import net.openan.a2at.sdk.prompt.analysis.impl.DefaultStructuredPromptSlotValueExtractor;
 import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
@@ -154,9 +154,10 @@ public final class DefaultA2ATServerBuilder {
     /**
      * Builds the default negotiation content-layer orchestrator from the configured unified SDK config.
      *
-     * <p>The wiring mirrors the client side: the message language and the local template root come from the prompt
-     * runtime config, the retry attempt limit comes from the LLM config, and the LLM client is only created when the
-     * provider is not {@code local_rule}.
+     * <p>The wiring is shared with the client side through
+     * {@link NegotiationContentService#buildOrchestrator(A2ATConfig, LLMClient)}: the message language and the local
+     * template root come from the prompt runtime config, the retry attempt limit comes from the LLM config, and the LLM
+     * client is only created when the provider is not {@code local_rule}.
      *
      * @return assembled negotiation generation orchestrator
      */
@@ -168,12 +169,7 @@ public final class DefaultA2ATServerBuilder {
             require(envPath, "Unified SDK env path must be configured.");
             llmClient = createLlmClient();
         }
-        return NegotiationGenerationOrchestratorBuilder.builder()
-                .language(config.prompt().language())
-                .localRootDir(config.prompt().localRootDir())
-                .llmClient(llmClient)
-                .maxAttempts(config.llm().maxAttempts())
-                .build();
+        return NegotiationContentService.buildOrchestrator(config, llmClient);
     }
 
     private static void require(Object value, String message) {
