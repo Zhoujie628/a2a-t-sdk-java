@@ -13,7 +13,6 @@ import net.openan.a2at.sdk.client.prompt.loader.DefaultClasspathClientTemplateLo
 import net.openan.a2at.sdk.client.prompt.loader.LocalFileClientSlotSchemaLoader;
 import net.openan.a2at.sdk.client.prompt.loader.LocalFileClientTemplateLoader;
 import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrchestrator;
-import net.openan.a2at.sdk.client.prompt.orchestration.DefaultClientPromptGenerationOrchestrator;
 import net.openan.a2at.sdk.client.prompt.recognition.ClientScenarioRecognizer;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
@@ -105,14 +104,13 @@ public final class DefaultA2ATClientBuilder {
         boolean isLocalRule = LOCAL_RULE_PROVIDER.equals(config.llm().provider());
         LLMClient llmClient = isLocalRule ? null : createLlmClient();
 
-        String scenarioSystemPrompt = isLocalRule
-                ? "" : resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "system.md");
-        String scenarioUserPrompt = isLocalRule
-                ? "" : resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "user.md");
-        String slotSystemPrompt = isLocalRule
-                ? "" : resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "system.md");
-        String slotUserPrompt = isLocalRule
-                ? "" : resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "user.md");
+        String scenarioSystemPrompt =
+                isLocalRule ? "" : resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "system.md");
+        String scenarioUserPrompt =
+                isLocalRule ? "" : resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "user.md");
+        String slotSystemPrompt =
+                isLocalRule ? "" : resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "system.md");
+        String slotUserPrompt = isLocalRule ? "" : resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "user.md");
 
         ClientScenarioRecognizer scenarioRecognizer;
         ClientSlotValueExtractor slotValueExtractor;
@@ -270,7 +268,10 @@ public final class DefaultA2ATClientBuilder {
 
         @Override
         public Map<String, String> extractSlotsWithSchema(
-                Object userInput, String scenarioCode, String language, String templateText,
+                Object userInput,
+                String scenarioCode,
+                String language,
+                String templateText,
                 Map<String, Object> dataSchema) {
             return llmExtractor.extractSlotsWithSchema(userInput, scenarioCode, language, templateText, dataSchema);
         }
