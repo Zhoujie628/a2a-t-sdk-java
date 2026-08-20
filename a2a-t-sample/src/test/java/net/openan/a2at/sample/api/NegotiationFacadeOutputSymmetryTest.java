@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import net.openan.a2at.sdk.client.A2ATClient;
+import net.openan.a2at.sdk.llm.LLMClient;
+import net.openan.a2at.sdk.llm.LLMClientConfig;
+import net.openan.a2at.sdk.llm.LLMClientFactory;
+import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
@@ -29,6 +33,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
 import net.openan.a2at.sdk.server.A2ATServer;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -41,6 +46,15 @@ import org.junit.jupiter.api.io.TempDir;
  * facades are wired to the same built-in resources.
  */
 class NegotiationFacadeOutputSymmetryTest {
+
+    private static final String TEST_MOCK_PROVIDER = "test-symmetry-mock";
+
+    @BeforeAll
+    static void registerMockProvider() {
+        if (!LLMClientFactory.availableProviders().contains(TEST_MOCK_PROVIDER)) {
+            LLMClientFactory.register(TEST_MOCK_PROVIDER, RecordingClient.class);
+        }
+    }
 
     private static final List<String> NEGOTIATION_API_METHODS = List.of(
             "generateNegotiationProposePromptFromData",
@@ -99,7 +113,10 @@ class NegotiationFacadeOutputSymmetryTest {
                 A2AT_LANGUAGE=%s
                 A2AT_PROMPT_SOURCE_TYPE=classpath
                 A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR=
-                A2AT_LLM_PROVIDER=local_rule
+                A2AT_LLM_PROVIDER=test-symmetry-mock
+                A2AT_LLM_MODEL=example-model
+                A2AT_LLM_BASE_URL=https://llm.example.test/v1
+                A2AT_LLM_API_KEY=test-key
                 A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
                 """
                         .formatted(language));
@@ -233,5 +250,23 @@ class NegotiationFacadeOutputSymmetryTest {
     private interface EndingGenerator {
 
         MetadataContent generate(NegotiationEndingData data, String templateUri);
+    }
+
+    public static final class RecordingClient implements LLMClient {
+
+        private final LLMClientConfig config;
+
+        public RecordingClient(LLMClientConfig config) {
+            this.config = config;
+        }
+
+        @Override
+        public LLMResponse structured(
+                List<Map<String, String>> messages,
+                Map<String, Object> jsonSchema,
+                Double temperature,
+                Integer maxTokens) {
+            return new LLMResponse("{}", config.model(), Map.of(), Map.of());
+        }
     }
 }
