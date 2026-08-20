@@ -32,7 +32,7 @@ import net.openan.a2at.sdk.prompt.taskrendering.exception.TaskPromptRenderExcept
  */
 public final class DefaultClientPromptGenerationOrchestrator implements ClientPromptGenerationOrchestrator {
 
-    private static final Pattern TEMPLATE_IDENTIFIER_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+");
+    private static final Pattern TEMPLATE_IDENTIFIER_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)*");
 
     private final ClientScenarioRecognizer scenarioRecognizer;
 

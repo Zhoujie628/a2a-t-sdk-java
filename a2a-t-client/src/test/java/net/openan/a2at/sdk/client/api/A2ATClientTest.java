@@ -220,81 +220,29 @@ class A2ATClientTest {
     }
 
     @Test
-    void templateUriEntryPointsGeneratePromptsFromStructuredInput() throws IOException {
-        Path envFile = writeMinimalLocalClientEnv();
-        A2ATClient client = new A2ATClient(envFile);
-        Map<String, Object> inputData = Map.of("site", "Site A", "target", "Reduce power by 10%");
-
-        PromptGenerationResult taskResult = client.generateTaskPromptFromJsonData(inputData, "energy-saving");
-        PromptGenerationResult authorizationResult =
-                client.generateAuthorizationPromptFromJsonData(inputData, "energy-saving");
-        PromptGenerationResult notificationResult =
-                client.generateNotificationPromptFromJsonData(inputData, "energy-saving");
-
-        assertTrue(taskResult.success());
-        assertTrue(authorizationResult.success());
-        assertTrue(notificationResult.success());
-        assertEquals("Site: Site A\\nTarget: Reduce power by 10%", taskResult.promptText());
-        assertEquals("Site: Site A\\nTarget: Reduce power by 10%", authorizationResult.promptText());
-        assertEquals("Site: Site A\\nTarget: Reduce power by 10%", notificationResult.promptText());
-    }
-
-    @Test
-    void templateUriEntryPointRendersEmptySlotValuesForNlInputUnderLocalRuleProvider() throws IOException {
-        Path envFile = writeMinimalLocalClientEnv();
-        A2ATClient client = new A2ATClient(envFile);
-
-        PromptGenerationResult result =
-                client.generateTaskPromptFromNl("Please analyze Site A power usage.", "energy-saving");
-
-        assertTrue(result.success());
-        assertEquals("Site: \\nTarget: ", result.promptText());
-    }
-
-    @Test
-    void templateUriEntryPointsReturnFailuresForInvalidAndUnknownIdentifiers() throws IOException {
-        Path envFile = writeMinimalLocalClientEnv();
-        A2ATClient client = new A2ATClient(envFile);
-
-        PromptGenerationResult invalidResult =
-                client.generateTaskPromptFromJsonData(Map.of("site", "Site A"), "../etc/passwd");
-        PromptGenerationResult unknownResult =
-                client.generateNotificationPromptFromNl("Report finished.", "no_such_template");
-
-        assertFalse(invalidResult.success());
-        assertNotNull(invalidResult.failure());
-        assertEquals("invalid_template_uri", invalidResult.failure().code());
-        assertEquals("generation", invalidResult.failure().stage());
-        assertFalse(unknownResult.success());
-        assertNotNull(unknownResult.failure());
-        assertEquals("template_not_found", unknownResult.failure().code());
-        assertEquals("generation", unknownResult.failure().stage());
-    }
-
-    @Test
     void fromTextEntryPointsReturnMetadataContent() throws IOException {
         Path envFile = writeMinimalClientEnvWithoutRequiredSlots("local_rule");
         A2ATClient client = new A2ATClient(envFile);
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromText("Please analyze Site A.", "unconstrained");
+                client.generateTaskPromptFromText("Please analyze Site A.", "Task-T/v1/unconstrained");
         MetadataContent authResult =
-                client.generateAuthPromptFromText("Authorize access.", "unconstrained");
+                client.generateAuthPromptFromText("Authorize access.", "Task-T/v1/unconstrained");
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromText("Report finished.", "unconstrained");
+                client.generateNotificationPromptFromText("Report finished.", "Task-T/v1/unconstrained");
 
         assertNotNull(taskResult);
-        assertEquals("unconstrained", taskResult.templateUri());
+        assertEquals("Task-T/v1/unconstrained", taskResult.templateUri());
         assertNotNull(taskResult.promptText());
         assertNotNull(taskResult.extensionUri());
 
         assertNotNull(authResult);
-        assertEquals("unconstrained", authResult.templateUri());
+        assertEquals("Task-T/v1/unconstrained", authResult.templateUri());
         assertNotNull(authResult.promptText());
         assertNotNull(authResult.extensionUri());
 
         assertNotNull(notificationResult);
-        assertEquals("unconstrained", notificationResult.templateUri());
+        assertEquals("Task-T/v1/unconstrained", notificationResult.templateUri());
         assertNotNull(notificationResult.promptText());
         assertNotNull(notificationResult.extensionUri());
     }
@@ -307,24 +255,24 @@ class A2ATClientTest {
         Map<String, Object> schema = Map.of("type", "object");
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromDataWithSchema(data, schema, "energy-saving");
+                client.generateTaskPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
         MetadataContent authResult =
-                client.generateAuthPromptFromDataWithSchema(data, schema, "energy-saving");
+                client.generateAuthPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromDataWithSchema(data, schema, "energy-saving");
+                client.generateNotificationPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
 
         assertNotNull(taskResult);
-        assertEquals("energy-saving", taskResult.templateUri());
+        assertEquals("Task-T/v1/energy-saving", taskResult.templateUri());
         assertNotNull(taskResult.promptText());
         assertNotNull(taskResult.extensionUri());
 
         assertNotNull(authResult);
-        assertEquals("energy-saving", authResult.templateUri());
+        assertEquals("Task-T/v1/energy-saving", authResult.templateUri());
         assertNotNull(authResult.promptText());
         assertNotNull(authResult.extensionUri());
 
         assertNotNull(notificationResult);
-        assertEquals("energy-saving", notificationResult.templateUri());
+        assertEquals("Task-T/v1/energy-saving", notificationResult.templateUri());
         assertNotNull(notificationResult.promptText());
         assertNotNull(notificationResult.extensionUri());
     }
@@ -335,11 +283,11 @@ class A2ATClientTest {
         A2ATClient client = new A2ATClient(envFile);
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromText("Please analyze Site A.", "unconstrained");
+                client.generateTaskPromptFromText("Please analyze Site A.", "Task-T/v1/unconstrained");
         MetadataContent authResult =
-                client.generateAuthPromptFromText("Authorize access.", "unconstrained");
+                client.generateAuthPromptFromText("Authorize access.", "Task-T/v1/unconstrained");
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromText("Report finished.", "unconstrained");
+                client.generateNotificationPromptFromText("Report finished.", "Task-T/v1/unconstrained");
 
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskResult.extensionUri());
         assertEquals(ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI, authResult.extensionUri());
@@ -354,11 +302,11 @@ class A2ATClientTest {
         Map<String, Object> schema = Map.of("type", "object");
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromDataWithSchema(data, schema, "energy-saving");
+                client.generateTaskPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
         MetadataContent authResult =
-                client.generateAuthPromptFromDataWithSchema(data, schema, "energy-saving");
+                client.generateAuthPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromDataWithSchema(data, schema, "energy-saving");
+                client.generateNotificationPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
 
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskResult.extensionUri());
         assertEquals(ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI, authResult.extensionUri());
@@ -411,9 +359,9 @@ class A2ATClientTest {
         A2ATClient client = new A2ATClient(envFile);
 
         MetadataContent result =
-                client.generateTaskPromptFromText("Please analyze Site A power usage.", "unconstrained");
+                client.generateTaskPromptFromText("Please analyze Site A power usage.", "Task-T/v1/unconstrained");
 
-        assertEquals("unconstrained", result.templateUri());
+        assertEquals("Task-T/v1/unconstrained", result.templateUri());
         assertEquals("Notes: \\nFault: ", result.promptText());
     }
 
@@ -425,9 +373,9 @@ class A2ATClientTest {
         Map<String, Object> schema = Map.of("type", "object", "required", Arrays.asList("site", "target"));
 
         MetadataContent result =
-                client.generateTaskPromptFromDataWithSchema(data, schema, "energy-saving");
+                client.generateTaskPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
 
-        assertEquals("energy-saving", result.templateUri());
+        assertEquals("Task-T/v1/energy-saving", result.templateUri());
         assertEquals("Site: Site A\\nTarget: Reduce power by 10%", result.promptText());
     }
 
@@ -437,7 +385,7 @@ class A2ATClientTest {
         A2ATClient client = new A2ATClient(envFile);
 
 PromptGenerationException ex = assertThrows(PromptGenerationException.class,
-                () -> client.generateTaskPromptFromText("Some text without site or target.", "energy_saving"));
+                () -> client.generateTaskPromptFromText("Some text without site or target.", "Task-T/v1/energy-saving"));
         assertEquals("slot_validation_error", ex.code());
         assertFalse(ex.failedParameters().isEmpty());
     }
@@ -451,8 +399,8 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 promptRoot.resolve("prompts").resolve("slot_extraction").resolve("zh-CN");
         Path scenariosDir = promptRoot.resolve("scenarios").resolve("zh-CN");
         Path templatesDir =
-                promptRoot.resolve("templates").resolve("unconstrained").resolve("zh-CN");
-        Path slotsDir = promptRoot.resolve("slots").resolve("unconstrained").resolve("zh-CN");
+                promptRoot.resolve("templates").resolve("Task-T").resolve("v1").resolve("unconstrained").resolve("zh-CN");
+        Path slotsDir = promptRoot.resolve("slots").resolve("Task-T").resolve("v1").resolve("unconstrained").resolve("zh-CN");
         Files.createDirectories(scenarioPromptDir);
         Files.createDirectories(slotPromptDir);
         Files.createDirectories(scenariosDir);

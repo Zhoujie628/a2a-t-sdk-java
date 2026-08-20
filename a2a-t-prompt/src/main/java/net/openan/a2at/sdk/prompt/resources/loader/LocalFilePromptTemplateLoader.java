@@ -27,18 +27,25 @@ public final class LocalFilePromptTemplateLoader implements PromptTemplateTextLo
             throw notFound(scenarioCode, language);
         }
         Path templatePath;
-        try (var typePaths = Files.list(templatesRoot)) {
-            Optional<Path> match = typePaths
-                    .filter(Files::isDirectory)
-                    .map(typeDir -> typeDir.resolve("v1").resolve(scenarioCode).resolve(language).resolve("template.md"))
-                    .filter(Files::exists)
-                    .findFirst();
-            templatePath = match.orElse(null);
-        } catch (IOException exception) {
-            throw new SdkException("Failed to scan prompt template resources: " + templatesRoot, exception);
-        }
-        if (templatePath == null) {
-            throw notFound(scenarioCode, language);
+        if (scenarioCode.contains("/")) {
+            templatePath = templatesRoot.resolve(scenarioCode).resolve(language).resolve("template.md");
+            if (!Files.exists(templatePath)) {
+                throw notFound(scenarioCode, language);
+            }
+        } else {
+            try (var typePaths = Files.list(templatesRoot)) {
+                Optional<Path> match = typePaths
+                        .filter(Files::isDirectory)
+                        .map(typeDir -> typeDir.resolve("v1").resolve(scenarioCode).resolve(language).resolve("template.md"))
+                        .filter(Files::exists)
+                        .findFirst();
+                templatePath = match.orElse(null);
+            } catch (IOException exception) {
+                throw new SdkException("Failed to scan prompt template resources: " + templatesRoot, exception);
+            }
+            if (templatePath == null) {
+                throw notFound(scenarioCode, language);
+            }
         }
         try {
             return Files.readString(templatePath);
@@ -48,9 +55,10 @@ public final class LocalFilePromptTemplateLoader implements PromptTemplateTextLo
     }
 
     private ResourceNotFoundException notFound(String scenarioCode, String language) {
-        return new ResourceNotFoundException(
-                "Prompt resource file does not exist.",
-                promptRootDir.resolve("templates").toString()
-                        + "/*/v1/" + scenarioCode + "/" + language + "/template.md");
+        String pathHint = scenarioCode.contains("/")
+                ? promptRootDir.resolve("templates").resolve(scenarioCode).resolve(language).resolve("template.md").toString()
+                : promptRootDir.resolve("templates").toString()
+                        + "/*/v1/" + scenarioCode + "/" + language + "/template.md";
+        return new ResourceNotFoundException("Prompt resource file does not exist.", pathHint);
     }
 }
