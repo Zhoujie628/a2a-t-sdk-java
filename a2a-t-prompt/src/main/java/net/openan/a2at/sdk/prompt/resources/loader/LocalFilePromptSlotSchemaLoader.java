@@ -29,18 +29,25 @@ public final class LocalFilePromptSlotSchemaLoader implements PromptSlotSchemaLo
             throw notFound(scenarioCode, language);
         }
         Path schemaPath;
-        try (var typePaths = Files.list(slotsRoot)) {
-            Optional<Path> match = typePaths
-                    .filter(Files::isDirectory)
-                    .map(typeDir -> typeDir.resolve("v1").resolve(scenarioCode).resolve(language).resolve("slot.json"))
-                    .filter(Files::exists)
-                    .findFirst();
-            schemaPath = match.orElse(null);
-        } catch (IOException exception) {
-            throw new SdkException("Failed to scan slot schema resources: " + slotsRoot, exception);
-        }
-        if (schemaPath == null) {
-            throw notFound(scenarioCode, language);
+        if (scenarioCode.contains("/")) {
+            schemaPath = slotsRoot.resolve(scenarioCode).resolve(language).resolve("slot.json");
+            if (!Files.exists(schemaPath)) {
+                throw notFound(scenarioCode, language);
+            }
+        } else {
+            try (var typePaths = Files.list(slotsRoot)) {
+                Optional<Path> match = typePaths
+                        .filter(Files::isDirectory)
+                        .map(typeDir -> typeDir.resolve("v1").resolve(scenarioCode).resolve(language).resolve("slot.json"))
+                        .filter(Files::exists)
+                        .findFirst();
+                schemaPath = match.orElse(null);
+            } catch (IOException exception) {
+                throw new SdkException("Failed to scan slot schema resources: " + slotsRoot, exception);
+            }
+            if (schemaPath == null) {
+                throw notFound(scenarioCode, language);
+            }
         }
         try {
             return PromptResourceJsonParser.parse(Files.readString(schemaPath), PromptSlotJsonSchema.class)
@@ -51,9 +58,10 @@ public final class LocalFilePromptSlotSchemaLoader implements PromptSlotSchemaLo
     }
 
     private ResourceNotFoundException notFound(String scenarioCode, String language) {
-        return new ResourceNotFoundException(
-                "Prompt resource file does not exist.",
-                promptRootDir.resolve("slots").toString()
-                        + "/*/v1/" + scenarioCode + "/" + language + "/slot.json");
+        String pathHint = scenarioCode.contains("/")
+                ? promptRootDir.resolve("slots").resolve(scenarioCode).resolve(language).resolve("slot.json").toString()
+                : promptRootDir.resolve("slots").toString()
+                        + "/*/v1/" + scenarioCode + "/" + language + "/slot.json";
+        return new ResourceNotFoundException("Prompt resource file does not exist.", pathHint);
     }
 }

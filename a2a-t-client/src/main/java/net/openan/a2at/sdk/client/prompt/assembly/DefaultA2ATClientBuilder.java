@@ -93,46 +93,45 @@ public final class DefaultA2ATClientBuilder {
         PromptResourceAccess resources = PromptResourceAccess.create(config.prompt());
         List<ScenarioDefinition> scenarios =
                 resources.loadScenarios(config.prompt().language());
-        if (LOCAL_RULE_PROVIDER.equals(config.llm().provider())) {
-            return buildLocalRulePromptGenerationOrchestrator(resources, scenarios);
-        }
 
-        return buildLlmBackedPromptGenerationOrchestrator(resources, scenarios);
-    }
-
-    private ClientPromptGenerationOrchestrator buildLocalRulePromptGenerationOrchestrator(
-            PromptResourceAccess resources, List<ScenarioDefinition> scenarios) {
-        ClientSlotSchemaLoader slotSchemaLoader =
-                newClientSlotSchemaLoader(resources, config.prompt().sourceType());
-        return new DefaultClientPromptGenerationOrchestrator(
-                new FirstScenarioRecognizer(slotSchemaLoader, config.prompt().language()),
-                scenarios,
-                config.prompt().language(),
-                "",
-                "",
-                newClientTemplateLoader(resources, config.prompt().sourceType()),
-                new DefaultTemplateDrivenSlotValueExtractor(slotSchemaLoader),
-                new TaskPromptRenderer());
-    }
-
-    private ClientPromptGenerationOrchestrator buildLlmBackedPromptGenerationOrchestrator(
-            PromptResourceAccess resources, List<ScenarioDefinition> scenarios) {
         ClientSlotSchemaLoader slotSchemaLoader =
                 newClientSlotSchemaLoader(resources, config.prompt().sourceType());
         ClientTemplateLoader templateLoader =
                 newClientTemplateLoader(resources, config.prompt().sourceType());
-        LLMClient llmClient = createLlmClient();
         String language = config.prompt().language();
-        String scenarioSystemPrompt = resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "system.md");
-        String scenarioUserPrompt = resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "user.md");
-        String slotSystemPrompt = resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "system.md");
-        String slotUserPrompt = resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "user.md");
-        ClientScenarioRecognizer llmScenarioRecognizer =
-                new SingleScenarioAwareRecognizer(scenarios, new ScenarioRecognizer(llmClient)::recognize);
-        ClientSlotValueExtractor slotValueExtractor = new StructuredInputAwareSlotValueExtractor(
-                new DefaultTemplateDrivenSlotValueExtractor(slotSchemaLoader),
-                new DefaultStructuredClientSlotValueExtractor(
-                        llmClient, slotSchemaLoader, slotSystemPrompt, slotUserPrompt));
+
+        boolean isLocalRule = LOCAL_RULE_PROVIDER.equals(config.llm().provider());
+        LLMClient llmClient = isLocalRule ? null : createLlmClient();
+
+        String scenarioSystemPrompt = isLocalRule
+                ? "" : resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "system.md");
+        String scenarioUserPrompt = isLocalRule
+                ? "" : resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "user.md");
+        String slotSystemPrompt = isLocalRule
+                ? "" : resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "system.md");
+        String slotUserPrompt = isLocalRule
+                ? "" : resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "user.md");
+
+        ClientScenarioRecognizer scenarioRecognizer;
+        ClientSlotValueExtractor slotValueExtractor;
+
+        if (isLocalRule) {
+            scenarioRecognizer = (normalizedInput, ignoredScenarios, systemPrompt, userPrompt) -> {
+                if (scenarios.isEmpty()) {
+                    return new ScenarioRecognitionResult(false, null, "No scenarios configured.");
+                }
+                return new ScenarioRecognitionResult(true, scenarios.get(0).scenarioCode(), null);
+            };
+            slotValueExtractor = new DefaultTemplateDrivenSlotValueExtractor(slotSchemaLoader);
+        } else {
+            scenarioRecognizer =
+                    new SingleScenarioAwareRecognizer(scenarios, new ScenarioRecognizer(llmClient)::recognize);
+            slotValueExtractor = new StructuredInputAwareSlotValueExtractor(
+                    new DefaultTemplateDrivenSlotValueExtractor(slotSchemaLoader),
+                    new DefaultStructuredClientSlotValueExtractor(
+                            llmClient, slotSchemaLoader, slotSystemPrompt, slotUserPrompt));
+        }
+
         return ClientPromptGenerationOrchestratorBuilder.builder()
                 .llmClient(llmClient)
                 .scenarios(scenarios)
@@ -141,7 +140,7 @@ public final class DefaultA2ATClientBuilder {
                 .scenarioUserPrompt(scenarioUserPrompt)
                 .slotSystemPrompt(slotSystemPrompt)
                 .slotUserPrompt(slotUserPrompt)
-                .scenarioRecognizer(llmScenarioRecognizer)
+                .scenarioRecognizer(scenarioRecognizer)
                 .templateLoader(templateLoader)
                 .slotSchemaLoader(slotSchemaLoader)
                 .slotValueExtractor(slotValueExtractor)
@@ -211,55 +210,6 @@ public final class DefaultA2ATClientBuilder {
             return new LocalFileClientSlotSchemaLoader(resources.localRootDir());
         }
         throw new UnsupportedOperationException("Unsupported prompt source type: " + sourceType);
-    }
-
-    private static final class FirstScenarioRecognizer
-            implements net.openan.a2at.sdk.client.prompt.recognition.ClientScenarioRecognizer {
-
-        private final ClientSlotSchemaLoader slotSchemaLoader;
-
-        private final String language;
-
-        private FirstScenarioRecognizer(ClientSlotSchemaLoader slotSchemaLoader, String language) {
-            this.slotSchemaLoader = slotSchemaLoader;
-            this.language = language;
-        }
-
-        @Override
-        public ScenarioRecognitionResult recognize(
-                String normalizedInput, List<ScenarioDefinition> scenarios, String systemPrompt, String userPrompt) {
-            if (scenarios.isEmpty()) {
-                return new ScenarioRecognitionResult(false, null, "No scenarios configured.");
-            }
-
-            Map<String, Object> normalizedFacts = normalizeInput(normalizedInput);
-            ScenarioDefinition bestScenario = scenarios.get(0);
-            int bestScore = Integer.MIN_VALUE;
-            for (ScenarioDefinition scenario : scenarios) {
-                int score = scoreScenario(scenario, normalizedFacts);
-                if (score > bestScore) {
-                    bestScenario = scenario;
-                    bestScore = score;
-                }
-            }
-            return new ScenarioRecognitionResult(true, bestScenario.scenarioCode(), null);
-        }
-
-        private int scoreScenario(ScenarioDefinition scenario, Map<String, Object> normalizedFacts) {
-            int score = 0;
-            for (var slotDefinition : slotSchemaLoader
-                    .loadSlotSchema(scenario.scenarioCode(), language)
-                    .slotDefinitions()) {
-                if (normalizedFacts.containsKey(slotDefinition.name())) {
-                    score += slotDefinition.required() ? 10 : 3;
-                }
-            }
-            return score;
-        }
-
-        private static Map<String, Object> normalizeInput(String normalizedInput) {
-            return Map.of("input", normalizedInput);
-        }
     }
 
     private record SingleScenarioAwareRecognizer(List<ScenarioDefinition> scenarios, ClientScenarioRecognizer delegate)

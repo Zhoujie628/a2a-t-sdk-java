@@ -1,17 +1,26 @@
 package net.openan.a2at.sdk.client.prompt.orchestration;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import net.openan.a2at.sdk.client.model.MetadataContent;
 import net.openan.a2at.sdk.client.model.PromptGenerationFailure;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.extractor.ClientSlotValueExtractor;
+import net.openan.a2at.sdk.client.prompt.loader.ClientSlotSchemaLoader;
 import net.openan.a2at.sdk.client.prompt.loader.ClientTemplateLoader;
 import net.openan.a2at.sdk.client.prompt.recognition.ClientScenarioRecognizer;
+import net.openan.a2at.sdk.core.exception.FailedParameter;
+import net.openan.a2at.sdk.core.exception.PromptGenerationException;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
+import net.openan.a2at.sdk.core.exception.SdkException;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
+import net.openan.a2at.sdk.llm.LLMRuntimeError;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
+import net.openan.a2at.sdk.prompt.resources.model.PromptSlotDefinition;
+import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import net.openan.a2at.sdk.prompt.taskrendering.api.TaskPromptRenderer;
 import net.openan.a2at.sdk.prompt.taskrendering.exception.TaskPromptRenderException;
@@ -23,7 +32,7 @@ import net.openan.a2at.sdk.prompt.taskrendering.exception.TaskPromptRenderExcept
  */
 public final class DefaultClientPromptGenerationOrchestrator implements ClientPromptGenerationOrchestrator {
 
-    private static final Pattern TEMPLATE_IDENTIFIER_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+");
+    private static final Pattern TEMPLATE_IDENTIFIER_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)*");
 
     private final ClientScenarioRecognizer scenarioRecognizer;
 
@@ -38,6 +47,8 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
     private final ClientTemplateLoader templateLoader;
 
     private final ClientSlotValueExtractor slotValueExtractor;
+
+    private final ClientSlotSchemaLoader slotSchemaLoader;
 
     private final TaskPromptRenderer renderer;
 
@@ -54,6 +65,7 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
      * @param templateLoader template loader
      * @param slotValueExtractor slot value extractor
      * @param renderer task prompt renderer
+     * @param slotSchemaLoader slot schema loader
      */
     public DefaultClientPromptGenerationOrchestrator(
             ClientScenarioRecognizer scenarioRecognizer,
@@ -63,7 +75,8 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
             String userPrompt,
             ClientTemplateLoader templateLoader,
             ClientSlotValueExtractor slotValueExtractor,
-            TaskPromptRenderer renderer) {
+            TaskPromptRenderer renderer,
+            ClientSlotSchemaLoader slotSchemaLoader) {
         this.scenarioRecognizer = scenarioRecognizer;
         this.scenarios = scenarios;
         this.language = language;
@@ -72,6 +85,7 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
         this.templateLoader = templateLoader;
         this.slotValueExtractor = slotValueExtractor;
         this.renderer = renderer;
+        this.slotSchemaLoader = slotSchemaLoader;
     }
 
     @Override
@@ -106,68 +120,6 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
         try {
             Map<String, String> slots =
                     slotValueExtractor.extractSlots(userInput, recognition.scenarioCode(), language, templateText);
-            String renderedPrompt = renderer.render(templateText, slots);
-            return PromptGenerationResult.success(renderedPrompt);
-        } catch (TaskPromptRenderException error) {
-            return PromptGenerationResult.failure(
-                    new PromptGenerationFailure("render_failed", error.getMessage(), "generation"));
-        }
-    }
-
-    @Override
-    public PromptGenerationResult generateTaskPromptFromNl(String taskInputNl, String promptTemplateUri) {
-        return generateFromTemplateUri(taskInputNl, promptTemplateUri);
-    }
-
-    @Override
-    public PromptGenerationResult generateTaskPromptFromJsonData(
-            Map<String, Object> taskInputJsonData, String promptTemplateUri) {
-        return generateFromTemplateUri(taskInputJsonData, promptTemplateUri);
-    }
-
-    @Override
-    public PromptGenerationResult generateAuthorizationPromptFromNl(String inputNl, String authorizationType) {
-        return generateFromTemplateUri(inputNl, authorizationType);
-    }
-
-    @Override
-    public PromptGenerationResult generateAuthorizationPromptFromJsonData(
-            Map<String, Object> inputJsonData, String authorizationType) {
-        return generateFromTemplateUri(inputJsonData, authorizationType);
-    }
-
-    @Override
-    public PromptGenerationResult generateNotificationPromptFromNl(String inputNl, String promptTemplateUri) {
-        return generateFromTemplateUri(inputNl, promptTemplateUri);
-    }
-
-    @Override
-    public PromptGenerationResult generateNotificationPromptFromJsonData(
-            Map<String, Object> inputJsonData, String promptTemplateUri) {
-        return generateFromTemplateUri(inputJsonData, promptTemplateUri);
-    }
-
-    private PromptGenerationResult generateFromTemplateUri(Object userInput, String templateIdentifier) {
-        if (templateIdentifier == null
-                || templateIdentifier.isBlank()
-                || !TEMPLATE_IDENTIFIER_PATTERN.matcher(templateIdentifier).matches()) {
-            return PromptGenerationResult.failure(new PromptGenerationFailure(
-                    "invalid_template_uri",
-                    "Template URI is null, blank, or contains invalid characters.",
-                    "generation"));
-        }
-
-        final String templateText;
-        try {
-            templateText = templateLoader.loadTemplate(templateIdentifier, language);
-        } catch (ResourceNotFoundException error) {
-            return PromptGenerationResult.failure(
-                    new PromptGenerationFailure("template_not_found", error.getMessage(), "generation"));
-        }
-
-        try {
-            Map<String, String> slots =
-                    slotValueExtractor.extractSlots(userInput, templateIdentifier, language, templateText);
             String renderedPrompt = renderer.render(templateText, slots);
             return PromptGenerationResult.success(renderedPrompt);
         } catch (TaskPromptRenderException error) {
@@ -217,12 +169,32 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
         if (templateIdentifier == null
                 || templateIdentifier.isBlank()
                 || !TEMPLATE_IDENTIFIER_PATTERN.matcher(templateIdentifier).matches()) {
-            throw new IllegalArgumentException("Template URI is null, blank, or contains invalid characters.");
+            throw new PromptGenerationException("invalid_template_uri",
+                    "Template URI is null, blank, or contains invalid characters.");
         }
-        String templateText = templateLoader.loadTemplate(templateIdentifier, language);
-        Map<String, String> slots =
-                slotValueExtractor.extractSlots(userInput, templateIdentifier, language, templateText);
-        String renderedPrompt = renderer.render(templateText, slots);
+        final String templateText;
+        try {
+            templateText = templateLoader.loadTemplate(templateIdentifier, language);
+        } catch (ResourceNotFoundException e) {
+            throw new PromptGenerationException("template_not_found", e.getMessage(), e);
+        } catch (SdkException e) {
+            throw new PromptGenerationException("prompt_resource_load_error", e.getMessage(), e);
+        }
+        final Map<String, String> slots;
+        try {
+            slots = slotValueExtractor.extractSlots(userInput, templateIdentifier, language, templateText);
+        } catch (ResourceNotFoundException e) {
+            throw new PromptGenerationException("slot_schema_not_found", e.getMessage(), e);
+        } catch (LLMRuntimeError | SdkException e) {
+            throw new PromptGenerationException("llm_invocation_failed", e.getMessage(), e);
+        }
+        validateRequiredSlots(slots, templateIdentifier);
+        final String renderedPrompt;
+        try {
+            renderedPrompt = renderer.render(templateText, slots);
+        } catch (TaskPromptRenderException e) {
+            throw new PromptGenerationException("render_failed", e.getMessage(), e);
+        }
         return new MetadataContent(templateIdentifier, renderedPrompt, extensionUri);
     }
 
@@ -234,13 +206,76 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
         if (templateIdentifier == null
                 || templateIdentifier.isBlank()
                 || !TEMPLATE_IDENTIFIER_PATTERN.matcher(templateIdentifier).matches()) {
-            throw new IllegalArgumentException("Template URI is null, blank, or contains invalid characters.");
+            throw new PromptGenerationException("invalid_template_uri",
+                    "Template URI is null, blank, or contains invalid characters.");
         }
-        String templateText = templateLoader.loadTemplate(templateIdentifier, language);
-        Map<String, String> slots =
-                slotValueExtractor.extractSlotsWithSchema(data, templateIdentifier, language, templateText, schema);
-        String renderedPrompt = renderer.render(templateText, slots);
+        final String templateText;
+        try {
+            templateText = templateLoader.loadTemplate(templateIdentifier, language);
+        } catch (ResourceNotFoundException e) {
+            throw new PromptGenerationException("template_not_found", e.getMessage(), e);
+        } catch (SdkException e) {
+            throw new PromptGenerationException("prompt_resource_load_error", e.getMessage(), e);
+        }
+        final Map<String, String> slots;
+        try {
+            slots = slotValueExtractor.extractSlotsWithSchema(
+                    data, templateIdentifier, language, templateText, schema);
+        } catch (ResourceNotFoundException e) {
+            throw new PromptGenerationException("slot_schema_not_found", e.getMessage(), e);
+        } catch (LLMRuntimeError | SdkException e) {
+            throw new PromptGenerationException("llm_invocation_failed", e.getMessage(), e);
+        }
+        validateRequiredSlots(slots, templateIdentifier);
+        final String renderedPrompt;
+        try {
+            renderedPrompt = renderer.render(templateText, slots);
+        } catch (TaskPromptRenderException e) {
+            throw new PromptGenerationException("render_failed", e.getMessage(), e);
+        }
         return new MetadataContent(templateIdentifier, renderedPrompt, extensionUri);
+    }
+
+    private void validateRequiredSlots(Map<String, String> slots, String templateIdentifier) {
+        final PromptSlotSchema schema;
+        try {
+            schema = slotSchemaLoader.loadSlotSchema(templateIdentifier, language);
+        } catch (SdkException e) {
+            throw new PromptGenerationException("slot_schema_not_found", e.getMessage(), e);
+        }
+        if (schema == null) {
+            throw new PromptGenerationException(
+                    "slot_schema_not_found", "Slot schema not found for template: " + templateIdentifier);
+        }
+        List<PromptSlotDefinition> defs = schema.slotDefinitions();
+        if (defs == null) {
+            return;
+        }
+        if (slots == null) {
+            slots = Map.of();
+        }
+        List<FailedParameter> failed = new ArrayList<>();
+        for (PromptSlotDefinition def : defs) {
+            if (def == null) {
+                continue;
+            }
+            if (def.required()) {
+                String name = def.name();
+                if (name == null) {
+                    continue;
+                }
+                String value = slots.get(name);
+                if (value == null || value.trim().isEmpty()) {
+                    failed.add(new FailedParameter(name, "missing_required"));
+                }
+            }
+        }
+        if (!failed.isEmpty()) {
+            throw new PromptGenerationException("slot_validation_error",
+                    "Required slots are missing or empty: " + failed.stream()
+                            .map(FailedParameter::parameterName).collect(Collectors.joining(", ")),
+                    failed);
+        }
     }
 
     String lastNormalizedInput() {

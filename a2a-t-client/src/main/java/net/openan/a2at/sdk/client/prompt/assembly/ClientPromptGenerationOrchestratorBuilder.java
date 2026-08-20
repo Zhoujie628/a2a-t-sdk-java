@@ -209,7 +209,6 @@ public final class ClientPromptGenerationOrchestratorBuilder {
      * @return fully assembled orchestrator with all required dependencies resolved
      */
     public DefaultClientPromptGenerationOrchestrator build() {
-        require(llmClient, "LLM client must be configured.");
         require(scenarios, "Scenario definitions must be configured.");
         require(language, "Prompt language must be configured.");
         require(scenarioSystemPrompt, "Scenario system prompt must be configured.");
@@ -243,7 +242,8 @@ public final class ClientPromptGenerationOrchestratorBuilder {
                 scenarioUserPrompt,
                 effectiveTemplateLoader,
                 effectiveSlotValueExtractor,
-                effectiveRenderer);
+                effectiveRenderer,
+                effectiveSlotSchemaLoader);
     }
 
     private static void require(Object value, String message) {
