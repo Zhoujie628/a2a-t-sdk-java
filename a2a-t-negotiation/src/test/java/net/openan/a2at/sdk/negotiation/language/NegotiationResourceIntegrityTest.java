@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -132,7 +133,7 @@ class NegotiationResourceIntegrityTest {
     }
 
     @Test
-    void thePromptResourceSurfaceContainsNoTypeRecognitionCategory() throws IOException {
+    void thePromptResourceSurfaceContainsNoTypeRecognitionCategory() throws IOException, URISyntaxException {
         URL promptsRoot = Thread.currentThread().getContextClassLoader().getResource("prompt_resources/prompts");
         assertNotNull(promptsRoot, "the prompt resources root must exist on the classpath");
         if (!"file".equals(promptsRoot.getProtocol())) {
