@@ -4,7 +4,7 @@
 - maxRounds: 5
 
 ## Information Negotiation
-Please provide the related content according to <Required Information Items>.
+Please supplement the relevant content based on <Required Information Items>.
 
 ## Required Information Items
 1. energy-saving area information: e.g. Songshan Lake
