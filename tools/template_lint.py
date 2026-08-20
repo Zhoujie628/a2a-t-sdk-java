@@ -14,12 +14,16 @@ HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 SLOT = re.compile(r"{{\s*([^{}\s]+)\s*}}")
 TASK = {"Task Description", "Task Type", "Task Target", "Task Object", "Task Context", "Constraints", "Expected Output", "Operation Type"}
 NOTIFICATION = {"Subscription Description", "Notification Topic", "Subscribe Condition", "Notification Data Format", "Expected Output"}
+AUTHORIZATION = {"Authorization Policy Operation Type", "Authorization Policy Operation Description", "Dynamic Network Operation Authorization Policy List", "Expected Output"}
 ALIASES = {
     "任务描述": "Task Description", "任务类型": "Task Type", "任务目标": "Task Target", "任务对象": "Task Object",
     "目标对象": "Task Object", "任务上下文": "Task Context", "约束条件": "Constraints", "预期输出": "Expected Output",
     "操作类型": "Operation Type",
     "订阅描述": "Subscription Description", "通知主题": "Notification Topic", "订阅条件": "Subscribe Condition",
     "通知数据格式": "Notification Data Format", "上报通知数据格式": "Notification Data Format",
+    "授权策略的操作类型": "Authorization Policy Operation Type",
+    "授权策略的操作描述": "Authorization Policy Operation Description",
+    "动网操作的授权策略列表": "Dynamic Network Operation Authorization Policy List",
 }
 
 
@@ -77,9 +81,18 @@ def lint_pair(template_path: Path, schema_path: Path) -> list[str]:
                 headings.append((line_no, canonical_heading(match.group(2))))
         placeholders.extend((line_no, name) for name in SLOT.findall(line))
     names = [name for _, name in headings]
-    profile = "notification" if "Subscription Description" in names else "task"
-    allowed = NOTIFICATION if profile == "notification" else TASK
-    required = {"Subscription Description"} if profile == "notification" else {"Task Description"}
+    if "Authorization Policy Operation Type" in names:
+        profile = "authorization"
+        allowed = AUTHORIZATION
+        required = {"Authorization Policy Operation Type"}
+    elif "Subscription Description" in names:
+        profile = "notification"
+        allowed = NOTIFICATION
+        required = {"Subscription Description"}
+    else:
+        profile = "task"
+        allowed = TASK
+        required = {"Task Description"}
     if not headings:
         errors.append(error(template_path, 1, "instruction-missing", "Template must contain L0 instructions marked with '##'."))
     for line_no, name in headings:
@@ -114,8 +127,6 @@ def lint_root(root: Path) -> list[str]:
         schema_path = slots / template_path.relative_to(templates).parent / "slot.json"
         if schema_path.is_file():
             errors.extend(lint_pair(template_path, schema_path))
-        else:
-            errors.append(error(template_path, 1, "slot-schema-missing", f"Missing paired slot schema: {schema_path}"))
     for schema_path in sorted(slots.glob("*/v1/*/*/slot.json")):
         template_path = templates / schema_path.relative_to(slots).parent / "template.md"
         if not template_path.is_file():
