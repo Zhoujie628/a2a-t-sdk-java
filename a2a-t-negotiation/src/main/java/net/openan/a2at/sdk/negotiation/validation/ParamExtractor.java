@@ -132,7 +132,11 @@ public final class ParamExtractor {
                     "Semantic validation rejected the negotiation message.",
                     semanticResult.errors());
         }
-        return new FilledParamData(mergeParams(context, semanticResult.params()));
+        FilledParamData filledParamData = new FilledParamData(mergeParams(context, semanticResult.params()));
+        LOGGER.atInfo().log(
+                "negotiation_param_extraction_completed param_keys={}",
+                filledParamData.data().keySet());
+        return filledParamData;
     }
 
     private NegotiationContext requireValidRuleContext(String prompt) {

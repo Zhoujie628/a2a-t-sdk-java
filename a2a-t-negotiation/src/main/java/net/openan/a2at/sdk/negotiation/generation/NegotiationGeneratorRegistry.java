@@ -15,6 +15,8 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Dispatch table from negotiation type and phase to the generator serving them.
@@ -27,6 +29,8 @@ import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
  * @since 2026-06
  */
 public final class NegotiationGeneratorRegistry {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(NegotiationGeneratorRegistry.class);
 
     private final Map<NegotiationType, NegotiationGenerator> proposeGenerators = new EnumMap<>(NegotiationType.class);
 
@@ -88,6 +92,11 @@ public final class NegotiationGeneratorRegistry {
             throw new NegotiationContentException(
                     "No negotiation generator is registered for type " + type + " and phase " + phase + ".", "type");
         }
+        LOGGER.atDebug().log(
+                "negotiation_generator_dispatched generator={} type={} phase={}",
+                generator.getClass().getSimpleName(),
+                type,
+                phase);
         return generator;
     }
 

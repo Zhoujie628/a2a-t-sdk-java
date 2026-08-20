@@ -6,6 +6,8 @@ import java.util.regex.Pattern;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default rule-level compliance checker for rendered negotiation messages.
@@ -21,6 +23,8 @@ import net.openan.a2at.sdk.negotiation.content.Vocabulary;
  * @since 2026-06
  */
 public final class DefaultNegotiationComplianceChecker implements NegotiationComplianceChecker {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultNegotiationComplianceChecker.class);
 
     private static final Pattern UUID_PATTERN =
             Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
@@ -53,7 +57,7 @@ public final class DefaultNegotiationComplianceChecker implements NegotiationCom
         }
         List<String> contextBody = contextSectionBody(prompt, vocabulary.get("section.context"));
         if (contextBody == null) {
-            return new NegotiationRuleCheckResult(false, false, List.of(), null);
+            return logResult(new NegotiationRuleCheckResult(false, false, List.of(), null));
         }
 
         String id = stringValue(contextBody, "- id:");
@@ -75,9 +79,9 @@ public final class DefaultNegotiationComplianceChecker implements NegotiationCom
 
         if (errors.isEmpty()) {
             NegotiationContext context = new NegotiationContext(id, round, maxRounds);
-            return new NegotiationRuleCheckResult(true, true, List.of(), context);
+            return logResult(new NegotiationRuleCheckResult(true, true, List.of(), context));
         }
-        return new NegotiationRuleCheckResult(false, true, List.copyOf(errors), null);
+        return logResult(new NegotiationRuleCheckResult(false, true, List.copyOf(errors), null));
     }
 
     private static void collectIdErrors(String id, List<SlotValidationError> errors) {
@@ -117,6 +121,25 @@ public final class DefaultNegotiationComplianceChecker implements NegotiationCom
                     "out_of_range",
                     "Negotiation context " + slotName + " must be a positive integer but was " + value + "."));
         }
+    }
+
+    /**
+     * Emits the rule-check completion event of one check outcome.
+     *
+     * @param result rule check outcome to log
+     * @return the unchanged outcome
+     */
+    private static NegotiationRuleCheckResult logResult(NegotiationRuleCheckResult result) {
+        if (result.errors().isEmpty()) {
+            LOGGER.atDebug().log("negotiation_rule_checks_completed passed={} error_count=0", result.passed());
+        } else {
+            LOGGER.atWarn()
+                    .log(
+                            "negotiation_rule_checks_completed passed={} error_count={}",
+                            result.passed(),
+                            result.errors().size());
+        }
+        return result;
     }
 
     /**

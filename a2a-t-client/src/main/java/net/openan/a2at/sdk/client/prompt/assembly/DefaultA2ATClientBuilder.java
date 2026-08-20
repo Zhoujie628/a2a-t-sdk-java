@@ -20,6 +20,8 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
 import net.openan.a2at.sdk.llm.LLMConfigLoader;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
 import net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
 import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
@@ -161,6 +163,31 @@ public final class DefaultA2ATClientBuilder {
                         .store(new InMemoryNegotiationStore())
                         .build(),
                 NegotiationRole.CLIENT);
+    }
+
+    /**
+     * Builds the default negotiation content-layer orchestrator from the configured unified SDK config.
+     *
+     * <p>The wiring mirrors the server side: the message language and the local template root come from the prompt
+     * runtime config, the retry attempt limit comes from the LLM config, and the LLM client is only created when the
+     * provider is not {@code local_rule}.
+     *
+     * @return assembled negotiation generation orchestrator
+     */
+    public NegotiationGenerationOrchestrator buildNegotiationGenerationOrchestrator() {
+        require(config, "Unified SDK config must be configured.");
+        requireSupportedConfig();
+        LLMClient llmClient = null;
+        if (!LOCAL_RULE_PROVIDER.equals(config.llm().provider())) {
+            require(envPath, "Unified SDK env path must be configured.");
+            llmClient = createLlmClient();
+        }
+        return NegotiationGenerationOrchestratorBuilder.builder()
+                .language(config.prompt().language())
+                .localRootDir(config.prompt().localRootDir())
+                .llmClient(llmClient)
+                .maxAttempts(config.llm().maxAttempts())
+                .build();
     }
 
     private void requireSupportedConfig() {

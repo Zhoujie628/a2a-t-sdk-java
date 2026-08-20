@@ -1,0 +1,308 @@
+package net.openan.a2at.sdk.negotiation.generation;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import java.util.Map;
+import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
+import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
+import net.openan.a2at.sdk.llm.LLMClient;
+import net.openan.a2at.sdk.llm.LLMResponse;
+import net.openan.a2at.sdk.negotiation.content.FilledParamData;
+import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.MetadataContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
+import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
+import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
+import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
+import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
+import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
+import net.openan.a2at.sdk.negotiation.resources.NegotiationTemplateLoader;
+import net.openan.a2at.sdk.negotiation.resources.PromptTemplate;
+import net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler;
+import org.junit.jupiter.api.Test;
+
+class NegotiationGenerationOrchestratorTest {
+
+    private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
+
+    private static final String INFORMATION_PROPOSE_URI = "Negotiation-T/v1/information-negotiation/propose";
+
+    @Test
+    void generatesInformationProposeFromDataInChinese() {
+        MetadataContent result = zhOrchestrator()
+                .generateProposeFromData(
+                        new NegotiationProposeData(
+                                new NegotiationContext(UUID, 1, 5),
+                                new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                        INFORMATION_PROPOSE_URI);
+
+        assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
+        assertEquals(NegotiationHandler.NEGOTIATION_T_URI, result.extensionUri());
+        assertFalse(result.promptText().isBlank());
+        assertTrue(result.promptText().contains("- id: " + UUID));
+        assertTrue(result.promptText().contains("- round: 1"));
+        assertTrue(result.promptText().contains("- maxRounds: 5"));
+        assertTrue(result.promptText().contains("协商上下文"));
+        assertTrue(result.promptText().contains("所需信息项"));
+
+        Map<String, String> metadata = result.buildMetadataContent();
+        assertEquals(2, metadata.size());
+        assertEquals(result.promptText(), metadata.get(NegotiationHandler.NEGOTIATION_T_URI));
+        assertEquals(result.templateUri(), metadata.get(MetadataContent.TEMPLATE_URI_METADATA_KEY));
+    }
+
+    @Test
+    void generatesInformationProposeFromDataInEnglish() {
+        MetadataContent result = orchestrator("en-US")
+                .generateProposeFromData(
+                        new NegotiationProposeData(
+                                new NegotiationContext(UUID, 2, 5),
+                                new InfoProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
+                        INFORMATION_PROPOSE_URI);
+
+        assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
+        assertFalse(result.promptText().isBlank());
+        assertTrue(result.promptText().contains("- id: " + UUID));
+        assertTrue(result.promptText().contains("Negotiation Context"));
+        assertTrue(result.promptText().contains("Required Information Items"));
+    }
+
+    @Test
+    void generatesProposeFromTextWithScriptedExtraction() {
+        ScriptedClient llm =
+                new ScriptedClient("{\"items\":[{\"name\":\"故障发生时间\",\"value\":\"精确到分钟的时间点\"}],\"relationship\":null}");
+        NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .llmClient(llm)
+                .build();
+
+        MetadataContent result = orchestrator.generateProposeFromText(
+                "请提供故障发生时间。", new NegotiationContext(UUID, 2, 5), INFORMATION_PROPOSE_URI);
+
+        assertEquals(1, llm.calls);
+        assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
+        assertFalse(result.promptText().isBlank());
+        assertTrue(result.promptText().contains("- round: 2"));
+        assertTrue(result.promptText().contains("故障发生时间"));
+    }
+
+    @Test
+    void validatesAndFillsProposeDataWithScriptedSemanticResponse() {
+        ScriptedClient llm =
+                new ScriptedClient("{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],"
+                        + "\"params\":{\"region\":\"松山湖\"}}");
+        NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .llmClient(llm)
+                .build();
+        MetadataContent message = orchestrator.generateProposeFromData(
+                new NegotiationProposeData(
+                        new NegotiationContext(UUID, 1, 5),
+                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                INFORMATION_PROPOSE_URI);
+
+        FilledParamData filled = orchestrator.validateAndFillingProposeData(
+                message.promptText(),
+                Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
+                INFORMATION_PROPOSE_URI);
+
+        assertEquals(1, llm.calls);
+        assertEquals(UUID, filled.data().get("id"));
+        assertEquals(1, filled.data().get("round"));
+        assertEquals(5, filled.data().get("maxRounds"));
+        assertEquals("松山湖", filled.data().get("region"));
+    }
+
+    @Test
+    void listsAllSixTemplatesPerLanguage() {
+        assertEquals(6, zhOrchestrator().getNegotiationPrompts().size());
+        assertEquals(6, orchestrator("en-US").getNegotiationPrompts().size());
+    }
+
+    @Test
+    void queriesSingleTemplateByUri() {
+        assertTrue(
+                zhOrchestrator().getNegotiationPrompt(INFORMATION_PROPOSE_URI).isPresent());
+        assertTrue(zhOrchestrator()
+                .getNegotiationPrompt("Negotiation-T/v1/target-negotiation/accept-reject")
+                .isPresent());
+        assertFalse(zhOrchestrator()
+                .getNegotiationPrompt("Negotiation-T/v1/unknown-negotiation/propose")
+                .isPresent());
+        assertFalse(zhOrchestrator().getNegotiationPrompt("malformed-uri").isPresent());
+    }
+
+    @Test
+    void retriesContentExtractionUntilItSucceeds() {
+        ScriptedClient llm = new ScriptedClient("", "", "{\"items\":[{\"name\":\"区域\",\"value\":\"松山湖\"}]}");
+        NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .llmClient(llm)
+                .maxAttempts(3)
+                .build();
+
+        MetadataContent result = orchestrator.generateProposeFromText(
+                "请提供区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
+
+        assertEquals(3, llm.calls);
+        assertFalse(result.promptText().isBlank());
+    }
+
+    @Test
+    void rethrowsOriginalCodeWhenRetriesAreExhausted() {
+        FailingClient llm = new FailingClient();
+        NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .llmClient(llm)
+                .maxAttempts(2)
+                .build();
+
+        NegotiationGenerationException failure = assertThrows(
+                NegotiationGenerationException.class,
+                () -> orchestrator.generateProposeFromText(
+                        "请提供区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI));
+
+        assertEquals(2, llm.calls);
+        assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, failure.getCode());
+    }
+
+    @Test
+    void reportsMissingTemplateAsTemplateNotFoundOnBothPipelines() {
+        NegotiationGenerationOrchestrator generationOrchestrator = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .templateLoader(missingTemplateLoader())
+                .build();
+
+        NegotiationGenerationException generationFailure = assertThrows(
+                NegotiationGenerationException.class,
+                () -> generationOrchestrator.generateProposeFromData(
+                        new NegotiationProposeData(
+                                new NegotiationContext(UUID, 1, 5),
+                                new InfoProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
+                        INFORMATION_PROPOSE_URI));
+        assertEquals(A2ATErrorCodes.TEMPLATE_NOT_FOUND, generationFailure.getCode());
+
+        NegotiationGenerationOrchestrator validationOrchestrator = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .semanticValidator((prompt, callerSchema, reference) -> {
+                    throw new ResourceNotFoundException(
+                            "Semantic validation prompt does not exist.", "prompt_resources/prompts");
+                })
+                .build();
+
+        NegotiationParamExtractionException extractionFailure = assertThrows(
+                NegotiationParamExtractionException.class,
+                () -> validationOrchestrator.validateAndFillingProposeData(
+                        "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
+                        Map.of("type", "object"),
+                        INFORMATION_PROPOSE_URI));
+        assertEquals(A2ATErrorCodes.TEMPLATE_NOT_FOUND, extractionFailure.getCode());
+    }
+
+    @Test
+    void rejectsNonNegotiationPromptInParameterExtraction() {
+        ScriptedClient llm = new ScriptedClient(
+                "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}");
+        NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .llmClient(llm)
+                .build();
+
+        NegotiationParamExtractionException failure = assertThrows(
+                NegotiationParamExtractionException.class,
+                () -> orchestrator.validateAndFillingProposeData(
+                        "plain text without any negotiation section",
+                        Map.of("type", "object"),
+                        INFORMATION_PROPOSE_URI));
+
+        assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, failure.getCode());
+        assertEquals(0, llm.calls);
+    }
+
+    @Test
+    void rejectsMalformedTemplateUriAsAContentError() {
+        NegotiationContentException malformedUriFailure =
+                assertThrows(NegotiationContentException.class, () -> zhOrchestrator()
+                        .generateProposeFromData(
+                                new NegotiationProposeData(
+                                        new NegotiationContext(UUID, 1, 5),
+                                        new InfoProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
+                                "information-negotiation/propose"));
+        assertEquals("templateUri", malformedUriFailure.getField());
+
+        NegotiationContentException phaseMismatchFailure =
+                assertThrows(NegotiationContentException.class, () -> zhOrchestrator()
+                        .generateProposeFromData(
+                                new NegotiationProposeData(
+                                        new NegotiationContext(UUID, 1, 5),
+                                        new InfoProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
+                                "Negotiation-T/v1/information-negotiation/accept-reject"));
+        assertEquals("templateUri", phaseMismatchFailure.getField());
+    }
+
+    private static NegotiationGenerationOrchestrator zhOrchestrator() {
+        return orchestrator("zh-CN");
+    }
+
+    private static NegotiationGenerationOrchestrator orchestrator(String language) {
+        return NegotiationGenerationOrchestratorBuilder.builder()
+                .language(language)
+                .build();
+    }
+
+    private static NegotiationTemplateLoader missingTemplateLoader() {
+        return new NegotiationTemplateLoader() {
+            @Override
+            public PromptTemplate load(NegotiationReference reference) {
+                throw new ResourceNotFoundException("Negotiation template does not exist.", reference.uri());
+            }
+
+            @Override
+            public List<PromptTemplate> loadAll() {
+                return List.of();
+            }
+        };
+    }
+
+    private static final class ScriptedClient implements LLMClient {
+
+        private final List<String> payloads;
+
+        private int calls;
+
+        private ScriptedClient(String... payloads) {
+            this.payloads = List.of(payloads);
+        }
+
+        @Override
+        public LLMResponse structured(
+                List<Map<String, String>> messages,
+                Map<String, Object> jsonSchema,
+                Double temperature,
+                Integer maxTokens) {
+            String payload = payloads.get(Math.min(calls, payloads.size() - 1));
+            calls++;
+            return new LLMResponse(payload, "test-model", Map.of("prompt_tokens", 1, "completion_tokens", 1), Map.of());
+        }
+    }
+
+    private static final class FailingClient implements LLMClient {
+
+        private int calls;
+
+        @Override
+        public LLMResponse structured(
+                List<Map<String, String>> messages,
+                Map<String, Object> jsonSchema,
+                Double temperature,
+                Integer maxTokens) {
+            calls++;
+            throw new IllegalStateException("LLM endpoint unavailable.");
+        }
+    }
+}

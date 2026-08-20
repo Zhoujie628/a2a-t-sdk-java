@@ -12,6 +12,8 @@ import net.openan.a2at.sdk.core.exception.SdkException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default negotiation template loader with dual-root fallback.
@@ -28,6 +30,8 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationType;
  * @since 2026-06
  */
 public final class DefaultNegotiationTemplateLoader implements NegotiationTemplateLoader {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultNegotiationTemplateLoader.class);
 
     private static final String CLASSPATH_ROOT = "prompt_resources/";
 
@@ -81,7 +85,9 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
     public PromptTemplate load(NegotiationReference reference) {
         String relativePath = templateRelativePath(reference);
         String content = readTemplate(relativePath);
-        return new PromptTemplate(reference.uri(), extractDescription(content), content);
+        PromptTemplate template = new PromptTemplate(reference.uri(), extractDescription(content), content);
+        LOGGER.atDebug().log("negotiation_template_loaded uri={} language={}", reference.uri(), reference.language());
+        return template;
     }
 
     /**

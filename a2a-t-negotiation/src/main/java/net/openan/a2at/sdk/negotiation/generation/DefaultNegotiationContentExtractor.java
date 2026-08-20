@@ -23,6 +23,8 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default content extractor backed by one structured LLM call.
@@ -37,6 +39,8 @@ import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
  * @since 2026-06
  */
 public final class DefaultNegotiationContentExtractor implements NegotiationContentExtractor {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultNegotiationContentExtractor.class);
 
     private static final String CATEGORY_INFORMATION = "information_negotiation";
 
@@ -114,7 +118,10 @@ public final class DefaultNegotiationContentExtractor implements NegotiationCont
                 messageBuilder.buildMessages(promptCategory(reference.type()), reference.language(), tokens);
         Map<String, Object> schema = schemaBuilder.buildExtractionSchema(reference.type(), reference.phase());
         Map<String, Object> payload = invokeLlm(messages, schema);
-        return mapContent(payload, reference.type(), reference.phase());
+        NegotiationContent content = mapContent(payload, reference.type(), reference.phase());
+        LOGGER.atInfo().log(
+                "negotiation_content_extraction_completed type={} phase={}", reference.type(), reference.phase());
+        return content;
     }
 
     private Map<String, Object> invokeLlm(List<Map<String, String>> messages, Map<String, Object> schema) {

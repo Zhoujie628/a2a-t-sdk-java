@@ -20,6 +20,8 @@ import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default LLM-backed semantic validator for negotiation messages.
@@ -40,6 +42,8 @@ import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
  * @since 2026-06
  */
 public final class DefaultNegotiationSemanticValidator implements NegotiationSemanticValidator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultNegotiationSemanticValidator.class);
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -102,7 +106,12 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
             throw new NegotiationValidationException(
                     "Semantic validation LLM invocation failed: " + error.getMessage(), error);
         }
-        return interpret(parseResponse(response.content()), reference);
+        SemanticValidationResult result = interpret(parseResponse(response.content()), reference);
+        LOGGER.atInfo().log(
+                "negotiation_semantic_validation_completed verdict={} error_count={}",
+                result.verdict(),
+                result.errors().size());
+        return result;
     }
 
     private static List<Map<String, String>> buildMessages(
