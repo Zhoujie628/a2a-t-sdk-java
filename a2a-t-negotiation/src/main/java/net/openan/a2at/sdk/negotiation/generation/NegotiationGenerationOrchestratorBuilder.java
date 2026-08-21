@@ -160,8 +160,7 @@ public final class NegotiationGenerationOrchestratorBuilder {
      *
      * @return assembled negotiation generation orchestrator
      * @throws IllegalStateException if the language is missing or the attempt limit is below 1
-     * @throws net.openan.a2at.sdk.negotiation.content.NegotiationContentException if the language has no bundled
-     *     vocabulary
+     * @throws IllegalArgumentException if the language has no bundled vocabulary
      */
     public NegotiationGenerationOrchestrator build() {
         if (language == null || language.isBlank()) {

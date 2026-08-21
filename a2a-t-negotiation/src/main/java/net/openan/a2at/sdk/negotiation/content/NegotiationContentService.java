@@ -86,8 +86,9 @@ public final class NegotiationContentService {
      * @param data typed propose input carrying the negotiation context and the typed content
      * @param templateUri template URI whose phase segment must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NegotiationContentException if the data or its context is null, the template URI is malformed, or its
-     *     phase or type contradicts the method or the content type
+     * @throws NullPointerException if the data or its context is null
+     * @throws IllegalArgumentException if the template URI is malformed, or its phase or type contradicts the method
+     *     or the content type
      * @throws NegotiationGenerationException with the code {@code template_not_found} or
      *     {@code negotiation_slot_missing} when loading or rendering the template fails
      */
@@ -101,8 +102,9 @@ public final class NegotiationContentService {
      * @param data typed terminal input whose content conclusion must be {@code Accept}
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NegotiationContentException if the data or its context is null, the template URI is malformed, its phase
-     *     or type contradicts the method or the content, or the content conclusion is not {@code Accept}
+     * @throws NullPointerException if the data or its context is null
+     * @throws IllegalArgumentException if the template URI is malformed, its phase or type contradicts the method or
+     *     the content, or the content conclusion is not {@code Accept}
      * @throws NegotiationGenerationException with the code {@code template_not_found} or
      *     {@code negotiation_slot_missing} when loading or rendering the template fails
      */
@@ -116,8 +118,9 @@ public final class NegotiationContentService {
      * @param data typed terminal input whose content conclusion must be {@code Reject}
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NegotiationContentException if the data or its context is null, the template URI is malformed, its phase
-     *     or type contradicts the method or the content, or the content conclusion is not {@code Reject}
+     * @throws NullPointerException if the data or its context is null
+     * @throws IllegalArgumentException if the template URI is malformed, its phase or type contradicts the method or
+     *     the content, or the content conclusion is not {@code Reject}
      * @throws NegotiationGenerationException with the code {@code template_not_found} or
      *     {@code negotiation_slot_missing} when loading or rendering the template fails
      */
@@ -132,8 +135,8 @@ public final class NegotiationContentService {
      * @param context negotiation context injected into the rendered message without any LLM involvement
      * @param templateUri template URI whose phase segment must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NegotiationContentException if the context is null or the template URI is malformed or contradicts the
-     *     method
+     * @throws NullPointerException if the context is null
+     * @throws IllegalArgumentException if the template URI is malformed or contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found},
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when loading or
      *     extracting fails, {@code negotiation_slot_missing} when the extracted content misses a required field, or
@@ -150,8 +153,8 @@ public final class NegotiationContentService {
      * @param context negotiation context injected into the rendered message without any LLM involvement
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NegotiationContentException if the context is null or the template URI is malformed or contradicts the
-     *     method
+     * @throws NullPointerException if the context is null
+     * @throws IllegalArgumentException if the template URI is malformed or contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found},
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when loading or
      *     extracting fails, {@code negotiation_slot_missing} when the extracted content misses a required field, or
@@ -168,8 +171,8 @@ public final class NegotiationContentService {
      * @param context negotiation context injected into the rendered message without any LLM involvement
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NegotiationContentException if the context is null or the template URI is malformed or contradicts the
-     *     method
+     * @throws NullPointerException if the context is null
+     * @throws IllegalArgumentException if the template URI is malformed or contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found},
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when loading or
      *     extracting fails, {@code negotiation_slot_missing} when the extracted content misses a required field, or
@@ -207,7 +210,8 @@ public final class NegotiationContentService {
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI whose phase segment must be {@code propose}
      * @return filled parameter data carrying the context parameters and the extracted parameters
-     * @throws NegotiationContentException if the schema is null or the template URI is malformed or contradicts the
+     * @throws NullPointerException if the prompt or schema is null
+     * @throws IllegalArgumentException if the prompt is blank, or the template URI is malformed or contradicts the
      *     method
      * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input},
      *     {@code negotiation_rule_violation}, {@code negotiation_semantic_rejected},
@@ -226,7 +230,8 @@ public final class NegotiationContentService {
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
-     * @throws NegotiationContentException if the schema is null or the template URI is malformed or contradicts the
+     * @throws NullPointerException if the prompt or schema is null
+     * @throws IllegalArgumentException if the prompt is blank, or the template URI is malformed or contradicts the
      *     method
      * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input},
      *     {@code negotiation_rule_violation}, {@code negotiation_semantic_rejected},
@@ -244,7 +249,8 @@ public final class NegotiationContentService {
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
-     * @throws NegotiationContentException if the schema is null or the template URI is malformed or contradicts the
+     * @throws NullPointerException if the prompt or schema is null
+     * @throws IllegalArgumentException if the prompt is blank, or the template URI is malformed or contradicts the
      *     method
      * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input},
      *     {@code negotiation_rule_violation}, {@code negotiation_semantic_rejected},

@@ -4,8 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.List;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
+import java.util.Optional;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import org.junit.jupiter.api.Test;
@@ -33,23 +32,23 @@ class NegotiationReferenceTest {
     }
 
     @Test
-    void parseAcceptsAllSixValidUris() {
+    void tryParseAcceptsAllSixValidUris() {
         for (NegotiationType type : NegotiationType.values()) {
-            NegotiationReference propose =
-                    NegotiationReference.parse(proposeUri(type), NegotiationPhase.PROPOSE, "zh-CN");
+            NegotiationReference propose = requirePresent(
+                    NegotiationReference.tryParse(proposeUri(type), NegotiationPhase.PROPOSE, "zh-CN"));
             assertEquals(type, propose.type());
             assertEquals(NegotiationPhase.PROPOSE, propose.phase());
             assertEquals(proposeUri(type), propose.uri());
             assertEquals("zh-CN", propose.language());
 
-            NegotiationReference accept =
-                    NegotiationReference.parse(acceptRejectUri(type), NegotiationPhase.ACCEPT, "en-US");
+            NegotiationReference accept = requirePresent(
+                    NegotiationReference.tryParse(acceptRejectUri(type), NegotiationPhase.ACCEPT, "en-US"));
             assertEquals(type, accept.type());
             assertEquals(NegotiationPhase.ACCEPT, accept.phase());
             assertEquals(acceptRejectUri(type), accept.uri());
 
-            NegotiationReference reject =
-                    NegotiationReference.parse(acceptRejectUri(type), NegotiationPhase.REJECT, "en-US");
+            NegotiationReference reject = requirePresent(
+                    NegotiationReference.tryParse(acceptRejectUri(type), NegotiationPhase.REJECT, "en-US"));
             assertEquals(type, reject.type());
             assertEquals(NegotiationPhase.REJECT, reject.phase());
             assertEquals(acceptRejectUri(type), reject.uri());
@@ -57,80 +56,67 @@ class NegotiationReferenceTest {
     }
 
     @Test
-    void parseRejectsWrongSegmentCount() {
-        assertParseFailure("information-negotiation/propose", NegotiationPhase.PROPOSE, "segments");
-        assertParseFailure(
-                "Negotiation-T/v1/information-negotiation/propose/extra", NegotiationPhase.PROPOSE, "segments");
-        assertParseFailure("foo", NegotiationPhase.PROPOSE, "segments");
+    void tryParseRejectsWrongSegmentCount() {
+        assertTrue(NegotiationReference.tryParse("information-negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
+        assertTrue(NegotiationReference.tryParse(
+                        "Negotiation-T/v1/information-negotiation/propose/extra", NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
+        assertTrue(NegotiationReference.tryParse("foo", NegotiationPhase.PROPOSE, "zh-CN").isEmpty());
     }
 
     @Test
-    void parseRejectsWrongPrefixAndVersion() {
-        assertParseFailure("Task-T/v1/information-negotiation/propose", NegotiationPhase.PROPOSE, "Negotiation-T");
-        assertParseFailure(
-                "negotiation-t/v1/information-negotiation/propose", NegotiationPhase.PROPOSE, "Negotiation-T");
-        assertParseFailure("Negotiation-T/v2/information-negotiation/propose", NegotiationPhase.PROPOSE, "v1");
+    void tryParseRejectsWrongPrefixAndVersion() {
+        assertTrue(NegotiationReference.tryParse("Task-T/v1/information-negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
+        assertTrue(NegotiationReference.tryParse(
+                        "negotiation-t/v1/information-negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
+        assertTrue(NegotiationReference.tryParse("Negotiation-T/v2/information-negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
     }
 
     @Test
-    void parseRejectsMissingTypeSegmentSuffixAndUnderscoreVariant() {
-        assertParseFailure("Negotiation-T/v1/information/propose", NegotiationPhase.PROPOSE, "-negotiation");
-        assertParseFailure(
-                "Negotiation-T/v1/information_negotiation/propose", NegotiationPhase.PROPOSE, "-negotiation");
+    void tryParseRejectsMissingTypeSegmentSuffixAndUnderscoreVariant() {
+        assertTrue(NegotiationReference.tryParse("Negotiation-T/v1/information/propose", NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
+        assertTrue(NegotiationReference.tryParse(
+                        "Negotiation-T/v1/information_negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
     }
 
     @Test
-    void parseRejectsUnknownType() {
-        assertParseFailure("Negotiation-T/v1/unknown-negotiation/propose", NegotiationPhase.PROPOSE, "unknown");
+    void tryParseRejectsUnknownType() {
+        assertTrue(NegotiationReference.tryParse("Negotiation-T/v1/unknown-negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
     }
 
     @Test
-    void parseRejectsIllegalPhaseSegment() {
-        assertParseFailure("Negotiation-T/v1/information-negotiation/propose-x", NegotiationPhase.PROPOSE, "phase");
-        assertParseFailure("Negotiation-T/v1/information-negotiation/accept", NegotiationPhase.PROPOSE, "phase");
+    void tryParseRejectsIllegalPhaseSegment() {
+        assertTrue(NegotiationReference.tryParse(
+                        "Negotiation-T/v1/information-negotiation/propose-x", NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
+        assertTrue(NegotiationReference.tryParse("Negotiation-T/v1/information-negotiation/accept", NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
     }
 
     @Test
-    void parseRejectsPhaseMismatchAgainstExpectedPhase() {
-        NegotiationContentException exception = assertThrows(
-                NegotiationContentException.class,
-                () -> NegotiationReference.parse(
-                        "Negotiation-T/v1/information-negotiation/propose", NegotiationPhase.ACCEPT, "zh-CN"));
+    void tryParseRejectsPhaseMismatchAgainstExpectedPhase() {
+        Optional<NegotiationReference> parsed = NegotiationReference.tryParse(
+                "Negotiation-T/v1/information-negotiation/propose", NegotiationPhase.ACCEPT, "zh-CN");
 
-        assertEquals("templateUri", exception.getField());
-        assertTrue(exception.getMessage().contains("does not match the expected phase"));
-        assertTrue(exception.getMessage().contains("propose"));
+        assertTrue(parsed.isEmpty());
     }
 
     @Test
-    void parseRejectsBlankUriAndNullExpectedPhase() {
-        NegotiationContentException blankException = assertThrows(
-                NegotiationContentException.class,
-                () -> NegotiationReference.parse("", NegotiationPhase.PROPOSE, "zh-CN"));
-        assertEquals("templateUri", blankException.getField());
+    void tryParseReturnsEmptyForBlankAndNullUriButThrowsOnNullExpectedPhase() {
+        assertTrue(NegotiationReference.tryParse("", NegotiationPhase.PROPOSE, "zh-CN").isEmpty());
+        assertTrue(NegotiationReference.tryParse(null, NegotiationPhase.PROPOSE, "zh-CN").isEmpty());
 
-        NegotiationContentException nullUriException = assertThrows(
-                NegotiationContentException.class,
-                () -> NegotiationReference.parse(null, NegotiationPhase.PROPOSE, "zh-CN"));
-        assertEquals("templateUri", nullUriException.getField());
-
-        NegotiationContentException nullPhaseException = assertThrows(
-                NegotiationContentException.class,
-                () -> NegotiationReference.parse("Negotiation-T/v1/information-negotiation/propose", null, "zh-CN"));
-        assertEquals("phase", nullPhaseException.getField());
-    }
-
-    @Test
-    void parseFailureMessagesAreDistinguishable() {
-        List<String> messages = List.of(
-                parseErrorMessage("information-negotiation/propose", NegotiationPhase.PROPOSE),
-                parseErrorMessage("Task-T/v1/information-negotiation/propose", NegotiationPhase.PROPOSE),
-                parseErrorMessage("Negotiation-T/v2/information-negotiation/propose", NegotiationPhase.PROPOSE),
-                parseErrorMessage("Negotiation-T/v1/information/propose", NegotiationPhase.PROPOSE),
-                parseErrorMessage("Negotiation-T/v1/unknown-negotiation/propose", NegotiationPhase.PROPOSE),
-                parseErrorMessage("Negotiation-T/v1/information-negotiation/propose-x", NegotiationPhase.PROPOSE));
-
-        assertEquals(messages.size(), messages.stream().distinct().count());
+        NullPointerException exception = assertThrows(
+                NullPointerException.class,
+                () -> NegotiationReference.tryParse("Negotiation-T/v1/information-negotiation/propose", null, "zh-CN"));
+        assertEquals("Expected negotiation phase must not be null.", exception.getMessage());
     }
 
     private static String proposeUri(NegotiationType type) {
@@ -141,21 +127,8 @@ class NegotiationReferenceTest {
         return "Negotiation-T/v1/" + type.typeSegment() + "/accept-reject";
     }
 
-    private static void assertParseFailure(String templateUri, NegotiationPhase expectedPhase, String messageFragment) {
-        NegotiationContentException exception = assertThrows(
-                NegotiationContentException.class,
-                () -> NegotiationReference.parse(templateUri, expectedPhase, "zh-CN"));
-
-        assertEquals("templateUri", exception.getField());
-        assertTrue(
-                exception.getMessage().contains(messageFragment),
-                "expected message containing '" + messageFragment + "' but was: " + exception.getMessage());
-    }
-
-    private static String parseErrorMessage(String templateUri, NegotiationPhase expectedPhase) {
-        return assertThrows(
-                        NegotiationContentException.class,
-                        () -> NegotiationReference.parse(templateUri, expectedPhase, "zh-CN"))
-                .getMessage();
+    private static NegotiationReference requirePresent(Optional<NegotiationReference> reference) {
+        assertTrue(reference.isPresent(), "expected a parsed reference but the result was empty");
+        return reference.get();
     }
 }

@@ -1,6 +1,6 @@
 package net.openan.a2at.sdk.negotiation.generation;
 
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
+import java.util.Objects;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 
 /**
@@ -16,12 +16,10 @@ public final class NegotiationContextRenderer {
      * @param context negotiation context to render
      * @return three lines of the form {@code - id: ...}, {@code - round: ...}, {@code - maxRounds: ...} joined by
      *     single newlines
-     * @throws NegotiationContentException if the context is null
+     * @throws NullPointerException if the context is null
      */
     public String render(NegotiationContext context) {
-        if (context == null) {
-            throw new NegotiationContentException("Negotiation context must not be null.", "context");
-        }
+        Objects.requireNonNull(context, "Negotiation context must not be null.");
         return "- id: " + context.id() + "\n- round: " + context.round() + "\n- maxRounds: " + context.maxRounds();
     }
 }

@@ -14,19 +14,10 @@ import org.junit.jupiter.api.Test;
 class NegotiationExceptionHierarchyTest {
 
     private static final Class<?>[] NEGOTIATION_EXCEPTION_TYPES = {
-        NegotiationContentException.class,
         NegotiationProcessingException.class,
         NegotiationGenerationException.class,
         NegotiationParamExtractionException.class
     };
-
-    @Test
-    void contentExceptionIsNotAProcessingError() {
-        NegotiationContentException exception = new NegotiationContentException("invalid content", "templateUri");
-
-        assertFalse(A2ATError.class.isInstance(exception));
-        assertEquals("templateUri", exception.getField());
-    }
 
     @Test
     void processingExceptionIsAProcessingErrorWithCode() {
@@ -34,6 +25,19 @@ class NegotiationExceptionHierarchyTest {
                 new NegotiationProcessingException(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, "invalid input");
 
         assertTrue(exception instanceof A2ATError);
+        assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, exception.getCode());
+    }
+
+    @Test
+    void processingExceptionInheritsGetCodeFromTheA2ATErrorRoot() {
+        NegotiationProcessingException exception =
+                new NegotiationProcessingException(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, "invalid input");
+
+        assertEquals(
+                A2ATError.class,
+                findGetMethod(NegotiationProcessingException.class).getDeclaringClass(),
+                "the code accessor must come from the A2ATError root so every negotiation failure shares one code"
+                        + " contract");
         assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, exception.getCode());
     }
 
@@ -67,6 +71,14 @@ class NegotiationExceptionHierarchyTest {
             boolean exposesStage = Arrays.stream(exceptionType.getMethods())
                     .anyMatch(method -> "getStage".equals(method.getName()) || "stage".equals(method.getName()));
             assertFalse(exposesStage, exceptionType.getSimpleName() + " must not expose a stage property");
+        }
+    }
+
+    private static java.lang.reflect.Method findGetMethod(Class<?> exceptionType) {
+        try {
+            return exceptionType.getMethod("getCode");
+        } catch (NoSuchMethodException exception) {
+            throw new AssertionError("getCode must be inherited from A2ATError", exception);
         }
     }
 }

@@ -3,7 +3,6 @@ package net.openan.a2at.sdk.negotiation.generation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import org.junit.jupiter.api.Test;
 
@@ -29,9 +28,8 @@ class NegotiationContextRendererTest {
 
     @Test
     void rejectsNullContext() {
-        NegotiationContentException exception =
-                assertThrows(NegotiationContentException.class, () -> renderer.render(null));
+        NullPointerException exception = assertThrows(NullPointerException.class, () -> renderer.render(null));
 
-        assertEquals("context", exception.getField());
+        assertEquals("Negotiation context must not be null.", exception.getMessage());
     }
 }

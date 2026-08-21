@@ -112,8 +112,8 @@ class VocabularyTest {
 
     @Test
     void unsupportedLanguageThrows() {
-        NegotiationContentException exception =
-                assertThrows(NegotiationContentException.class, () -> Vocabulary.forLanguage("fr-FR"));
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> Vocabulary.forLanguage("fr-FR"));
 
         assertTrue(exception.getMessage().contains("fr-FR"));
         assertTrue(exception.getMessage().contains("A2AT_LANGUAGE"));
@@ -123,8 +123,8 @@ class VocabularyTest {
     void unknownKeyThrows() {
         Vocabulary vocabulary = Vocabulary.forLanguage("zh-CN");
 
-        NegotiationContentException exception =
-                assertThrows(NegotiationContentException.class, () -> vocabulary.get("section.unknown"));
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> vocabulary.get("section.unknown"));
 
         assertTrue(exception.getMessage().contains("section.unknown"));
     }

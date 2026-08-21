@@ -2,7 +2,7 @@ package net.openan.a2at.sdk.negotiation.generation;
 
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
+import java.util.Objects;
 
 /**
  * Assembles the LLM message list of one negotiation LLM step.
@@ -42,12 +42,10 @@ public class NegotiationMessageBuilder {
      * Creates a message builder on one prompt resource loader.
      *
      * @param resourceLoader loader supplying the system and user prompts
+     * @throws NullPointerException if the resource loader is null
      */
     public NegotiationMessageBuilder(NegotiationPromptResourceLoader resourceLoader) {
-        if (resourceLoader == null) {
-            throw new NegotiationContentException(
-                    "Negotiation message builder requires a prompt resource loader.", "resourceLoader");
-        }
+        Objects.requireNonNull(resourceLoader, "Negotiation message builder requires a prompt resource loader.");
         this.resourceLoader = resourceLoader;
     }
 

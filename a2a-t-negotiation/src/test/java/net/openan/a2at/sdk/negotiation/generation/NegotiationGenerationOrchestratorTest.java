@@ -14,7 +14,6 @@ import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
@@ -225,24 +224,28 @@ class NegotiationGenerationOrchestratorTest {
     }
 
     @Test
-    void rejectsMalformedTemplateUriAsAContentError() {
-        NegotiationContentException malformedUriFailure =
-                assertThrows(NegotiationContentException.class, () -> zhOrchestrator()
+    void rejectsMalformedTemplateUriAsAnIllegalArgument() {
+        IllegalArgumentException malformedUriFailure =
+                assertThrows(IllegalArgumentException.class, () -> zhOrchestrator()
                         .generateProposeFromData(
                                 new NegotiationProposeData(
                                         new NegotiationContext(UUID, 1, 5),
                                         new InfoProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
                                 "information-negotiation/propose"));
-        assertEquals("templateUri", malformedUriFailure.getField());
+        assertTrue(malformedUriFailure
+                .getMessage()
+                .contains("Template URI is malformed or contradicts the expected phase PROPOSE (propose)"));
 
-        NegotiationContentException phaseMismatchFailure =
-                assertThrows(NegotiationContentException.class, () -> zhOrchestrator()
+        IllegalArgumentException phaseMismatchFailure =
+                assertThrows(IllegalArgumentException.class, () -> zhOrchestrator()
                         .generateProposeFromData(
                                 new NegotiationProposeData(
                                         new NegotiationContext(UUID, 1, 5),
                                         new InfoProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
                                 "Negotiation-T/v1/information-negotiation/accept-reject"));
-        assertEquals("templateUri", phaseMismatchFailure.getField());
+        assertTrue(phaseMismatchFailure
+                .getMessage()
+                .contains("Template URI is malformed or contradicts the expected phase PROPOSE (propose)"));
     }
 
     private static NegotiationGenerationOrchestrator zhOrchestrator() {

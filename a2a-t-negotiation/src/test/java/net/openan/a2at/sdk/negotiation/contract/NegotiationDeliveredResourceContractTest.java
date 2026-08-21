@@ -66,6 +66,7 @@ class NegotiationDeliveredResourceContractTest {
     @Test
     void errorCodeConstantsStayExactlyThePinnedRegistry() {
         java.util.Map<String, String> expected = new java.util.LinkedHashMap<>();
+        expected.put("SDK_INTERNAL_ERROR", "sdk_internal_error");
         expected.put("PARAM_EXTRACTION_FAILED", "param_extraction_failed");
         expected.put("TEMPLATE_NOT_FOUND", "template_not_found");
         expected.put("NEGOTIATION_CONTENT_EXTRACT_FAILED", "negotiation_content_extract_failed");

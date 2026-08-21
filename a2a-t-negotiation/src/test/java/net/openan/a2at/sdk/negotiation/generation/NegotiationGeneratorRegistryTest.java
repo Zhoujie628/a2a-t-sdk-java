@@ -13,7 +13,6 @@ import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
@@ -89,23 +88,21 @@ class NegotiationGeneratorRegistryTest {
 
     @Test
     void rejectsProposeContentInTerminalPhaseAndEndingContentInProposePhase() {
-        NegotiationContentException proposeInEnding = assertThrows(
-                NegotiationContentException.class,
+        IllegalArgumentException proposeInEnding = assertThrows(
+                IllegalArgumentException.class,
                 () -> registry.resolve(
                         NegotiationType.INFORMATION, NegotiationPhase.ACCEPT, new InfoProposeContent(List.of(), null)));
-        assertEquals("content", proposeInEnding.getField());
         assertTrue(proposeInEnding
                 .getMessage()
                 .contains("ACCEPT phase requires ending content but received propose content of type"
                         + " InfoProposeContent"));
 
-        NegotiationContentException endingInPropose = assertThrows(
-                NegotiationContentException.class,
+        IllegalArgumentException endingInPropose = assertThrows(
+                IllegalArgumentException.class,
                 () -> registry.resolve(
                         NegotiationType.INFORMATION,
                         NegotiationPhase.PROPOSE,
                         new InfoEndingContent(NegotiationConclusion.ACCEPT, List.of())));
-        assertEquals("content", endingInPropose.getField());
         assertTrue(endingInPropose
                 .getMessage()
                 .contains("PROPOSE phase requires propose content but received ending content of type"
@@ -114,21 +111,20 @@ class NegotiationGeneratorRegistryTest {
 
     @Test
     void rejectsContentRuntimeTypeNotMatchingTheNegotiationType() {
-        NegotiationContentException exception = assertThrows(
-                NegotiationContentException.class,
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
                 () -> registry.resolve(
                         NegotiationType.INFORMATION,
                         NegotiationPhase.PROPOSE,
                         new TargetProposeContent("描述", null, null, null)));
 
-        assertEquals("content", exception.getField());
         assertTrue(exception
                 .getMessage()
                 .contains("Negotiation type INFORMATION requires content of type InfoProposeContent but received"
                         + " TargetProposeContent"));
 
         assertThrows(
-                NegotiationContentException.class,
+                IllegalArgumentException.class,
                 () -> registry.resolve(
                         NegotiationType.TARGET,
                         NegotiationPhase.ACCEPT,
@@ -137,20 +133,19 @@ class NegotiationGeneratorRegistryTest {
 
     @Test
     void rejectsEndingConclusionNotMatchingThePhase() {
-        NegotiationContentException exception = assertThrows(
-                NegotiationContentException.class,
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
                 () -> registry.resolve(
                         NegotiationType.INFORMATION,
                         NegotiationPhase.ACCEPT,
                         new InfoEndingContent(NegotiationConclusion.REJECT, List.of())));
 
-        assertEquals("content.conclusion", exception.getField());
         assertTrue(exception
                 .getMessage()
                 .contains("ACCEPT phase requires conclusion Accept but the content carries Reject"));
 
         assertThrows(
-                NegotiationContentException.class,
+                IllegalArgumentException.class,
                 () -> registry.resolve(
                         NegotiationType.TARGET,
                         NegotiationPhase.REJECT,
@@ -159,12 +154,12 @@ class NegotiationGeneratorRegistryTest {
 
     @Test
     void rejectsEndingContentWithoutConclusion() {
-        NegotiationContentException exception = assertThrows(
-                NegotiationContentException.class,
+        NullPointerException exception = assertThrows(
+                NullPointerException.class,
                 () -> registry.resolve(
                         NegotiationType.INFORMATION, NegotiationPhase.ACCEPT, new InfoEndingContent(null, List.of())));
 
-        assertEquals("content.conclusion", exception.getField());
+        assertTrue(exception.getMessage().contains("conclusion must not be null"));
     }
 
     @Test
@@ -172,22 +167,22 @@ class NegotiationGeneratorRegistryTest {
         NegotiationContent content = new InfoProposeContent(List.of(), null);
 
         assertEquals(
-                "type",
+                "Negotiation type must not be null.",
                 assertThrows(
-                                NegotiationContentException.class,
+                                NullPointerException.class,
                                 () -> registry.resolve(null, NegotiationPhase.PROPOSE, content))
-                        .getField());
+                        .getMessage());
         assertEquals(
-                "phase",
+                "Negotiation phase must not be null.",
                 assertThrows(
-                                NegotiationContentException.class,
+                                NullPointerException.class,
                                 () -> registry.resolve(NegotiationType.INFORMATION, null, content))
-                        .getField());
+                        .getMessage());
         assertEquals(
-                "content",
+                "Negotiation content must not be null.",
                 assertThrows(
-                                NegotiationContentException.class,
+                                NullPointerException.class,
                                 () -> registry.resolve(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, null))
-                        .getField());
+                        .getMessage());
     }
 }

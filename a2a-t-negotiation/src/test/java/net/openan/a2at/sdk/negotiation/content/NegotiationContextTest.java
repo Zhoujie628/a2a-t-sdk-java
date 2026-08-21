@@ -23,14 +23,13 @@ class NegotiationContextTest {
 
     @Test
     void blankIdThrowsWithDistinguishableMessage() {
-        NegotiationContentException blankException =
-                assertThrows(NegotiationContentException.class, () -> new NegotiationContext("", 1, 5));
-        NegotiationContentException whitespaceException =
-                assertThrows(NegotiationContentException.class, () -> new NegotiationContext("   ", 1, 5));
-        NegotiationContentException nullException =
-                assertThrows(NegotiationContentException.class, () -> new NegotiationContext(null, 1, 5));
+        IllegalArgumentException blankException =
+                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext("", 1, 5));
+        IllegalArgumentException whitespaceException =
+                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext("   ", 1, 5));
+        IllegalArgumentException nullException =
+                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext(null, 1, 5));
 
-        assertEquals("context.id", blankException.getField());
         assertTrue(blankException.getMessage().contains("id"));
         assertTrue(blankException.getMessage().contains("blank"));
         assertEquals(blankException.getMessage(), whitespaceException.getMessage());
@@ -39,30 +38,27 @@ class NegotiationContextTest {
 
     @Test
     void zeroRoundThrowsWithDistinguishableMessage() {
-        NegotiationContentException exception =
-                assertThrows(NegotiationContentException.class, () -> new NegotiationContext(SESSION_ID, 0, 5));
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext(SESSION_ID, 0, 5));
 
-        assertEquals("context.round", exception.getField());
         assertTrue(exception.getMessage().contains("round"));
         assertTrue(exception.getMessage().contains("0"));
     }
 
     @Test
     void negativeRoundThrowsWithDistinguishableMessage() {
-        NegotiationContentException exception =
-                assertThrows(NegotiationContentException.class, () -> new NegotiationContext(SESSION_ID, -1, 5));
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext(SESSION_ID, -1, 5));
 
-        assertEquals("context.round", exception.getField());
         assertTrue(exception.getMessage().contains("round"));
         assertTrue(exception.getMessage().contains("-1"));
     }
 
     @Test
     void zeroMaxRoundsThrowsWithDistinguishableMessage() {
-        NegotiationContentException exception =
-                assertThrows(NegotiationContentException.class, () -> new NegotiationContext(SESSION_ID, 1, 0));
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext(SESSION_ID, 1, 0));
 
-        assertEquals("context.maxRounds", exception.getField());
         assertTrue(exception.getMessage().contains("maxRounds"));
         assertTrue(exception.getMessage().contains("0"));
     }

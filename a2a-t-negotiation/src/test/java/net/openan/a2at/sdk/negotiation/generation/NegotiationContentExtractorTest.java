@@ -262,11 +262,9 @@ class NegotiationContentExtractorTest {
         assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, blank.getCode());
 
         assertEquals(
-                "reference",
-                assertThrows(
-                                net.openan.a2at.sdk.negotiation.content.NegotiationContentException.class,
-                                () -> extractor.extract("文本", null))
-                        .getField());
+                "Negotiation reference must not be null.",
+                assertThrows(NullPointerException.class, () -> extractor.extract("文本", null))
+                        .getMessage());
     }
 
     private static NegotiationReference reference(NegotiationType type, NegotiationPhase phase, String language) {

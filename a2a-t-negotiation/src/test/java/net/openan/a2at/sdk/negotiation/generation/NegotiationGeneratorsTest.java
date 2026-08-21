@@ -12,7 +12,6 @@ import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
@@ -202,8 +201,8 @@ class NegotiationGeneratorsTest {
         FeasibilityProposeContent nullAction =
                 new FeasibilityProposeContent("描述", null, List.of(new NegotiationItem("名称", "值")), null);
 
-        NegotiationContentException nullActionError =
-                assertThrows(NegotiationContentException.class, () -> new FeasibilityProposeGenerator()
+        NullPointerException nullActionError =
+                assertThrows(NullPointerException.class, () -> new FeasibilityProposeGenerator()
                         .generate(
                                 context(1),
                                 nullAction,
@@ -211,13 +210,13 @@ class NegotiationGeneratorsTest {
                                         "Negotiation-T/v1/feasibility-negotiation/propose",
                                         ZH_FEASIBILITY_PROPOSE_TEMPLATE),
                                 zhVocabulary));
-        assertEquals("content.action", nullActionError.getField());
+        assertTrue(nullActionError.getMessage().contains("action must not be null"));
 
         FeasibilityProposeContent emptyEvaluation =
                 new FeasibilityProposeContent("描述", NegotiationAction.REQUEST_FEASIBILITY_EVALUATION, null, null);
 
-        NegotiationContentException emptyEvaluationError =
-                assertThrows(NegotiationContentException.class, () -> new FeasibilityProposeGenerator()
+        IllegalArgumentException emptyEvaluationError =
+                assertThrows(IllegalArgumentException.class, () -> new FeasibilityProposeGenerator()
                         .generate(
                                 context(1),
                                 emptyEvaluation,
@@ -225,13 +224,15 @@ class NegotiationGeneratorsTest {
                                         "Negotiation-T/v1/feasibility-negotiation/propose",
                                         ZH_FEASIBILITY_PROPOSE_TEMPLATE),
                                 zhVocabulary));
-        assertEquals("content.contentsToEvaluate", emptyEvaluationError.getField());
+        assertEquals(
+                "Contents to evaluate of a feasibility evaluation request must contain at least one item.",
+                emptyEvaluationError.getMessage());
 
         FeasibilityProposeContent emptyAlternative =
                 new FeasibilityProposeContent("描述", NegotiationAction.PROPOSE_ALTERNATIVE_ON_FAILURE, null, List.of());
 
-        NegotiationContentException emptyAlternativeError =
-                assertThrows(NegotiationContentException.class, () -> new FeasibilityProposeGenerator()
+        IllegalArgumentException emptyAlternativeError =
+                assertThrows(IllegalArgumentException.class, () -> new FeasibilityProposeGenerator()
                         .generate(
                                 context(1),
                                 emptyAlternative,
@@ -239,14 +240,16 @@ class NegotiationGeneratorsTest {
                                         "Negotiation-T/v1/feasibility-negotiation/propose",
                                         ZH_FEASIBILITY_PROPOSE_TEMPLATE),
                                 zhVocabulary));
-        assertEquals("content.infeasibilityDetailsAndProposal", emptyAlternativeError.getField());
+        assertEquals(
+                "Infeasibility details and proposal of an alternative proposal must contain at least one item.",
+                emptyAlternativeError.getMessage());
 
         FeasibilityProposeContent blankDescription = new FeasibilityProposeContent(
                 " ", NegotiationAction.REQUEST_FEASIBILITY_EVALUATION, List.of(new NegotiationItem("名称", "值")), null);
 
         assertEquals(
-                "content.feasibilityNegotiationDescription",
-                assertThrows(NegotiationContentException.class, () -> new FeasibilityProposeGenerator()
+                "Feasibility negotiation description must not be blank.",
+                assertThrows(IllegalArgumentException.class, () -> new FeasibilityProposeGenerator()
                                 .generate(
                                         context(1),
                                         blankDescription,
@@ -254,7 +257,7 @@ class NegotiationGeneratorsTest {
                                                 "Negotiation-T/v1/feasibility-negotiation/propose",
                                                 ZH_FEASIBILITY_PROPOSE_TEMPLATE),
                                         zhVocabulary))
-                        .getField());
+                        .getMessage());
     }
 
     @Test
@@ -302,15 +305,15 @@ class NegotiationGeneratorsTest {
     void targetBlankDescriptionIsRejected() {
         TargetProposeContent content = new TargetProposeContent(" ", null, null, null);
 
-        NegotiationContentException exception =
-                assertThrows(NegotiationContentException.class, () -> new TargetProposeGenerator()
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> new TargetProposeGenerator()
                         .generate(
                                 context(1),
                                 content,
                                 template("Negotiation-T/v1/target-negotiation/propose", ZH_TARGET_PROPOSE_TEMPLATE),
                                 zhVocabulary));
 
-        assertEquals("content.targetNegotiationDescription", exception.getField());
+        assertEquals("Target negotiation description must not be blank.", exception.getMessage());
     }
 
     @Test
@@ -405,19 +408,19 @@ class NegotiationGeneratorsTest {
 
     @Test
     void abortConclusionIsRejectedByEveryEndingGenerator() {
-        assertThrows(NegotiationContentException.class, () -> new InformationEndingGenerator()
+        assertThrows(IllegalArgumentException.class, () -> new InformationEndingGenerator()
                 .generate(
                         context(1),
                         new InfoEndingContent(NegotiationConclusion.ABORT, List.of()),
                         template("Negotiation-T/v1/information-negotiation/accept-reject", ZH_INFO_ENDING_TEMPLATE),
                         zhVocabulary));
-        assertThrows(NegotiationContentException.class, () -> new TargetEndingGenerator()
+        assertThrows(IllegalArgumentException.class, () -> new TargetEndingGenerator()
                 .generate(
                         context(1),
                         new TargetEndingContent(NegotiationConclusion.ABORT, "意图", null),
                         template("Negotiation-T/v1/target-negotiation/accept-reject", ZH_TARGET_ENDING_TEMPLATE),
                         zhVocabulary));
-        assertThrows(NegotiationContentException.class, () -> new FeasibilityEndingGenerator()
+        assertThrows(IllegalArgumentException.class, () -> new FeasibilityEndingGenerator()
                 .generate(
                         context(1),
                         new FeasibilityEndingContent(NegotiationConclusion.ABORT, "结论"),
@@ -429,8 +432,8 @@ class NegotiationGeneratorsTest {
 
     @Test
     void nullConclusionIsRejected() {
-        NegotiationContentException exception =
-                assertThrows(NegotiationContentException.class, () -> new InformationEndingGenerator()
+        NullPointerException exception =
+                assertThrows(NullPointerException.class, () -> new InformationEndingGenerator()
                         .generate(
                                 context(1),
                                 new InfoEndingContent(null, List.of()),
@@ -439,13 +442,13 @@ class NegotiationGeneratorsTest {
                                         ZH_INFO_ENDING_TEMPLATE),
                                 zhVocabulary));
 
-        assertEquals("content.conclusion", exception.getField());
+        assertTrue(exception.getMessage().contains("conclusion must not be null"));
     }
 
     @Test
     void targetEndingRequiresTheFieldMatchingTheConclusion() {
-        NegotiationContentException acceptWithoutIntent =
-                assertThrows(NegotiationContentException.class, () -> new TargetEndingGenerator()
+        IllegalArgumentException acceptWithoutIntent =
+                assertThrows(IllegalArgumentException.class, () -> new TargetEndingGenerator()
                         .generate(
                                 context(1),
                                 new TargetEndingContent(NegotiationConclusion.ACCEPT, null, "失败原因"),
@@ -453,10 +456,12 @@ class NegotiationGeneratorsTest {
                                         "Negotiation-T/v1/target-negotiation/accept-reject", ZH_TARGET_ENDING_TEMPLATE),
                                 zhVocabulary));
 
-        assertEquals("content.confirmedIntent", acceptWithoutIntent.getField());
+        assertEquals(
+                "Confirmed intent of an accepting target negotiation message must not be blank.",
+                acceptWithoutIntent.getMessage());
 
-        NegotiationContentException rejectWithoutReason =
-                assertThrows(NegotiationContentException.class, () -> new TargetEndingGenerator()
+        IllegalArgumentException rejectWithoutReason =
+                assertThrows(IllegalArgumentException.class, () -> new TargetEndingGenerator()
                         .generate(
                                 context(1),
                                 new TargetEndingContent(NegotiationConclusion.REJECT, "  ", null),
@@ -464,13 +469,15 @@ class NegotiationGeneratorsTest {
                                         "Negotiation-T/v1/target-negotiation/accept-reject", ZH_TARGET_ENDING_TEMPLATE),
                                 zhVocabulary));
 
-        assertEquals("content.failureReason", rejectWithoutReason.getField());
+        assertEquals(
+                "Failure reason of a rejecting target negotiation message must not be blank.",
+                rejectWithoutReason.getMessage());
     }
 
     @Test
     void feasibilityEndingRequiresTheSummary() {
-        NegotiationContentException exception =
-                assertThrows(NegotiationContentException.class, () -> new FeasibilityEndingGenerator()
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> new FeasibilityEndingGenerator()
                         .generate(
                                 context(1),
                                 new FeasibilityEndingContent(NegotiationConclusion.ACCEPT, " "),
@@ -479,26 +486,29 @@ class NegotiationGeneratorsTest {
                                         ZH_FEASIBILITY_ENDING_TEMPLATE),
                                 zhVocabulary));
 
-        assertEquals("content.feasibilitySummary", exception.getField());
+        assertEquals(
+                "Feasibility summary of a terminal feasibility negotiation message must not be blank.",
+                exception.getMessage());
     }
 
     @Test
     void generatorRejectsContentOfAnotherRuntimeType() {
-        NegotiationContentException exception =
-                assertThrows(NegotiationContentException.class, () -> new InformationProposeGenerator()
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> new InformationProposeGenerator()
                         .generate(
                                 context(1),
                                 new TargetProposeContent("描述", null, null, null),
                                 template("Negotiation-T/v1/information-negotiation/propose", ZH_INFO_PROPOSE_TEMPLATE),
                                 zhVocabulary));
 
-        assertEquals("content", exception.getField());
+        assertTrue(exception.getMessage().contains("requires content of type InfoProposeContent"));
     }
 
     @Test
     void generatorsRenderAgainstTheBundledTemplates() {
-        NegotiationReference reference = NegotiationReference.parse(
-                "Negotiation-T/v1/target-negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN");
+        NegotiationReference reference = NegotiationReference.tryParse(
+                        "Negotiation-T/v1/target-negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
+                .orElseThrow(() -> new AssertionError("expected the bundled target propose template to resolve"));
         PromptTemplate loaded = new DefaultNegotiationTemplateLoader("zh-CN", null).load(reference);
 
         TargetProposeContent content = new TargetProposeContent(

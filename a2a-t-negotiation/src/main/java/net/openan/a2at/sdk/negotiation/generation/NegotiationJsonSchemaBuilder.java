@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
+import java.util.Objects;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 
@@ -33,15 +33,11 @@ public class NegotiationJsonSchemaBuilder {
      * @param type negotiation type whose content is extracted
      * @param phase API-level phase of the extraction; accept and reject share the terminal schema
      * @return JSON Schema describing the snake_case extraction output of the pair
-     * @throws NegotiationContentException if the type or phase is null
+     * @throws NullPointerException if the type or phase is null
      */
     public Map<String, Object> buildExtractionSchema(NegotiationType type, NegotiationPhase phase) {
-        if (type == null) {
-            throw new NegotiationContentException("Negotiation type must not be null.", "type");
-        }
-        if (phase == null) {
-            throw new NegotiationContentException("Negotiation phase must not be null.", "phase");
-        }
+        Objects.requireNonNull(type, "Negotiation type must not be null.");
+        Objects.requireNonNull(phase, "Negotiation phase must not be null.");
         return switch (type) {
             case INFORMATION -> phase == NegotiationPhase.PROPOSE
                     ? informationProposeSchema()
@@ -62,12 +58,10 @@ public class NegotiationJsonSchemaBuilder {
      *
      * @param callerSchema parameter schema provided by the caller of the validation API
      * @return merged JSON Schema of the semantic validation LLM call
-     * @throws NegotiationContentException if the caller schema is null
+     * @throws NullPointerException if the caller schema is null
      */
     public Map<String, Object> buildSemanticValidationSchema(Map<String, Object> callerSchema) {
-        if (callerSchema == null) {
-            throw new NegotiationContentException("Caller parameter schema must not be null.", "schema");
-        }
+        Objects.requireNonNull(callerSchema, "Caller parameter schema must not be null.");
         Map<String, Object> schema = new LinkedHashMap<>();
         schema.put("type", "object");
         Map<String, Object> properties = new LinkedHashMap<>();

@@ -19,20 +19,19 @@ public record NegotiationContext(String id, int round, int maxRounds) {
     /**
      * Validates the context fields.
      *
-     * @throws NegotiationContentException if the id is blank, the round is below 1, or maxRounds is below 1
+     * @throws IllegalArgumentException if the id is blank, the round is below 1, or maxRounds is below 1
      */
     public NegotiationContext {
         if (id == null || id.isBlank()) {
-            throw new NegotiationContentException("Negotiation context id must not be blank.", "context.id");
+            throw new IllegalArgumentException("Negotiation context id must not be blank.");
         }
         if (round < 1) {
-            throw new NegotiationContentException(
-                    "Negotiation context round must be a positive integer but was " + round + ".", "context.round");
+            throw new IllegalArgumentException(
+                    "Negotiation context round must be a positive integer but was " + round + ".");
         }
         if (maxRounds < 1) {
-            throw new NegotiationContentException(
-                    "Negotiation context maxRounds must be a positive integer but was " + maxRounds + ".",
-                    "context.maxRounds");
+            throw new IllegalArgumentException(
+                    "Negotiation context maxRounds must be a positive integer but was " + maxRounds + ".");
         }
     }
 
