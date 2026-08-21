@@ -1,7 +1,7 @@
 package net.openan.a2at.sdk.core.model;
 
 import java.util.Objects;
-import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 
 /**
  * Minimal structured result wrapper used by higher-level orchestration flows.
@@ -9,7 +9,7 @@ import net.openan.a2at.sdk.core.exception.SdkException;
  * @param <T> result value type
  * @since 2026-06
  */
-public record OperationResult<T>(T value, SdkException error) {
+public record OperationResult<T>(T value, A2ATError error) {
 
     /**
      * Creates a successful operation result.
@@ -29,7 +29,7 @@ public record OperationResult<T>(T value, SdkException error) {
      * @param <T> value type
      * @return failed result wrapper
      */
-    public static <T> OperationResult<T> failure(SdkException error) {
+    public static <T> OperationResult<T> failure(A2ATError error) {
         return new OperationResult<>(null, Objects.requireNonNull(error, "error"));
     }
 

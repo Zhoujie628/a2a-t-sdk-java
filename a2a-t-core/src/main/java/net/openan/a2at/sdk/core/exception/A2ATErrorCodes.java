@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class A2ATErrorCodes {
 
+    /** Default code for SDK processing failures without a more specific code. */
+    public static final String SDK_INTERNAL_ERROR = "sdk_internal_error";
+
     /** Default code for parameter-extraction failures without a more specific code. */
     public static final String PARAM_EXTRACTION_FAILED = "param_extraction_failed";
 

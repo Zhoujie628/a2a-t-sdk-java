@@ -1,20 +1,19 @@
 package net.openan.a2at.sdk.core.validation;
 
 import java.util.List;
-import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 
 /**
  * Failure raised by the content validation pipeline.
  *
- * <p>Carries a machine-readable error code and optionally structured per-slot validation error details so callers can
- * inspect which slot failed, under which error code, and why, without parsing exception messages.
+ * <p>Carries the machine-readable error code inherited from {@link A2ATError} and optionally structured per-slot
+ * validation error details so callers can inspect which slot failed, under which error code, and why, without parsing
+ * exception messages.
  *
  * @since 2026-08
  */
-public class ContentValidationException extends SdkException {
-
-    private final String code;
+public class ContentValidationException extends A2ATError {
 
     private final List<SlotValidationError> errors;
 
@@ -58,19 +57,10 @@ public class ContentValidationException extends SdkException {
      * @param errors structured per-slot validation error details
      * @param cause root cause
      */
-    public ContentValidationException(String code, String message, List<SlotValidationError> errors, Throwable cause) {
-        super(message, cause);
-        this.code = code;
+    public ContentValidationException(
+            String code, String message, List<SlotValidationError> errors, Throwable cause) {
+        super(code, message, cause);
         this.errors = errors == null ? List.of() : List.copyOf(errors);
-    }
-
-    /**
-     * Returns the machine-readable error code for this failure.
-     *
-     * @return error code
-     */
-    public String code() {
-        return code;
     }
 
     /**

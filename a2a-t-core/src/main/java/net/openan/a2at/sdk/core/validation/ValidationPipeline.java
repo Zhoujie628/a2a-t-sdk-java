@@ -53,21 +53,17 @@ public final class ValidationPipeline {
      * @param schema caller-provided parameter JSON schema
      * @param reference template reference the content is validated against
      * @return filled parameter data carrying the merged parameters
+     * @throws NullPointerException if the prompt, schema or template reference is null
+     * @throws IllegalArgumentException if the prompt is blank
      * @throws ContentValidationException if the validation fails at any stage
      */
     public FilledParamData validate(String prompt, Map<String, Object> schema, TemplateReference reference) {
-        if (schema == null) {
-            throw new ContentValidationException(
-                    A2ATErrorCodes.VALIDATION_INVALID_INPUT, "Schema must not be null.");
+        Objects.requireNonNull(schema, "schema");
+        Objects.requireNonNull(prompt, "prompt");
+        if (prompt.isBlank()) {
+            throw new IllegalArgumentException("Prompt must not be blank.");
         }
-        if (prompt == null || prompt.isBlank()) {
-            throw new ContentValidationException(
-                    A2ATErrorCodes.VALIDATION_INVALID_INPUT, "Prompt must not be null or blank.");
-        }
-        if (reference == null) {
-            throw new ContentValidationException(
-                    A2ATErrorCodes.VALIDATION_INVALID_INPUT, "Template reference must not be null.");
-        }
+        Objects.requireNonNull(reference, "reference");
 
         Map<String, Object> contextParams = ruleChecker.check(prompt);
 

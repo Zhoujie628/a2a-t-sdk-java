@@ -5,7 +5,7 @@ package net.openan.a2at.sdk.core.exception;
  *
  * @since 2026-06
  */
-public final class ResourceNotFoundException extends SdkException {
+public final class ResourceNotFoundException extends A2ATError {
 
     private final String resourcePath;
 

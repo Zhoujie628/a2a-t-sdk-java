@@ -39,7 +39,7 @@ public final class RetryUtil {
             try {
                 return action.get();
             } catch (ContentValidationException exception) {
-                if (!A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR.equals(exception.code())) {
+                if (!A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR.equals(exception.getCode())) {
                     throw exception;
                 }
                 if (attempt == maxAttempts) {

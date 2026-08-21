@@ -20,6 +20,8 @@ public interface ContentValidator {
      * @param schema caller-provided parameter JSON schema
      * @param templateUri URI of the template the content is validated against
      * @return filled parameter data carrying the merged parameters
+     * @throws NullPointerException if the prompt, schema or template URI is null
+     * @throws IllegalArgumentException if the prompt is blank or the template URI is blank or malformed
      * @throws ContentValidationException if the validation fails at any stage
      */
     FilledParamData validate(String prompt, Map<String, Object> schema, String templateUri);
