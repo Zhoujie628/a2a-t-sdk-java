@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.FilledParamData;
+import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -55,7 +55,6 @@ class NegotiationLogEventContractTest {
             Map.entry("negotiation_generator_dispatched", Set.of(Level.DEBUG)),
             Map.entry("negotiation_content_extraction_completed", Set.of(Level.INFO)),
             Map.entry("negotiation_semantic_validation_completed", Set.of(Level.INFO)),
-            Map.entry("negotiation_param_extraction_completed", Set.of(Level.INFO)),
             Map.entry("negotiation_generation_completed", Set.of(Level.INFO)),
             Map.entry("negotiation_llm_retry", Set.of(Level.WARN)),
             Map.entry("negotiation_llm_retry_exhausted", Set.of(Level.WARN)),

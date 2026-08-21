@@ -8,9 +8,10 @@ import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.assembly.DefaultA2ATClientBuilder;
 import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrchestrator;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
+import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
-import net.openan.a2at.sdk.negotiation.content.FilledParamData;
+import net.openan.a2at.sdk.core.validation.ContentValidator;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContentService;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
@@ -36,6 +37,12 @@ public final class A2ATClient {
 
     private final TemplateQueryService templateQueryService;
 
+    private final ContentValidator taskContentValidator;
+
+    private final ContentValidator notificationContentValidator;
+
+    private final ContentValidator authContentValidator;
+
     /**
      * Creates a client facade from one user-supplied `.env` path.
      *
@@ -51,6 +58,9 @@ public final class A2ATClient {
         this.negotiationOrchestrator = builder.buildNegotiationOrchestrator();
         this.negotiationContentService = new NegotiationContentService(builder.buildNegotiationGenerationOrchestrator());
         this.templateQueryService = builder.buildTemplateQueryService();
+        this.taskContentValidator = builder.buildTaskContentValidator();
+        this.notificationContentValidator = builder.buildNotificationContentValidator();
+        this.authContentValidator = builder.buildAuthContentValidator();
     }
 
     /**
@@ -461,5 +471,45 @@ public final class A2ATClient {
      */
     public FilledParamData validateAndFillingRejectData(String prompt, Map<String, Object> schema, String templateUri) {
         return negotiationContentService.validateAndFillingRejectData(prompt, schema, templateUri);
+    }
+
+    /**
+     * Validates a task prompt and extracts its parameters.
+     *
+     * @param prompt rendered task prompt text to validate
+     * @param schema caller-provided parameter JSON schema describing the parameters to extract
+     * @param templateUri template URI declaring the expected task template; its prefix segment must be
+     *     {@code Task-T}
+     * @return filled parameter data carrying the merged parameters
+     */
+    public FilledParamData validateAndFillingTaskData(String prompt, Map<String, Object> schema, String templateUri) {
+        return taskContentValidator.validate(prompt, schema, templateUri);
+    }
+
+    /**
+     * Validates a notification prompt and extracts its parameters.
+     *
+     * @param prompt rendered notification prompt text to validate
+     * @param schema caller-provided parameter JSON schema describing the parameters to extract
+     * @param templateUri template URI declaring the expected notification template; its prefix segment must be
+     *     {@code Notification-T}
+     * @return filled parameter data carrying the merged parameters
+     */
+    public FilledParamData validateAndFillingNotificationData(
+            String prompt, Map<String, Object> schema, String templateUri) {
+        return notificationContentValidator.validate(prompt, schema, templateUri);
+    }
+
+    /**
+     * Validates an authorization prompt and extracts its parameters.
+     *
+     * @param prompt rendered authorization prompt text to validate
+     * @param schema caller-provided parameter JSON schema describing the parameters to extract
+     * @param templateUri template URI declaring the expected authorization template; its prefix segment must be
+     *     {@code Authorization-T}
+     * @return filled parameter data carrying the merged parameters
+     */
+    public FilledParamData validateAndFillingAuthData(String prompt, Map<String, Object> schema, String templateUri) {
+        return authContentValidator.validate(prompt, schema, templateUri);
     }
 }

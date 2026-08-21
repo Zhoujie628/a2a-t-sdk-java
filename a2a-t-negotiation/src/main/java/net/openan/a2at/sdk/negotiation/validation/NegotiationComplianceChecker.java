@@ -1,5 +1,7 @@
 package net.openan.a2at.sdk.negotiation.validation;
 
+import java.util.Map;
+import net.openan.a2at.sdk.core.validation.RuleChecker;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 
 /**
@@ -14,7 +16,7 @@ import net.openan.a2at.sdk.negotiation.content.Vocabulary;
  *
  * @since 2026-06
  */
-public interface NegotiationComplianceChecker {
+public interface NegotiationComplianceChecker extends RuleChecker {
 
     /**
      * Runs the rule-level compliance check of one rendered message.
@@ -27,4 +29,15 @@ public interface NegotiationComplianceChecker {
      * @throws NullPointerException if the vocabulary is null
      */
     NegotiationRuleCheckResult check(String prompt, Vocabulary vocabulary);
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>This default implementation is not supported; use {@link #check(String, Vocabulary)} instead. The
+     * {@link NegotiationRuleCheckerAdapter} bridges this interface to the {@link RuleChecker} contract.
+     */
+    @Override
+    default Map<String, Object> check(String prompt) {
+        throw new UnsupportedOperationException("Use check(String, Vocabulary) instead");
+    }
 }

@@ -34,4 +34,19 @@ public final class A2ATErrorCodes {
 
     /** An LLM infrastructure failure prevented the step from completing. */
     public static final String NEGOTIATION_LLM_INFRASTRUCTURE_ERROR = "negotiation_llm_infrastructure_error";
+
+    /** The input is not valid for the requested validation operation. */
+    public static final String VALIDATION_INVALID_INPUT = "validation_invalid_input";
+
+    /** One or more structural rules of the expected content were violated. */
+    public static final String VALIDATION_RULE_VIOLATION = "validation_rule_violation";
+
+    /** Semantic validation rejected the content. */
+    public static final String VALIDATION_SEMANTIC_REJECTED = "validation_semantic_rejected";
+
+    /** An LLM infrastructure failure prevented the validation step from completing. */
+    public static final String VALIDATION_LLM_INFRASTRUCTURE_ERROR = "validation_llm_infrastructure_error";
+
+    /** A referenced prompt resource could not be resolved. */
+    public static final String VALIDATION_PROMPT_RESOURCE_NOT_FOUND = "validation_prompt_resource_not_found";
 }

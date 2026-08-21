@@ -65,15 +65,20 @@ class NegotiationDeliveredResourceContractTest {
 
     @Test
     void errorCodeConstantsStayExactlyThePinnedRegistry() {
-        java.util.Map<String, String> expected = java.util.Map.of(
-                "PARAM_EXTRACTION_FAILED", "param_extraction_failed",
-                "TEMPLATE_NOT_FOUND", "template_not_found",
-                "NEGOTIATION_CONTENT_EXTRACT_FAILED", "negotiation_content_extract_failed",
-                "NEGOTIATION_SEMANTIC_REJECTED", "negotiation_semantic_rejected",
-                "NEGOTIATION_RULE_VIOLATION", "negotiation_rule_violation",
-                "NEGOTIATION_SLOT_MISSING", "negotiation_slot_missing",
-                "NEGOTIATION_INVALID_INPUT", "negotiation_invalid_input",
-                "NEGOTIATION_LLM_INFRASTRUCTURE_ERROR", "negotiation_llm_infrastructure_error");
+        java.util.Map<String, String> expected = new java.util.LinkedHashMap<>();
+        expected.put("PARAM_EXTRACTION_FAILED", "param_extraction_failed");
+        expected.put("TEMPLATE_NOT_FOUND", "template_not_found");
+        expected.put("NEGOTIATION_CONTENT_EXTRACT_FAILED", "negotiation_content_extract_failed");
+        expected.put("NEGOTIATION_SEMANTIC_REJECTED", "negotiation_semantic_rejected");
+        expected.put("NEGOTIATION_RULE_VIOLATION", "negotiation_rule_violation");
+        expected.put("NEGOTIATION_SLOT_MISSING", "negotiation_slot_missing");
+        expected.put("NEGOTIATION_INVALID_INPUT", "negotiation_invalid_input");
+        expected.put("NEGOTIATION_LLM_INFRASTRUCTURE_ERROR", "negotiation_llm_infrastructure_error");
+        expected.put("VALIDATION_INVALID_INPUT", "validation_invalid_input");
+        expected.put("VALIDATION_RULE_VIOLATION", "validation_rule_violation");
+        expected.put("VALIDATION_SEMANTIC_REJECTED", "validation_semantic_rejected");
+        expected.put("VALIDATION_LLM_INFRASTRUCTURE_ERROR", "validation_llm_infrastructure_error");
+        expected.put("VALIDATION_PROMPT_RESOURCE_NOT_FOUND", "validation_prompt_resource_not_found");
 
         java.util.Map<String, String> actual = new java.util.LinkedHashMap<>();
         for (java.lang.reflect.Field field : A2ATErrorCodes.class.getDeclaredFields()) {

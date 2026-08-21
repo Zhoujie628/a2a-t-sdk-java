@@ -1,6 +1,13 @@
 package net.openan.a2at.sdk.negotiation.validation;
 
+import java.util.List;
 import java.util.Map;
+import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
+import net.openan.a2at.sdk.core.model.SlotValidationError;
+import net.openan.a2at.sdk.core.validation.ContentValidationException;
+import net.openan.a2at.sdk.core.validation.SemanticValidator;
+import net.openan.a2at.sdk.core.validation.TemplateReference;
+import net.openan.a2at.sdk.core.validation.ValidationResult;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 
 /**
@@ -14,7 +21,7 @@ import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
  *
  * @since 2026-06
  */
-public interface NegotiationSemanticValidator {
+public interface NegotiationSemanticValidator extends SemanticValidator {
 
     /**
      * Validates one rendered negotiation message semantically and extracts its parameters.
@@ -31,4 +38,22 @@ public interface NegotiationSemanticValidator {
      *     of the reference language are missing
      */
     SemanticValidationResult validate(String prompt, Map<String, Object> callerSchema, NegotiationReference reference);
+
+    @Override
+    default ValidationResult validate(String prompt, Map<String, Object> schema, TemplateReference reference) {
+        if (!(reference instanceof NegotiationReference)) {
+            throw new IllegalArgumentException("Reference must be NegotiationReference");
+        }
+        try {
+            SemanticValidationResult result = this.validate(prompt, schema, (NegotiationReference) reference);
+            return new ValidationResult(result.verdict(), result.errors(), result.params());
+        } catch (NegotiationValidationException exception) {
+            throw new ContentValidationException(
+                    A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR,
+                    "Semantic validation LLM step failed: " + exception.getMessage(),
+                    List.of(new SlotValidationError(
+                            "_llm", A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getMessage())),
+                    exception);
+        }
+    }
 }

@@ -25,7 +25,6 @@ class NegotiationPackageStructureTest {
                 List.of(
                         "FeasibilityEndingContent.java",
                         "FeasibilityProposeContent.java",
-                        "FilledParamData.java",
                         "InfoEndingContent.java",
                         "InfoProposeContent.java",
                         "NegotiationAction.java",
@@ -102,6 +101,7 @@ class NegotiationPackageStructureTest {
                         "NegotiationComplianceChecker.java",
                         "NegotiationParamSchemas.java",
                         "NegotiationRuleCheckResult.java",
+                        "NegotiationRuleCheckerAdapter.java",
                         "NegotiationSemanticValidator.java",
                         "NegotiationValidationException.java",
                         "ParamExtractor.java",

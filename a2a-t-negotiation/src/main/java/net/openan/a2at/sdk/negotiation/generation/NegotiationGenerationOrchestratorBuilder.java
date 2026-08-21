@@ -7,6 +7,7 @@ import net.openan.a2at.sdk.negotiation.resources.NegotiationTemplateLoader;
 import net.openan.a2at.sdk.negotiation.validation.DefaultNegotiationComplianceChecker;
 import net.openan.a2at.sdk.negotiation.validation.DefaultNegotiationSemanticValidator;
 import net.openan.a2at.sdk.negotiation.validation.NegotiationComplianceChecker;
+import net.openan.a2at.sdk.negotiation.validation.NegotiationRuleCheckerAdapter;
 import net.openan.a2at.sdk.negotiation.validation.NegotiationSemanticValidator;
 import net.openan.a2at.sdk.negotiation.validation.NegotiationValidationException;
 import net.openan.a2at.sdk.negotiation.validation.ParamExtractor;
@@ -179,8 +180,10 @@ public final class NegotiationGenerationOrchestratorBuilder {
                 complianceChecker != null ? complianceChecker : new DefaultNegotiationComplianceChecker();
         NegotiationSemanticValidator effectiveSemanticValidator =
                 semanticValidator != null ? semanticValidator : defaultSemanticValidator();
+        NegotiationRuleCheckerAdapter ruleCheckerAdapter =
+                new NegotiationRuleCheckerAdapter(effectiveComplianceChecker, vocabulary);
         ParamExtractor paramExtractor =
-                new ParamExtractor(effectiveComplianceChecker, effectiveSemanticValidator, vocabulary);
+                new ParamExtractor(ruleCheckerAdapter, effectiveSemanticValidator, maxAttempts);
         return new NegotiationGenerationOrchestrator(
                 language,
                 maxAttempts,
