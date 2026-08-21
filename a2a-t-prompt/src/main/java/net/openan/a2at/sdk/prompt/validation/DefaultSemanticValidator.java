@@ -102,7 +102,7 @@ public final class DefaultSemanticValidator implements SemanticValidator {
         }
 
         return userPromptTemplate
-                .replaceAll("\\[extension_name\\]", Matcher.quoteReplacement(reference.extensionPrefix()))
+                .replaceAll("\\[extension_name\\]", Matcher.quoteReplacement(reference.extensionName()))
                 .replaceAll("\\[input\\]", Matcher.quoteReplacement(prompt))
                 .replaceAll("\\[template_uri\\]", Matcher.quoteReplacement(reference.uri()))
                 .replaceAll("\\[schema\\]", Matcher.quoteReplacement(schemaJson));

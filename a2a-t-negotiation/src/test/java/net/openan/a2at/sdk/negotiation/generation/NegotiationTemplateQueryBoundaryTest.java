@@ -11,6 +11,7 @@ import ch.qos.logback.core.read.ListAppender;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,12 +32,12 @@ import org.slf4j.LoggerFactory;
 class NegotiationTemplateQueryBoundaryTest {
 
     private static final List<String> EXPECTED_URI_ORDER = List.of(
-            "Negotiation-T/v1/information-negotiation/propose",
-            "Negotiation-T/v1/information-negotiation/accept-reject",
-            "Negotiation-T/v1/target-negotiation/propose",
-            "Negotiation-T/v1/target-negotiation/accept-reject",
-            "Negotiation-T/v1/feasibility-negotiation/propose",
-            "Negotiation-T/v1/feasibility-negotiation/accept-reject");
+            StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(),
+            StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri(),
+            StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(),
+            StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri(),
+            StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
+            StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri());
 
     private ListAppender<ILoggingEvent> logAppender;
 
@@ -85,11 +86,11 @@ class NegotiationTemplateQueryBoundaryTest {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(language);
 
         Optional<PromptTemplate> template =
-                orchestrator.getNegotiationPrompt("Negotiation-T/v1/feasibility-negotiation/propose");
+                orchestrator.getNegotiationPrompt(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri());
 
         assertTrue(template.isPresent());
         assertEquals(
-                "Negotiation-T/v1/feasibility-negotiation/propose",
+                StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
                 template.orElseThrow().uri());
         String contextTitle = "zh-CN".equals(language) ? "## 协商上下文" : "## Negotiation Context";
         assertTrue(template.orElseThrow().content().contains(contextTitle));

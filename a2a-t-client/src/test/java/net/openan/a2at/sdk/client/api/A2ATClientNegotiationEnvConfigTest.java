@@ -29,6 +29,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +57,7 @@ class A2ATClientNegotiationEnvConfigTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = "Negotiation-T/v1/information-negotiation/propose";
+    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
 
     private static final String CUSTOM_TEMPLATE_MARKER = "CUSTOM-TEMPLATE-MARKER-7d31";
 

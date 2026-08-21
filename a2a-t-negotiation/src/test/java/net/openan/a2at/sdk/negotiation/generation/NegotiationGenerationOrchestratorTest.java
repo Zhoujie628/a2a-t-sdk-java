@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.llm.LLMClient;
@@ -29,7 +30,7 @@ class NegotiationGenerationOrchestratorTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = "Negotiation-T/v1/information-negotiation/propose";
+    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
 
     @Test
     void generatesInformationProposeFromDataInChinese() {
@@ -128,7 +129,7 @@ class NegotiationGenerationOrchestratorTest {
         assertTrue(
                 zhOrchestrator().getNegotiationPrompt(INFORMATION_PROPOSE_URI).isPresent());
         assertTrue(zhOrchestrator()
-                .getNegotiationPrompt("Negotiation-T/v1/target-negotiation/accept-reject")
+                .getNegotiationPrompt(StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri())
                 .isPresent());
         assertFalse(zhOrchestrator()
                 .getNegotiationPrompt("Negotiation-T/v1/unknown-negotiation/propose")
@@ -242,7 +243,7 @@ class NegotiationGenerationOrchestratorTest {
                                 new NegotiationProposeData(
                                         new NegotiationContext(UUID, 1, 5),
                                         new InfoProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
-                                "Negotiation-T/v1/information-negotiation/accept-reject"));
+                                StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri()));
         assertTrue(phaseMismatchFailure
                 .getMessage()
                 .contains("Template URI is malformed or contradicts the expected phase PROPOSE (propose)"));

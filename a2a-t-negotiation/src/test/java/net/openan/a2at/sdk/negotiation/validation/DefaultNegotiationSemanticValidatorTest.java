@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
@@ -68,7 +69,7 @@ class DefaultNegotiationSemanticValidatorTest {
         assertEquals("user", messages.get(1).get("role"));
         String userPrompt = messages.get(1).get("content");
         assertTrue(userPrompt.contains("information"));
-        assertTrue(userPrompt.contains("Negotiation-T/v1/information-negotiation/propose"));
+        assertTrue(userPrompt.contains(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri()));
         assertTrue(userPrompt.contains("confirmed_rate_mbps"));
         assertTrue(userPrompt.contains("energy saving region"));
         assertEquals(Map.of("merged", true), llmClient.lastSchema);

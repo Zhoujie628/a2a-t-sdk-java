@@ -15,6 +15,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.server.A2ATServer;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +23,8 @@ class A2ATServerNegotiationApiTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = "Negotiation-T/v1/information-negotiation/propose";
+    private static final String INFORMATION_PROPOSE_URI =
+            StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
 
     @Test
     void generatesInformationProposeFromDataWithBuiltinChineseTemplates() throws IOException {
@@ -73,7 +75,8 @@ class A2ATServerNegotiationApiTest {
         A2ATServer server = new A2ATServer(writeEnv("zh-CN"));
 
         assertTrue(server.getNegotiationPrompt(INFORMATION_PROPOSE_URI).isPresent());
-        assertTrue(server.getNegotiationPrompt("Negotiation-T/v1/feasibility-negotiation/accept-reject")
+        assertTrue(server
+                .getNegotiationPrompt(StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri())
                 .isPresent());
         assertFalse(server.getNegotiationPrompt("not-a-template-uri").isPresent());
         PromptTemplate template =

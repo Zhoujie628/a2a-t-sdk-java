@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
@@ -30,9 +31,9 @@ class InformationNegotiationScenarioTest {
 
     private static final String SESSION_ID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = "Negotiation-T/v1/information-negotiation/propose";
+    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
 
-    private static final String INFORMATION_ACCEPT_URI = "Negotiation-T/v1/information-negotiation/accept-reject";
+    private static final String INFORMATION_ACCEPT_URI = StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri();
 
     @Test
     void informationNegotiationReachesTheTerminalStateWithinOneRound() {

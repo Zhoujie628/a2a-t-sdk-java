@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.stream.Stream;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -27,9 +28,9 @@ class ConditionalSectionRenderingTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String FEASIBILITY_PROPOSE_URI = "Negotiation-T/v1/feasibility-negotiation/propose";
+    private static final String FEASIBILITY_PROPOSE_URI = StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri();
 
-    private static final String TARGET_PROPOSE_URI = "Negotiation-T/v1/target-negotiation/propose";
+    private static final String TARGET_PROPOSE_URI = StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri();
 
     static Stream<Arguments> languages() {
         return Stream.of(Arguments.of("zh-CN"), Arguments.of("en-US"));

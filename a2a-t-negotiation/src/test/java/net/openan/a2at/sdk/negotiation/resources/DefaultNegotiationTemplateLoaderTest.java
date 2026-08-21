@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
@@ -18,12 +19,12 @@ import org.junit.jupiter.api.io.TempDir;
 class DefaultNegotiationTemplateLoaderTest {
 
     private static final List<String> EXPECTED_LOAD_ALL_URIS = List.of(
-            "Negotiation-T/v1/information-negotiation/propose",
-            "Negotiation-T/v1/information-negotiation/accept-reject",
-            "Negotiation-T/v1/target-negotiation/propose",
-            "Negotiation-T/v1/target-negotiation/accept-reject",
-            "Negotiation-T/v1/feasibility-negotiation/propose",
-            "Negotiation-T/v1/feasibility-negotiation/accept-reject");
+            StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(),
+            StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri(),
+            StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(),
+            StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri(),
+            StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
+            StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri());
 
     @TempDir
     Path customRootDir;
@@ -50,7 +51,7 @@ class DefaultNegotiationTemplateLoaderTest {
         PromptTemplate template =
                 loader.load(new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "en-US"));
 
-        assertEquals("Negotiation-T/v1/information-negotiation/propose", template.uri());
+        assertEquals(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(), template.uri());
         assertTrue(template.content().startsWith("## Negotiation Context"));
     }
 
@@ -119,7 +120,7 @@ class DefaultNegotiationTemplateLoaderTest {
 
         assertEquals(EXPECTED_LOAD_ALL_URIS, urisOf(templates));
         PromptTemplate overriddenTemplate = templates.get(2);
-        assertEquals("Negotiation-T/v1/target-negotiation/propose", overriddenTemplate.uri());
+        assertEquals(StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(), overriddenTemplate.uri());
         assertTrue(overriddenTemplate.content().contains("自定义目标内容"));
     }
 

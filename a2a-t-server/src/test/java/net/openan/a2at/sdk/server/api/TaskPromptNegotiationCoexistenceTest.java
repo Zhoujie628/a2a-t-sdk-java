@@ -16,6 +16,7 @@ import net.openan.a2at.sdk.llm.LLMClientFactory;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -46,7 +47,8 @@ class TaskPromptNegotiationCoexistenceTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = "Negotiation-T/v1/information-negotiation/propose";
+    private static final String INFORMATION_PROPOSE_URI =
+            StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
 
     private static final String TASK_T_MESSAGE = "## 任务类型(Task Type)\n"
             + "无线能效优化\n\n"

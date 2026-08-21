@@ -22,9 +22,9 @@ public interface TemplateReference {
     String language();
 
     /**
-     * Returns the extension prefix identifying the template family.
+     * Returns the extension name identifying the template family — the first segment of the template URI.
      *
-     * @return extension prefix
+     * @return extension name such as {@code Task-T}
      */
-    String extensionPrefix();
+    String extensionName();
 }

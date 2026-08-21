@@ -19,6 +19,7 @@ import net.openan.a2at.sdk.core.exception.FailedParameter;
 import net.openan.a2at.sdk.core.exception.PromptGenerationException;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotDefinition;
@@ -305,9 +306,9 @@ private static DefaultClientPromptGenerationOrchestrator newTemplateUriOrchestra
         DefaultClientPromptGenerationOrchestrator orchestrator =
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
-        MetadataContent result = orchestrator.generateTaskPromptFromText("Analyze Site A.", "Task-T/v1/energy-saving");
+        MetadataContent result = orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING.uri());
 
-        assertEquals("Task-T/v1/energy-saving", result.templateUri());
+        assertEquals(StandardTemplates.ENERGY_SAVING.uri(), result.templateUri());
         assertEquals("Site: Site A", result.promptText());
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, result.extensionUri());
     }
@@ -319,7 +320,7 @@ private static DefaultClientPromptGenerationOrchestrator newTemplateUriOrchestra
         DefaultClientPromptGenerationOrchestrator orchestrator =
                 newTemplateUriOrchestrator(recognizer, templateLoader, new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
-        orchestrator.generateTaskPromptFromText("Analyze Site A.", "Task-T/v1/energy-saving");
+        orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING.uri());
 
         assertEquals(0, recognizer.invocationCount);
     }
@@ -409,9 +410,9 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
         MetadataContent result = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of("site", "string"), "Task-T/v1/energy-saving");
+                Map.of("site", "Site A"), Map.of("site", "string"), StandardTemplates.ENERGY_SAVING.uri());
 
-        assertEquals("Task-T/v1/energy-saving", result.templateUri());
+        assertEquals(StandardTemplates.ENERGY_SAVING.uri(), result.templateUri());
         assertEquals("Site: Site A", result.promptText());
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, result.extensionUri());
     }
@@ -425,10 +426,10 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
         Map<String, Object> schema = Map.of("site", "string", "count", "number");
-        orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), schema, "Task-T/v1/energy-saving");
+        orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), schema, StandardTemplates.ENERGY_SAVING.uri());
 
         assertEquals(schema, slotValueExtractor.lastSchema);
-        assertEquals("Task-T/v1/energy-saving", slotValueExtractor.lastScenarioCode);
+        assertEquals(StandardTemplates.ENERGY_SAVING.uri(), slotValueExtractor.lastScenarioCode);
         assertEquals("Site: {site}", slotValueExtractor.lastTemplateText);
     }
 
@@ -441,7 +442,7 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
         MetadataContent result = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), null, "Task-T/v1/energy-saving");
+                Map.of("site", "Site A"), null, StandardTemplates.ENERGY_SAVING.uri());
 
         assertEquals("Site: Site A", result.promptText());
         assertEquals(null, slotValueExtractor.lastSchema);
@@ -456,7 +457,7 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
         MetadataContent result = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), "Task-T/v1/energy-saving");
+                Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING.uri());
 
         assertEquals("Site: Site A", result.promptText());
         assertEquals(Map.of(), slotValueExtractor.lastSchema);
@@ -541,15 +542,15 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
         DefaultClientPromptGenerationOrchestrator orchestrator =
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
-        MetadataContent taskText = orchestrator.generateTaskPromptFromText("Analyze Site A.", "Task-T/v1/energy-saving");
+        MetadataContent taskText = orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING.uri());
         MetadataContent taskData = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), "Task-T/v1/energy-saving");
+                Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING.uri());
         MetadataContent authText = orchestrator.generateAuthPromptFromText("Grant access.", "Authorization-T/v1/database_read");
         MetadataContent authData = orchestrator.generateAuthPromptFromDataWithSchema(
                 Map.of("site", "Site A"), Map.of(), "Authorization-T/v1/database_read");
-        MetadataContent notifText = orchestrator.generateNotificationPromptFromText("Report finished.", "Task-T/v1/energy-saving");
+        MetadataContent notifText = orchestrator.generateNotificationPromptFromText("Report finished.", StandardTemplates.ENERGY_SAVING.uri());
         MetadataContent notifData = orchestrator.generateNotificationPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), "Task-T/v1/energy-saving");
+                Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING.uri());
 
         assertTrue(taskText.promptText().contains("Site A"));
         assertTrue(taskData.promptText().contains("Site A"));
@@ -565,15 +566,15 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
         DefaultClientPromptGenerationOrchestrator orchestrator = newTemplateUriOrchestrator(
                 new RecordingScenarioRecognizer(), templateLoader, new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
-        MetadataContent taskText = orchestrator.generateTaskPromptFromText("Analyze Site A.", "Task-T/v1/energy-saving");
+        MetadataContent taskText = orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING.uri());
         MetadataContent taskData = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), "Task-T/v1/energy-saving");
+                Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING.uri());
         MetadataContent authText = orchestrator.generateAuthPromptFromText("Grant access.", "Authorization-T/v1/database_read");
         MetadataContent authData = orchestrator.generateAuthPromptFromDataWithSchema(
                 Map.of("site", "Site A"), Map.of(), "Authorization-T/v1/database_read");
-        MetadataContent notifText = orchestrator.generateNotificationPromptFromText("Report finished.", "Task-T/v1/energy-saving");
+        MetadataContent notifText = orchestrator.generateNotificationPromptFromText("Report finished.", StandardTemplates.ENERGY_SAVING.uri());
         MetadataContent notifData = orchestrator.generateNotificationPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), "Task-T/v1/energy-saving");
+                Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING.uri());
 
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskText.extensionUri());
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskData.extensionUri());

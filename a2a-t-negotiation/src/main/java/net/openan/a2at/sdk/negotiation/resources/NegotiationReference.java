@@ -4,6 +4,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import net.openan.a2at.sdk.core.resources.PathSegments;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.core.validation.TemplateReference;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
@@ -22,7 +23,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 public record NegotiationReference(NegotiationType type, NegotiationPhase phase, String language)
         implements TemplateReference {
 
-    private static final String URI_PREFIX = "Negotiation-T";
+    private static final String URI_PREFIX = StandardTemplates.NEGOTIATION_EXTENSION_NAME;
 
     private static final String URI_VERSION_SEGMENT = "v1";
 
@@ -62,7 +63,7 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
     }
 
     @Override
-    public String extensionPrefix() {
+    public String extensionName() {
         return URI_PREFIX;
     }
 
