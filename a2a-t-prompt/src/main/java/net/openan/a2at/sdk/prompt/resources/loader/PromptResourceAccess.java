@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.PromptRuntimeConfig;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import net.openan.a2at.sdk.resources.ClasspathPromptResourceLoader;
@@ -139,7 +139,7 @@ public interface PromptResourceAccess {
             try {
                 return Files.readString(promptPath);
             } catch (IOException exception) {
-                throw new SdkException("Failed to read prompt resource: " + promptPath, exception);
+                throw new A2ATError("Failed to read prompt resource: " + promptPath, exception);
             }
         }
     }

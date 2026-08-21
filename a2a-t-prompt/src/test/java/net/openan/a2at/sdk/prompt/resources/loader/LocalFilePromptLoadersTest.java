@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import org.junit.jupiter.api.Test;
@@ -144,7 +144,7 @@ class LocalFilePromptLoadersTest {
     }
 
     @Test
-    void malformedLocalSlotSchemaIsWrappedAsSdkException() throws IOException {
+    void malformedLocalSlotSchemaIsWrappedAsA2ATError() throws IOException {
         write(
                 promptRootDir
                         .resolve("slots")
@@ -155,8 +155,8 @@ class LocalFilePromptLoadersTest {
                         .resolve("slot.json"),
                 "{ \"required\": [\"severity\"], \"properties\": ");
 
-        SdkException exception =
-                assertThrows(SdkException.class, () -> new LocalFilePromptSlotSchemaLoader(promptRootDir)
+        A2ATError exception =
+                assertThrows(A2ATError.class, () -> new LocalFilePromptSlotSchemaLoader(promptRootDir)
                         .loadSlotSchema("incident_triage", "en"));
 
         assertTrue(exception.getMessage().startsWith("Failed to read slot schema resource: "));

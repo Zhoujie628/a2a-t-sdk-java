@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 
 /**
@@ -31,7 +31,7 @@ public final class LocalFilePromptScenarioCatalogLoader {
             return PromptResourceJsonParser.parse(Files.readString(catalogPath), ScenarioCatalog.class)
                     .scenarios();
         } catch (IOException exception) {
-            throw new SdkException("Failed to read scenario catalog: " + catalogPath, exception);
+            throw new A2ATError("Failed to read scenario catalog: " + catalogPath, exception);
         }
     }
 

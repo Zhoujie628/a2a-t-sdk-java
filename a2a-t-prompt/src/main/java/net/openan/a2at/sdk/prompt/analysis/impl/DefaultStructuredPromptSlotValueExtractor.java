@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.PromptMessage;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.prompt.analysis.model.StructuredSlotExtractionResult;
@@ -120,7 +120,7 @@ public final class DefaultStructuredPromptSlotValueExtractor implements PromptSl
                     OBJECT_MAPPER.readValue(payload, new TypeReference<Map<String, Object>>() {});
             return response == null ? Map.of() : response;
         } catch (JsonProcessingException error) {
-            throw new SdkException("Structured LLM payload must be a JSON object.", error);
+            throw new A2ATError("Structured LLM payload must be a JSON object.", error);
         }
     }
 

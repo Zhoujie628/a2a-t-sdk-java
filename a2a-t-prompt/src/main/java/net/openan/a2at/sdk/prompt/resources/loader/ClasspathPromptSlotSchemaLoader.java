@@ -5,7 +5,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceDirectories;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotJsonSchema;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
@@ -44,7 +44,7 @@ public final class ClasspathPromptSlotSchemaLoader implements PromptSlotSchemaLo
             } catch (ResourceNotFoundException ignored) {
                 // try next slot type
             } catch (JsonProcessingException exception) {
-                throw new SdkException("Failed to parse slot schema: " + scenarioCode, exception);
+                throw new A2ATError("Failed to parse slot schema: " + scenarioCode, exception);
             }
         }
         throw new ResourceNotFoundException(
