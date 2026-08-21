@@ -9,5 +9,5 @@ import java.util.List;
  * @param relationship free-form description of how the missing items relate to each other; null when there is none
  * @since 2026-06
  */
-public record InfoProposeContent(List<NegotiationItem> items, String relationship)
+public record InformationProposeContent(List<NegotiationItem> items, String relationship)
         implements NegotiationProposeContent {}

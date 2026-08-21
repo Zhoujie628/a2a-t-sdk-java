@@ -9,5 +9,5 @@ import java.util.List;
  * @param items information items delivered with the terminal message
  * @since 2026-06
  */
-public record InfoEndingContent(NegotiationConclusion conclusion, List<NegotiationItem> items)
+public record InformationEndingContent(NegotiationConclusion conclusion, List<NegotiationItem> items)
         implements NegotiationEndingContent {}

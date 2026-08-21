@@ -10,8 +10,8 @@ import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -61,7 +61,7 @@ class InformationNegotiationScenarioTest {
         MetadataContent request = requester.generateProposeFromData(
                 new NegotiationProposeData(
                         round,
-                        new InfoProposeContent(
+                        new InformationProposeContent(
                                 List.of(
                                         new NegotiationItem("节能区域信息", "如松山湖"),
                                         new NegotiationItem("节能速率保障目标", "如20Mbps")),
@@ -82,7 +82,7 @@ class InformationNegotiationScenarioTest {
         MetadataContent answer = responder.generateAcceptFromData(
                 new NegotiationEndingData(
                         round,
-                        new InfoEndingContent(
+                        new InformationEndingContent(
                                 NegotiationConclusion.ACCEPT,
                                 List.of(
                                         new NegotiationItem("节能区域信息", "松山湖"),

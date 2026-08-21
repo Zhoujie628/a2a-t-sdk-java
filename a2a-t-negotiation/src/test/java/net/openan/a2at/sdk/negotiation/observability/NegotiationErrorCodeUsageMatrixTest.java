@@ -18,7 +18,7 @@ import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
@@ -303,7 +303,7 @@ class NegotiationErrorCodeUsageMatrixTest {
     private static NegotiationProposeData proposeData() {
         return new NegotiationProposeData(
                 new NegotiationContext(UUID, 1, 5),
-                new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null));
+                new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null));
     }
 
     private static String semanticPayload(String negotiationType) {

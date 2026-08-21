@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Stream;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
@@ -44,7 +44,7 @@ class ConclusionLiteralAndExceptionSlotTest {
                 .generateAcceptFromData(
                         new NegotiationEndingData(
                                 context,
-                                new InfoEndingContent(
+                                new InformationEndingContent(
                                         NegotiationConclusion.ACCEPT,
                                         List.of(new NegotiationItem("area information", "Songshan Lake")))),
                         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT)
@@ -84,7 +84,7 @@ class ConclusionLiteralAndExceptionSlotTest {
                 .generateRejectFromData(
                         new NegotiationEndingData(
                                 context,
-                                new InfoEndingContent(
+                                new InformationEndingContent(
                                         NegotiationConclusion.REJECT,
                                         List.of(new NegotiationItem("area information", "not available")))),
                         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT)

@@ -27,8 +27,8 @@ import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -628,7 +628,7 @@ class FromTextLlmPipelineTest {
      */
     private static String extractionJson(NegotiationContent content, NegotiationPhase phase) {
         if (phase == NegotiationPhase.PROPOSE) {
-            if (content instanceof InfoProposeContent info) {
+            if (content instanceof InformationProposeContent info) {
                 return "{\"items\":" + itemsJson(info.items()) + ",\"relationship\":"
                         + stringOrNull(info.relationship()) + "}";
             }
@@ -654,7 +654,7 @@ class FromTextLlmPipelineTest {
                     + itemsJson(feasibility.infeasibilityDetailsAndProposal())
                     + "}";
         }
-        if (content instanceof InfoEndingContent info) {
+        if (content instanceof InformationEndingContent info) {
             return "{\"conclusion\":" + quote(info.conclusion().literal()) + ",\"items\":" + itemsJson(info.items())
                     + "}";
         }

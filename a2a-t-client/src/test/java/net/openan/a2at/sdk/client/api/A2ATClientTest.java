@@ -258,7 +258,7 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
     void fromTextEntryPointsReturnMetadataContent() throws IOException {
         Path envFile = writeMinimalClientEnvWithoutRequiredSlots(TEST_MOCK_PROVIDER);
         A2ATClient client = new A2ATClient(envFile);
-        TemplateUri unconstrained = TemplateUri.of("Task-T", "v1", "network-layer", "unconstrained");
+        TemplateUri unconstrained = TemplateUri.of("Task-T", "network-layer", "unconstrained");
 
         MetadataContent taskResult = client.generateTaskPromptFromText("Please analyze Site A.", unconstrained);
         MetadataContent authResult = client.generateAuthPromptFromText("Authorize access.", unconstrained);
@@ -314,7 +314,7 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
     void fromTextReturnsCorrectExtensionUriPerContentType() throws IOException {
         Path envFile = writeMinimalClientEnvWithoutRequiredSlots(TEST_MOCK_PROVIDER);
         A2ATClient client = new A2ATClient(envFile);
-        TemplateUri unconstrained = TemplateUri.of("Task-T", "v1", "network-layer", "unconstrained");
+        TemplateUri unconstrained = TemplateUri.of("Task-T", "network-layer", "unconstrained");
 
         MetadataContent taskResult = client.generateTaskPromptFromText("Please analyze Site A.", unconstrained);
         MetadataContent authResult = client.generateAuthPromptFromText("Authorize access.", unconstrained);

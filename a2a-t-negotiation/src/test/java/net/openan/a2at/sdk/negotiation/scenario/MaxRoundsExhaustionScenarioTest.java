@@ -78,7 +78,7 @@ class MaxRoundsExhaustionScenarioTest {
         assertEquals(1, peerLlm.callCount(), "the rule gate must fail before any semantic LLM call");
 
         assertTrue(
-                agent.getNegotiationPrompt(TemplateUri.of("Negotiation-T", "v1", "target-negotiation", "abort"))
+                agent.getNegotiationPrompt(TemplateUri.of("Negotiation-T", "target-negotiation", "abort"))
                         .isEmpty(),
                 "no template of an abort phase exists anywhere");
     }

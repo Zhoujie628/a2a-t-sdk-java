@@ -421,7 +421,7 @@ The content layer is stateless. It deliberately does not own a session state mac
 
 All thirteen methods exist on both `A2ATClient` and `A2ATServer` with identical signatures and semantics.
 
-Every method that identifies a template takes the value type `net.openan.a2at.sdk.core.model.TemplateUri` instead of a raw string. A `TemplateUri` is always well-formed — its constructor validates the extension name, path segments, and version — so malformed URIs cannot reach these APIs. Build one with `TemplateUri.of("Negotiation-T", "v1", "information-negotiation", "propose")`, or better, use the constants in `StandardTemplates` from the same package (for example `StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE`, whose `uri()` is `Negotiation-T/information-negotiation/propose/v1`). When a URI string arrives from outside the code, `TemplateUri.parse(String)` returns an `Optional<TemplateUri>` and never throws.
+Every method that identifies a template takes the value type `net.openan.a2at.sdk.core.model.TemplateUri` instead of a raw string. A `TemplateUri` is always well-formed — its constructor validates the extension name, path segments, and version — so malformed URIs cannot reach these APIs. Build one with `TemplateUri.of("Negotiation-T", "information-negotiation", "propose")`, or better, use the constants in `StandardTemplates` from the same package (for example `StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE`, whose `uri()` is `Negotiation-T/information-negotiation/propose/v1`). When a URI string arrives from outside the code, `TemplateUri.parse(String)` returns an `Optional<TemplateUri>` and never throws.
 
 **Generation from typed data — deterministic, never calls an LLM:**
 
@@ -508,7 +508,7 @@ All types live in `net.openan.a2at.sdk.negotiation.content`.
 
 | Negotiation type | Propose content | Ending content |
 |--|--|--|
-| Information | `InfoProposeContent(List<NegotiationItem> items, String relationship)` | `InfoEndingContent(conclusion, items)` |
+| Information | `InformationProposeContent(List<NegotiationItem> items, String relationship)` | `InformationEndingContent(conclusion, items)` |
 | Target | `TargetProposeContent(description, intentUnderstanding, alignmentAndClarification, requestForClarification)` | `TargetEndingContent(conclusion, confirmedIntent, failureReason)` |
 | Feasibility | `FeasibilityProposeContent(description, action, contentsToEvaluate, infeasibilityDetailsAndProposal)` | `FeasibilityEndingContent(conclusion, feasibilitySummary)` |
 
@@ -576,7 +576,7 @@ import net.openan.a2at.sdk.server.A2ATServer;
 A2ATClient client = new A2ATClient(Path.of("client.env"));
 
 NegotiationContext context = NegotiationContext.of("neg-0001-uuid", 1);
-InfoProposeContent content = new InfoProposeContent(
+InformationProposeContent content = new InformationProposeContent(
         List.of(
                 new NegotiationItem("subscription_condition.incident_level", "critical or warning"),
                 new NegotiationItem("notification_data.format", "DataPart or raw JSON")),
@@ -611,7 +611,7 @@ try {
 }
 
 // --- Server side: accept and return the requested information ---
-InfoEndingContent ending = new InfoEndingContent(
+InformationEndingContent ending = new InformationEndingContent(
         NegotiationConclusion.ACCEPT,
         List.of(new NegotiationItem("subscription_condition.incident_level", "critical")));
 

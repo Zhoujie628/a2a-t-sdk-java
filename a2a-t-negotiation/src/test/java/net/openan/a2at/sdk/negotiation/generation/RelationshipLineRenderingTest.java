@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
@@ -79,7 +79,7 @@ class RelationshipLineRenderingTest {
                 .generateProposeFromData(
                         new NegotiationProposeData(
                                 new NegotiationContext(UUID, 2, 5),
-                                new InfoProposeContent(
+                                new InformationProposeContent(
                                         List.of(new NegotiationItem(
                                                 chinese ? "节能区域" : "area", chinese ? "松山湖" : "Songshan Lake")),
                                         relationship)),

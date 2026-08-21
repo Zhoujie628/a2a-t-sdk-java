@@ -18,8 +18,8 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -483,7 +483,7 @@ class ValidateAndFillingDataPipelineTest {
         MetadataContent content = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
                         new NegotiationContext(SESSION_ID, 2, 5),
-                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                        new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_URI);
         return content.promptText();
     }
@@ -492,7 +492,7 @@ class ValidateAndFillingDataPipelineTest {
             NegotiationGenerationOrchestrator orchestrator, NegotiationConclusion conclusion) {
         NegotiationEndingData data = new NegotiationEndingData(
                 new NegotiationContext(SESSION_ID, 2, 5),
-                new InfoEndingContent(conclusion, List.of(new NegotiationItem("节能区域", "松山湖"))));
+                new InformationEndingContent(conclusion, List.of(new NegotiationItem("节能区域", "松山湖"))));
         MetadataContent content = conclusion == NegotiationConclusion.ACCEPT
                 ? orchestrator.generateAcceptFromData(data, INFORMATION_ACCEPT_REJECT_URI)
                 : orchestrator.generateRejectFromData(data, INFORMATION_ACCEPT_REJECT_URI);

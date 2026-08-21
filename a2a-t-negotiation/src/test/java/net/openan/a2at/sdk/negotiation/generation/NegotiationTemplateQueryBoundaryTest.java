@@ -105,7 +105,7 @@ class NegotiationTemplateQueryBoundaryTest {
         NegotiationGenerationOrchestrator orchestrator = orchestrator("zh-CN");
 
         Optional<PromptTemplate> template = orchestrator.getNegotiationPrompt(
-                TemplateUri.of("Negotiation-T", "v1", "unknown-negotiation", "propose"));
+                TemplateUri.of("Negotiation-T", "unknown-negotiation", "propose"));
 
         assertTrue(template.isEmpty());
         assertTrue(hasWarning("negotiation_template_not_found", "A2AT_LANGUAGE"));

@@ -62,12 +62,9 @@ public final class ClasspathPromptTemplateLoader implements PromptTemplateTextLo
      */
     private static List<TemplateUri> bareCodeCandidates(String templateType, String scenarioCode) {
         return List.of(
-                TemplateUri.of(
-                        templateType,
-                        TemplateUri.DEFAULT_TEMPLATE_VERSION,
-                        StandardTemplates.NETWORK_LAYER_SEGMENT,
+                TemplateUri.of(templateType, StandardTemplates.NETWORK_LAYER_SEGMENT,
                         scenarioCode),
-                TemplateUri.of(templateType, TemplateUri.DEFAULT_TEMPLATE_VERSION, scenarioCode));
+                TemplateUri.of(templateType, scenarioCode));
     }
 
     private static List<String> discoverTemplateTypes() {

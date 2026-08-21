@@ -55,18 +55,34 @@ public record TemplateUri(
     }
 
     /**
-     * Creates a template URI from its components.
+     * Creates a template URI from its components, defaulting the template version to
+     * {@link #DEFAULT_TEMPLATE_VERSION}.
      *
      * @param extensionName first URI segment identifying the template family, such as {@code Task-T}
-     * @param templateVersion trailing URI segment, such as {@code v1}
      * @param pathSegments middle URI segments, such as {@code network-layer, energy-saving}
+     * @return validated template URI
+     * @throws NullPointerException if the extension name or any path segment is null
+     * @throws IllegalArgumentException if any component is not a simple path segment or no path segment is given
+     */
+    public static @NonNull TemplateUri of(@NonNull String extensionName, @NonNull String... pathSegments) {
+        return new TemplateUri(extensionName, List.of(pathSegments), DEFAULT_TEMPLATE_VERSION);
+    }
+
+    /**
+     * Creates a template URI from its components with an explicit template version.
+     *
+     * @param extensionName first URI segment identifying the template family, such as {@code Task-T}
+     * @param pathSegments middle URI segments, such as {@code network-layer, energy-saving}
+     * @param templateVersion trailing URI segment, such as {@code v2}
      * @return validated template URI
      * @throws NullPointerException if any component is null
      * @throws IllegalArgumentException if any component is not a simple path segment or no path segment is given
      */
     public static @NonNull TemplateUri of(
-            @NonNull String extensionName, @NonNull String templateVersion, @NonNull String... pathSegments) {
-        return new TemplateUri(extensionName, List.of(pathSegments), templateVersion);
+            @NonNull String extensionName,
+            @NonNull List<String> pathSegments,
+            @NonNull String templateVersion) {
+        return new TemplateUri(extensionName, pathSegments, templateVersion);
     }
 
     /**

@@ -2,7 +2,7 @@ package net.openan.a2at.sdk.negotiation.generation;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
@@ -30,15 +30,15 @@ final class InformationProposeGenerator extends AbstractNegotiationGenerator {
     @Override
     public String generate(
             NegotiationContext context, NegotiationContent content, PromptTemplate template, Vocabulary vocabulary) {
-        InfoProposeContent proposeContent =
-                contentOf(content, InfoProposeContent.class, "Information propose generator");
+        InformationProposeContent proposeContent =
+                contentOf(content, InformationProposeContent.class, "Information propose generator");
         Map<String, String> slots = new LinkedHashMap<>();
         slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(vocabulary.get("slot.info_items"), itemsSlotValue(proposeContent, vocabulary));
         return render(template, slots);
     }
 
-    private String itemsSlotValue(InfoProposeContent content, Vocabulary vocabulary) {
+    private String itemsSlotValue(InformationProposeContent content, Vocabulary vocabulary) {
         String items = formatItems(content.items(), vocabulary);
         if (content.relationship() == null || content.relationship().isBlank()) {
             return items;

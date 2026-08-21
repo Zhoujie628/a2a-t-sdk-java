@@ -73,12 +73,9 @@ public final class ClasspathPromptSlotSchemaLoader implements PromptSlotSchemaLo
      */
     private static List<TemplateUri> bareCodeCandidates(String slotType, String scenarioCode) {
         return List.of(
-                TemplateUri.of(
-                        slotType,
-                        TemplateUri.DEFAULT_TEMPLATE_VERSION,
-                        StandardTemplates.NETWORK_LAYER_SEGMENT,
+                TemplateUri.of(slotType, StandardTemplates.NETWORK_LAYER_SEGMENT,
                         scenarioCode),
-                TemplateUri.of(slotType, TemplateUri.DEFAULT_TEMPLATE_VERSION, scenarioCode));
+                TemplateUri.of(slotType, scenarioCode));
     }
 
     private static List<String> discoverSlotTypes() {

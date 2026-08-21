@@ -35,7 +35,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
             (scenarioCode, language) -> new PromptSlotSchema(scenarioCode, List.of());
 
     private static final TemplateUri AUTH_DATABASE_READ =
-            TemplateUri.of("Authorization-T", "v1", "database_read");
+            TemplateUri.of("Authorization-T", "database_read");
 
     @Test
     void generateTaskPromptLoadsTemplateAndRendersExtractedSlotsWhenScenarioIsMatched() {

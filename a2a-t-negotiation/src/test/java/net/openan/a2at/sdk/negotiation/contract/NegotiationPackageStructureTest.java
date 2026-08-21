@@ -25,8 +25,8 @@ class NegotiationPackageStructureTest {
                 List.of(
                         "FeasibilityEndingContent.java",
                         "FeasibilityProposeContent.java",
-                        "InfoEndingContent.java",
-                        "InfoProposeContent.java",
+                        "InformationEndingContent.java",
+                        "InformationProposeContent.java",
                         "NegotiationAction.java",
                         "NegotiationConclusion.java",
                         "NegotiationContent.java",

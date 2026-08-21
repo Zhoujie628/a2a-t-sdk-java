@@ -32,7 +32,7 @@ class ClasspathPromptResourceLoaderTest {
     @Test
     void raisesTypedErrorWhenResourceIsMissing() {
         PromptResourceKey key = PromptResourceKey.template(
-                TemplateUri.of("Task-T", "v1", "network-layer", "missing_scenario"), "en-US", "template.md");
+                TemplateUri.of("Task-T", "network-layer", "missing_scenario"), "en-US", "template.md");
 
         ResourceNotFoundException error = assertThrows(ResourceNotFoundException.class, () -> loader.loadText(key));
 
@@ -53,7 +53,7 @@ class ClasspathPromptResourceLoaderTest {
     void loadsPackagedSubscribeIncidentSlotSchemaWithSemanticHint() {
         PromptResourceKey key =
                 PromptResourceKey.slotSchema(
-                        TemplateUri.of("Notification-T", "v1", "network-layer", "subscribe-incident"),
+                        TemplateUri.of("Notification-T", "network-layer", "subscribe-incident"),
                         "zh-CN",
                         "slot.json");
 

@@ -16,7 +16,7 @@ import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
@@ -54,7 +54,7 @@ class NegotiationConcurrentMixedLoadTest {
 
         NegotiationProposeData proposeData = new NegotiationProposeData(
                 new NegotiationContext(UUID, 1, 5),
-                new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null));
+                new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null));
         MetadataContent fromDataBase = orchestrator.generateProposeFromData(proposeData, INFORMATION_PROPOSE_URI);
         MetadataContent fromTextBase = orchestrator.generateProposeFromText(
                 "请提供节能区域信息。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
