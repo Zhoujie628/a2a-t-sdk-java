@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.prompt.taskrendering.api;
+package net.openan.a2at.sdk.prompt.taskrendering;
 
 import java.util.Map;
 import java.util.Objects;

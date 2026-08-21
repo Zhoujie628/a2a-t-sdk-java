@@ -2,6 +2,7 @@ package net.openan.a2at.sdk.core.validation;
 
 import java.util.Map;
 import org.jspecify.annotations.NonNull;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 
 /**
  * LLM-backed semantic validator for content.

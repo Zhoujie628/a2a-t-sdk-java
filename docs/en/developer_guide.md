@@ -421,7 +421,7 @@ The content layer is stateless. It deliberately does not own a session state mac
 
 All thirteen methods exist on both `A2ATClient` and `A2ATServer` with identical signatures and semantics.
 
-Every method that identifies a template takes the value type `net.openan.a2at.sdk.core.validation.TemplateUri` instead of a raw string. A `TemplateUri` is always well-formed — its constructor validates the extension name, path segments, and version — so malformed URIs cannot reach these APIs. Build one with `TemplateUri.of("Negotiation-T", "v1", "information-negotiation", "propose")`, or better, use the constants in `StandardTemplates` from the same package (for example `StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE`, whose `uri()` is `Negotiation-T/information-negotiation/propose/v1`). When a URI string arrives from outside the code, `TemplateUri.parse(String)` returns an `Optional<TemplateUri>` and never throws.
+Every method that identifies a template takes the value type `net.openan.a2at.sdk.core.model.TemplateUri` instead of a raw string. A `TemplateUri` is always well-formed — its constructor validates the extension name, path segments, and version — so malformed URIs cannot reach these APIs. Build one with `TemplateUri.of("Negotiation-T", "v1", "information-negotiation", "propose")`, or better, use the constants in `StandardTemplates` from the same package (for example `StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE`, whose `uri()` is `Negotiation-T/information-negotiation/propose/v1`). When a URI string arrives from outside the code, `TemplateUri.parse(String)` returns an `Optional<TemplateUri>` and never throws.
 
 **Generation from typed data — deterministic, never calls an LLM:**
 
@@ -568,7 +568,7 @@ import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.exception.A2ATParamExtractionError;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.negotiation.content.*;
 import net.openan.a2at.sdk.server.A2ATServer;
 

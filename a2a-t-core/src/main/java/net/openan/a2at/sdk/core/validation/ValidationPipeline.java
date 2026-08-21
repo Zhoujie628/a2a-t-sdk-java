@@ -12,6 +12,7 @@ import net.openan.a2at.sdk.core.model.SlotValidationError;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 
 /**
  * Orchestrates the content validation pipeline: input validation, rule-level gate, retryable semantic validation and

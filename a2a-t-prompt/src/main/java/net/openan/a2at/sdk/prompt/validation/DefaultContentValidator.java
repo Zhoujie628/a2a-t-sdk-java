@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.validation.ContentValidator;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ValidationPipeline;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;

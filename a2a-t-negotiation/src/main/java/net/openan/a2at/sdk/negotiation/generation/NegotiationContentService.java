@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.content;
+package net.openan.a2at.sdk.negotiation.generation;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -10,10 +10,13 @@ import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.PromptRuntimeConfig;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMClient;
-import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
-import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
+import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
+import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
+import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
+import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 

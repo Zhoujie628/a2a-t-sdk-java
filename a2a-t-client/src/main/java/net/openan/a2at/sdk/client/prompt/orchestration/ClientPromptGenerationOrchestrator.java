@@ -3,7 +3,7 @@ package net.openan.a2at.sdk.client.prompt.orchestration;
 import java.util.Map;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 
 /**
  * Internal prompt-generation orchestration contract used by the client facade.

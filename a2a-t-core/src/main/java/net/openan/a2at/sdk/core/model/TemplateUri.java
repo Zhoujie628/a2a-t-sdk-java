@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.core.validation;
+package net.openan.a2at.sdk.core.model;
 
 import java.util.List;
 import java.util.Objects;

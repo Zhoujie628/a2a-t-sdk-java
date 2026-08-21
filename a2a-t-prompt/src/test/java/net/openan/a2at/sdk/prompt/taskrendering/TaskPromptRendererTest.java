@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.prompt.taskrendering.api;
+package net.openan.a2at.sdk.prompt.taskrendering;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

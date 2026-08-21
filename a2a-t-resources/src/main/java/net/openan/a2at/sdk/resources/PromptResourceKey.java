@@ -3,7 +3,7 @@ package net.openan.a2at.sdk.resources;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 
 /**
  * Identifies one resource bundled with the SDK prompt resource tree.

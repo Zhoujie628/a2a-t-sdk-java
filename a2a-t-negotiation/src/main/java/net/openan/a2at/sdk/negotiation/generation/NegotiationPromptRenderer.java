@@ -1,8 +1,8 @@
 package net.openan.a2at.sdk.negotiation.generation;
 
 import java.util.Map;
-import net.openan.a2at.sdk.prompt.taskrendering.api.DropBlankSlotSectionRenderer;
-import net.openan.a2at.sdk.prompt.taskrendering.api.SectionedTemplateRenderer;
+import net.openan.a2at.sdk.prompt.taskrendering.DropBlankSlotSectionRenderer;
+import net.openan.a2at.sdk.prompt.taskrendering.SectionedTemplateRenderer;
 
 /**
  * Renders a negotiation template by filling slot sections and dropping empty ones.
