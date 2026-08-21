@@ -2,6 +2,7 @@ package net.openan.a2at.sdk.negotiation.resources;
 
 import java.util.Locale;
 import net.openan.a2at.sdk.core.resources.PathSegments;
+import net.openan.a2at.sdk.core.validation.TemplateReference;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
@@ -17,7 +18,8 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationType;
  * @param language locale identifier such as {@code zh-CN} or {@code en-US}
  * @since 2026-06
  */
-public record NegotiationReference(NegotiationType type, NegotiationPhase phase, String language) {
+public record NegotiationReference(NegotiationType type, NegotiationPhase phase, String language)
+        implements TemplateReference {
 
     private static final String URI_PREFIX = "Negotiation-T";
 
@@ -60,6 +62,11 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
      */
     public String uri() {
         return String.join("/", URI_PREFIX, URI_VERSION_SEGMENT, typeSegment(), phase.uriSegment());
+    }
+
+    @Override
+    public String extensionPrefix() {
+        return URI_PREFIX;
     }
 
     /**

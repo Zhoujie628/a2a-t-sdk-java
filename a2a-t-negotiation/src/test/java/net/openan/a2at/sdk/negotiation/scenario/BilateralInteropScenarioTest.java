@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.negotiation.content.FilledParamData;
+import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;

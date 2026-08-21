@@ -3,6 +3,7 @@ package net.openan.a2at.sdk.server.assembly;
 import java.nio.file.Path;
 import java.util.List;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
+import net.openan.a2at.sdk.core.validation.ContentValidator;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
@@ -20,6 +21,7 @@ import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import net.openan.a2at.sdk.server.compliance.DefaultServerPromptComplianceOrchestrator;
 import net.openan.a2at.sdk.server.metadata.LlmBackedPromptMetadataExtractor;
 import net.openan.a2at.sdk.server.validation.LlmBackedPromptSemanticValidator;
+import net.openan.a2at.sdk.prompt.validation.DefaultContentValidator;
 
 /**
  * Default builder that assembles one high-level A2AT server runtime from unified config.
@@ -149,6 +151,66 @@ public final class DefaultA2ATServerBuilder {
         require(config, "Unified SDK config must be configured.");
         requireSupportedConfig();
         return new TemplateQueryService(config.prompt().language(), config.prompt().localRootDir());
+    }
+
+    /**
+     * Builds the task content validator from the configured unified SDK config.
+     *
+     * <p>The validator enforces the {@code Task-T} extension prefix and reuses the configured language, LLM retry
+     * attempt limit, LLM client and prompt resource access.
+     *
+     * @return assembled task content validator
+     */
+    public ContentValidator buildTaskContentValidator() {
+        require(config, "Unified SDK config must be configured.");
+        requireSupportedConfig();
+        require(envPath, "Unified SDK env path must be configured.");
+        return new DefaultContentValidator(
+                "Task-T",
+                config.prompt().language(),
+                config.llm().maxAttempts(),
+                createLlmClient(),
+                PromptResourceAccess.create(config.prompt()));
+    }
+
+    /**
+     * Builds the notification content validator from the configured unified SDK config.
+     *
+     * <p>The validator enforces the {@code Notification-T} extension prefix and reuses the configured language, LLM
+     * retry attempt limit, LLM client and prompt resource access.
+     *
+     * @return assembled notification content validator
+     */
+    public ContentValidator buildNotificationContentValidator() {
+        require(config, "Unified SDK config must be configured.");
+        requireSupportedConfig();
+        require(envPath, "Unified SDK env path must be configured.");
+        return new DefaultContentValidator(
+                "Notification-T",
+                config.prompt().language(),
+                config.llm().maxAttempts(),
+                createLlmClient(),
+                PromptResourceAccess.create(config.prompt()));
+    }
+
+    /**
+     * Builds the authorization content validator from the configured unified SDK config.
+     *
+     * <p>The validator enforces the {@code Authorization-T} extension prefix and reuses the configured language, LLM
+     * retry attempt limit, LLM client and prompt resource access.
+     *
+     * @return assembled authorization content validator
+     */
+    public ContentValidator buildAuthContentValidator() {
+        require(config, "Unified SDK config must be configured.");
+        requireSupportedConfig();
+        require(envPath, "Unified SDK env path must be configured.");
+        return new DefaultContentValidator(
+                "Authorization-T",
+                config.prompt().language(),
+                config.llm().maxAttempts(),
+                createLlmClient(),
+                PromptResourceAccess.create(config.prompt()));
     }
 
     private static void require(Object value, String message) {

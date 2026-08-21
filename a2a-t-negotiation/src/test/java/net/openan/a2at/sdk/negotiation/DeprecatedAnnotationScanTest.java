@@ -22,7 +22,7 @@ class DeprecatedAnnotationScanTest {
 
     private static final Path MAIN_SOURCES = Path.of("src", "main", "java");
 
-    /** The only @Deprecated marker that existed before the negotiation content layer was added. */
+    /** The only @Deprecated markers that existed before the negotiation content layer was added. */
     private static final List<String> PINNED_DEPRECATED_ANNOTATIONS =
             List.of("net/openan/a2at/sdk/negotiation/runtime/NegotiationHandler.java");
 

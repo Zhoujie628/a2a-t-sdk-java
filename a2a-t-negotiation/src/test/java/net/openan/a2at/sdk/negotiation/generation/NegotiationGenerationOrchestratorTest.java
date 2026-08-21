@@ -11,7 +11,7 @@ import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.FilledParamData;
+import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;

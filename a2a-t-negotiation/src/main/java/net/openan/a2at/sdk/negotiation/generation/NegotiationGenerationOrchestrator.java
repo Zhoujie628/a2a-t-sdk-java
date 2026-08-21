@@ -9,8 +9,8 @@ import net.openan.a2at.sdk.core.exception.A2ATParamExtractionError;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.core.model.SlotValidationError;
-import net.openan.a2at.sdk.negotiation.content.FilledParamData;
+import net.openan.a2at.sdk.core.model.FilledParamData;
+import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -20,12 +20,9 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionExcepti
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
-import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationTemplateLoader;
-import net.openan.a2at.sdk.negotiation.validation.NegotiationValidationException;
 import net.openan.a2at.sdk.negotiation.validation.ParamExtractor;
-import net.openan.a2at.sdk.negotiation.validation.SemanticValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +48,6 @@ public final class NegotiationGenerationOrchestrator {
     private static final Logger DEFAULT_LOGGER = LoggerFactory.getLogger(NegotiationGenerationOrchestrator.class);
 
     private static final String STEP_CONTENT_EXTRACT = "negotiation_content_extract";
-
-    private static final String STEP_SEMANTIC_VALIDATE = "negotiation_semantic_validate";
 
     private static final String LANGUAGE_HINT =
             "set A2AT_LANGUAGE to a language with bundled templates (zh-CN or en-US) or provide the template under"
@@ -442,9 +437,7 @@ public final class NegotiationGenerationOrchestrator {
         }
         NegotiationReference reference = NegotiationReference.parse(templateUri, phase, language);
         try {
-            SemanticValidationResult semanticResult = withRetry(
-                    STEP_SEMANTIC_VALIDATE, () -> paramExtractor.runSemanticValidation(prompt, schema, reference));
-            return paramExtractor.extract(prompt, reference, semanticResult);
+            return paramExtractor.extract(prompt, schema, reference);
         } catch (NegotiationParamExtractionException failure) {
             logger.atWarn()
                     .log(
@@ -452,25 +445,7 @@ public final class NegotiationGenerationOrchestrator {
                             failure.getCode(),
                             failure.getErrors().size());
             throw failure;
-        } catch (NegotiationValidationException failure) {
-            throw paramExtractionInfrastructureFailure(failure);
-        } catch (ResourceNotFoundException failure) {
-            NegotiationParamExtractionException mapped = new NegotiationParamExtractionException(
-                    A2ATErrorCodes.TEMPLATE_NOT_FOUND, failure.getMessage(), List.of());
-            logger.atWarn().log("negotiation_param_extraction_failed code={} error_count=0", mapped.getCode());
-            throw mapped;
         }
-    }
-
-    private NegotiationParamExtractionException paramExtractionInfrastructureFailure(
-            NegotiationValidationException failure) {
-        NegotiationParamExtractionException mapped = new NegotiationParamExtractionException(
-                A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR,
-                "Semantic validation LLM step failed: " + failure.getMessage(),
-                List.of(new SlotValidationError(
-                        "_llm", A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, failure.getMessage())));
-        logger.atWarn().log("negotiation_param_extraction_failed code={} error_count=1", mapped.getCode());
-        throw mapped;
     }
 
     private Optional<NegotiationReference> parseQueryReference(String templateUri) {

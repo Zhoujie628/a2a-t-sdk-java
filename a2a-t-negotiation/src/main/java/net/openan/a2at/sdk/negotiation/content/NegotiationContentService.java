@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
+import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.PromptRuntimeConfig;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
