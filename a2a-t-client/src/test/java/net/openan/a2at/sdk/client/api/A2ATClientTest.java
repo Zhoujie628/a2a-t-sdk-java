@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,7 +15,7 @@ import java.util.Map;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrchestrator;
-import net.openan.a2at.sdk.core.exception.PromptGenerationException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
@@ -344,18 +345,18 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
         Path envFile = writeMinimalLocalClientEnv();
         A2ATClient client = new A2ATClient(envFile);
 
-        PromptGenerationException taskEx = assertThrows(
-                PromptGenerationException.class,
+        IllegalArgumentException taskEx = assertThrows(
+                IllegalArgumentException.class,
                 () -> client.generateTaskPromptFromText("Please analyze Site A.", "../etc/passwd"));
-        assertEquals("invalid_template_uri", taskEx.code());
-        PromptGenerationException authEx = assertThrows(
-                PromptGenerationException.class,
+        assertFalse(A2ATError.class.isInstance(taskEx), "invalid template URI must stay outside the A2ATError tree");
+        IllegalArgumentException authEx = assertThrows(
+                IllegalArgumentException.class,
                 () -> client.generateAuthPromptFromText("Authorize access.", "../etc/passwd"));
-        assertEquals("invalid_template_uri", authEx.code());
-        PromptGenerationException notifEx = assertThrows(
-                PromptGenerationException.class,
+        assertFalse(A2ATError.class.isInstance(authEx), "invalid template URI must stay outside the A2ATError tree");
+        IllegalArgumentException notifEx = assertThrows(
+                IllegalArgumentException.class,
                 () -> client.generateNotificationPromptFromText("Report finished.", "../etc/passwd"));
-        assertEquals("invalid_template_uri", notifEx.code());
+        assertFalse(A2ATError.class.isInstance(notifEx), "invalid template URI must stay outside the A2ATError tree");
     }
 
     @Test
@@ -365,18 +366,18 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
         Map<String, Object> data = Map.of("site", "Site A");
         Map<String, Object> schema = Map.of("type", "object");
 
-        PromptGenerationException taskEx = assertThrows(
-                PromptGenerationException.class,
+        IllegalArgumentException taskEx = assertThrows(
+                IllegalArgumentException.class,
                 () -> client.generateTaskPromptFromDataWithSchema(data, schema, "../etc/passwd"));
-        assertEquals("invalid_template_uri", taskEx.code());
-        PromptGenerationException authEx = assertThrows(
-                PromptGenerationException.class,
+        assertFalse(A2ATError.class.isInstance(taskEx), "invalid template URI must stay outside the A2ATError tree");
+        IllegalArgumentException authEx = assertThrows(
+                IllegalArgumentException.class,
                 () -> client.generateAuthPromptFromDataWithSchema(data, schema, "../etc/passwd"));
-        assertEquals("invalid_template_uri", authEx.code());
-        PromptGenerationException notifEx = assertThrows(
-                PromptGenerationException.class,
+        assertFalse(A2ATError.class.isInstance(authEx), "invalid template URI must stay outside the A2ATError tree");
+        IllegalArgumentException notifEx = assertThrows(
+                IllegalArgumentException.class,
                 () -> client.generateNotificationPromptFromDataWithSchema(data, schema, "../etc/passwd"));
-        assertEquals("invalid_template_uri", notifEx.code());
+        assertFalse(A2ATError.class.isInstance(notifEx), "invalid template URI must stay outside the A2ATError tree");
     }
 
     private static Path writeMinimalClientEnvWithoutRequiredSlots(String provider) throws IOException {
