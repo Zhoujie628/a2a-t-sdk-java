@@ -14,16 +14,27 @@ import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
  * Default content validator that orchestrates the full validation pipeline with a no-op rule checker and an LLM-backed
  * semantic validator.
  *
+ * <p>The semantic validator is initialised lazily on the first {@link #validate} call so that constructing the
+ * validator never loads prompt resources — the facade builders can wire the validator eagerly without requiring the
+ * content_validation prompt resources to be present at startup.
+ *
  * @since 2026-08
  */
 public final class DefaultContentValidator implements ContentValidator {
 
-    private final ValidationPipeline pipeline;
     private final String extensionPrefix;
     private final String language;
+    private final int maxAttempts;
+    private final LLMClient llmClient;
+    private final PromptResourceAccess promptResourceAccess;
+
+    private volatile ValidationPipeline pipeline;
 
     /**
      * Creates a content validator for the given extension prefix and language.
+     *
+     * <p>The constructor does not load any prompt resources. The underlying semantic validator and its prompt resources
+     * are loaded on the first {@link #validate} call.
      *
      * @param extensionPrefix extension prefix used for template URI validation
      * @param language language code for prompt resource loading
@@ -39,10 +50,9 @@ public final class DefaultContentValidator implements ContentValidator {
             PromptResourceAccess promptResourceAccess) {
         this.extensionPrefix = extensionPrefix;
         this.language = language;
-        this.pipeline = new ValidationPipeline(
-                prompt -> Map.of(),
-                new DefaultSemanticValidator(llmClient, language, promptResourceAccess),
-                maxAttempts);
+        this.maxAttempts = maxAttempts;
+        this.llmClient = llmClient;
+        this.promptResourceAccess = promptResourceAccess;
     }
 
     @Override
@@ -77,7 +87,24 @@ public final class DefaultContentValidator implements ContentValidator {
         }
 
         TemplateReference reference = new SimpleTemplateReference(templateUri, language, extensionPrefix);
-        return pipeline.validate(prompt, schema, reference);
+        return pipeline().validate(prompt, schema, reference);
+    }
+
+    private ValidationPipeline pipeline() {
+        ValidationPipeline p = pipeline;
+        if (p == null) {
+            synchronized (this) {
+                p = pipeline;
+                if (p == null) {
+                    p = new ValidationPipeline(
+                            prompt -> Map.of(),
+                            new DefaultSemanticValidator(llmClient, language, promptResourceAccess),
+                            maxAttempts);
+                    pipeline = p;
+                }
+            }
+        }
+        return p;
     }
 
     /**
