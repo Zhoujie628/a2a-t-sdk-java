@@ -19,13 +19,6 @@ class TemplateUriTest {
     }
 
     @Test
-    void extensionPrefixIsDerivedViewOfFirstSegment() {
-        TemplateUri uri = TemplateUri.of("Negotiation-T", "v1", "feasibility-negotiation", "propose");
-        assertEquals("Negotiation-T", uri.extensionPrefix());
-        assertEquals(uri.extensionName(), uri.extensionPrefix());
-    }
-
-    @Test
     void parseRoundTripsSingleTrailingSegment() {
         Optional<TemplateUri> parsed = TemplateUri.parse("Task-T/v1/energy-saving");
         assertEquals(Optional.of(TemplateUri.of("Task-T", "v1", "energy-saving")), parsed);
@@ -59,14 +52,6 @@ class TemplateUriTest {
         assertThrows(IllegalArgumentException.class, () -> TemplateUri.of("Task-T", "v1", "scen/ario"));
         assertThrows(IllegalArgumentException.class, () -> TemplateUri.of("Task-T", "v1", "scen..ario/x"));
         assertThrows(IllegalArgumentException.class, () -> TemplateUri.of("Task-T", "v1", "  "));
-    }
-
-    @Test
-    void withLanguageBindsRuntimeLanguage() {
-        TemplateReference reference = TemplateUri.of("Task-T", "v1", "energy-saving").withLanguage("zh-CN");
-        assertEquals("Task-T/v1/energy-saving", reference.uri());
-        assertEquals("zh-CN", reference.language());
-        assertEquals("Task-T", reference.extensionName());
     }
 
     @Test

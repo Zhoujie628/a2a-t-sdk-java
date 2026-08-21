@@ -207,7 +207,7 @@ class ParamExtractorTest {
         private int invocations;
 
         @Override
-        public SemanticValidationResult validate(
+        public SemanticValidationResult validateNegotiation(
                 String prompt, Map<String, Object> callerSchema, NegotiationReference reference) {
             invocations++;
             if (failure != null) {

@@ -7,9 +7,9 @@ import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
 import net.openan.a2at.sdk.core.validation.RuleChecker;
 import net.openan.a2at.sdk.core.validation.SemanticValidator;
-import net.openan.a2at.sdk.core.validation.TemplateReference;
 import net.openan.a2at.sdk.core.validation.ValidationPipeline;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
+import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 
 /**
  * Orchestrates the validation of a negotiation message and the extraction of its parameters.
@@ -23,7 +23,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionExcepti
  */
 public final class ParamExtractor {
 
-    private final ValidationPipeline pipeline;
+    private final ValidationPipeline<NegotiationReference> pipeline;
 
     /**
      * Creates a parameter extractor.
@@ -33,7 +33,10 @@ public final class ParamExtractor {
      * @param maxAttempts maximum number of retry attempts for the semantic validation step
      * @throws NullPointerException if any collaborator is null
      */
-    public ParamExtractor(RuleChecker ruleChecker, SemanticValidator semanticValidator, int maxAttempts) {
+    public ParamExtractor(
+            RuleChecker ruleChecker,
+            SemanticValidator<NegotiationReference> semanticValidator,
+            int maxAttempts) {
         Objects.requireNonNull(ruleChecker, "ruleChecker");
         Objects.requireNonNull(semanticValidator, "semanticValidator");
         this.pipeline = new ValidationPipeline(ruleChecker, semanticValidator, maxAttempts);
@@ -51,7 +54,7 @@ public final class ParamExtractor {
      *     {@code negotiation_llm_infrastructure_error} or {@code template_not_found} when the validation pipeline
      *     fails
      */
-    public FilledParamData extract(String prompt, Map<String, Object> schema, TemplateReference reference) {
+    public FilledParamData extract(String prompt, Map<String, Object> schema, NegotiationReference reference) {
         try {
             return pipeline.validate(prompt, schema, reference);
         } catch (ContentValidationException e) {
