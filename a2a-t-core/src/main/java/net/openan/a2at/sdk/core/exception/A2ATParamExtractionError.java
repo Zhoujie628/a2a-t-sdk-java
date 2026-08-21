@@ -2,6 +2,7 @@ package net.openan.a2at.sdk.core.exception;
 
 import java.util.List;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Shared failure type raised when validating a prompt and extracting parameters from it fails.
@@ -33,7 +34,8 @@ public class A2ATParamExtractionError extends A2ATError {
      * @param message failure message
      * @param errors structured per-slot validation error details
      */
-    public A2ATParamExtractionError(String code, String message, List<SlotValidationError> errors) {
+    public A2ATParamExtractionError(
+            @NonNull String code, String message, @NonNull List<SlotValidationError> errors) {
         super(code, message);
         this.errors = List.copyOf(errors);
     }
@@ -43,7 +45,7 @@ public class A2ATParamExtractionError extends A2ATError {
      *
      * @return immutable list of slot validation errors, never null
      */
-    public List<SlotValidationError> getErrors() {
+    public @NonNull List<SlotValidationError> getErrors() {
         return errors;
     }
 }

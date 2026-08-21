@@ -10,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.ConfigFileNotFoundException;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Reads SDK configuration from one caller-supplied `.env` file.
@@ -29,7 +30,7 @@ public final class DotEnvConfigSource {
      * @return parsed non-empty key/value pairs
      * @throws A2ATError if the file contains more than {@value #MAX_ENTRIES} entries or cannot be read
      */
-    public static Map<String, String> load(Path path) {
+    public static @NonNull Map<String, String> load(@NonNull Path path) {
         if (!Files.exists(path)) {
             throw new ConfigFileNotFoundException(path);
         }

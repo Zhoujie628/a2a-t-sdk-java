@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
@@ -49,7 +50,7 @@ class NegotiationLogEventContractTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE;
 
     private static final Map<String, Set<Level>> EXPECTED_EVENT_LEVELS = Map.ofEntries(
             Map.entry("negotiation_template_loaded", Set.of(Level.DEBUG)),
@@ -207,13 +208,13 @@ class NegotiationLogEventContractTest {
         NegotiationGenerationOrchestrator builtinOrchestrator = NegotiationGenerationOrchestratorBuilder.builder()
                 .language("zh-CN")
                 .build();
-        builtinOrchestrator.getNegotiationPrompt("malformed-template-uri");
+        builtinOrchestrator.getNegotiationPrompt(StandardTemplates.ENERGY_SAVING);
 
         List<String> warnings = messagesOf("negotiation_template_not_found");
         assertEquals(3, warnings.size());
         assertTrue(warnings.get(0).contains("uri=all"));
         assertTrue(warnings.get(0).contains("language=zh-CN"));
-        assertTrue(warnings.get(1).contains("uri=" + INFORMATION_PROPOSE_URI));
+        assertTrue(warnings.get(1).contains("uri=" + INFORMATION_PROPOSE_URI.uri()));
         assertTrue(warnings.get(1).contains("language=zh-CN"));
         assertTrue(warnings.get(2).contains("reason=invalid_template_uri"));
         for (String warning : warnings) {
@@ -342,7 +343,7 @@ class NegotiationLogEventContractTest {
                 .build();
         orchestrator.getNegotiationPrompts();
         orchestrator.getNegotiationPrompt(INFORMATION_PROPOSE_URI);
-        assertTrue(orchestrator.getNegotiationPrompt("malformed-template-uri").isEmpty());
+        assertTrue(orchestrator.getNegotiationPrompt(StandardTemplates.ENERGY_SAVING).isEmpty());
     }
 
     private static String validExtractionPayload() {

@@ -10,9 +10,12 @@ import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.PromptRuntimeConfig;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Shared service for the negotiation content layer consumed by both the client and the server facade.
@@ -32,7 +35,7 @@ public final class NegotiationContentService {
      *
      * @param orchestrator negotiation generation orchestrator carrying the actual pipelines
      */
-    public NegotiationContentService(NegotiationGenerationOrchestrator orchestrator) {
+    public NegotiationContentService(@NonNull NegotiationGenerationOrchestrator orchestrator) {
         this.orchestrator = Objects.requireNonNull(orchestrator, "Negotiation orchestrator must not be null.");
     }
 
@@ -47,7 +50,8 @@ public final class NegotiationContentService {
      * @param llmClient LLM client for the LLM-backed steps; null keeps those steps unavailable
      * @return assembled negotiation generation orchestrator
      */
-    public static NegotiationGenerationOrchestrator buildOrchestrator(A2ATConfig config, LLMClient llmClient) {
+    public static NegotiationGenerationOrchestrator buildOrchestrator(
+            @NonNull A2ATConfig config, @Nullable LLMClient llmClient) {
         return NegotiationGenerationOrchestratorBuilder.builder()
                 .language(config.prompt().language())
                 .localRootDir(config.prompt().localRootDir())
@@ -66,7 +70,8 @@ public final class NegotiationContentService {
      * @param envPath resolved `.env` file path the config was loaded from
      * @return config with the local root resolved to an absolute normalized path
      */
-    public static A2ATConfig resolvePromptResourceLocalRootDir(A2ATConfig config, Path envPath) {
+    public static A2ATConfig resolvePromptResourceLocalRootDir(
+            @NonNull A2ATConfig config, @NonNull Path envPath) {
         String localRootDir = config.prompt().localRootDir();
         Path localRootPath = Path.of(localRootDir);
         Path resolvedLocalRootPath = localRootPath.isAbsolute()
@@ -86,13 +91,13 @@ public final class NegotiationContentService {
      * @param data typed propose input carrying the negotiation context and the typed content
      * @param templateUri template URI whose phase segment must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NullPointerException if the data or its context is null
-     * @throws IllegalArgumentException if the template URI is malformed, or its phase or type contradicts the method
-     *     or the content type
+     * @throws NullPointerException if the data, its context or the template URI is null
+     * @throws IllegalArgumentException if the template URI's phase or type contradicts the method or the content type
      * @throws NegotiationGenerationException with the code {@code template_not_found} or
      *     {@code negotiation_slot_missing} when loading or rendering the template fails
      */
-    public MetadataContent generateProposeFromData(NegotiationProposeData data, String templateUri) {
+    public MetadataContent generateProposeFromData(
+            @NonNull NegotiationProposeData data, @NonNull TemplateUri templateUri) {
         return orchestrator.generateProposeFromData(data, templateUri);
     }
 
@@ -102,13 +107,14 @@ public final class NegotiationContentService {
      * @param data typed terminal input whose content conclusion must be {@code Accept}
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NullPointerException if the data or its context is null
-     * @throws IllegalArgumentException if the template URI is malformed, its phase or type contradicts the method or
-     *     the content, or the content conclusion is not {@code Accept}
+     * @throws NullPointerException if the data, its context or the template URI is null
+     * @throws IllegalArgumentException if the template URI's phase or type contradicts the method or the content, or
+     *     the content conclusion is not {@code Accept}
      * @throws NegotiationGenerationException with the code {@code template_not_found} or
      *     {@code negotiation_slot_missing} when loading or rendering the template fails
      */
-    public MetadataContent generateAcceptFromData(NegotiationEndingData data, String templateUri) {
+    public MetadataContent generateAcceptFromData(
+            @NonNull NegotiationEndingData data, @NonNull TemplateUri templateUri) {
         return orchestrator.generateAcceptFromData(data, templateUri);
     }
 
@@ -118,13 +124,14 @@ public final class NegotiationContentService {
      * @param data typed terminal input whose content conclusion must be {@code Reject}
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NullPointerException if the data or its context is null
-     * @throws IllegalArgumentException if the template URI is malformed, its phase or type contradicts the method or
-     *     the content, or the content conclusion is not {@code Reject}
+     * @throws NullPointerException if the data, its context or the template URI is null
+     * @throws IllegalArgumentException if the template URI's phase or type contradicts the method or the content, or
+     *     the content conclusion is not {@code Reject}
      * @throws NegotiationGenerationException with the code {@code template_not_found} or
      *     {@code negotiation_slot_missing} when loading or rendering the template fails
      */
-    public MetadataContent generateRejectFromData(NegotiationEndingData data, String templateUri) {
+    public MetadataContent generateRejectFromData(
+            @NonNull NegotiationEndingData data, @NonNull TemplateUri templateUri) {
         return orchestrator.generateRejectFromData(data, templateUri);
     }
 
@@ -135,14 +142,15 @@ public final class NegotiationContentService {
      * @param context negotiation context injected into the rendered message without any LLM involvement
      * @param templateUri template URI whose phase segment must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NullPointerException if the context is null
-     * @throws IllegalArgumentException if the template URI is malformed or contradicts the method
+     * @throws NullPointerException if the context or the template URI is null
+     * @throws IllegalArgumentException if the template URI contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found},
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when loading or
      *     extracting fails, {@code negotiation_slot_missing} when the extracted content misses a required field, or
      *     {@code negotiation_invalid_input} when the text is blank or the extracted content contradicts the phase
      */
-    public MetadataContent generateProposeFromText(String text, NegotiationContext context, String templateUri) {
+    public MetadataContent generateProposeFromText(
+            String text, @NonNull NegotiationContext context, @NonNull TemplateUri templateUri) {
         return orchestrator.generateProposeFromText(text, context, templateUri);
     }
 
@@ -153,14 +161,15 @@ public final class NegotiationContentService {
      * @param context negotiation context injected into the rendered message without any LLM involvement
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NullPointerException if the context is null
-     * @throws IllegalArgumentException if the template URI is malformed or contradicts the method
+     * @throws NullPointerException if the context or the template URI is null
+     * @throws IllegalArgumentException if the template URI contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found},
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when loading or
      *     extracting fails, {@code negotiation_slot_missing} when the extracted content misses a required field, or
      *     {@code negotiation_invalid_input} when the text is blank or the extracted conclusion is not {@code Accept}
      */
-    public MetadataContent generateAcceptFromText(String text, NegotiationContext context, String templateUri) {
+    public MetadataContent generateAcceptFromText(
+            String text, @NonNull NegotiationContext context, @NonNull TemplateUri templateUri) {
         return orchestrator.generateAcceptFromText(text, context, templateUri);
     }
 
@@ -171,14 +180,15 @@ public final class NegotiationContentService {
      * @param context negotiation context injected into the rendered message without any LLM involvement
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NullPointerException if the context is null
-     * @throws IllegalArgumentException if the template URI is malformed or contradicts the method
+     * @throws NullPointerException if the context or the template URI is null
+     * @throws IllegalArgumentException if the template URI contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found},
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when loading or
      *     extracting fails, {@code negotiation_slot_missing} when the extracted content misses a required field, or
      *     {@code negotiation_invalid_input} when the text is blank or the extracted conclusion is not {@code Reject}
      */
-    public MetadataContent generateRejectFromText(String text, NegotiationContext context, String templateUri) {
+    public MetadataContent generateRejectFromText(
+            String text, @NonNull NegotiationContext context, @NonNull TemplateUri templateUri) {
         return orchestrator.generateRejectFromText(text, context, templateUri);
     }
 
@@ -195,11 +205,12 @@ public final class NegotiationContentService {
     /**
      * Loads one negotiation template by its URI; never throws.
      *
-     * @param templateUri template URI such as {@code Negotiation-T/v1/target-negotiation/propose}
-     * @return the addressed template, or an empty optional when the URI is malformed or no template exists for it in
-     *     the configured language
+     * @param templateUri template URI such as {@code Negotiation-T/target-negotiation/propose/v1}
+     * @return the addressed template, or an empty optional when the URI does not address a negotiation template or no
+     *     template exists for it in the configured language
+     * @throws NullPointerException if the template URI is null
      */
-    public Optional<PromptTemplate> getNegotiationPrompt(String templateUri) {
+    public Optional<PromptTemplate> getNegotiationPrompt(@NonNull TemplateUri templateUri) {
         return orchestrator.getNegotiationPrompt(templateUri);
     }
 
@@ -210,16 +221,15 @@ public final class NegotiationContentService {
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI whose phase segment must be {@code propose}
      * @return filled parameter data carrying the context parameters and the extracted parameters
-     * @throws NullPointerException if the prompt or schema is null
-     * @throws IllegalArgumentException if the prompt is blank, or the template URI is malformed or contradicts the
-     *     method
+     * @throws NullPointerException if the prompt, the schema or the template URI is null
+     * @throws IllegalArgumentException if the prompt is blank, or the template URI contradicts the method
      * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input},
      *     {@code negotiation_rule_violation}, {@code negotiation_semantic_rejected},
      *     {@code negotiation_llm_infrastructure_error} or {@code template_not_found} when the validation pipeline
      *     fails
      */
     public FilledParamData validateAndFillingProposeData(
-            String prompt, Map<String, Object> schema, String templateUri) {
+            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
         return orchestrator.validateAndFillingProposeData(prompt, schema, templateUri);
     }
 
@@ -230,15 +240,15 @@ public final class NegotiationContentService {
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
-     * @throws NullPointerException if the prompt or schema is null
-     * @throws IllegalArgumentException if the prompt is blank, or the template URI is malformed or contradicts the
-     *     method
+     * @throws NullPointerException if the prompt, the schema or the template URI is null
+     * @throws IllegalArgumentException if the prompt is blank, or the template URI contradicts the method
      * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input},
      *     {@code negotiation_rule_violation}, {@code negotiation_semantic_rejected},
      *     {@code negotiation_llm_infrastructure_error} or {@code template_not_found} when the validation pipeline
      *     fails
      */
-    public FilledParamData validateAndFillingAcceptData(String prompt, Map<String, Object> schema, String templateUri) {
+    public FilledParamData validateAndFillingAcceptData(
+            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
         return orchestrator.validateAndFillingAcceptData(prompt, schema, templateUri);
     }
 
@@ -249,15 +259,15 @@ public final class NegotiationContentService {
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
-     * @throws NullPointerException if the prompt or schema is null
-     * @throws IllegalArgumentException if the prompt is blank, or the template URI is malformed or contradicts the
-     *     method
+     * @throws NullPointerException if the prompt, the schema or the template URI is null
+     * @throws IllegalArgumentException if the prompt is blank, or the template URI contradicts the method
      * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input},
      *     {@code negotiation_rule_violation}, {@code negotiation_semantic_rejected},
      *     {@code negotiation_llm_infrastructure_error} or {@code template_not_found} when the validation pipeline
      *     fails
      */
-    public FilledParamData validateAndFillingRejectData(String prompt, Map<String, Object> schema, String templateUri) {
+    public FilledParamData validateAndFillingRejectData(
+            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
         return orchestrator.validateAndFillingRejectData(prompt, schema, templateUri);
     }
 }

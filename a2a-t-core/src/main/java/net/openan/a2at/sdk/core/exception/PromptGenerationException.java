@@ -1,6 +1,8 @@
 package net.openan.a2at.sdk.core.exception;
 
 import java.util.List;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unified exception type for MetadataContent pipeline failures.
@@ -20,7 +22,7 @@ public final class PromptGenerationException extends A2ATError {
      * @param message human-readable failure description
      * @throws NullPointerException if {@code code} is null
      */
-    public PromptGenerationException(String code, String message) {
+    public PromptGenerationException(@NonNull String code, String message) {
         super(code, message);
         this.failedParameters = List.of();
     }
@@ -34,7 +36,8 @@ public final class PromptGenerationException extends A2ATError {
      * @param failedParameters list of failed parameters
      * @throws NullPointerException if {@code code} is null
      */
-    public PromptGenerationException(String code, String message, List<FailedParameter> failedParameters) {
+    public PromptGenerationException(
+            @NonNull String code, String message, @Nullable List<FailedParameter> failedParameters) {
         super(code, message);
         this.failedParameters = failedParameters == null ? List.of() : List.copyOf(failedParameters);
     }
@@ -48,7 +51,7 @@ public final class PromptGenerationException extends A2ATError {
      * @param cause root cause
      * @throws NullPointerException if {@code code} is null
      */
-    public PromptGenerationException(String code, String message, Throwable cause) {
+    public PromptGenerationException(@NonNull String code, String message, @Nullable Throwable cause) {
         super(code, message, cause);
         this.failedParameters = List.of();
     }
@@ -58,7 +61,7 @@ public final class PromptGenerationException extends A2ATError {
      *
      * @return failed parameters
      */
-    public List<FailedParameter> failedParameters() {
+    public @NonNull List<FailedParameter> failedParameters() {
         return failedParameters;
     }
 }

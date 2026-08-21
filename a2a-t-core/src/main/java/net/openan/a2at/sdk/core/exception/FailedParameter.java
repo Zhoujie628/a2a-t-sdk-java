@@ -1,5 +1,7 @@
 package net.openan.a2at.sdk.core.exception;
 
+import org.jspecify.annotations.NonNull;
+
 /**
  * Describes a single failed required slot during slot validation.
  *
@@ -7,4 +9,4 @@ package net.openan.a2at.sdk.core.exception;
  * @param reason the failure reason, e.g. {@code missing_required}
  * @since 2026-08
  */
-public record FailedParameter(String parameterName, String reason) {}
+public record FailedParameter(@NonNull String parameterName, @NonNull String reason) {}

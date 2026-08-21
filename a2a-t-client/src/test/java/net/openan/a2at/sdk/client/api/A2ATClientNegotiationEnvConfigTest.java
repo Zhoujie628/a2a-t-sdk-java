@@ -58,7 +58,9 @@ class A2ATClientNegotiationEnvConfigTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri INFORMATION_PROPOSE = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE;
+
+    private static final String INFORMATION_PROPOSE_URI = INFORMATION_PROPOSE.uri();
 
     private static final String CUSTOM_TEMPLATE_MARKER = "CUSTOM-TEMPLATE-MARKER-7d31";
 
@@ -103,7 +105,7 @@ class A2ATClientNegotiationEnvConfigTest {
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
                         new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
-                INFORMATION_PROPOSE_URI);
+                INFORMATION_PROPOSE);
 
         assertTrue(result.promptText().contains("协商上下文"), "the zh-CN language must select the Chinese templates");
         assertTrue(
@@ -113,7 +115,7 @@ class A2ATClientNegotiationEnvConfigTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> client.generateNegotiationProposePromptFromText(
-                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI));
+                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE));
         assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, failure.getCode());
         assertEquals(
                 1,
@@ -135,19 +137,19 @@ class A2ATClientNegotiationEnvConfigTest {
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
                         new InfoProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
-                INFORMATION_PROPOSE_URI);
+                INFORMATION_PROPOSE);
 
         assertTrue(result.promptText().contains("Negotiation Context"), "the default language must be en-US");
         assertTrue(result.promptText().contains("Required Information Items"));
         assertEquals(6, client.getNegotiationPrompts().size(), "the built-in resources must be used by default");
-        assertTrue(client.getNegotiationPrompt(INFORMATION_PROPOSE_URI).isPresent());
+        assertTrue(client.getNegotiationPrompt(INFORMATION_PROPOSE).isPresent());
 
         assertThrows(
                 NegotiationGenerationException.class,
                 () -> client.generateNegotiationProposePromptFromText(
                         "Provide the energy-saving region.",
                         new NegotiationContext(UUID, 1, 5),
-                        INFORMATION_PROPOSE_URI));
+                        INFORMATION_PROPOSE));
         assertEquals(
                 2,
                 retryEventCount(),

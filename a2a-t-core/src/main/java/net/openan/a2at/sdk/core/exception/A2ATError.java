@@ -1,6 +1,8 @@
 package net.openan.a2at.sdk.core.exception;
 
 import java.util.Objects;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Single root exception type for all A2A-T SDK processing failures.
@@ -32,7 +34,7 @@ public class A2ATError extends RuntimeException {
      * @param message failure message
      * @param cause root cause
      */
-    public A2ATError(String message, Throwable cause) {
+    public A2ATError(String message, @Nullable Throwable cause) {
         this(A2ATErrorCodes.SDK_INTERNAL_ERROR, message, cause);
     }
 
@@ -43,7 +45,7 @@ public class A2ATError extends RuntimeException {
      * @param message failure message
      * @throws NullPointerException if {@code code} is null
      */
-    public A2ATError(String code, String message) {
+    public A2ATError(@NonNull String code, String message) {
         super(message);
         this.code = Objects.requireNonNull(code, "code must not be null");
     }
@@ -56,7 +58,7 @@ public class A2ATError extends RuntimeException {
      * @param cause root cause
      * @throws NullPointerException if {@code code} is null
      */
-    public A2ATError(String code, String message, Throwable cause) {
+    public A2ATError(@NonNull String code, String message, @Nullable Throwable cause) {
         super(message, cause);
         this.code = Objects.requireNonNull(code, "code must not be null");
     }
@@ -66,7 +68,7 @@ public class A2ATError extends RuntimeException {
      *
      * @return error code, never null
      */
-    public String getCode() {
+    public @NonNull String getCode() {
         return code;
     }
 }

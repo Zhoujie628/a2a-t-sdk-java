@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.openan.a2at.sdk.core.resources.PathSegments;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Structured, always-valid identifier of a content template.
@@ -27,7 +29,8 @@ import net.openan.a2at.sdk.core.resources.PathSegments;
  * @param templateVersion trailing URI segment, such as {@code v1}
  * @since 2026-08
  */
-public record TemplateUri(String extensionName, List<String> pathSegments, String templateVersion) {
+public record TemplateUri(
+        @NonNull String extensionName, @NonNull List<String> pathSegments, @NonNull String templateVersion) {
 
     /** Default template version segment used by all built-in templates. */
     public static final String DEFAULT_TEMPLATE_VERSION = "v1";
@@ -61,7 +64,8 @@ public record TemplateUri(String extensionName, List<String> pathSegments, Strin
      * @throws NullPointerException if any component is null
      * @throws IllegalArgumentException if any component is not a simple path segment or no path segment is given
      */
-    public static TemplateUri of(String extensionName, String templateVersion, String... pathSegments) {
+    public static @NonNull TemplateUri of(
+            @NonNull String extensionName, @NonNull String templateVersion, @NonNull String... pathSegments) {
         return new TemplateUri(extensionName, List.of(pathSegments), templateVersion);
     }
 
@@ -72,7 +76,7 @@ public record TemplateUri(String extensionName, List<String> pathSegments, Strin
      * @return parsed template URI, or an empty result when the input is null, blank, has fewer than three segments or
      *     contains a segment that is not a simple path segment
      */
-    public static Optional<TemplateUri> parse(String templateUri) {
+    public static Optional<TemplateUri> parse(@Nullable String templateUri) {
         if (templateUri == null || templateUri.isBlank()) {
             return Optional.empty();
         }
@@ -96,7 +100,7 @@ public record TemplateUri(String extensionName, List<String> pathSegments, Strin
      *
      * @return template URI such as {@code Negotiation-T/information-negotiation/propose/v1}
      */
-    public String uri() {
+    public @NonNull String uri() {
         return Stream.concat(
                         Stream.concat(Stream.of(extensionName), pathSegments.stream()),
                         Stream.of(templateVersion))

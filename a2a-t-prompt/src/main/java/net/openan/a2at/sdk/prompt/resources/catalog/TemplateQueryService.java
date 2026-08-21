@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +15,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>The service exposes the extension-agnostic template queries of the design document over a
  * {@link PromptTemplateCatalog}: {@link #getPrompts()} lists every loadable template of the configured language
- * across all A2A-T extensions and {@link #getPrompt(String)} loads one template by its URI. Both queries never
+ * across all A2A-T extensions and {@link #getPrompt(TemplateUri)} loads one template by its URI. Both queries never
  * throw; a missing template is answered with an empty result and an actionable warning log.
  *
  * @since 2026-08
@@ -37,7 +40,8 @@ public final class TemplateQueryService {
      * @param templateCatalog directory-driven catalog over the template tree of every extension
      * @param language locale identifier the catalog was created for; only used in log messages
      */
-    public TemplateQueryService(PromptTemplateCatalog templateCatalog, String language) {
+    public TemplateQueryService(
+            @NonNull PromptTemplateCatalog templateCatalog, @NonNull String language) {
         this.templateCatalog = Objects.requireNonNull(templateCatalog, "Prompt template catalog must not be null.");
         this.language = Objects.requireNonNull(language, "Language must not be null.");
         this.logger = DEFAULT_LOGGER;
@@ -50,7 +54,7 @@ public final class TemplateQueryService {
      * @param localRootDir local prompt resource root containing the {@code templates/} tree; null or blank disables
      *     local template overrides
      */
-    public TemplateQueryService(String language, String localRootDir) {
+    public TemplateQueryService(@NonNull String language, @Nullable String localRootDir) {
         this(new PromptTemplateCatalog(language, localRootDir), language);
     }
 
@@ -64,28 +68,29 @@ public final class TemplateQueryService {
      * @return loadable templates of the configured language across all extensions, sorted by URI; empty when none can
      *     be loaded
      */
-    public List<PromptTemplate> getPrompts() {
+    public @NonNull List<PromptTemplate> getPrompts() {
         return templateCatalog.loadAll();
     }
 
     /**
      * Loads one template by its URI, regardless of the extension.
      *
-     * <p>This query never throws: a malformed URI or a template that exists nowhere for the configured language
-     * returns an empty result and logs an actionable warning.
+     * <p>This query never throws: a template that exists nowhere for the configured language returns an empty result
+     * and logs an actionable warning.
      *
-     * @param templateUri template URI such as {@code Negotiation-T/v1/target-negotiation/propose} or
-     *     {@code Task-T/v1/energy-saving}
-     * @return the addressed template, or an empty result when the URI is malformed or the template does not exist for
-     *     the configured language
+     * @param templateUri template URI such as {@code Negotiation-T/information-negotiation/propose/v1} or
+     *     {@code Task-T/network-layer/energy-saving/v1}
+     * @return the addressed template, or an empty result when the template does not exist for the configured language
+     * @throws NullPointerException if the template URI is null
      */
-    public Optional<PromptTemplate> getPrompt(String templateUri) {
+    public Optional<PromptTemplate> getPrompt(@NonNull TemplateUri templateUri) {
+        Objects.requireNonNull(templateUri, "templateUri");
         Optional<PromptTemplate> template = templateCatalog.load(templateUri);
         if (template.isEmpty()) {
             logger.atWarn()
                     .log(
                             "prompt_template_not_found uri={} language={} hint={}",
-                            templateUri,
+                            templateUri.uri(),
                             language,
                             LANGUAGE_HINT);
         }

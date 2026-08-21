@@ -3,6 +3,7 @@ package net.openan.a2at.sdk.client.prompt.orchestration;
 import java.util.Map;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 
 /**
  * Internal prompt-generation orchestration contract used by the client facade.
@@ -27,7 +28,7 @@ public interface ClientPromptGenerationOrchestrator {
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      */
-    MetadataContent generateTaskPromptFromText(String text, String templateUri);
+    MetadataContent generateTaskPromptFromText(String text, TemplateUri templateUri);
 
     /**
      * Generates a task prompt with metadata from structured input and an optional data schema using the template
@@ -39,29 +40,29 @@ public interface ClientPromptGenerationOrchestrator {
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      */
     MetadataContent generateTaskPromptFromDataWithSchema(
-            Map<String, Object> data, Map<String, Object> schema, String templateUri);
+            Map<String, Object> data, Map<String, Object> schema, TemplateUri templateUri);
 
     /**
      * Generates an authorization prompt with metadata from natural-language input using the template identified by the
-     * authorization type, bypassing scenario recognition.
+     * template URI, bypassing scenario recognition.
      *
      * @param text natural-language authorization input
-     * @param authorizationType authorization type used as the template identifier
+     * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      */
-    MetadataContent generateAuthPromptFromText(String text, String authorizationType);
+    MetadataContent generateAuthPromptFromText(String text, TemplateUri templateUri);
 
     /**
      * Generates an authorization prompt with metadata from structured input and an optional data schema using the
-     * template identified by the authorization type, bypassing scenario recognition.
+     * template identified by the template URI, bypassing scenario recognition.
      *
      * @param data structured authorization input as a string-to-object map
      * @param schema optional data schema map for schema-guided extraction
-     * @param authorizationType authorization type used as the template identifier
+     * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      */
     MetadataContent generateAuthPromptFromDataWithSchema(
-            Map<String, Object> data, Map<String, Object> schema, String authorizationType);
+            Map<String, Object> data, Map<String, Object> schema, TemplateUri templateUri);
 
     /**
      * Generates a notification prompt with metadata from natural-language input using the template identified by the
@@ -71,7 +72,7 @@ public interface ClientPromptGenerationOrchestrator {
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      */
-    MetadataContent generateNotificationPromptFromText(String text, String templateUri);
+    MetadataContent generateNotificationPromptFromText(String text, TemplateUri templateUri);
 
     /**
      * Generates a notification prompt with metadata from structured input and an optional data schema using the
@@ -83,5 +84,5 @@ public interface ClientPromptGenerationOrchestrator {
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      */
     MetadataContent generateNotificationPromptFromDataWithSchema(
-            Map<String, Object> data, Map<String, Object> schema, String templateUri);
+            Map<String, Object> data, Map<String, Object> schema, TemplateUri templateUri);
 }

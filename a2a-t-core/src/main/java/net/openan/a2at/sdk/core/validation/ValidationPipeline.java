@@ -9,6 +9,7 @@ import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,8 @@ public final class ValidationPipeline<T> {
      * @param maxAttempts maximum number of retry attempts for the semantic validation step
      * @throws NullPointerException if the rule checker or the semantic validator is null
      */
-    public ValidationPipeline(RuleChecker ruleChecker, SemanticValidator<T> semanticValidator, int maxAttempts) {
+    public ValidationPipeline(
+            @NonNull RuleChecker ruleChecker, @NonNull SemanticValidator<T> semanticValidator, int maxAttempts) {
         this.ruleChecker = Objects.requireNonNull(ruleChecker, "ruleChecker");
         this.semanticValidator = Objects.requireNonNull(semanticValidator, "semanticValidator");
         this.maxAttempts = maxAttempts;
@@ -58,7 +60,8 @@ public final class ValidationPipeline<T> {
      * @throws IllegalArgumentException if the prompt is blank
      * @throws ContentValidationException if the validation fails at any stage
      */
-    public FilledParamData validate(String prompt, Map<String, Object> schema, T reference) {
+    public @NonNull FilledParamData validate(
+            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull T reference) {
         Objects.requireNonNull(schema, "schema");
         Objects.requireNonNull(prompt, "prompt");
         if (prompt.isBlank()) {

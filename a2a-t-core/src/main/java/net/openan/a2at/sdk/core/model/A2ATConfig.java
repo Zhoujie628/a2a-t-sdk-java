@@ -2,6 +2,7 @@ package net.openan.a2at.sdk.core.model;
 
 import java.nio.file.Path;
 import java.util.Map;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Unified SDK configuration entry point loaded from one caller-supplied `.env` file.
@@ -21,7 +22,7 @@ public record A2ATConfig(
      * @param envPath caller-supplied `.env` file path
      * @return unified SDK config
      */
-    public static A2ATConfig load(Path envPath) {
+    public static @NonNull A2ATConfig load(@NonNull Path envPath) {
         Map<String, String> values = DotEnvConfigSource.load(envPath);
         return new A2ATConfig(
                 PromptRuntimeConfig.fromMap(values),

@@ -1,5 +1,6 @@
 package net.openan.a2at.sdk.negotiation.resources;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -8,6 +9,8 @@ import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Addressing key for one negotiation template: negotiation type, API-level phase and language.
@@ -76,7 +79,7 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
      * @throws NullPointerException if the expected phase is null
      */
     public static Optional<NegotiationReference> tryParse(
-            String templateUri, NegotiationPhase expectedPhase, String language) {
+            @Nullable String templateUri, @NonNull NegotiationPhase expectedPhase, String language) {
         Objects.requireNonNull(expectedPhase, "Expected negotiation phase must not be null.");
         if (templateUri == null || templateUri.isBlank()) {
             return Optional.empty();
@@ -96,6 +99,46 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
             return Optional.empty();
         }
         if (!URI_VERSION_SEGMENT.equals(segments[3])) {
+            return Optional.empty();
+        }
+        return Optional.of(new NegotiationReference(parsedType, expectedPhase, language));
+    }
+
+    /**
+     * Derives a reference from a typed template URI, checking it against the expected phase.
+     *
+     * <p>The typed variant of {@link #tryParse(String, NegotiationPhase, String)}: because a {@link TemplateUri} is
+     * always structurally well formed, the checks operate on the URI components directly instead of splitting a raw
+     * string. The URI layer cannot distinguish accept from reject because both share the {@code accept-reject}
+     * segment; the expected phase disambiguates the result, which therefore always carries the expected phase.
+     *
+     * @param templateUri typed template URI such as {@code Negotiation-T/target-negotiation/accept-reject/v1}
+     * @param expectedPhase API-level phase the caller is operating on; the derived reference carries this phase
+     * @param language locale identifier for the derived reference
+     * @return reference addressed by the URI carrying the expected phase, or an empty result when the URI does not
+     *     address a negotiation template of the expected phase (wrong extension name, path segment count, type
+     *     segment, phase segment or template version)
+     * @throws NullPointerException if the template URI or the expected phase is null
+     */
+    public static Optional<NegotiationReference> fromTemplateUri(
+            @NonNull TemplateUri templateUri, @NonNull NegotiationPhase expectedPhase, String language) {
+        Objects.requireNonNull(templateUri, "Template URI must not be null.");
+        Objects.requireNonNull(expectedPhase, "Expected negotiation phase must not be null.");
+        if (!URI_PREFIX.equals(templateUri.extensionName())) {
+            return Optional.empty();
+        }
+        List<String> segments = templateUri.pathSegments();
+        if (segments.size() != 2) {
+            return Optional.empty();
+        }
+        NegotiationType parsedType = parseTypeSegment(segments.get(0));
+        if (parsedType == null) {
+            return Optional.empty();
+        }
+        if (!phaseSegmentMatches(segments.get(1), expectedPhase)) {
+            return Optional.empty();
+        }
+        if (!URI_VERSION_SEGMENT.equals(templateUri.templateVersion())) {
             return Optional.empty();
         }
         return Optional.of(new NegotiationReference(parsedType, expectedPhase, language));

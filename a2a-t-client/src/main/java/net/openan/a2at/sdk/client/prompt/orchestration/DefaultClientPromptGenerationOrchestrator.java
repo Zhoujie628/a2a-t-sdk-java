@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.client.model.PromptGenerationFailure;
@@ -18,6 +17,7 @@ import net.openan.a2at.sdk.core.exception.FailedParameter;
 import net.openan.a2at.sdk.core.exception.PromptGenerationException;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotDefinition;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
@@ -31,8 +31,6 @@ import net.openan.a2at.sdk.prompt.taskrendering.exception.TaskPromptRenderExcept
  * @since 2026-06
  */
 public final class DefaultClientPromptGenerationOrchestrator implements ClientPromptGenerationOrchestrator {
-
-    private static final Pattern TEMPLATE_IDENTIFIER_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)*");
 
     private final ClientScenarioRecognizer scenarioRecognizer;
 
@@ -129,44 +127,44 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
     }
 
     @Override
-    public MetadataContent generateTaskPromptFromText(String text, String templateUri) {
+    public MetadataContent generateTaskPromptFromText(String text, TemplateUri templateUri) {
         return generateFromTemplateUriWithMetadata(text, templateUri, ExtensionUriConstants.TASK_T_EXTENSION_URI);
     }
 
     @Override
     public MetadataContent generateTaskPromptFromDataWithSchema(
-            Map<String, Object> data, Map<String, Object> schema, String templateUri) {
+            Map<String, Object> data, Map<String, Object> schema, TemplateUri templateUri) {
         return generateFromDataWithSchema(data, schema, templateUri, ExtensionUriConstants.TASK_T_EXTENSION_URI);
     }
 
     @Override
-    public MetadataContent generateAuthPromptFromText(String text, String authorizationType) {
-        return generateFromTemplateUriWithMetadata(
-                text, authorizationType, ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI);
+    public MetadataContent generateAuthPromptFromText(String text, TemplateUri templateUri) {
+        return generateFromTemplateUriWithMetadata(text, templateUri, ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI);
     }
 
     @Override
     public MetadataContent generateAuthPromptFromDataWithSchema(
-            Map<String, Object> data, Map<String, Object> schema, String authorizationType) {
+            Map<String, Object> data, Map<String, Object> schema, TemplateUri templateUri) {
         return generateFromDataWithSchema(
-                data, schema, authorizationType, ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI);
+                data, schema, templateUri, ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI);
     }
 
     @Override
-    public MetadataContent generateNotificationPromptFromText(String text, String templateUri) {
+    public MetadataContent generateNotificationPromptFromText(String text, TemplateUri templateUri) {
         return generateFromTemplateUriWithMetadata(
                 text, templateUri, ExtensionUriConstants.NOTIFICATION_T_EXTENSION_URI);
     }
 
     @Override
     public MetadataContent generateNotificationPromptFromDataWithSchema(
-            Map<String, Object> data, Map<String, Object> schema, String templateUri) {
+            Map<String, Object> data, Map<String, Object> schema, TemplateUri templateUri) {
         return generateFromDataWithSchema(data, schema, templateUri, ExtensionUriConstants.NOTIFICATION_T_EXTENSION_URI);
     }
 
     private MetadataContent generateFromTemplateUriWithMetadata(
-            String userInput, String templateIdentifier, String extensionUri) {
-        requireValidTemplateIdentifier(templateIdentifier);
+            String userInput, TemplateUri templateUri, String extensionUri) {
+        Objects.requireNonNull(templateUri, "templateUri");
+        String templateIdentifier = templateUri.uri();
         final String templateText;
         try {
             templateText = templateLoader.loadTemplate(templateIdentifier, language);
@@ -196,9 +194,10 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
     private MetadataContent generateFromDataWithSchema(
             Map<String, Object> data,
             Map<String, Object> schema,
-            String templateIdentifier,
+            TemplateUri templateUri,
             String extensionUri) {
-        requireValidTemplateIdentifier(templateIdentifier);
+        Objects.requireNonNull(templateUri, "templateUri");
+        String templateIdentifier = templateUri.uri();
         final String templateText;
         try {
             templateText = templateLoader.loadTemplate(templateIdentifier, language);
@@ -224,20 +223,6 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
             throw new PromptGenerationException("render_failed", e.getMessage(), e);
         }
         return new MetadataContent(templateIdentifier, renderedPrompt, extensionUri);
-    }
-
-    /**
-     * Enforces the caller contract of the template identifier: a null identifier is a {@link NullPointerException},
-     * a blank or malformed identifier is an {@link IllegalArgumentException}. Both stay outside the {@link A2ATError}
-     * tree because they are programming errors of the caller.
-     */
-    private static void requireValidTemplateIdentifier(String templateIdentifier) {
-        Objects.requireNonNull(templateIdentifier, "templateIdentifier");
-        if (templateIdentifier.isBlank() || !TEMPLATE_IDENTIFIER_PATTERN.matcher(templateIdentifier).matches()) {
-            throw new IllegalArgumentException(
-                    "Template URI is blank or contains invalid characters (invalid_template_uri): "
-                            + templateIdentifier);
-        }
     }
 
     private void validateRequiredSlots(Map<String, String> slots, String templateIdentifier) {
