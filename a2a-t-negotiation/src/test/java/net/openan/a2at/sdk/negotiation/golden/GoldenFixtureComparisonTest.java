@@ -13,9 +13,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
 import net.openan.a2at.sdk.negotiation.golden.GoldenInputs.GoldenCase;
@@ -38,7 +38,7 @@ class GoldenFixtureComparisonTest {
     private static final String EXTENSION_URI =
             "https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1";
 
-    private static final String TEMPLATE_URI_METADATA_KEY = "template_uri";
+    private static final String TEMPLATE_URI_METADATA_KEY = MetadataContent.TEMPLATE_URI_METADATA_KEY;
 
     static Stream<Arguments> goldenCases() {
         List<Arguments> cases = new ArrayList<>();

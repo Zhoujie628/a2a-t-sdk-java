@@ -14,15 +14,15 @@ import java.util.Map;
 public record MetadataContent(String templateUri, String promptText, String extensionUri) {
 
     /** Metadata key carrying the template URI alongside the message itself. */
-    public static final String TEMPLATE_URI_METADATA_KEY = "template_uri";
+    public static final String TEMPLATE_URI_METADATA_KEY = "templateUri";
 
     /**
      * Builds the A2A-T metadata map for this generated message.
      *
      * <p>The returned map contains exactly two keys in a fixed order: the extension URI mapping to the rendered
-     * message, and {@code template_uri} mapping to the template URI. Repeated calls return equal maps.
+     * message, and {@code templateUri} mapping to the template URI. Repeated calls return equal maps.
      *
-     * @return newly built metadata map with exactly the extension URI and {@code template_uri} keys
+     * @return newly built metadata map with exactly the extension URI and {@code templateUri} keys
      */
     public Map<String, String> buildMetadataContent() {
         Map<String, String> metadata = new LinkedHashMap<>();

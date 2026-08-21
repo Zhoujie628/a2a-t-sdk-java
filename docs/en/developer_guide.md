@@ -510,7 +510,7 @@ All types live in `net.openan.a2at.sdk.negotiation.content`.
 
 `NegotiationItem(name, value)` is one named entry of an item list. `NegotiationConclusion` carries `ACCEPT`, `REJECT`, and `ABORT`; only `Accept` and `Reject` are renderable — generation methods reject `ABORT` as a programming error. `NegotiationAction` (`REQUEST_FEASIBILITY_EVALUATION`, `PROPOSE_ALTERNATIVE_ON_FAILURE`) selects the conditional sections of the feasibility propose template.
 
-**MetadataContent** — the generation result: `record MetadataContent(String templateUri, String promptText, String extensionUri)`. `buildMetadataContent()` returns exactly two keys: the TMF extension URI (`https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1`) mapping to the rendered message, and `template_uri` mapping to the template URI. This map is what travels in the A2A message metadata.
+**MetadataContent** — the generation result: `record MetadataContent(String templateUri, String promptText, String extensionUri)`. `buildMetadataContent()` returns exactly two keys: the TMF extension URI (`https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1`) mapping to the rendered message, and `templateUri` mapping to the template URI. This map is what travels in the A2A message metadata.
 
 **FilledParamData** — the extraction result: `record FilledParamData(Map<String, Object> data)` holding the context parameters merged with the schema-extracted parameters.
 
@@ -576,7 +576,7 @@ MetadataContent propose = client.generateNegotiationProposePromptFromData(
 
 // This two-key map travels in the A2A message metadata.
 Map<String, String> metadata = propose.buildMetadataContent();
-// metadata.get("template_uri")  -> "Negotiation-T/v1/information-negotiation/propose"
+// metadata.get("templateUri")  -> "Negotiation-T/v1/information-negotiation/propose"
 // metadata.get(propose.extensionUri()) -> the rendered message text
 
 // --- Server side: validate the received message and extract parameters ---

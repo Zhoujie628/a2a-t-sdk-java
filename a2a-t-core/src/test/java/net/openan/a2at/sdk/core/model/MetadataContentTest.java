@@ -67,6 +67,6 @@ class MetadataContentTest {
         Map<String, String> metadata = content.buildMetadataContent();
 
         assertEquals(2, metadata.size());
-        assertTrue(metadata.containsKey("template_uri"));
+        assertTrue(metadata.containsKey(MetadataContent.TEMPLATE_URI_METADATA_KEY));
     }
 }
