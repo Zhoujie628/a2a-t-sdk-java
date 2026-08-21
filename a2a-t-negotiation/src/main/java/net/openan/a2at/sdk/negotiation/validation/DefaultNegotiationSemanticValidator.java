@@ -94,7 +94,7 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
      *     missing
      */
     @Override
-    public SemanticValidationResult validate(
+    public SemanticValidationResult validateNegotiation(
             String prompt, Map<String, Object> callerSchema, NegotiationReference reference) {
         Objects.requireNonNull(prompt, "prompt");
         Objects.requireNonNull(reference, "reference");

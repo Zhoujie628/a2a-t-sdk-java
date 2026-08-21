@@ -6,7 +6,6 @@ import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
 import net.openan.a2at.sdk.core.validation.SemanticValidator;
-import net.openan.a2at.sdk.core.validation.TemplateReference;
 import net.openan.a2at.sdk.core.validation.ValidationResult;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 
@@ -21,14 +20,14 @@ import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
  *
  * @since 2026-06
  */
-public interface NegotiationSemanticValidator extends SemanticValidator {
+public interface NegotiationSemanticValidator extends SemanticValidator<NegotiationReference> {
 
     /**
      * Validates one rendered negotiation message semantically and extracts its parameters.
      *
      * @param prompt rendered negotiation message text
      * @param callerSchema caller-provided parameter JSON schema embedded into the structured-call output contract
-     * @param reference template reference the message is validated against, carrying the declared type, phase and
+     * @param reference negotiation reference the message is validated against, carrying the declared type, phase and
      *     language
      * @return semantic validation outcome carrying the verdict, the implied negotiation type, the semantic errors and
      *     the extracted parameters
@@ -37,15 +36,13 @@ public interface NegotiationSemanticValidator extends SemanticValidator {
      * @throws net.openan.a2at.sdk.core.exception.ResourceNotFoundException if the semantic validation prompt resources
      *     of the reference language are missing
      */
-    SemanticValidationResult validate(String prompt, Map<String, Object> callerSchema, NegotiationReference reference);
+    SemanticValidationResult validateNegotiation(
+            String prompt, Map<String, Object> callerSchema, NegotiationReference reference);
 
     @Override
-    default ValidationResult validate(String prompt, Map<String, Object> schema, TemplateReference reference) {
-        if (!(reference instanceof NegotiationReference)) {
-            throw new IllegalArgumentException("Reference must be NegotiationReference");
-        }
+    default ValidationResult validate(String prompt, Map<String, Object> schema, NegotiationReference reference) {
         try {
-            SemanticValidationResult result = this.validate(prompt, schema, (NegotiationReference) reference);
+            SemanticValidationResult result = validateNegotiation(prompt, schema, reference);
             return new ValidationResult(result.verdict(), result.errors(), result.params());
         } catch (NegotiationValidationException exception) {
             throw new ContentValidationException(

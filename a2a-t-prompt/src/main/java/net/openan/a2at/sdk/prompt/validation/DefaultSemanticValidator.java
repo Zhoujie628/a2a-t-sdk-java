@@ -15,7 +15,7 @@ import net.openan.a2at.sdk.core.model.PromptMessage;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
 import net.openan.a2at.sdk.core.validation.SemanticValidator;
-import net.openan.a2at.sdk.core.validation.TemplateReference;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ValidationResult;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 2026-08
  */
-public final class DefaultSemanticValidator implements SemanticValidator {
+public final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSemanticValidator.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -56,7 +56,7 @@ public final class DefaultSemanticValidator implements SemanticValidator {
     }
 
     @Override
-    public ValidationResult validate(String prompt, Map<String, Object> schema, TemplateReference reference) {
+    public ValidationResult validate(String prompt, Map<String, Object> schema, TemplateUri reference) {
         if (llmClient == null) {
             throw new ContentValidationException(
                     A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR,
@@ -93,7 +93,7 @@ public final class DefaultSemanticValidator implements SemanticValidator {
         return new ValidationResult(verdict, errors, params);
     }
 
-    private String fillUserPrompt(String prompt, Map<String, Object> schema, TemplateReference reference) {
+    private String fillUserPrompt(String prompt, Map<String, Object> schema, TemplateUri reference) {
         String schemaJson;
         try {
             schemaJson = OBJECT_MAPPER.writeValueAsString(schema);

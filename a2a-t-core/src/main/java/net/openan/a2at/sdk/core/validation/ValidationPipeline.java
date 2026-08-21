@@ -20,15 +20,16 @@ import org.slf4j.LoggerFactory;
  * conflict the context parameter wins and a warning is logged, so the LLM output can never override the rule-level
  * parsed values.
  *
+ * @param <T> template addressing type the validation is performed against, such as {@link TemplateUri}
  * @since 2026-08
  */
-public final class ValidationPipeline {
+public final class ValidationPipeline<T> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidationPipeline.class);
 
     private final RuleChecker ruleChecker;
 
-    private final SemanticValidator semanticValidator;
+    private final SemanticValidator<T> semanticValidator;
 
     private final int maxAttempts;
 
@@ -40,7 +41,7 @@ public final class ValidationPipeline {
      * @param maxAttempts maximum number of retry attempts for the semantic validation step
      * @throws NullPointerException if the rule checker or the semantic validator is null
      */
-    public ValidationPipeline(RuleChecker ruleChecker, SemanticValidator semanticValidator, int maxAttempts) {
+    public ValidationPipeline(RuleChecker ruleChecker, SemanticValidator<T> semanticValidator, int maxAttempts) {
         this.ruleChecker = Objects.requireNonNull(ruleChecker, "ruleChecker");
         this.semanticValidator = Objects.requireNonNull(semanticValidator, "semanticValidator");
         this.maxAttempts = maxAttempts;
@@ -51,13 +52,13 @@ public final class ValidationPipeline {
      *
      * @param prompt content prompt text
      * @param schema caller-provided parameter JSON schema
-     * @param reference template reference the content is validated against
+     * @param reference template addressing value the content is validated against
      * @return filled parameter data carrying the merged parameters
-     * @throws NullPointerException if the prompt, schema or template reference is null
+     * @throws NullPointerException if the prompt, schema or reference is null
      * @throws IllegalArgumentException if the prompt is blank
      * @throws ContentValidationException if the validation fails at any stage
      */
-    public FilledParamData validate(String prompt, Map<String, Object> schema, TemplateReference reference) {
+    public FilledParamData validate(String prompt, Map<String, Object> schema, T reference) {
         Objects.requireNonNull(schema, "schema");
         Objects.requireNonNull(prompt, "prompt");
         if (prompt.isBlank()) {

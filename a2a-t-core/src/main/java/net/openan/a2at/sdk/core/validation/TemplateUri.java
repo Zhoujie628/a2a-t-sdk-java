@@ -16,8 +16,8 @@ import net.openan.a2at.sdk.core.resources.PathSegments;
  * of this type can never carry a malformed URI — the structural invariants that validators previously re-derived by
  * splitting raw strings are encoded in the type itself.
  *
- * <p>The language is deliberately not part of the URI: it is runtime context resolved from the global prompt
- * configuration, bound into a {@link TemplateReference} only when a concrete reference is needed.
+ * <p>The language is deliberately not part of the URI: it is global runtime context resolved from the prompt
+ * configuration by whichever component needs it, never an addressability dimension of the template.
  *
  * @param extensionName first URI segment identifying the template family, such as {@code Task-T}
  * @param version second URI segment, such as {@code v1}
@@ -90,29 +90,6 @@ public record TemplateUri(String extensionName, String version, List<String> seg
     public String uri() {
         return Stream.concat(Stream.of(extensionName, version), segments.stream())
                 .collect(Collectors.joining("/"));
-    }
-
-    /**
-     * Returns the extension prefix identifying the template family — the first URI segment, kept as a derived view for
-     * callers using the legacy term.
-     *
-     * @return extension prefix such as {@code Task-T}
-     */
-    public String extensionPrefix() {
-        return extensionName;
-    }
-
-    /**
-     * Binds the runtime language into a concrete template reference.
-     *
-     * <p>The language is global prompt runtime context, so callers normally pass this URI as-is; binding happens
-     * inside the SDK at the point where a language-carrying reference is required.
-     *
-     * @param language locale identifier such as {@code zh-CN} or {@code en-US}
-     * @return template reference carrying this URI and the given language
-     */
-    public TemplateReference withLanguage(String language) {
-        return new SimpleTemplateReference(uri(), language, extensionName);
     }
 
     private static void validateSegment(String value, String label) {
