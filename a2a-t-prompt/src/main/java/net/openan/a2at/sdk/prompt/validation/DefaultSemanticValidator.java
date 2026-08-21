@@ -69,7 +69,17 @@ public final class DefaultSemanticValidator implements SemanticValidator {
                 List.of(new PromptMessage("system", systemPrompt), new PromptMessage("user", userPrompt)));
 
         LLMResponse response = llmClient.structured(messages, outputSchema, null, null);
-        Map<String, Object> parsed = jsonValueParser.parseObject(response.content());
+        Map<String, Object> parsed;
+        try {
+            parsed = jsonValueParser.parseObject(response.content());
+        } catch (RuntimeException exception) {
+            throw new ContentValidationException(
+                    A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR,
+                    "Semantic validation LLM response is not valid JSON: " + exception.getMessage(),
+                    List.of(new SlotValidationError(
+                            "_llm", A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getMessage())),
+                    exception);
+        }
 
         boolean verdict = Boolean.TRUE.equals(parsed.get("semantic_verdict"));
         List<SlotValidationError> errors = parseErrors(parsed.get("errors"));
