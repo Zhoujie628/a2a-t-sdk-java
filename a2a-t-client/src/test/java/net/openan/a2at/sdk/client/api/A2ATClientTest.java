@@ -17,6 +17,7 @@ import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrchestrator;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
@@ -282,24 +283,24 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
         Map<String, Object> schema = Map.of("type", "object");
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
+                client.generateTaskPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING.uri());
         MetadataContent authResult =
-                client.generateAuthPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
+                client.generateAuthPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING.uri());
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
+                client.generateNotificationPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING.uri());
 
         assertNotNull(taskResult);
-        assertEquals("Task-T/v1/energy-saving", taskResult.templateUri());
+        assertEquals(StandardTemplates.ENERGY_SAVING.uri(), taskResult.templateUri());
         assertNotNull(taskResult.promptText());
         assertNotNull(taskResult.extensionUri());
 
         assertNotNull(authResult);
-        assertEquals("Task-T/v1/energy-saving", authResult.templateUri());
+        assertEquals(StandardTemplates.ENERGY_SAVING.uri(), authResult.templateUri());
         assertNotNull(authResult.promptText());
         assertNotNull(authResult.extensionUri());
 
         assertNotNull(notificationResult);
-        assertEquals("Task-T/v1/energy-saving", notificationResult.templateUri());
+        assertEquals(StandardTemplates.ENERGY_SAVING.uri(), notificationResult.templateUri());
         assertNotNull(notificationResult.promptText());
         assertNotNull(notificationResult.extensionUri());
     }
@@ -329,11 +330,11 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
         Map<String, Object> schema = Map.of("type", "object");
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
+                client.generateTaskPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING.uri());
         MetadataContent authResult =
-                client.generateAuthPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
+                client.generateAuthPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING.uri());
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromDataWithSchema(data, schema, "Task-T/v1/energy-saving");
+                client.generateNotificationPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING.uri());
 
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskResult.extensionUri());
         assertEquals(ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI, authResult.extensionUri());

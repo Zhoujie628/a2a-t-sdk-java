@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.List;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.core.validation.ContentValidator;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
@@ -166,7 +167,7 @@ public final class DefaultA2ATServerBuilder {
         requireSupportedConfig();
         require(envPath, "Unified SDK env path must be configured.");
         return new DefaultContentValidator(
-                "Task-T",
+                StandardTemplates.TASK_EXTENSION_NAME,
                 config.prompt().language(),
                 config.llm().maxAttempts(),
                 createLlmClient(),
@@ -186,7 +187,7 @@ public final class DefaultA2ATServerBuilder {
         requireSupportedConfig();
         require(envPath, "Unified SDK env path must be configured.");
         return new DefaultContentValidator(
-                "Notification-T",
+                StandardTemplates.NOTIFICATION_EXTENSION_NAME,
                 config.prompt().language(),
                 config.llm().maxAttempts(),
                 createLlmClient(),
@@ -206,7 +207,7 @@ public final class DefaultA2ATServerBuilder {
         requireSupportedConfig();
         require(envPath, "Unified SDK env path must be configured.");
         return new DefaultContentValidator(
-                "Authorization-T",
+                StandardTemplates.AUTHORIZATION_EXTENSION_NAME,
                 config.prompt().language(),
                 config.llm().maxAttempts(),
                 createLlmClient(),

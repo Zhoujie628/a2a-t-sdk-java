@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
@@ -28,7 +29,7 @@ class MaxRoundsExhaustionScenarioTest {
 
     private static final String SESSION_ID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String TARGET_ACCEPT_URI = "Negotiation-T/v1/target-negotiation/accept-reject";
+    private static final String TARGET_ACCEPT_URI = StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri();
 
     @Test
     void exhaustedRoundBudgetEndsWithARejectMessageThePeerStillAccepts() {

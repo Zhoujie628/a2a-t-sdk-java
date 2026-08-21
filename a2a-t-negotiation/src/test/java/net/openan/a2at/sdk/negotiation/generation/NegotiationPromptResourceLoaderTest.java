@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 
@@ -84,7 +85,7 @@ class NegotiationPromptResourceLoaderTest {
                         NegotiationMessageBuilder.TOKEN_NEGOTIATION_TYPE,
                         "information",
                         NegotiationMessageBuilder.TOKEN_TEMPLATE_URI,
-                        "Negotiation-T/v1/information-negotiation/propose",
+                        StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(),
                         NegotiationMessageBuilder.TOKEN_SCHEMA,
                         "{\"type\":\"object\"}",
                         NegotiationMessageBuilder.TOKEN_INPUT,

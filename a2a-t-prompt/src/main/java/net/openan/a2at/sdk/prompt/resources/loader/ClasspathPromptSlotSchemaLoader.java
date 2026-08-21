@@ -7,6 +7,7 @@ import java.util.Set;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceDirectories;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotJsonSchema;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
 import net.openan.a2at.sdk.resources.ClasspathPromptResourceLoader;
@@ -23,7 +24,8 @@ import net.openan.a2at.sdk.resources.PromptResourceKey;
  */
 public final class ClasspathPromptSlotSchemaLoader implements PromptSlotSchemaLoader {
 
-    private static final List<String> KNOWN_SLOT_TYPES = List.of("Task-T", "Notification-T");
+    private static final List<String> KNOWN_SLOT_TYPES =
+            List.of(StandardTemplates.TASK_EXTENSION_NAME, StandardTemplates.NOTIFICATION_EXTENSION_NAME);
 
     private static final List<String> SLOT_TYPES = discoverSlotTypes();
 

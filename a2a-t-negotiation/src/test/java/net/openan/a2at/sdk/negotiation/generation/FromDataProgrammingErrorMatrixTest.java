@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
@@ -38,17 +39,17 @@ class FromDataProgrammingErrorMatrixTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = "Negotiation-T/v1/information-negotiation/propose";
+    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
 
-    private static final String INFORMATION_ACCEPT_URI = "Negotiation-T/v1/information-negotiation/accept-reject";
+    private static final String INFORMATION_ACCEPT_URI = StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri();
 
-    private static final String TARGET_PROPOSE_URI = "Negotiation-T/v1/target-negotiation/propose";
+    private static final String TARGET_PROPOSE_URI = StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri();
 
-    private static final String FEASIBILITY_PROPOSE_URI = "Negotiation-T/v1/feasibility-negotiation/propose";
+    private static final String FEASIBILITY_PROPOSE_URI = StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri();
 
-    private static final String FEASIBILITY_ACCEPT_URI = "Negotiation-T/v1/feasibility-negotiation/accept-reject";
+    private static final String FEASIBILITY_ACCEPT_URI = StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri();
 
-    private static final String TARGET_ACCEPT_URI = "Negotiation-T/v1/target-negotiation/accept-reject";
+    private static final String TARGET_ACCEPT_URI = StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri();
 
     private final CountingClient llm = new CountingClient();
 

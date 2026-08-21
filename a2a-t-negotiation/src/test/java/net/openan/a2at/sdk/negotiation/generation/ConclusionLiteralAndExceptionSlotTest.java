@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.stream.Stream;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
@@ -46,7 +47,7 @@ class ConclusionLiteralAndExceptionSlotTest {
                                 new InfoEndingContent(
                                         NegotiationConclusion.ACCEPT,
                                         List.of(new NegotiationItem("area information", "Songshan Lake")))),
-                        "Negotiation-T/v1/information-negotiation/accept-reject")
+                        StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri())
                 .promptText();
         String target = orchestrator
                 .generateAcceptFromData(
@@ -54,7 +55,7 @@ class ConclusionLiteralAndExceptionSlotTest {
                                 context,
                                 new TargetEndingContent(
                                         NegotiationConclusion.ACCEPT, "The confirmed intent is recorded.", null)),
-                        "Negotiation-T/v1/target-negotiation/accept-reject")
+                        StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri())
                 .promptText();
         String feasibility = orchestrator
                 .generateAcceptFromData(
@@ -62,7 +63,7 @@ class ConclusionLiteralAndExceptionSlotTest {
                                 context,
                                 new FeasibilityEndingContent(
                                         NegotiationConclusion.ACCEPT, "The target is achievable.")),
-                        "Negotiation-T/v1/feasibility-negotiation/accept-reject")
+                        StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri())
                 .promptText();
 
         assertTrue(information.contains(conclusionSection(language, "information") + "\nAccept"));
@@ -86,7 +87,7 @@ class ConclusionLiteralAndExceptionSlotTest {
                                 new InfoEndingContent(
                                         NegotiationConclusion.REJECT,
                                         List.of(new NegotiationItem("area information", "not available")))),
-                        "Negotiation-T/v1/information-negotiation/accept-reject")
+                        StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri())
                 .promptText();
         String target = orchestrator
                 .generateRejectFromData(
@@ -94,7 +95,7 @@ class ConclusionLiteralAndExceptionSlotTest {
                                 context,
                                 new TargetEndingContent(
                                         NegotiationConclusion.REJECT, null, "The intent cannot be clarified.")),
-                        "Negotiation-T/v1/target-negotiation/accept-reject")
+                        StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri())
                 .promptText();
         String feasibility = orchestrator
                 .generateRejectFromData(
@@ -102,7 +103,7 @@ class ConclusionLiteralAndExceptionSlotTest {
                                 context,
                                 new FeasibilityEndingContent(
                                         NegotiationConclusion.REJECT, "The target is not achievable.")),
-                        "Negotiation-T/v1/feasibility-negotiation/accept-reject")
+                        StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri())
                 .promptText();
 
         assertTrue(information.contains(conclusionSection(language, "information") + "\nReject"));
@@ -125,14 +126,14 @@ class ConclusionLiteralAndExceptionSlotTest {
                         new NegotiationEndingData(
                                 new NegotiationContext(UUID, 2, 5),
                                 new FeasibilityEndingContent(NegotiationConclusion.ACCEPT, summary)),
-                        "Negotiation-T/v1/feasibility-negotiation/accept-reject")
+                        StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri())
                 .promptText();
         String rejectText = orchestrator
                 .generateRejectFromData(
                         new NegotiationEndingData(
                                 new NegotiationContext(UUID, 2, 5),
                                 new FeasibilityEndingContent(NegotiationConclusion.REJECT, summary)),
-                        "Negotiation-T/v1/feasibility-negotiation/accept-reject")
+                        StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri())
                 .promptText();
 
         String sectionTitle =
@@ -156,7 +157,7 @@ class ConclusionLiteralAndExceptionSlotTest {
                         new NegotiationEndingData(
                                 new NegotiationContext(UUID, 2, 5),
                                 new FeasibilityEndingContent(NegotiationConclusion.ACCEPT, summary)),
-                        "Negotiation-T/v1/feasibility-negotiation/accept-reject")
+                        StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri())
                 .promptText();
 
         assertEquals(1, countOccurrences(promptText, summary));

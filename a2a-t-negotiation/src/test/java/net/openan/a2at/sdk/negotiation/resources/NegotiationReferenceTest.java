@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import org.junit.jupiter.api.Test;
@@ -21,13 +22,13 @@ class NegotiationReferenceTest {
     @Test
     void uriComposesPrefixVersionTypeSegmentAndPhaseSegment() {
         assertEquals(
-                "Negotiation-T/v1/information-negotiation/propose",
+                StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(),
                 new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "en-US").uri());
         assertEquals(
-                "Negotiation-T/v1/target-negotiation/accept-reject",
+                StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri(),
                 new NegotiationReference(NegotiationType.TARGET, NegotiationPhase.ACCEPT, "zh-CN").uri());
         assertEquals(
-                "Negotiation-T/v1/feasibility-negotiation/accept-reject",
+                StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri(),
                 new NegotiationReference(NegotiationType.FEASIBILITY, NegotiationPhase.REJECT, "zh-CN").uri());
     }
 
@@ -103,7 +104,7 @@ class NegotiationReferenceTest {
     @Test
     void tryParseRejectsPhaseMismatchAgainstExpectedPhase() {
         Optional<NegotiationReference> parsed = NegotiationReference.tryParse(
-                "Negotiation-T/v1/information-negotiation/propose", NegotiationPhase.ACCEPT, "zh-CN");
+                StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(), NegotiationPhase.ACCEPT, "zh-CN");
 
         assertTrue(parsed.isEmpty());
     }
@@ -115,7 +116,7 @@ class NegotiationReferenceTest {
 
         NullPointerException exception = assertThrows(
                 NullPointerException.class,
-                () -> NegotiationReference.tryParse("Negotiation-T/v1/information-negotiation/propose", null, "zh-CN"));
+                () -> NegotiationReference.tryParse(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(), null, "zh-CN"));
         assertEquals("Expected negotiation phase must not be null.", exception.getMessage());
     }
 

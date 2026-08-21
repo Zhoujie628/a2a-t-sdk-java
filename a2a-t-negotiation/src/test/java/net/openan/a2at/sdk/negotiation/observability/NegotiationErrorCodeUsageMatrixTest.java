@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
@@ -41,9 +42,9 @@ class NegotiationErrorCodeUsageMatrixTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = "Negotiation-T/v1/information-negotiation/propose";
+    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
 
-    private static final String INFORMATION_ENDING_URI = "Negotiation-T/v1/information-negotiation/accept-reject";
+    private static final String INFORMATION_ENDING_URI = StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri();
 
     private static final String VALID_CONTEXT_PROMPT = "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5";
 

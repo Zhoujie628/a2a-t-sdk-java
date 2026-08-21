@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Stream;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
@@ -30,7 +31,7 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 class NegotiationLanguageSwitchTest {
 
-    private static final String INFORMATION_PROPOSE_URI = "Negotiation-T/v1/information-negotiation/propose";
+    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
 
     static Stream<GoldenCase> goldenCases() {
         return Stream.of(GoldenCase.values());

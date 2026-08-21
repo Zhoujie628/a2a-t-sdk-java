@@ -22,6 +22,7 @@ import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -151,7 +152,7 @@ class NegotiationFacadeOutputSymmetryTest {
                 new SymmetryCase(
                         "information_propose",
                         NegotiationPhase.PROPOSE,
-                        "Negotiation-T/v1/information-negotiation/propose",
+                        StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(),
                         new NegotiationProposeData(
                                 new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5),
                                 new InfoProposeContent(
@@ -163,7 +164,7 @@ class NegotiationFacadeOutputSymmetryTest {
                 new SymmetryCase(
                         "target_propose",
                         NegotiationPhase.PROPOSE,
-                        "Negotiation-T/v1/target-negotiation/propose",
+                        StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(),
                         new NegotiationProposeData(
                                 new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 1, 5),
                                 new TargetProposeContent(
@@ -174,7 +175,7 @@ class NegotiationFacadeOutputSymmetryTest {
                 new SymmetryCase(
                         "feasibility_propose",
                         NegotiationPhase.PROPOSE,
-                        "Negotiation-T/v1/feasibility-negotiation/propose",
+                        StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
                         new NegotiationProposeData(
                                 new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5),
                                 new FeasibilityProposeContent(
@@ -185,36 +186,36 @@ class NegotiationFacadeOutputSymmetryTest {
                 endingCase(
                         "information_accept",
                         NegotiationPhase.ACCEPT,
-                        "Negotiation-T/v1/information-negotiation/accept-reject",
+                        StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri(),
                         new InfoEndingContent(
                                 NegotiationConclusion.ACCEPT,
                                 List.of(new NegotiationItem("area information", "Songshan Lake")))),
                 endingCase(
                         "target_accept",
                         NegotiationPhase.ACCEPT,
-                        "Negotiation-T/v1/target-negotiation/accept-reject",
+                        StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri(),
                         new TargetEndingContent(NegotiationConclusion.ACCEPT, "The confirmed intent.", null)),
                 endingCase(
                         "feasibility_accept",
                         NegotiationPhase.ACCEPT,
-                        "Negotiation-T/v1/feasibility-negotiation/accept-reject",
+                        StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri(),
                         new FeasibilityEndingContent(NegotiationConclusion.ACCEPT, "The target is achievable.")),
                 endingCase(
                         "information_reject",
                         NegotiationPhase.REJECT,
-                        "Negotiation-T/v1/information-negotiation/accept-reject",
+                        StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri(),
                         new InfoEndingContent(
                                 NegotiationConclusion.REJECT,
                                 List.of(new NegotiationItem("area information", "not available")))),
                 endingCase(
                         "target_reject",
                         NegotiationPhase.REJECT,
-                        "Negotiation-T/v1/target-negotiation/accept-reject",
+                        StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri(),
                         new TargetEndingContent(NegotiationConclusion.REJECT, null, "The intent is unclear.")),
                 endingCase(
                         "feasibility_reject",
                         NegotiationPhase.REJECT,
-                        "Negotiation-T/v1/feasibility-negotiation/accept-reject",
+                        StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri(),
                         new FeasibilityEndingContent(NegotiationConclusion.REJECT, "The target is not achievable.")));
     }
 

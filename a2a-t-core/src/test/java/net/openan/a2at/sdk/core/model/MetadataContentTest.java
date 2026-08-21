@@ -6,11 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import org.junit.jupiter.api.Test;
 
 class MetadataContentTest {
 
-    private static final String TEMPLATE_URI = "Negotiation-T/v1/information-negotiation/propose";
+    private static final String TEMPLATE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
 
     @Test
     void recordExposesAllThreeComponents() {

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceDirectories;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.resources.ClasspathPromptResourceLoader;
 import net.openan.a2at.sdk.resources.PromptResourceKey;
 
@@ -19,7 +20,8 @@ import net.openan.a2at.sdk.resources.PromptResourceKey;
  */
 public final class ClasspathPromptTemplateLoader implements PromptTemplateTextLoader {
 
-    private static final List<String> KNOWN_TEMPLATE_TYPES = List.of("Task-T", "Notification-T", "Negotiation-T");
+    private static final List<String> KNOWN_TEMPLATE_TYPES = List.of(
+            StandardTemplates.TASK_EXTENSION_NAME, StandardTemplates.NOTIFICATION_EXTENSION_NAME, StandardTemplates.NEGOTIATION_EXTENSION_NAME);
 
     private static final List<String> TEMPLATE_TYPES = discoverTemplateTypes();
 
