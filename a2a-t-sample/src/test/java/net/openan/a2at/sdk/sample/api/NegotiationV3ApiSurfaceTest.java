@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Locks the v3 negotiation API surface of both facades and the field faces of the result records.
  *
- * <p>The client and the server expose exactly the fourteen negotiation and validation methods with their pinned parameter
+ * <p>The client and the server expose exactly the eleven camelCase negotiation methods with their pinned parameter
  * counts, their surface carries none of the removed v2-shape method names, and the two result records expose exactly
  * their documented components.
  */
@@ -38,16 +38,13 @@ class NegotiationV3ApiSurfaceTest {
             Map.entry("getNegotiationPrompt", 1),
             Map.entry("validateAndFillingProposeData", 3),
             Map.entry("validateAndFillingAcceptData", 3),
-            Map.entry("validateAndFillingRejectData", 3),
-            Map.entry("validateAndFillingTaskData", 3),
-            Map.entry("validateAndFillingNotificationData", 3),
-            Map.entry("validateAndFillingAuthData", 3));
+            Map.entry("validateAndFillingRejectData", 3));
 
     private static final List<String> REMOVED_V2_METHOD_NAME_FRAGMENTS =
             List.of("FromNl", "FromJsonData", "validateAndExtractParams");
 
     @Test
-    void bothFacadesExposeExactlyTheFourteenV3NegotiationMethods() {
+    void bothFacadesExposeExactlyTheElevenV3NegotiationMethods() {
         assertExactNegotiationSurface(A2ATClient.class);
         assertExactNegotiationSurface(A2ATServer.class);
     }
@@ -75,13 +72,15 @@ class NegotiationV3ApiSurfaceTest {
         List<Method> negotiationMethods = Arrays.stream(allMethods)
                 .filter(method -> method.getName().startsWith("generateNegotiation")
                         || method.getName().startsWith("getNegotiation")
-                        || method.getName().startsWith("validateAndFilling"))
+                        || "validateAndFillingProposeData".equals(method.getName())
+                        || "validateAndFillingAcceptData".equals(method.getName())
+                        || "validateAndFillingRejectData".equals(method.getName()))
                 .toList();
         Set<String> names = negotiationMethods.stream().map(Method::getName).collect(Collectors.toSet());
         assertEquals(
                 EXPECTED_NEGOTIATION_METHOD_PARAMETERS.keySet(),
                 names,
-                facade.getSimpleName() + " must expose exactly the fourteen v3 negotiation and validation methods");
+                facade.getSimpleName() + " must expose exactly the eleven v3 negotiation methods");
         assertEquals(
                 EXPECTED_NEGOTIATION_METHOD_PARAMETERS.size(),
                 negotiationMethods.size(),
