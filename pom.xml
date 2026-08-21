@@ -377,7 +377,7 @@
             -->
             <id>old_jdk_support</id>
             <activation>
-                <jdk>(17, 21]</jdk>
+                <jdk>[17, 21]</jdk>
             </activation>
             <properties>
                 <error-prone.version>2.42.0</error-prone.version>
