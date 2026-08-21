@@ -2,7 +2,7 @@ package net.openan.a2at.sdk.negotiation.observability;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -17,7 +17,6 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
@@ -170,7 +169,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR),
                 row(
-                        "entry_programming_error_carries_no_code_but_a_field",
+                        "entry_programming_error_carries_no_code_but_the_offending_argument",
                         "not-a-json",
                         0,
                         llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
@@ -178,7 +177,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .build()
                                 .generateProposeFromData(proposeData(), "malformed-template-uri"),
-                        NegotiationContentException.class,
+                        IllegalArgumentException.class,
                         null),
                 row(
                         "internal_render_failure_is_wrapped_as_slot_missing",
@@ -248,9 +247,15 @@ class NegotiationErrorCodeUsageMatrixTest {
                 failure.getMessage() != null && !failure.getMessage().isBlank(),
                 "row " + name + " must carry a non-blank message");
 
-        if (failure instanceof NegotiationContentException contentFailure) {
-            assertFalse(A2ATError.class.isInstance(contentFailure), "row " + name + " must stay outside A2ATError");
-            assertNotNull(contentFailure.getField(), "row " + name + " must carry a problem field");
+        if (failure instanceof IllegalArgumentException argumentFailure) {
+            assertFalse(
+                    A2ATError.class.isInstance(argumentFailure),
+                    "row " + name + " must stay outside A2ATError because it carries no code");
+            assertNullCode(expectedCode, name);
+            assertTrue(
+                    argumentFailure.getMessage().contains("Template URI is malformed"),
+                    "row " + name + " must name the offending argument in its message but was: "
+                            + argumentFailure.getMessage());
             return;
         }
         if (failure instanceof NegotiationGenerationException generationFailure) {
@@ -276,6 +281,10 @@ class NegotiationErrorCodeUsageMatrixTest {
         }
         fail("row " + name + " failed with an unexpected exception type: "
                 + failure.getClass().getName());
+    }
+
+    private static void assertNullCode(String expectedCode, String name) {
+        assertNull(expectedCode, "row " + name + " carries no public code by design");
     }
 
     private static RuntimeException runExpectingFailure(

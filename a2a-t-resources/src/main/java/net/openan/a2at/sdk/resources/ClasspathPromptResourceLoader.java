@@ -3,8 +3,8 @@ package net.openan.a2at.sdk.resources;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 
 /**
@@ -30,7 +30,7 @@ public final class ClasspathPromptResourceLoader {
         try (stream) {
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException error) {
-            throw new SdkException("Failed to read prompt resource: " + relativePath, error);
+            throw new A2ATError("Failed to read prompt resource: " + relativePath, error);
         }
     }
 }

@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 import net.openan.a2at.sdk.core.resources.PathSegments;
@@ -132,7 +132,7 @@ public final class PromptTemplateCatalog {
         try {
             String content = readTemplate(relativePath);
             return Optional.of(new PromptTemplate(uri, TemplateDescriptions.extract(content), content));
-        } catch (SdkException exception) {
+        } catch (A2ATError exception) {
             return Optional.empty();
         }
     }
@@ -235,7 +235,7 @@ public final class PromptTemplateCatalog {
                 try {
                     return Files.readString(localPath, StandardCharsets.UTF_8);
                 } catch (IOException exception) {
-                    throw new SdkException("Failed to read prompt template: " + localPath, exception);
+                    throw new A2ATError("Failed to read prompt template: " + localPath, exception);
                 }
             }
         }
@@ -250,7 +250,7 @@ public final class PromptTemplateCatalog {
         try (stream) {
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException exception) {
-            throw new SdkException("Failed to read prompt template: " + classpathPath, exception);
+            throw new A2ATError("Failed to read prompt template: " + classpathPath, exception);
         }
     }
 

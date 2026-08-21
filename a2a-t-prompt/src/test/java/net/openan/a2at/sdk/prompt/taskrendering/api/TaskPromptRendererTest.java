@@ -108,4 +108,18 @@ class TaskPromptRendererTest {
                 TaskPromptRenderException.class,
                 () -> renderer.render("Site: {site}\nTime Range: {time_range}", Map.of("site", "Site A")));
     }
+
+    @Test
+    void renderRaisesNullPointerExceptionWhenTemplateIsNull() {
+        NullPointerException exception =
+                assertThrows(NullPointerException.class, () -> renderer.render(null, Map.of("site", "Site A")));
+
+        assertEquals("Template text must not be null.", exception.getMessage());
+    }
+
+    @Test
+    void renderRaisesWhenTemplateHasUnbalancedBraces() {
+        assertThrows(
+                TaskPromptRenderException.class, () -> renderer.render("Site: {{site}", Map.of("site", "Site A")));
+    }
 }

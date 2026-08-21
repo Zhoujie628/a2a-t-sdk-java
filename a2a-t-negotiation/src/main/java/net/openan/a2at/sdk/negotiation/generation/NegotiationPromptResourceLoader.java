@@ -3,11 +3,10 @@ package net.openan.a2at.sdk.negotiation.generation;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 import net.openan.a2at.sdk.core.resources.PathSegments;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 
 /**
  * Loads negotiation LLM prompt resources from the classpath bundle packaged with the SDK.
@@ -52,13 +51,12 @@ public class NegotiationPromptResourceLoader {
 
     private static String loadPrompt(String fileName, String promptCategory, String language) {
         if (!PathSegments.isSimpleSegment(promptCategory)) {
-            throw new NegotiationContentException(
-                    "Prompt category must be a non-blank simple path segment but was " + promptCategory + ".",
-                    "promptCategory");
+            throw new IllegalArgumentException(
+                    "Prompt category must be a non-blank simple path segment but was " + promptCategory + ".");
         }
         if (!PathSegments.isSimpleSegment(language)) {
-            throw new NegotiationContentException(
-                    "Prompt language must be a non-blank simple path segment but was " + language + ".", "language");
+            throw new IllegalArgumentException(
+                    "Prompt language must be a non-blank simple path segment but was " + language + ".");
         }
         String path = CLASSPATH_ROOT + promptCategory + "/" + language + "/" + fileName;
         return readResource(path);
@@ -73,7 +71,7 @@ public class NegotiationPromptResourceLoader {
         try (stream) {
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException exception) {
-            throw new SdkException("Failed to read negotiation prompt resource: " + path, exception);
+            throw new A2ATError("Failed to read negotiation prompt resource: " + path, exception);
         }
     }
 }

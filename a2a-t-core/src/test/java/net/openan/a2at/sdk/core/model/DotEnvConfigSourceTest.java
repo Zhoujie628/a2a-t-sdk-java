@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.ConfigFileNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -117,16 +117,16 @@ class DotEnvConfigSourceTest {
     }
 
     /**
-     * Verifies that {@link DotEnvConfigSource#load(Path)} throws {@link SdkException}
+     * Verifies that {@link DotEnvConfigSource#load(Path)} throws {@link A2ATError}
      * when the number of entries exceeds the maximum limit (200).
      *
      * <p>Scenario: A .env file contains more than 200 valid entries.
-     * Expected result: SdkException is thrown with message indicating the limit was exceeded.
+     * Expected result: A2ATError is thrown with message indicating the limit was exceeded.
      *
      * @throws IOException if temp file creation fails
      */
     @Test
-    void should_throwSdkException_When_entriesExceedMaxLimit() throws IOException {
+    void should_throwA2ATError_When_entriesExceedMaxLimit() throws IOException {
         Path envFile = Files.createTempFile("a2at-dotenv-max", ".env");
         StringBuilder content = new StringBuilder();
         for (int i = 0; i < 201; i++) {
@@ -134,7 +134,7 @@ class DotEnvConfigSourceTest {
         }
         Files.writeString(envFile, content.toString());
 
-        SdkException exception = assertThrows(SdkException.class, () -> DotEnvConfigSource.load(envFile));
+        A2ATError exception = assertThrows(A2ATError.class, () -> DotEnvConfigSource.load(envFile));
 
         assertEquals("Config file exceeds maximum allowed entries: 200", exception.getMessage());
     }

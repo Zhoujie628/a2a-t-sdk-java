@@ -30,7 +30,6 @@ import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
@@ -361,8 +360,8 @@ class FromTextLlmPipelineTest {
     }
 
     /**
-     * IT-B-005 (4): a template URI whose phase segment contradicts the method is a programming error with the
-     * templateUri problem field and never reaches the LLM.
+     * IT-B-005 (4): a template URI whose phase segment contradicts the method is a programming error with an
+     * {@link IllegalArgumentException} pointing at the template URI and never reaches the LLM.
      */
     @Test
     void phaseMismatchedTemplateUriFailsBeforeAnyLlmCall() {
@@ -370,14 +369,16 @@ class FromTextLlmPipelineTest {
                 extractionJson(GoldenCase.INFORMATION_PROPOSE.content(), NegotiationPhase.PROPOSE));
         NegotiationGenerationOrchestrator orchestrator = orchestrator(ZH_CN, llm, 3);
 
-        NegotiationContentException failure = assertThrows(
-                NegotiationContentException.class,
+        IllegalArgumentException failure = assertThrows(
+                IllegalArgumentException.class,
                 () -> orchestrator.generateProposeFromText(
                         "请提供区域。",
                         GoldenCase.INFORMATION_PROPOSE.context(),
                         GoldenCase.INFORMATION_ACCEPT.templateUri()));
 
-        assertEquals("templateUri", failure.getField());
+        assertTrue(
+                failure.getMessage().contains("Template URI is malformed or contradicts the expected phase PROPOSE"),
+                "the failure must point at the template URI but was: " + failure.getMessage());
         assertEquals(0, llm.calls);
     }
 

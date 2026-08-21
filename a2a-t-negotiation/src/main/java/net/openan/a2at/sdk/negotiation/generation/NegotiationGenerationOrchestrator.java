@@ -2,6 +2,7 @@ package net.openan.a2at.sdk.negotiation.generation;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
@@ -12,7 +13,6 @@ import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
@@ -98,15 +98,14 @@ public final class NegotiationGenerationOrchestrator {
      * @param templateUri template URI such as {@code Negotiation-T/v1/information-negotiation/propose}; its phase
      *     segment must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NegotiationContentException if the data or its context is null, the template URI is malformed, or its
-     *     phase or type contradicts the method or the content type
+     * @throws NullPointerException if the data or its context is null
+     * @throws IllegalArgumentException if the template URI is malformed, or its phase or type contradicts the method
+     *     or the content type
      * @throws NegotiationGenerationException with the code {@code template_not_found} when no template exists for the
      *     URI in any resource root, or the code {@code negotiation_slot_missing} when rendering the template fails
      */
     public MetadataContent generateProposeFromData(NegotiationProposeData data, String templateUri) {
-        if (data == null) {
-            throw new NegotiationContentException("Negotiation propose data must not be null.", "data");
-        }
+        Objects.requireNonNull(data, "Negotiation propose data must not be null.");
         return generateFromData(data.context(), data.content(), templateUri, NegotiationPhase.PROPOSE);
     }
 
@@ -120,15 +119,14 @@ public final class NegotiationGenerationOrchestrator {
      * @param templateUri template URI such as {@code Negotiation-T/v1/information-negotiation/accept-reject}; its phase
      *     segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NegotiationContentException if the data or its context is null, the template URI is malformed, its phase
-     *     or type contradicts the method or the content, or the content conclusion is not {@code Accept}
+     * @throws NullPointerException if the data or its context is null
+     * @throws IllegalArgumentException if the template URI is malformed, its phase or type contradicts the method or
+     *     the content, or the content conclusion is not {@code Accept}
      * @throws NegotiationGenerationException with the code {@code template_not_found} when no template exists for the
      *     URI in any resource root, or the code {@code negotiation_slot_missing} when rendering the template fails
      */
     public MetadataContent generateAcceptFromData(NegotiationEndingData data, String templateUri) {
-        if (data == null) {
-            throw new NegotiationContentException("Negotiation ending data must not be null.", "data");
-        }
+        Objects.requireNonNull(data, "Negotiation ending data must not be null.");
         return generateFromData(data.context(), data.content(), templateUri, NegotiationPhase.ACCEPT);
     }
 
@@ -142,15 +140,14 @@ public final class NegotiationGenerationOrchestrator {
      * @param templateUri template URI such as {@code Negotiation-T/v1/feasibility-negotiation/accept-reject}; its phase
      *     segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NegotiationContentException if the data or its context is null, the template URI is malformed, its phase
-     *     or type contradicts the method or the content, or the content conclusion is not {@code Reject}
+     * @throws NullPointerException if the data or its context is null
+     * @throws IllegalArgumentException if the template URI is malformed, its phase or type contradicts the method or
+     *     the content, or the content conclusion is not {@code Reject}
      * @throws NegotiationGenerationException with the code {@code template_not_found} when no template exists for the
      *     URI in any resource root, or the code {@code negotiation_slot_missing} when rendering the template fails
      */
     public MetadataContent generateRejectFromData(NegotiationEndingData data, String templateUri) {
-        if (data == null) {
-            throw new NegotiationContentException("Negotiation ending data must not be null.", "data");
-        }
+        Objects.requireNonNull(data, "Negotiation ending data must not be null.");
         return generateFromData(data.context(), data.content(), templateUri, NegotiationPhase.REJECT);
     }
 
@@ -167,8 +164,8 @@ public final class NegotiationGenerationOrchestrator {
      * @param templateUri template URI such as {@code Negotiation-T/v1/target-negotiation/propose}; its phase segment
      *     must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NegotiationContentException if the context is null or the template URI is malformed or its phase
-     *     contradicts the method
+     * @throws NullPointerException if the context is null
+     * @throws IllegalArgumentException if the template URI is malformed or its phase contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found} when no template or prompt
      *     resource exists for the URI and language, {@code negotiation_content_extract_failed} or
      *     {@code negotiation_llm_infrastructure_error} when the extraction step fails after exhausting its retries,
@@ -191,8 +188,8 @@ public final class NegotiationGenerationOrchestrator {
      * @param templateUri template URI such as {@code Negotiation-T/v1/information-negotiation/accept-reject}; its phase
      *     segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NegotiationContentException if the context is null or the template URI is malformed or its phase
-     *     contradicts the method
+     * @throws NullPointerException if the context is null
+     * @throws IllegalArgumentException if the template URI is malformed or its phase contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found} when no template or prompt
      *     resource exists for the URI and language, {@code negotiation_content_extract_failed} or
      *     {@code negotiation_llm_infrastructure_error} when the extraction step fails after exhausting its retries,
@@ -215,8 +212,8 @@ public final class NegotiationGenerationOrchestrator {
      * @param templateUri template URI such as {@code Negotiation-T/v1/feasibility-negotiation/accept-reject}; its phase
      *     segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws NegotiationContentException if the context is null or the template URI is malformed or its phase
-     *     contradicts the method
+     * @throws NullPointerException if the context is null
+     * @throws IllegalArgumentException if the template URI is malformed or its phase contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found} when no template or prompt
      *     resource exists for the URI and language, {@code negotiation_content_extract_failed} or
      *     {@code negotiation_llm_infrastructure_error} when the extraction step fails after exhausting its retries,
@@ -291,8 +288,8 @@ public final class NegotiationGenerationOrchestrator {
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code propose}
      * @return filled parameter data carrying the context parameters and the extracted parameters
-     * @throws NegotiationContentException if the schema is null or the template URI is malformed or its phase
-     *     contradicts the method
+     * @throws NullPointerException if the schema is null
+     * @throws IllegalArgumentException if the template URI is malformed or its phase contradicts the method
      * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input} when the prompt is
      *     not a negotiation message, {@code negotiation_rule_violation} when the negotiation context violates a rule,
      *     {@code negotiation_semantic_rejected} when the semantic validation rejects the message,
@@ -316,8 +313,8 @@ public final class NegotiationGenerationOrchestrator {
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
-     * @throws NegotiationContentException if the schema is null or the template URI is malformed or its phase
-     *     contradicts the method
+     * @throws NullPointerException if the schema is null
+     * @throws IllegalArgumentException if the template URI is malformed or its phase contradicts the method
      * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input} when the prompt is
      *     not a negotiation message, {@code negotiation_rule_violation} when the negotiation context violates a rule,
      *     {@code negotiation_semantic_rejected} when the semantic validation rejects the message,
@@ -340,8 +337,8 @@ public final class NegotiationGenerationOrchestrator {
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
-     * @throws NegotiationContentException if the schema is null or the template URI is malformed or its phase
-     *     contradicts the method
+     * @throws NullPointerException if the schema is null
+     * @throws IllegalArgumentException if the template URI is malformed or its phase contradicts the method
      * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input} when the prompt is
      *     not a negotiation message, {@code negotiation_rule_violation} when the negotiation context violates a rule,
      *     {@code negotiation_semantic_rejected} when the semantic validation rejects the message,
@@ -356,7 +353,7 @@ public final class NegotiationGenerationOrchestrator {
             NegotiationContext context, NegotiationContent content, String templateUri, NegotiationPhase phase) {
         requireContext(context);
         try {
-            NegotiationReference reference = NegotiationReference.parse(templateUri, phase, language);
+            NegotiationReference reference = requireReference(templateUri, phase);
             PromptTemplate template = loadTemplate(reference);
             String promptText = renderMessage(context, content, reference, template);
             return completeGeneration(reference, promptText, context);
@@ -371,7 +368,7 @@ public final class NegotiationGenerationOrchestrator {
             String text, NegotiationContext context, String templateUri, NegotiationPhase phase) {
         requireContext(context);
         try {
-            NegotiationReference reference = NegotiationReference.parse(templateUri, phase, language);
+            NegotiationReference reference = requireReference(templateUri, phase);
             PromptTemplate template = loadTemplate(reference);
             NegotiationContent content = extractContent(text, reference);
             String promptText = renderMessage(context, content, reference, template);
@@ -432,10 +429,8 @@ public final class NegotiationGenerationOrchestrator {
 
     private FilledParamData validateAndFilling(
             String prompt, Map<String, Object> schema, String templateUri, NegotiationPhase phase) {
-        if (schema == null) {
-            throw new NegotiationContentException("Parameter schema must not be null.", "schema");
-        }
-        NegotiationReference reference = NegotiationReference.parse(templateUri, phase, language);
+        Objects.requireNonNull(schema, "Parameter schema must not be null.");
+        NegotiationReference reference = requireReference(templateUri, phase);
         try {
             return paramExtractor.extract(prompt, schema, reference);
         } catch (NegotiationParamExtractionException failure) {
@@ -448,15 +443,30 @@ public final class NegotiationGenerationOrchestrator {
         }
     }
 
+    /**
+     * Parses the template URI against one expected phase, rejecting every URI the parse rejects.
+     *
+     * @param templateUri template URI declared by the caller
+     * @param phase API-level phase the calling method operates on
+     * @return reference addressed by the URI carrying the expected phase
+     * @throws IllegalArgumentException if the URI is null, blank, malformed or its phase segment does not match the
+     *     expected phase
+     */
+    private NegotiationReference requireReference(String templateUri, NegotiationPhase phase) {
+        return NegotiationReference.tryParse(templateUri, phase, language)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Template URI is malformed or contradicts the expected phase " + phase + " ("
+                                + phase.uriSegment() + "): " + templateUri + "."));
+    }
+
     private Optional<NegotiationReference> parseQueryReference(String templateUri) {
         // The URI layer cannot distinguish accept from reject because both phases share the accept-reject template
         // segment. The query therefore addresses the shared template through the ACCEPT phase; the parsed phase is an
         // addressing artifact only and must never be read as the phase of any message.
         for (NegotiationPhase phase : List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT)) {
-            try {
-                return Optional.of(NegotiationReference.parse(templateUri, phase, language));
-            } catch (NegotiationContentException exception) {
-                // The next candidate phase may still match the URI segment.
+            Optional<NegotiationReference> reference = NegotiationReference.tryParse(templateUri, phase, language);
+            if (reference.isPresent()) {
+                return reference;
             }
         }
         return Optional.empty();
@@ -522,8 +532,6 @@ public final class NegotiationGenerationOrchestrator {
     }
 
     private static void requireContext(NegotiationContext context) {
-        if (context == null) {
-            throw new NegotiationContentException("Negotiation context must not be null.", "context");
-        }
+        Objects.requireNonNull(context, "Negotiation context must not be null.");
     }
 }

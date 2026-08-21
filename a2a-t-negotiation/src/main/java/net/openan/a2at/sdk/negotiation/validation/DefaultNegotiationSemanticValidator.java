@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 import net.openan.a2at.sdk.llm.LLMClient;
@@ -142,7 +142,7 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
         try (stream) {
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException exception) {
-            throw new SdkException(
+            throw new A2ATError(
                     "Failed to read negotiation semantic validation prompt: " + classpathPath, exception);
         }
     }

@@ -1,13 +1,16 @@
 package net.openan.a2at.sdk.server.exception;
 
+import net.openan.a2at.sdk.core.exception.A2ATError;
+
 /**
- * Internal exception used to carry standardized compliance error details.
+ * Compliance-check failure carrying a stable error code and the compliance stage where the failure occurred.
+ *
+ * <p>Part of the {@link A2ATError} tree: callers can catch the {@link A2ATError} root to handle any A2A-T processing
+ * failure and dispatch on its machine-readable error code.
  *
  * @since 2026-06
  */
-public final class PromptComplianceCheckException extends RuntimeException {
-
-    private final String code;
+public final class PromptComplianceCheckException extends A2ATError {
 
     private final String stage;
 
@@ -19,18 +22,8 @@ public final class PromptComplianceCheckException extends RuntimeException {
      * @param stage compliance stage where the failure occurred
      */
     public PromptComplianceCheckException(String code, String message, String stage) {
-        super(message);
-        this.code = code;
+        super(code, message);
         this.stage = stage;
-    }
-
-    /**
-     * Returns the stable compliance error code.
-     *
-     * @return stable error code
-     */
-    public String code() {
-        return code;
     }
 
     /**
@@ -38,7 +31,7 @@ public final class PromptComplianceCheckException extends RuntimeException {
      *
      * @return failure stage
      */
-    public String stage() {
+    public String getStage() {
         return stage;
     }
 }

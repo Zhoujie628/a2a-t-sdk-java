@@ -3,6 +3,7 @@ package net.openan.a2at.sdk.negotiation.generation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.json.JacksonJsonValueParser;
 import net.openan.a2at.sdk.core.json.JsonValueParser;
@@ -15,7 +16,6 @@ import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
@@ -94,16 +94,14 @@ public final class DefaultNegotiationContentExtractor implements NegotiationCont
      * @param text free-text input describing the message content
      * @param reference reference identifying the negotiation type, phase and language to extract for
      * @return typed negotiation content matching the reference
-     * @throws NegotiationContentException if the reference is null or the text is blank
+     * @throws NullPointerException if the reference is null
      * @throws NegotiationGenerationException with one of the codes {@code negotiation_llm_infrastructure_error},
      *     {@code negotiation_content_extract_failed}, {@code negotiation_slot_missing} or
      *     {@code negotiation_invalid_input}
      */
     @Override
     public NegotiationContent extract(String text, NegotiationReference reference) {
-        if (reference == null) {
-            throw new NegotiationContentException("Negotiation reference must not be null.", "reference");
-        }
+        Objects.requireNonNull(reference, "Negotiation reference must not be null.");
         if (text == null || text.isBlank()) {
             throw new NegotiationGenerationException(
                     A2ATErrorCodes.NEGOTIATION_INVALID_INPUT,

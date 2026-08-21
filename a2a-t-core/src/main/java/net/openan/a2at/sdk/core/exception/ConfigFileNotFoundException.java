@@ -7,7 +7,7 @@ import java.nio.file.Path;
  *
  * @since 2026-06
  */
-public final class ConfigFileNotFoundException extends SdkException {
+public final class ConfigFileNotFoundException extends A2ATError {
 
     /**
      * Creates one exception for one missing config file.

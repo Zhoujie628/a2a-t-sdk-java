@@ -72,8 +72,8 @@ class LlmBackedPromptMetadataExtractorTest {
         PromptComplianceCheckException error =
                 assertThrows(PromptComplianceCheckException.class, () -> extractor.extract("unknown prompt"));
 
-        assertEquals("processed_prompt_parse_error", error.code());
-        assertEquals("prompt_parse", error.stage());
+        assertEquals("processed_prompt_parse_error", error.getCode());
+        assertEquals("prompt_parse", error.getStage());
     }
 
     @Test
@@ -98,8 +98,8 @@ class LlmBackedPromptMetadataExtractorTest {
         PromptComplianceCheckException error =
                 assertThrows(PromptComplianceCheckException.class, () -> extractor.extract("bad prompt"));
 
-        assertEquals("slot_validation_error", error.code());
-        assertEquals("slot_validation", error.stage());
+        assertEquals("slot_validation_error", error.getCode());
+        assertEquals("slot_validation", error.getStage());
     }
 
     @Test
@@ -122,8 +122,8 @@ class LlmBackedPromptMetadataExtractorTest {
         PromptComplianceCheckException error =
                 assertThrows(PromptComplianceCheckException.class, () -> extractor.extract("prompt"));
 
-        assertEquals("template_not_found", error.code());
-        assertEquals("generation", error.stage());
+        assertEquals("template_not_found", error.getCode());
+        assertEquals("generation", error.getStage());
     }
 
     private static final class RecordingClient implements LLMClient {

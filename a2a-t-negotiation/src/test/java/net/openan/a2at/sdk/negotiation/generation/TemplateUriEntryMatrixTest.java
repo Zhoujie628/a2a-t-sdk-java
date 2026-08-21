@@ -20,7 +20,6 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
@@ -108,8 +107,8 @@ class TemplateUriEntryMatrixTest {
 
     /**
      * Entry (c): every malformed URI — wrong segment count, prefix, version, type suffix, separator (underscore
-     * misspelling), unknown type and invalid phase segment — fails as a programming error pointing at
-     * {@code templateUri}, without any LLM call.
+     * misspelling), unknown type and invalid phase segment — fails as a programming error with an
+     * {@link IllegalArgumentException} pointing at the template URI, without any LLM call.
      */
     @ParameterizedTest(name = "malformed URI [{0}] is rejected as a templateUri programming error")
     @ValueSource(
@@ -133,11 +132,13 @@ class TemplateUriEntryMatrixTest {
                 .llmClient(llm)
                 .build();
 
-        NegotiationContentException failure = assertThrows(
-                NegotiationContentException.class,
+        IllegalArgumentException failure = assertThrows(
+                IllegalArgumentException.class,
                 () -> orchestrator.generateProposeFromData(informationProposeData(), templateUri));
 
-        assertEquals("templateUri", failure.getField());
+        assertTrue(
+                failure.getMessage().contains("Template URI is malformed or contradicts the expected phase PROPOSE"),
+                "the failure must point at the template URI but was: " + failure.getMessage());
         assertEquals(0, llm.calls);
     }
 

@@ -7,11 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 import net.openan.a2at.sdk.core.resources.PathSegments;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
@@ -57,14 +56,13 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
      * @param language locale identifier such as {@code zh-CN} or {@code en-US}
      * @param localRootDir local prompt resource root containing the {@code templates/} tree; null or blank disables
      *     local template overrides
-     * @throws NegotiationContentException if the language is not a simple path segment
+     * @throws IllegalArgumentException if the language is not a simple path segment
      */
     public DefaultNegotiationTemplateLoader(String language, String localRootDir) {
         if (!PathSegments.isSimpleSegment(language)) {
-            throw new NegotiationContentException(
+            throw new IllegalArgumentException(
                     "Negotiation template loader language must be a non-blank simple path segment but was " + language
-                            + ".",
-                    "language");
+                            + ".");
         }
         this.language = language;
         this.localRootDir = localRootDir == null || localRootDir.isBlank() ? null : Path.of(localRootDir);
@@ -128,7 +126,7 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
                 try {
                     return Files.readString(localPath, StandardCharsets.UTF_8);
                 } catch (IOException exception) {
-                    throw new SdkException("Failed to read negotiation template: " + localPath, exception);
+                    throw new A2ATError("Failed to read negotiation template: " + localPath, exception);
                 }
             }
         }
@@ -144,7 +142,7 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
         try (stream) {
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException exception) {
-            throw new SdkException("Failed to read negotiation template: " + classpathPath, exception);
+            throw new A2ATError("Failed to read negotiation template: " + classpathPath, exception);
         }
     }
 

@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotJsonSchema;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
 
@@ -43,7 +43,7 @@ public final class LocalFilePromptSlotSchemaLoader implements PromptSlotSchemaLo
                         .findFirst();
                 schemaPath = match.orElse(null);
             } catch (IOException exception) {
-                throw new SdkException("Failed to scan slot schema resources: " + slotsRoot, exception);
+                throw new A2ATError("Failed to scan slot schema resources: " + slotsRoot, exception);
             }
             if (schemaPath == null) {
                 throw notFound(scenarioCode, language);
@@ -53,7 +53,7 @@ public final class LocalFilePromptSlotSchemaLoader implements PromptSlotSchemaLo
             return PromptResourceJsonParser.parse(Files.readString(schemaPath), PromptSlotJsonSchema.class)
                     .toPromptSlotSchema(scenarioCode);
         } catch (IOException exception) {
-            throw new SdkException("Failed to read slot schema resource: " + schemaPath, exception);
+            throw new A2ATError("Failed to read slot schema resource: " + schemaPath, exception);
         }
     }
 

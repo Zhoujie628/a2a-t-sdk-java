@@ -14,7 +14,6 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
@@ -28,8 +27,9 @@ import org.junit.jupiter.api.Test;
  * Verifies the single-root failure contract of the negotiation content layer.
  *
  * <p>Every runtime failure of the generation and parameter-extraction pipelines is catchable through the common
- * {@link A2ATError} root, while programming errors of the content layer ({@link NegotiationContentException}) stay
- * outside that tree so that callers cannot accidentally swallow them with a generic processing-failure handler.
+ * {@link A2ATError} root, while programming errors of the content layer (standard {@link IllegalArgumentException}
+ * and {@link NullPointerException} of argument validation) stay outside that tree so that callers cannot accidentally
+ * swallow them with a generic processing-failure handler.
  */
 class NegotiationExceptionTreeRootCatchTest {
 
@@ -139,21 +139,55 @@ class NegotiationExceptionTreeRootCatchTest {
         } catch (A2ATError caughtByRoot) {
             fail("content programming errors must stay outside the A2ATError tree but were caught: "
                     + caughtByRoot.getMessage());
-        } catch (NegotiationContentException expected) {
+        } catch (IllegalArgumentException expected) {
             assertFalse(
                     A2ATError.class.isInstance(expected),
                     "content programming errors must stay outside the A2ATError tree");
-            assertEquals("templateUri", expected.getField());
+            assertTrue(
+                    expected.getMessage().contains("Template URI is malformed"),
+                    "the failure must point at the template URI but was: " + expected.getMessage());
         }
     }
 
     @Test
     void contentProgrammingErrorsOfTheContextStayOutsideTheCommonRoot() {
-        NegotiationContentException failure =
-                assertThrows(NegotiationContentException.class, () -> new NegotiationContext("  ", 1, 5));
+        IllegalArgumentException failure =
+                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext("  ", 1, 5));
 
         assertFalse(
                 A2ATError.class.isInstance(failure), "content programming errors must stay outside the A2ATError tree");
+    }
+
+    @Test
+    void nullPromptOnValidateAndFillingStaysOutsideTheCommonRoot() {
+        NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .build();
+
+        NullPointerException failure = assertThrows(
+                NullPointerException.class,
+                () -> orchestrator.validateAndFillingProposeData(null, Map.of("type", "object"), INFORMATION_PROPOSE_URI));
+
+        assertFalse(A2ATError.class.isInstance(failure), "a null prompt is a programming error and must stay outside the A2ATError tree");
+    }
+
+    @Test
+    void blankPromptOnValidateAndFillingStaysOutsideTheCommonRoot() {
+        NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .build();
+
+        IllegalArgumentException failure = assertThrows(
+                IllegalArgumentException.class,
+                () -> orchestrator.validateAndFillingProposeData(
+                        "   ", Map.of("type", "object"), INFORMATION_PROPOSE_URI));
+
+        assertFalse(
+                A2ATError.class.isInstance(failure),
+                "a blank prompt is a programming error and must stay outside the A2ATError tree");
+        assertTrue(
+                failure.getMessage().contains("blank"),
+                "the failure must point at the blank prompt but was: " + failure.getMessage());
     }
 
     /**

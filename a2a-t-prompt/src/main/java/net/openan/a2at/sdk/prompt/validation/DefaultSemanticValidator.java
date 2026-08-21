@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
-import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.json.JacksonJsonValueParser;
 import net.openan.a2at.sdk.core.json.JsonValueParser;
 import net.openan.a2at.sdk.core.model.PromptMessage;
@@ -98,7 +98,7 @@ public final class DefaultSemanticValidator implements SemanticValidator {
         try {
             schemaJson = OBJECT_MAPPER.writeValueAsString(schema);
         } catch (JsonProcessingException exception) {
-            throw new SdkException("Failed to serialize schema to JSON.", exception);
+            throw new A2ATError("Failed to serialize schema to JSON.", exception);
         }
 
         return userPromptTemplate

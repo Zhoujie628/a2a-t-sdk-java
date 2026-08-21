@@ -76,8 +76,8 @@ class LlmBackedPromptSemanticValidatorTest {
                                 "## notification_topic\n{{notification_topic}}\n",
                                 Map.of(SLOT_NAME, "Incident"))));
 
-        assertEquals("slot_validation_error", error.code());
-        assertEquals("slot_validation", error.stage());
+        assertEquals("slot_validation_error", error.getCode());
+        assertEquals("slot_validation", error.getStage());
     }
 
     private static final class RecordingClient implements LLMClient {

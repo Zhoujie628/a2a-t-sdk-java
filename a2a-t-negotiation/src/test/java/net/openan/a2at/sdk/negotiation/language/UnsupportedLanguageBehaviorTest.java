@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
@@ -26,12 +25,14 @@ class UnsupportedLanguageBehaviorTest {
 
     @Test
     void assemblingThePipelineForAnUnsupportedLanguageFailsWithTheLanguageHint() {
-        NegotiationContentException exception =
-                assertThrows(NegotiationContentException.class, () -> NegotiationGenerationOrchestratorBuilder.builder()
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> NegotiationGenerationOrchestratorBuilder.builder()
                         .language("fr-FR")
                         .build());
 
-        assertEquals("language", exception.getField());
+        assertTrue(
+                exception.getMessage().contains("fr-FR"),
+                "the failure must name the unsupported language: " + exception.getMessage());
         assertTrue(
                 exception.getMessage().contains("A2AT_LANGUAGE"),
                 "the failure must point at the language configuration: " + exception.getMessage());

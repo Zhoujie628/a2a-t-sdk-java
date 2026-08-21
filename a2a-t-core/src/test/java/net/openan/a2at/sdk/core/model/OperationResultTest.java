@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
  * <p>Tests cover the following scenarios:
  * <ul>
  *   <li>Creating successful results with values</li>
- *   <li>Creating failure results with SDK exceptions</li>
+ *   <li>Creating failure results with SDK errors</li>
  *   <li>Null safety for failure result errors</li>
  * </ul>
  *
@@ -40,15 +40,15 @@ class OperationResultTest {
     }
 
     /**
-     * Verifies that {@link OperationResult#failure(SdkException)} creates a result
+     * Verifies that {@link OperationResult#failure(A2ATError)} creates a result
      * containing an error without a value.
      *
-     * <p>Scenario: Create a failure result with an SdkException.
-     * Expected result: isSuccess() returns false, value() returns null, error() returns the exception.
+     * <p>Scenario: Create a failure result with an A2ATError.
+     * Expected result: isSuccess() returns false, value() returns null, error() returns the error.
      */
     @Test
     void should_carryErrorWithoutValue_When_failureResultCreated() {
-        SdkException error = new SdkException("operation failed");
+        A2ATError error = new A2ATError("operation failed");
 
         OperationResult<String> result = OperationResult.failure(error);
 
@@ -58,7 +58,7 @@ class OperationResultTest {
     }
 
     /**
-     * Verifies that {@link OperationResult#failure(SdkException)} rejects null errors.
+     * Verifies that {@link OperationResult#failure(A2ATError)} rejects null errors.
      *
      * <p>Scenario: Attempt to create a failure result with a null error.
      * Expected result: NullPointerException is thrown.

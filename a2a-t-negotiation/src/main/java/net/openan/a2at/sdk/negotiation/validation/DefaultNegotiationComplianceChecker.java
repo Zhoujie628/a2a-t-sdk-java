@@ -2,6 +2,7 @@ package net.openan.a2at.sdk.negotiation.validation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -52,9 +53,7 @@ public final class DefaultNegotiationComplianceChecker implements NegotiationCom
      */
     @Override
     public NegotiationRuleCheckResult check(String prompt, Vocabulary vocabulary) {
-        if (vocabulary == null) {
-            throw new NullPointerException("vocabulary");
-        }
+        Objects.requireNonNull(vocabulary, "vocabulary");
         List<String> contextBody = contextSectionBody(prompt, vocabulary.get("section.context"));
         if (contextBody == null) {
             return logResult(new NegotiationRuleCheckResult(false, false, List.of(), null));

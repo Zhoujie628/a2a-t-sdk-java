@@ -2,10 +2,10 @@ package net.openan.a2at.sdk.negotiation.generation;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
@@ -40,12 +40,9 @@ public final class FeasibilityProposeGenerator extends AbstractNegotiationGenera
                 "content.feasibilityNegotiationDescription",
                 "Feasibility negotiation description");
         NegotiationAction action = proposeContent.action();
-        if (action == null) {
-            throw new NegotiationContentException(
-                    "Feasibility negotiation action must not be null; it selects the conditional sections of the"
-                            + " message.",
-                    "content.action");
-        }
+        Objects.requireNonNull(
+                action,
+                "Feasibility negotiation action must not be null; it selects the conditional sections of the message.");
         Map<String, String> slots = new LinkedHashMap<>();
         slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(vocabulary.get("slot.feasibility"), proposeContent.feasibilityNegotiationDescription());

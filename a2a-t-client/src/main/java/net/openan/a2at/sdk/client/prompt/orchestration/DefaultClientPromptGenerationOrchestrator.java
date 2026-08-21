@@ -3,6 +3,7 @@ package net.openan.a2at.sdk.client.prompt.orchestration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import net.openan.a2at.sdk.core.model.MetadataContent;
@@ -12,12 +13,11 @@ import net.openan.a2at.sdk.client.prompt.extractor.ClientSlotValueExtractor;
 import net.openan.a2at.sdk.client.prompt.loader.ClientSlotSchemaLoader;
 import net.openan.a2at.sdk.client.prompt.loader.ClientTemplateLoader;
 import net.openan.a2at.sdk.client.prompt.recognition.ClientScenarioRecognizer;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.FailedParameter;
 import net.openan.a2at.sdk.core.exception.PromptGenerationException;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
-import net.openan.a2at.sdk.llm.LLMRuntimeError;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotDefinition;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
@@ -166,18 +166,13 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
 
     private MetadataContent generateFromTemplateUriWithMetadata(
             String userInput, String templateIdentifier, String extensionUri) {
-        if (templateIdentifier == null
-                || templateIdentifier.isBlank()
-                || !TEMPLATE_IDENTIFIER_PATTERN.matcher(templateIdentifier).matches()) {
-            throw new PromptGenerationException("invalid_template_uri",
-                    "Template URI is null, blank, or contains invalid characters.");
-        }
+        requireValidTemplateIdentifier(templateIdentifier);
         final String templateText;
         try {
             templateText = templateLoader.loadTemplate(templateIdentifier, language);
         } catch (ResourceNotFoundException e) {
             throw new PromptGenerationException("template_not_found", e.getMessage(), e);
-        } catch (SdkException e) {
+        } catch (A2ATError e) {
             throw new PromptGenerationException("prompt_resource_load_error", e.getMessage(), e);
         }
         final Map<String, String> slots;
@@ -185,7 +180,7 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
             slots = slotValueExtractor.extractSlots(userInput, templateIdentifier, language, templateText);
         } catch (ResourceNotFoundException e) {
             throw new PromptGenerationException("slot_schema_not_found", e.getMessage(), e);
-        } catch (LLMRuntimeError | SdkException e) {
+        } catch (A2ATError e) {
             throw new PromptGenerationException("llm_invocation_failed", e.getMessage(), e);
         }
         validateRequiredSlots(slots, templateIdentifier);
@@ -203,18 +198,13 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
             Map<String, Object> schema,
             String templateIdentifier,
             String extensionUri) {
-        if (templateIdentifier == null
-                || templateIdentifier.isBlank()
-                || !TEMPLATE_IDENTIFIER_PATTERN.matcher(templateIdentifier).matches()) {
-            throw new PromptGenerationException("invalid_template_uri",
-                    "Template URI is null, blank, or contains invalid characters.");
-        }
+        requireValidTemplateIdentifier(templateIdentifier);
         final String templateText;
         try {
             templateText = templateLoader.loadTemplate(templateIdentifier, language);
         } catch (ResourceNotFoundException e) {
             throw new PromptGenerationException("template_not_found", e.getMessage(), e);
-        } catch (SdkException e) {
+        } catch (A2ATError e) {
             throw new PromptGenerationException("prompt_resource_load_error", e.getMessage(), e);
         }
         final Map<String, String> slots;
@@ -223,7 +213,7 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
                     data, templateIdentifier, language, templateText, schema);
         } catch (ResourceNotFoundException e) {
             throw new PromptGenerationException("slot_schema_not_found", e.getMessage(), e);
-        } catch (LLMRuntimeError | SdkException e) {
+        } catch (A2ATError e) {
             throw new PromptGenerationException("llm_invocation_failed", e.getMessage(), e);
         }
         validateRequiredSlots(slots, templateIdentifier);
@@ -236,11 +226,25 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
         return new MetadataContent(templateIdentifier, renderedPrompt, extensionUri);
     }
 
+    /**
+     * Enforces the caller contract of the template identifier: a null identifier is a {@link NullPointerException},
+     * a blank or malformed identifier is an {@link IllegalArgumentException}. Both stay outside the {@link A2ATError}
+     * tree because they are programming errors of the caller.
+     */
+    private static void requireValidTemplateIdentifier(String templateIdentifier) {
+        Objects.requireNonNull(templateIdentifier, "templateIdentifier");
+        if (templateIdentifier.isBlank() || !TEMPLATE_IDENTIFIER_PATTERN.matcher(templateIdentifier).matches()) {
+            throw new IllegalArgumentException(
+                    "Template URI is blank or contains invalid characters (invalid_template_uri): "
+                            + templateIdentifier);
+        }
+    }
+
     private void validateRequiredSlots(Map<String, String> slots, String templateIdentifier) {
         final PromptSlotSchema schema;
         try {
             schema = slotSchemaLoader.loadSlotSchema(templateIdentifier, language);
-        } catch (SdkException e) {
+        } catch (A2ATError e) {
             throw new PromptGenerationException("slot_schema_not_found", e.getMessage(), e);
         }
         if (schema == null) {

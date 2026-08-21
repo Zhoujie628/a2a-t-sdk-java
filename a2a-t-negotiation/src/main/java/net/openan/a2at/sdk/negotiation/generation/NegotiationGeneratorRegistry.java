@@ -2,13 +2,13 @@ package net.openan.a2at.sdk.negotiation.generation;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Objects;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeContent;
@@ -53,44 +53,36 @@ public final class NegotiationGeneratorRegistry {
      * @param phase API-level phase addressed by the calling method
      * @param content typed content of the message
      * @return generator registered for the exact (type, phase) pair
-     * @throws NegotiationContentException if any argument is null, the content family does not match the phase, the
-     *     content runtime type does not match the negotiation type, or an ending content carries a conclusion that does
-     *     not match the phase
+     * @throws NullPointerException if any argument is null
+     * @throws IllegalArgumentException if the content family does not match the phase, the content runtime type does
+     *     not match the negotiation type, or an ending content carries a conclusion that does not match the phase
      */
     public NegotiationGenerator resolve(NegotiationType type, NegotiationPhase phase, NegotiationContent content) {
-        if (type == null) {
-            throw new NegotiationContentException("Negotiation type must not be null.", "type");
-        }
-        if (phase == null) {
-            throw new NegotiationContentException("Negotiation phase must not be null.", "phase");
-        }
-        if (content == null) {
-            throw new NegotiationContentException("Negotiation content must not be null.", "content");
-        }
+        Objects.requireNonNull(type, "Negotiation type must not be null.");
+        Objects.requireNonNull(phase, "Negotiation phase must not be null.");
+        Objects.requireNonNull(content, "Negotiation content must not be null.");
         boolean proposePhase = phase == NegotiationPhase.PROPOSE;
         boolean proposeContent = content instanceof NegotiationProposeContent;
         if (proposePhase != proposeContent) {
-            throw new NegotiationContentException(
+            throw new IllegalArgumentException(
                     "The " + phase + " phase requires " + (proposePhase ? "propose" : "ending")
                             + " content but received "
                             + (proposeContent ? "propose" : "ending") + " content of type "
-                            + content.getClass().getSimpleName() + ".",
-                    "content");
+                            + content.getClass().getSimpleName() + ".");
         }
         Class<?> expectedType = expectedContentClass(type, proposePhase);
         if (content.getClass() != expectedType) {
-            throw new NegotiationContentException(
+            throw new IllegalArgumentException(
                     "Negotiation type " + type + " requires content of type " + expectedType.getSimpleName()
-                            + " but received " + content.getClass().getSimpleName() + ".",
-                    "content");
+                            + " but received " + content.getClass().getSimpleName() + ".");
         }
         if (!proposePhase) {
             requireConclusionMatchesPhase((NegotiationEndingContent) content, phase);
         }
         NegotiationGenerator generator = (proposePhase ? proposeGenerators : endingGenerators).get(type);
         if (generator == null) {
-            throw new NegotiationContentException(
-                    "No negotiation generator is registered for type " + type + " and phase " + phase + ".", "type");
+            throw new IllegalArgumentException(
+                    "No negotiation generator is registered for type " + type + " and phase " + phase + ".");
         }
         LOGGER.atDebug().log(
                 "negotiation_generator_dispatched generator={} type={} phase={}",
@@ -101,19 +93,15 @@ public final class NegotiationGeneratorRegistry {
     }
 
     private static void requireConclusionMatchesPhase(NegotiationEndingContent content, NegotiationPhase phase) {
-        NegotiationConclusion conclusion = content.conclusion();
-        if (conclusion == null) {
-            throw new NegotiationContentException(
-                    "Negotiation conclusion must not be null; the " + phase + " phase requires a conclusion.",
-                    "content" + ".conclusion");
-        }
+        NegotiationConclusion conclusion = Objects.requireNonNull(
+                content.conclusion(),
+                "Negotiation conclusion must not be null; the " + phase + " phase requires a conclusion.");
         NegotiationConclusion expected =
                 phase == NegotiationPhase.ACCEPT ? NegotiationConclusion.ACCEPT : NegotiationConclusion.REJECT;
         if (conclusion != expected) {
-            throw new NegotiationContentException(
+            throw new IllegalArgumentException(
                     "The " + phase + " phase requires conclusion " + expected.literal() + " but the content carries "
-                            + conclusion.literal() + ".",
-                    "content.conclusion");
+                            + conclusion.literal() + ".");
         }
     }
 

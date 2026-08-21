@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 
 /**
  * Loads shared prompt templates from one local prompt resource root.
@@ -41,7 +41,7 @@ public final class LocalFilePromptTemplateLoader implements PromptTemplateTextLo
                         .findFirst();
                 templatePath = match.orElse(null);
             } catch (IOException exception) {
-                throw new SdkException("Failed to scan prompt template resources: " + templatesRoot, exception);
+                throw new A2ATError("Failed to scan prompt template resources: " + templatesRoot, exception);
             }
             if (templatePath == null) {
                 throw notFound(scenarioCode, language);
@@ -50,7 +50,7 @@ public final class LocalFilePromptTemplateLoader implements PromptTemplateTextLo
         try {
             return Files.readString(templatePath);
         } catch (IOException exception) {
-            throw new SdkException("Failed to read template resource: " + templatePath, exception);
+            throw new A2ATError("Failed to read template resource: " + templatePath, exception);
         }
     }
 

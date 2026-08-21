@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
+import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.exception.SdkException;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import net.openan.a2at.sdk.resources.ClasspathPromptResourceLoader;
@@ -86,9 +86,9 @@ class ClasspathPromptLoadersTest {
     }
 
     @Test
-    void invalidClasspathScenarioCatalogIsWrappedAsSdkException() {
-        SdkException exception = assertThrows(
-                SdkException.class, () -> new ClasspathPromptScenarioCatalogLoader(resourceLoader).load("broken"));
+    void invalidClasspathScenarioCatalogIsWrappedAsA2ATError() {
+        A2ATError exception = assertThrows(
+                A2ATError.class, () -> new ClasspathPromptScenarioCatalogLoader(resourceLoader).load("broken"));
 
         assertEquals("Failed to parse scenario catalog for language: broken", exception.getMessage());
     }

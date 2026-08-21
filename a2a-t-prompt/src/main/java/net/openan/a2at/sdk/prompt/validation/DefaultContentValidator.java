@@ -1,9 +1,8 @@
 package net.openan.a2at.sdk.prompt.validation;
 
 import java.util.Map;
-import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
+import java.util.Objects;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.core.validation.ContentValidationException;
 import net.openan.a2at.sdk.core.validation.ContentValidator;
 import net.openan.a2at.sdk.core.validation.TemplateReference;
 import net.openan.a2at.sdk.core.validation.ValidationPipeline;
@@ -57,15 +56,14 @@ public final class DefaultContentValidator implements ContentValidator {
 
     @Override
     public FilledParamData validate(String prompt, Map<String, Object> schema, String templateUri) {
-        if (templateUri == null || templateUri.isBlank()) {
-            throw new ContentValidationException(
-                    A2ATErrorCodes.VALIDATION_INVALID_INPUT, "Template URI must not be null or blank.");
+        Objects.requireNonNull(templateUri, "templateUri");
+        if (templateUri.isBlank()) {
+            throw new IllegalArgumentException("Template URI must not be blank.");
         }
 
         String[] parts = templateUri.split("/");
         if (parts.length < 3) {
-            throw new ContentValidationException(
-                    A2ATErrorCodes.VALIDATION_INVALID_INPUT,
+            throw new IllegalArgumentException(
                     "Template URI format must be {prefix}/v1/{scenario}, got: " + templateUri);
         }
 
@@ -74,16 +72,13 @@ public final class DefaultContentValidator implements ContentValidator {
         String scenario = parts[2];
 
         if (!extensionPrefix.equals(prefix)) {
-            throw new ContentValidationException(
-                    A2ATErrorCodes.VALIDATION_INVALID_INPUT,
+            throw new IllegalArgumentException(
                     "Template URI prefix '" + prefix + "' does not match expected extension prefix '" + extensionPrefix
                             + "'.");
         }
 
         if (!"v1".equals(version)) {
-            throw new ContentValidationException(
-                    A2ATErrorCodes.VALIDATION_INVALID_INPUT,
-                    "Unsupported template URI version: " + version);
+            throw new IllegalArgumentException("Unsupported template URI version: " + version);
         }
 
         TemplateReference reference = new SimpleTemplateReference(templateUri, language, extensionPrefix);

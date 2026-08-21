@@ -1,16 +1,15 @@
 package net.openan.a2at.sdk.core.exception;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Unified exception type for MetadataContent pipeline failures.
  *
+ * <p>The machine-readable error code is carried by the root {@link A2ATError} and is never null.
+ *
  * @since 2026-08
  */
-public final class PromptGenerationException extends SdkException {
-
-    private final String code;
+public final class PromptGenerationException extends A2ATError {
 
     private final List<FailedParameter> failedParameters;
 
@@ -19,10 +18,10 @@ public final class PromptGenerationException extends SdkException {
      *
      * @param code stable error code
      * @param message human-readable failure description
+     * @throws NullPointerException if {@code code} is null
      */
     public PromptGenerationException(String code, String message) {
-        super(message);
-        this.code = Objects.requireNonNull(code, "code must not be null");
+        super(code, message);
         this.failedParameters = List.of();
     }
 
@@ -33,10 +32,10 @@ public final class PromptGenerationException extends SdkException {
      * @param code stable error code
      * @param message human-readable failure description
      * @param failedParameters list of failed parameters
+     * @throws NullPointerException if {@code code} is null
      */
     public PromptGenerationException(String code, String message, List<FailedParameter> failedParameters) {
-        super(message);
-        this.code = Objects.requireNonNull(code, "code must not be null");
+        super(code, message);
         this.failedParameters = failedParameters == null ? List.of() : List.copyOf(failedParameters);
     }
 
@@ -47,20 +46,11 @@ public final class PromptGenerationException extends SdkException {
      * @param code stable error code
      * @param message human-readable failure description
      * @param cause root cause
+     * @throws NullPointerException if {@code code} is null
      */
     public PromptGenerationException(String code, String message, Throwable cause) {
-        super(message, cause);
-        this.code = Objects.requireNonNull(code, "code must not be null");
+        super(code, message, cause);
         this.failedParameters = List.of();
-    }
-
-    /**
-     * Returns the stable error code.
-     *
-     * @return error code
-     */
-    public String code() {
-        return code;
     }
 
     /**

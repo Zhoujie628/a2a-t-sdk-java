@@ -427,7 +427,7 @@ MetadataContent generateNegotiationAcceptPromptFromData(NegotiationEndingData da
 MetadataContent generateNegotiationRejectPromptFromData(NegotiationEndingData data, String templateUri)
 ```
 
-The typed content is validated, dispatched to the generator of the negotiation type addressed by the template URI, and rendered from that template. The accept variant requires `content.conclusion() == ACCEPT`, the reject variant `REJECT`; a mismatched conclusion (including `ABORT`) is a content error.
+The typed content is validated, dispatched to the generator of the negotiation type addressed by the template URI, and rendered from that template. The accept variant requires `content.conclusion() == ACCEPT`, the reject variant `REJECT`; a mismatched conclusion (including `ABORT`) is rejected with `IllegalArgumentException` as a programming error.
 
 **Generation from free text — one LLM extraction step with configurable retry:**
 
@@ -474,7 +474,7 @@ The template URI format is:
 Negotiation-T/v1/{type}-negotiation/{phase}
 ```
 
-where `{type}` is `information`, `target`, or `feasibility`, and `{phase}` is `propose` or `accept-reject`. Six built-in templates ship with the SDK, one per combination, each in `zh-CN` and `en-US`:
+where `{type}` is `information`, `target`, or `feasibility`, and `{phase}` is `propose` or `accept-reject`. URI parsing never throws: `NegotiationReference.tryParse` returns an `Optional<NegotiationReference>`, and a null, blank or malformed URI (wrong segment count, prefix, version, type or phase segment) simply yields an empty result. Six built-in templates ship with the SDK, one per combination, each in `zh-CN` and `en-US`:
 
 | Template URI | Purpose |
 |--|--|
@@ -508,7 +508,7 @@ All types live in `net.openan.a2at.sdk.negotiation.content`.
 | Target | `TargetProposeContent(description, intentUnderstanding, alignmentAndClarification, requestForClarification)` | `TargetEndingContent(conclusion, confirmedIntent, failureReason)` |
 | Feasibility | `FeasibilityProposeContent(description, action, contentsToEvaluate, infeasibilityDetailsAndProposal)` | `FeasibilityEndingContent(conclusion, feasibilitySummary)` |
 
-`NegotiationItem(name, value)` is one named entry of an item list. `NegotiationConclusion` carries `ACCEPT`, `REJECT`, and `ABORT`; only `Accept` and `Reject` are renderable — generation methods reject `ABORT` as a programming error. `NegotiationAction` (`REQUEST_FEASIBILITY_EVALUATION`, `PROPOSE_ALTERNATIVE_ON_FAILURE`) selects the conditional sections of the feasibility propose template.
+`NegotiationItem(name, value)` is one named entry of an item list. `NegotiationConclusion` carries `ACCEPT`, `REJECT`, and `ABORT`; only `Accept` and `Reject` are renderable — generation methods reject `ABORT` with an `IllegalArgumentException` (a programming error outside the `A2ATError` tree). `NegotiationAction` (`REQUEST_FEASIBILITY_EVALUATION`, `PROPOSE_ALTERNATIVE_ON_FAILURE`) selects the conditional sections of the feasibility propose template.
 
 **MetadataContent** — the generation result: `record MetadataContent(String templateUri, String promptText, String extensionUri)`. `buildMetadataContent()` returns exactly two keys: the TMF extension URI (`https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1`) mapping to the rendered message, and `template_uri` mapping to the template URI. This map is what travels in the A2A message metadata.
 
@@ -516,14 +516,20 @@ All types live in `net.openan.a2at.sdk.negotiation.content`.
 
 ### 1.10.5 Error Handling
 
-The exception tree has two branches under the SDK root:
+All SDK processing failures share one root, while programming errors stay outside it:
 
-- `A2ATError` — the processing-failure root of the whole SDK.
-  - `NegotiationProcessingException` — a negotiation processing failure carrying a machine-readable code; `getCode()` returns it.
+- `A2ATError` — the single root of **all** SDK processing failures (runtime, environment and data-processing failures). The machine-readable code is declared on the root itself: `getCode()` never returns `null` and carries the default `sdk_internal_error` when a failure has no more specific code. Catching this one type therefore covers every processing failure the SDK can raise, LLM and compliance failures included.
+  - `NegotiationProcessingException` — a negotiation processing failure.
     - `NegotiationGenerationException` — raised by generation calls.
-  - `A2ATParamExtractionError` — a parameter-extraction failure carrying a code and structured per-slot errors (`getCode()`, `getErrors()`).
+  - `A2ATParamExtractionError` — a parameter-extraction failure with structured per-slot errors; `getCode()` is inherited from the root, `getErrors()` returns the slot details.
     - `NegotiationParamExtractionException` — raised by `validateAndFilling*Data` calls.
-- `NegotiationContentException` — a **programming error** (blank context id, null data, malformed template URI, phase or conclusion mismatch). It extends `RuntimeException` directly, not `A2ATError`, and exposes `getField()` pointing at the offending input such as `templateUri` or `context.id`.
+  - `LLMError` — the LLM integration failure subtree, folded into the `A2ATError` tree.
+    - `LLMConfigError` — invalid LLM configuration or provider registration.
+    - `LLMRuntimeError` — an LLM infrastructure failure at call time.
+  - `PromptComplianceCheckException` — a compliance-check failure carrying the code and the compliance stage (`getStage()`); raised by the server-side compliance pipeline with the codes `processed_prompt_parse_error`, `slot_validation_error` and `template_not_found`.
+  - The remaining processing failures — prompt generation (`PromptGenerationException`), content validation (`ContentValidationException`), template rendering (`TaskPromptRenderException`), resource resolution (`ResourceNotFoundException`, `ConfigFileNotFoundException`), scenario recognition (`ScenarioRecognitionException`) and negotiation state access (`NegotiationStateException`) — are part of the same tree.
+
+Programming errors — argument-contract violations by the caller — intentionally stay **outside** the `A2ATError` tree, as standard JDK exceptions, so a generic `catch (A2ATError)` handler cannot swallow them: a null argument raises `NullPointerException`, and a blank, malformed or semantically contradictory argument (blank context id, malformed template URI, phase or conclusion mismatch, unsupported language) raises `IllegalArgumentException`. The former `NegotiationContentException` has been removed; the violations it used to report now surface as these standard exceptions, and each facade method documents them with `@throws` tags.
 
 Error codes and their meaning:
 
@@ -535,14 +541,15 @@ Error codes and their meaning:
 | `negotiation_semantic_rejected` | Semantic validation rejected the message | No |
 | `negotiation_rule_violation` | The negotiation context section violates a structural rule | No |
 | `negotiation_slot_missing` | A required slot is missing when rendering | No |
-| `negotiation_invalid_input` | The input is not valid for the operation (blank text, not a negotiation message, wrong conclusion) | No |
+| `negotiation_invalid_input` | The input is not valid for the operation (blank free text on the from-text generation calls, not a negotiation message, wrong conclusion) | No |
 | `param_extraction_failed` | Default code for extraction failures without a more specific code | No |
+| `sdk_internal_error` | Default code for SDK processing failures without a more specific code | No |
 
 Retry semantics: a failing LLM step carrying a retryable code is re-run up to the attempt limit configured by `A2AT_LLM_MAX_ATTEMPTS`; failures carrying any other code are rethrown immediately. When the attempts are exhausted, the original failure is rethrown with its original code. `A2AT_LLM_MAX_ATTEMPTS` defaults to 3 and is clamped to the range 1–10 (out-of-range values are clamped with a warning log).
 
 ### 1.10.6 Language Configuration
 
-The negotiation templates and the vocabulary used for rendering and section recognition are keyed by `A2AT_LANGUAGE`. Supported values are exactly `zh-CN` and `en-US`; there is no fallback — any other value fails with a `NegotiationContentException` when the vocabulary is resolved. Set the language explicitly in `client.env` / `server.env`:
+The negotiation templates and the vocabulary used for rendering and section recognition are keyed by `A2AT_LANGUAGE`. Supported values are exactly `zh-CN` and `en-US`; there is no fallback — any other value fails with an `IllegalArgumentException` when the vocabulary is resolved. Set the language explicitly in `client.env` / `server.env`:
 
 ```properties
 A2AT_LANGUAGE=zh-CN

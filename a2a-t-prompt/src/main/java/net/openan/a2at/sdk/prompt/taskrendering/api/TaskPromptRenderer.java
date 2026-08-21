@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.prompt.taskrendering.api;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,8 +31,9 @@ public final class TaskPromptRenderer implements SectionedTemplateRenderer {
      */
     @Override
     public String render(String templateText, Map<String, String> slots) {
-        if (templateText == null || !balancedBraces(templateText)) {
-            throw new TaskPromptRenderException("Template text is invalid.");
+        Objects.requireNonNull(templateText, "Template text must not be null.");
+        if (!balancedBraces(templateText)) {
+            throw new TaskPromptRenderException("Template text has unbalanced braces.");
         }
 
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(collapseSlotDrivenSections(templateText));

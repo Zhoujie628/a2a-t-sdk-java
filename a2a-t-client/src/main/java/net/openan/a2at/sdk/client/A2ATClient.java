@@ -70,6 +70,8 @@ public final class A2ATClient {
      * @param text natural-language task input
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
+     * @throws NullPointerException if the template URI is null
+     * @throws IllegalArgumentException if the template URI is blank or contains invalid characters
      */
     public MetadataContent generateTaskPromptFromText(
             String text, String templateUri) {
@@ -84,6 +86,8 @@ public final class A2ATClient {
      * @param schema optional data schema map for schema-guided extraction
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
+     * @throws NullPointerException if the template URI is null
+     * @throws IllegalArgumentException if the template URI is blank or contains invalid characters
      */
     public MetadataContent generateTaskPromptFromDataWithSchema(
             Map<String, Object> data, Map<String, Object> schema, String templateUri) {
@@ -101,6 +105,8 @@ public final class A2ATClient {
      * @param text natural-language authorization input
      * @param authorizationType authorization type used as the template identifier
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
+     * @throws NullPointerException if the authorization type is null
+     * @throws IllegalArgumentException if the authorization type is blank or contains invalid characters
      */
     public MetadataContent generateAuthPromptFromText(
             String text, String authorizationType) {
@@ -119,6 +125,8 @@ public final class A2ATClient {
      * @param schema optional data schema map for schema-guided extraction
      * @param authorizationType authorization type used as the template identifier
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
+     * @throws NullPointerException if the authorization type is null
+     * @throws IllegalArgumentException if the authorization type is blank or contains invalid characters
      */
     public MetadataContent generateAuthPromptFromDataWithSchema(
             Map<String, Object> data, Map<String, Object> schema, String authorizationType) {
@@ -132,6 +140,8 @@ public final class A2ATClient {
      * @param text natural-language notification input
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
+     * @throws NullPointerException if the template URI is null
+     * @throws IllegalArgumentException if the template URI is blank or contains invalid characters
      */
     public MetadataContent generateNotificationPromptFromText(
             String text, String templateUri) {
@@ -146,6 +156,8 @@ public final class A2ATClient {
      * @param schema optional data schema map for schema-guided extraction
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
+     * @throws NullPointerException if the template URI is null
+     * @throws IllegalArgumentException if the template URI is blank or contains invalid characters
      */
     public MetadataContent generateNotificationPromptFromDataWithSchema(
             Map<String, Object> data, Map<String, Object> schema, String templateUri) {
@@ -198,8 +210,9 @@ public final class A2ATClient {
      * @param templateUri template URI such as {@code Negotiation-T/v1/information-negotiation/propose}; its phase
      *     segment must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws net.openan.a2at.sdk.negotiation.content.NegotiationContentException if the data or its context is null,
-     *     the template URI is malformed, or its phase or type contradicts the method or the content type
+     * @throws NullPointerException if the data or its context is null
+     * @throws IllegalArgumentException if the template URI is malformed, or its phase or type contradicts the method
+     *     or the content type
      * @throws net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException with the code
      *     {@code template_not_found} when no template exists for the URI in any resource root, or the code
      *     {@code negotiation_slot_missing} when rendering the template fails
@@ -218,9 +231,9 @@ public final class A2ATClient {
      * @param templateUri template URI such as {@code Negotiation-T/v1/information-negotiation/accept-reject}; its phase
      *     segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws net.openan.a2at.sdk.negotiation.content.NegotiationContentException if the data or its context is null,
-     *     the template URI is malformed, its phase or type contradicts the method or the content, or the content
-     *     conclusion is not {@code Accept}
+     * @throws NullPointerException if the data or its context is null
+     * @throws IllegalArgumentException if the template URI is malformed, its phase or type contradicts the method or
+     *     the content, or the content conclusion is not {@code Accept}
      * @throws net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException with the code
      *     {@code template_not_found} when no template exists for the URI in any resource root, or the code
      *     {@code negotiation_slot_missing} when rendering the template fails
@@ -239,9 +252,9 @@ public final class A2ATClient {
      * @param templateUri template URI such as {@code Negotiation-T/v1/feasibility-negotiation/accept-reject}; its phase
      *     segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws net.openan.a2at.sdk.negotiation.content.NegotiationContentException if the data or its context is null,
-     *     the template URI is malformed, its phase or type contradicts the method or the content, or the content
-     *     conclusion is not {@code Reject}
+     * @throws NullPointerException if the data or its context is null
+     * @throws IllegalArgumentException if the template URI is malformed, its phase or type contradicts the method or
+     *     the content, or the content conclusion is not {@code Reject}
      * @throws net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException with the code
      *     {@code template_not_found} when no template exists for the URI in any resource root, or the code
      *     {@code negotiation_slot_missing} when rendering the template fails
@@ -263,8 +276,8 @@ public final class A2ATClient {
      * @param templateUri template URI such as {@code Negotiation-T/v1/target-negotiation/propose}; its phase segment
      *     must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws net.openan.a2at.sdk.negotiation.content.NegotiationContentException if the context is null or the
-     *     template URI is malformed or its phase contradicts the method
+     * @throws NullPointerException if the context is null
+     * @throws IllegalArgumentException if the template URI is malformed or its phase contradicts the method
      * @throws net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException with the code
      *     {@code template_not_found} when no template or prompt resource exists for the URI and language,
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when the
@@ -289,8 +302,8 @@ public final class A2ATClient {
      * @param templateUri template URI such as {@code Negotiation-T/v1/information-negotiation/accept-reject}; its phase
      *     segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws net.openan.a2at.sdk.negotiation.content.NegotiationContentException if the context is null or the
-     *     template URI is malformed or its phase contradicts the method
+     * @throws NullPointerException if the context is null
+     * @throws IllegalArgumentException if the template URI is malformed or its phase contradicts the method
      * @throws net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException with the code
      *     {@code template_not_found} when no template or prompt resource exists for the URI and language,
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when the
@@ -315,8 +328,8 @@ public final class A2ATClient {
      * @param templateUri template URI such as {@code Negotiation-T/v1/feasibility-negotiation/accept-reject}; its phase
      *     segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
-     * @throws net.openan.a2at.sdk.negotiation.content.NegotiationContentException if the context is null or the
-     *     template URI is malformed or its phase contradicts the method
+     * @throws NullPointerException if the context is null
+     * @throws IllegalArgumentException if the template URI is malformed or its phase contradicts the method
      * @throws net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException with the code
      *     {@code template_not_found} when no template or prompt resource exists for the URI and language,
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when the
@@ -399,8 +412,9 @@ public final class A2ATClient {
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code propose}
      * @return filled parameter data carrying the context parameters and the extracted parameters
-     * @throws net.openan.a2at.sdk.negotiation.content.NegotiationContentException if the schema is null or the template
-     *     URI is malformed or its phase contradicts the method
+     * @throws NullPointerException if the prompt or schema is null
+     * @throws IllegalArgumentException if the prompt is blank, or the template URI is malformed or its phase
+     *     contradicts the method
      * @throws net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException with the code
      *     {@code negotiation_invalid_input} when the prompt is not a negotiation message,
      *     {@code negotiation_rule_violation} when the negotiation context violates a rule,
@@ -425,8 +439,9 @@ public final class A2ATClient {
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
-     * @throws net.openan.a2at.sdk.negotiation.content.NegotiationContentException if the schema is null or the template
-     *     URI is malformed or its phase contradicts the method
+     * @throws NullPointerException if the prompt or schema is null
+     * @throws IllegalArgumentException if the prompt is blank, or the template URI is malformed or its phase
+     *     contradicts the method
      * @throws net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException with the code
      *     {@code negotiation_invalid_input} when the prompt is not a negotiation message,
      *     {@code negotiation_rule_violation} when the negotiation context violates a rule,
@@ -450,8 +465,9 @@ public final class A2ATClient {
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
-     * @throws net.openan.a2at.sdk.negotiation.content.NegotiationContentException if the schema is null or the template
-     *     URI is malformed or its phase contradicts the method
+     * @throws NullPointerException if the prompt or schema is null
+     * @throws IllegalArgumentException if the prompt is blank, or the template URI is malformed or its phase
+     *     contradicts the method
      * @throws net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException with the code
      *     {@code negotiation_invalid_input} when the prompt is not a negotiation message,
      *     {@code negotiation_rule_violation} when the negotiation context violates a rule,

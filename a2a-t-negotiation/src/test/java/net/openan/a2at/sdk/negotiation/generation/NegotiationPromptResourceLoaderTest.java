@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import org.junit.jupiter.api.Test;
 
 class NegotiationPromptResourceLoaderTest {
@@ -41,18 +40,14 @@ class NegotiationPromptResourceLoaderTest {
 
     @Test
     void rejectsPathLikeArguments() {
-        assertEquals(
-                "promptCategory",
-                assertThrows(
-                                NegotiationContentException.class,
-                                () -> loader.loadSystem("../information_negotiation", "zh-CN"))
-                        .getField());
-        assertEquals(
-                "language",
-                assertThrows(
-                                NegotiationContentException.class,
-                                () -> loader.loadUser("information_negotiation", "../zh-CN"))
-                        .getField());
+        assertTrue(assertThrows(
+                        IllegalArgumentException.class, () -> loader.loadSystem("../information_negotiation", "zh-CN"))
+                .getMessage()
+                .contains("Prompt category must be a non-blank simple path segment"));
+        assertTrue(
+                assertThrows(IllegalArgumentException.class, () -> loader.loadUser("information_negotiation", "../zh-CN"))
+                        .getMessage()
+                        .contains("Prompt language must be a non-blank simple path segment"));
     }
 
     @Test
@@ -112,8 +107,8 @@ class NegotiationPromptResourceLoaderTest {
     @Test
     void messageBuilderRejectsNullResourceLoader() {
         assertEquals(
-                "resourceLoader",
-                assertThrows(NegotiationContentException.class, () -> new NegotiationMessageBuilder(null))
-                        .getField());
+                "Negotiation message builder requires a prompt resource loader.",
+                assertThrows(NullPointerException.class, () -> new NegotiationMessageBuilder(null))
+                        .getMessage());
     }
 }

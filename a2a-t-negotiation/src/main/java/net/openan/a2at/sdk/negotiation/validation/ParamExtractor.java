@@ -55,7 +55,7 @@ public final class ParamExtractor {
         try {
             return pipeline.validate(prompt, schema, reference);
         } catch (ContentValidationException e) {
-            throw new NegotiationParamExtractionException(mapCode(e.code()), e.getMessage(), e.errors());
+            throw new NegotiationParamExtractionException(mapCode(e.getCode()), e.getMessage(), e.errors());
         }
     }
 

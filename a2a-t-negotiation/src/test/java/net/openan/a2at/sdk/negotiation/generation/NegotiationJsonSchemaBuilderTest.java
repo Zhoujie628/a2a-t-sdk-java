@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import org.junit.jupiter.api.Test;
@@ -114,17 +113,17 @@ class NegotiationJsonSchemaBuilderTest {
     @Test
     void rejectsNullTypeAndPhase() {
         assertEquals(
-                "type",
+                "Negotiation type must not be null.",
                 assertThrows(
-                                NegotiationContentException.class,
+                                NullPointerException.class,
                                 () -> builder.buildExtractionSchema(null, NegotiationPhase.PROPOSE))
-                        .getField());
+                        .getMessage());
         assertEquals(
-                "phase",
+                "Negotiation phase must not be null.",
                 assertThrows(
-                                NegotiationContentException.class,
+                                NullPointerException.class,
                                 () -> builder.buildExtractionSchema(NegotiationType.INFORMATION, null))
-                        .getField());
+                        .getMessage());
     }
 
     @Test
@@ -180,8 +179,8 @@ class NegotiationJsonSchemaBuilderTest {
     @Test
     void rejectsNullCallerSchema() {
         assertEquals(
-                "schema",
-                assertThrows(NegotiationContentException.class, () -> builder.buildSemanticValidationSchema(null))
-                        .getField());
+                "Caller parameter schema must not be null.",
+                assertThrows(NullPointerException.class, () -> builder.buildSemanticValidationSchema(null))
+                        .getMessage());
     }
 }

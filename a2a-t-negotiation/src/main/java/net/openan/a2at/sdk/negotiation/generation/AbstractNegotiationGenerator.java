@@ -2,9 +2,9 @@ package net.openan.a2at.sdk.negotiation.generation;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
@@ -32,15 +32,14 @@ abstract class AbstractNegotiationGenerator implements NegotiationGenerator {
      * @param expectedType exact content class this generator serves
      * @param generatorName human-readable generator name used in the failure message
      * @return content cast to the expected type
-     * @throws NegotiationContentException if the content is null or of another runtime type
+     * @throws IllegalArgumentException if the content is null or of another runtime type
      */
     protected static <T extends NegotiationContent> T contentOf(
             NegotiationContent content, Class<T> expectedType, String generatorName) {
         if (content == null || content.getClass() != expectedType) {
-            throw new NegotiationContentException(
+            throw new IllegalArgumentException(
                     generatorName + " requires content of type " + expectedType.getSimpleName() + " but received "
-                            + (content == null ? "null" : content.getClass().getSimpleName()) + ".",
-                    "content");
+                            + (content == null ? "null" : content.getClass().getSimpleName()) + ".");
         }
         return expectedType.cast(content);
     }
@@ -50,19 +49,17 @@ abstract class AbstractNegotiationGenerator implements NegotiationGenerator {
      *
      * @param conclusion conclusion carried by ending content
      * @return the validated conclusion
-     * @throws NegotiationContentException if the conclusion is null or abort
+     * @throws NullPointerException if the conclusion is null
+     * @throws IllegalArgumentException if the conclusion is abort
      */
     protected static NegotiationConclusion renderableConclusion(NegotiationConclusion conclusion) {
-        if (conclusion == null) {
-            throw new NegotiationContentException(
-                    "Negotiation conclusion must not be null; accept and reject are the renderable conclusions.",
-                    "content.conclusion");
-        }
+        Objects.requireNonNull(
+                conclusion, "Negotiation conclusion must not be null; accept and reject are the renderable"
+                        + " conclusions.");
         if (conclusion == NegotiationConclusion.ABORT) {
-            throw new NegotiationContentException(
+            throw new IllegalArgumentException(
                     "Negotiation conclusion Abort has no template section to render; terminate an exhausted"
-                            + " negotiation with a reject message instead.",
-                    "content.conclusion");
+                            + " negotiation with a reject message instead.");
         }
         return conclusion;
     }
@@ -74,11 +71,11 @@ abstract class AbstractNegotiationGenerator implements NegotiationGenerator {
      * @param field field path used in the failure
      * @param description field description used in the failure message
      * @return the validated text
-     * @throws NegotiationContentException if the value is null or blank
+     * @throws IllegalArgumentException if the value is null or blank
      */
     protected static String requiredText(String value, String field, String description) {
         if (value == null || value.isBlank()) {
-            throw new NegotiationContentException(description + " must not be blank.", field);
+            throw new IllegalArgumentException(description + " must not be blank.");
         }
         return value;
     }
@@ -90,12 +87,12 @@ abstract class AbstractNegotiationGenerator implements NegotiationGenerator {
      * @param field field path used in the failure
      * @param description field description used in the failure message
      * @return the validated item list
-     * @throws NegotiationContentException if the list is null or empty
+     * @throws IllegalArgumentException if the list is null or empty
      */
     protected static List<NegotiationItem> requiredItems(
             List<NegotiationItem> items, String field, String description) {
         if (items == null || items.isEmpty()) {
-            throw new NegotiationContentException(description + " must contain at least one item.", field);
+            throw new IllegalArgumentException(description + " must contain at least one item.");
         }
         return items;
     }

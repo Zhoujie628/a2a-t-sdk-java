@@ -40,7 +40,7 @@ public final class Vocabulary {
      *
      * @param language locale identifier such as {@code zh-CN} or {@code en-US}
      * @return vocabulary holding the text constants of that language
-     * @throws NegotiationContentException if the language has no bundled vocabulary
+     * @throws IllegalArgumentException if the language has no bundled vocabulary
      */
     public static Vocabulary forLanguage(String language) {
         if (ZH_CN.equals(language)) {
@@ -49,10 +49,9 @@ public final class Vocabulary {
         if (EN_US.equals(language)) {
             return EN_US_VOCABULARY;
         }
-        throw new NegotiationContentException(
+        throw new IllegalArgumentException(
                 "Unsupported negotiation vocabulary language " + language + "; supported languages are zh-CN and"
-                        + " en-US, configure A2AT_LANGUAGE accordingly.",
-                "language");
+                        + " en-US, configure A2AT_LANGUAGE accordingly.");
     }
 
     /**
@@ -60,14 +59,13 @@ public final class Vocabulary {
      *
      * @param canonicalKey canonical vocabulary key such as {@code section.context} or {@code punct.list_colon}
      * @return language-specific text constant
-     * @throws NegotiationContentException if the key is not part of the vocabulary
+     * @throws IllegalArgumentException if the key is not part of the vocabulary
      */
     public String get(String canonicalKey) {
         String value = entries.get(canonicalKey);
         if (value == null) {
-            throw new NegotiationContentException(
-                    "Unknown negotiation vocabulary key " + canonicalKey + " for language " + language + ".",
-                    "canonicalKey");
+            throw new IllegalArgumentException(
+                    "Unknown negotiation vocabulary key " + canonicalKey + " for language " + language + ".");
         }
         return value;
     }

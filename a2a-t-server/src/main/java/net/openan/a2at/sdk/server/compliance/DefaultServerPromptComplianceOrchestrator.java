@@ -38,7 +38,7 @@ public final class DefaultServerPromptComplianceOrchestrator implements ServerPr
             return new PromptComplianceResult(true, null);
         } catch (PromptComplianceCheckException error) {
             return new PromptComplianceResult(
-                    false, new PromptComplianceFailure(error.code(), error.getMessage(), error.stage()));
+                    false, new PromptComplianceFailure(error.getCode(), error.getMessage(), error.getStage()));
         }
     }
 }

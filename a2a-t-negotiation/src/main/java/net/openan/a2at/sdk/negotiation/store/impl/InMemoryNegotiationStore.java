@@ -1,9 +1,9 @@
 package net.openan.a2at.sdk.negotiation.store.impl;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import net.openan.a2at.sdk.negotiation.store.NegotiationStore;
-import net.openan.a2at.sdk.negotiation.types.exception.NegotiationStateException;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationRecord;
 
 /**
@@ -17,11 +17,13 @@ public final class InMemoryNegotiationStore implements NegotiationStore {
 
     @Override
     public void save(NegotiationRecord record) {
-        if (record == null || record.context() == null || record.context().negotiationId() == null
-                || record.context().negotiationId().isEmpty()) {
-            throw new NegotiationStateException("negotiation id is null or empty.");
+        Objects.requireNonNull(record, "Negotiation record must not be null.");
+        Objects.requireNonNull(record.context(), "Negotiation record context must not be null.");
+        String negotiationId = record.context().negotiationId();
+        if (negotiationId == null || negotiationId.isEmpty()) {
+            throw new IllegalArgumentException("negotiation id is null or empty.");
         }
-        records.put(record.context().negotiationId(), record);
+        records.put(negotiationId, record);
     }
 
     @Override
