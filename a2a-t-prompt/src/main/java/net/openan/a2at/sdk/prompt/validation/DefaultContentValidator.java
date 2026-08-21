@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.validation.ContentValidator;
+import net.openan.a2at.sdk.core.validation.SimpleTemplateReference;
 import net.openan.a2at.sdk.core.validation.TemplateReference;
 import net.openan.a2at.sdk.core.validation.ValidationPipeline;
 import net.openan.a2at.sdk.llm.LLMClient;
@@ -21,7 +22,7 @@ import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
  */
 public final class DefaultContentValidator implements ContentValidator {
 
-    private final String extensionPrefix;
+    private final String extensionName;
     private final String language;
     private final int maxAttempts;
     private final LLMClient llmClient;
@@ -30,24 +31,24 @@ public final class DefaultContentValidator implements ContentValidator {
     private volatile ValidationPipeline pipeline;
 
     /**
-     * Creates a content validator for the given extension prefix and language.
+     * Creates a content validator for the given extension name and language.
      *
      * <p>The constructor does not load any prompt resources. The underlying semantic validator and its prompt resources
      * are loaded on the first {@link #validate} call.
      *
-     * @param extensionPrefix extension prefix used for template URI validation
+     * @param extensionName extension name used for template URI validation
      * @param language language code for prompt resource loading
      * @param maxAttempts maximum retry attempts for semantic validation
      * @param llmClient LLM client for semantic validation; may be {@code null} and set later
      * @param promptResourceAccess prompt resource access for loading validation prompts
      */
     public DefaultContentValidator(
-            String extensionPrefix,
+            String extensionName,
             String language,
             int maxAttempts,
             LLMClient llmClient,
             PromptResourceAccess promptResourceAccess) {
-        this.extensionPrefix = extensionPrefix;
+        this.extensionName = extensionName;
         this.language = language;
         this.maxAttempts = maxAttempts;
         this.llmClient = llmClient;
@@ -69,11 +70,10 @@ public final class DefaultContentValidator implements ContentValidator {
 
         String prefix = parts[0];
         String version = parts[1];
-        String scenario = parts[2];
 
-        if (!extensionPrefix.equals(prefix)) {
+        if (!extensionName.equals(prefix)) {
             throw new IllegalArgumentException(
-                    "Template URI prefix '" + prefix + "' does not match expected extension prefix '" + extensionPrefix
+                    "Template URI prefix '" + prefix + "' does not match expected extension prefix '" + extensionName
                             + "'.");
         }
 
@@ -81,7 +81,7 @@ public final class DefaultContentValidator implements ContentValidator {
             throw new IllegalArgumentException("Unsupported template URI version: " + version);
         }
 
-        TemplateReference reference = new SimpleTemplateReference(templateUri, language, extensionPrefix);
+        TemplateReference reference = new SimpleTemplateReference(templateUri, language, extensionName);
         return pipeline().validate(prompt, schema, reference);
     }
 
@@ -101,9 +101,4 @@ public final class DefaultContentValidator implements ContentValidator {
         }
         return p;
     }
-
-    /**
-     * Package-private template reference implementation.
-     */
-    record SimpleTemplateReference(String uri, String language, String extensionPrefix) implements TemplateReference {}
 }

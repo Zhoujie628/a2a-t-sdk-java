@@ -62,7 +62,7 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
     }
 
     @Override
-    public String extensionPrefix() {
+    public String extensionName() {
         return URI_PREFIX;
     }
 
