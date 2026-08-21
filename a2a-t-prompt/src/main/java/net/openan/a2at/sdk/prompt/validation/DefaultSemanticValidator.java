@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 2026-08
  */
-public final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
+final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSemanticValidator.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

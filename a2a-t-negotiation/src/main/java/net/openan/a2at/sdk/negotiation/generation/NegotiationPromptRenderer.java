@@ -21,7 +21,7 @@ import net.openan.a2at.sdk.prompt.taskrendering.SectionedTemplateRenderer;
  *
  * @since 2026-06
  */
-public class NegotiationPromptRenderer implements SectionedTemplateRenderer {
+class NegotiationPromptRenderer implements SectionedTemplateRenderer {
 
     private final DropBlankSlotSectionRenderer delegate = new DropBlankSlotSectionRenderer();
 

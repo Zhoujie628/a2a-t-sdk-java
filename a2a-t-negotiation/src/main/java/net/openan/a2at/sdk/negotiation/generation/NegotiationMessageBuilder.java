@@ -14,7 +14,7 @@ import java.util.Objects;
  *
  * @since 2026-06
  */
-public class NegotiationMessageBuilder {
+final class NegotiationMessageBuilder {
 
     /** Token name receiving the negotiation phase of the step, such as {@code propose} or {@code accept}. */
     public static final String TOKEN_PHASE = "phase";

@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 2026-06
  */
-public final class DefaultNegotiationContentExtractor implements NegotiationContentExtractor {
+final class DefaultNegotiationContentExtractor implements NegotiationContentExtractor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultNegotiationContentExtractor.class);
 

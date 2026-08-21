@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 2026-08
  */
-public final class PromptTemplateCatalog {
+final class PromptTemplateCatalog {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PromptTemplateCatalog.class);
 

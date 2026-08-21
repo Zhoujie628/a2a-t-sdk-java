@@ -8,7 +8,7 @@ package net.openan.a2at.sdk.negotiation.generation;
  *
  * @since 2026-06
  */
-public class NegotiationRenderException extends RuntimeException {
+class NegotiationRenderException extends RuntimeException {
 
     /**
      * Creates a render failure.

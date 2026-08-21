@@ -15,7 +15,7 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
  *
  * @since 2026-06
  */
-public final class InformationEndingGenerator extends AbstractNegotiationGenerator {
+final class InformationEndingGenerator extends AbstractNegotiationGenerator {
 
     /**
      * Generates an information negotiation accept or reject message.

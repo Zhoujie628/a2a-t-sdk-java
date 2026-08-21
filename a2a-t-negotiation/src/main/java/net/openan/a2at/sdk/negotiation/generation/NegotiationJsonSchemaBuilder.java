@@ -17,7 +17,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationType;
  *
  * @since 2026-06
  */
-public class NegotiationJsonSchemaBuilder {
+final class NegotiationJsonSchemaBuilder {
 
     private static final List<String> CONCLUSION_ENUM = List.of("Accept", "Reject");
 

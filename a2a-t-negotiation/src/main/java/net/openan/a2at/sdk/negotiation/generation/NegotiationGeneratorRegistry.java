@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 2026-06
  */
-public final class NegotiationGeneratorRegistry {
+final class NegotiationGeneratorRegistry {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NegotiationGeneratorRegistry.class);
 

@@ -16,7 +16,7 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
  *
  * @since 2026-06
  */
-public final class FeasibilityEndingGenerator extends AbstractNegotiationGenerator {
+final class FeasibilityEndingGenerator extends AbstractNegotiationGenerator {
 
     /**
      * Generates a feasibility negotiation accept or reject message.

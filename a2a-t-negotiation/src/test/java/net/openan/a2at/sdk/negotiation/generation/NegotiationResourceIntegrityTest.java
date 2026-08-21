@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.language;
+package net.openan.a2at.sdk.negotiation.generation;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -20,7 +20,6 @@ import java.util.regex.Pattern;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
-import net.openan.a2at.sdk.negotiation.generation.NegotiationPromptResourceLoader;
 import net.openan.a2at.sdk.negotiation.golden.GoldenInputs;
 import net.openan.a2at.sdk.negotiation.golden.GoldenInputs.GoldenCase;
 import net.openan.a2at.sdk.negotiation.resources.DefaultNegotiationTemplateLoader;
