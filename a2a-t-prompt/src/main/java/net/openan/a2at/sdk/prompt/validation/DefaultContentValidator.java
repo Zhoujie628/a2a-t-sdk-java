@@ -40,7 +40,9 @@ public final class DefaultContentValidator implements ContentValidator {
      * @param extensionName extension name used for template URI validation
      * @param language language code for prompt resource loading
      * @param maxAttempts maximum retry attempts for semantic validation
-     * @param llmClient LLM client for semantic validation; may be {@code null} and set later
+     * @param llmClient LLM client for semantic validation; may be {@code null}, in which case the first
+     *     {@link #validate} call fails with {@code ContentValidationException} carrying
+     *     {@code VALIDATION_LLM_INFRASTRUCTURE_ERROR}; there is no late injection point
      * @param promptResourceAccess prompt resource access for loading validation prompts
      */
     public DefaultContentValidator(

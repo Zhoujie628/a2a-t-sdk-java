@@ -32,7 +32,7 @@ class DefaultNegotiationSemanticValidatorTest {
     private final RecordingLLMClient llmClient = new RecordingLLMClient();
 
     private final DefaultNegotiationSemanticValidator validator =
-            new DefaultNegotiationSemanticValidator(llmClient, schemaBuilder);
+            new DefaultNegotiationSemanticValidator(llmClient, schemaBuilder::buildSemanticValidationSchema);
 
     private final NegotiationReference informationReference =
             new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "en-US");
@@ -236,14 +236,70 @@ class DefaultNegotiationSemanticValidatorTest {
         }
     }
 
-    private static final class RecordingSchemaBuilder implements SemanticSchemaBuilder {
+    private static final class RecordingSchemaBuilder {
 
         private Map<String, Object> lastCallerSchema;
 
-        @Override
         public Map<String, Object> buildSemanticValidationSchema(Map<String, Object> callerSchema) {
             lastCallerSchema = callerSchema;
             return Map.of("merged", true);
         }
+        @Test
+    @SuppressWarnings("unchecked")
+    void semanticValidationSchemaMergesTheCallerSchemaIntoAFourKeyContract() {
+        Map<String, Object> callerSchema =
+                Map.of("type", "object", "properties", Map.of("energy_rate", Map.of("type", "number")));
+
+        Map<String, Object> schema = DefaultNegotiationSemanticValidator.buildSemanticValidationSchema(callerSchema);
+
+        assertEquals("object", schema.get("type"));
+        Map<String, Object> properties = (Map<String, Object>) schema.get("properties");
+        assertEquals(
+                List.of("semantic_verdict", "negotiation_type", "errors", "params"), List.copyOf(properties.keySet()));
+        assertEquals(List.of("semantic_verdict", "negotiation_type", "errors", "params"), schema.get("required"));
+        assertEquals(Boolean.FALSE, schema.get("additionalProperties"));
+
+        assertEquals(Map.of("type", "boolean"), properties.get("semantic_verdict"));
+
+        Map<String, Object> negotiationType = (Map<String, Object>) properties.get("negotiation_type");
+        assertEquals(List.of("string", "null"), negotiationType.get("type"));
+        List<Object> typeEnum = (List<Object>) negotiationType.get("enum");
+        assertEquals(4, typeEnum.size());
+        assertTrue(typeEnum.contains("information"));
+        assertTrue(typeEnum.contains("target"));
+        assertTrue(typeEnum.contains("feasibility"));
+        assertTrue(typeEnum.contains(null));
+
+        Map<String, Object> errors = (Map<String, Object>) properties.get("errors");
+        assertEquals("array", errors.get("type"));
+        Map<String, Object> errorItem = (Map<String, Object>) errors.get("items");
+        assertEquals(
+                List.of("slot_name", "code", "message"),
+                List.copyOf(((Map<String, Object>) errorItem.get("properties")).keySet()));
+        assertEquals(List.of("slot_name", "code", "message"), errorItem.get("required"));
+
+        assertEquals(callerSchema, properties.get("params"));
     }
+
+    @Test
+    void semanticValidationSchemaWrapsCallerSchemaWithoutTypeKeyword() {
+        Map<String, Object> callerSchema = new java.util.LinkedHashMap<>();
+        callerSchema.put("properties", Map.of("id", Map.of("type", "string")));
+
+        Map<String, Object> schema = DefaultNegotiationSemanticValidator.buildSemanticValidationSchema(callerSchema);
+
+        Map<?, ?> params = (Map<?, ?>) ((Map<?, ?>) schema.get("properties")).get("params");
+        assertEquals("object", params.get("type"));
+        assertEquals(Map.of("id", Map.of("type", "string")), params.get("properties"));
+        assertNull(params.get("additionalProperties"));
+    }
+
+    @Test
+    void rejectsNullCallerSchema() {
+        assertEquals(
+                "Caller parameter schema must not be null.",
+                assertThrows(NullPointerException.class, () -> DefaultNegotiationSemanticValidator.buildSemanticValidationSchema(null))
+                        .getMessage());
+    }
+}
 }

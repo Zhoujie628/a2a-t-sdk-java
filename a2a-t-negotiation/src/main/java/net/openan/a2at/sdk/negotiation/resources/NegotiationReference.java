@@ -81,27 +81,7 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
     public static Optional<NegotiationReference> tryParse(
             @Nullable String templateUri, @NonNull NegotiationPhase expectedPhase, String language) {
         Objects.requireNonNull(expectedPhase, "Expected negotiation phase must not be null.");
-        if (templateUri == null || templateUri.isBlank()) {
-            return Optional.empty();
-        }
-        String[] segments = templateUri.strip().split("/");
-        if (segments.length != 4) {
-            return Optional.empty();
-        }
-        if (!URI_PREFIX.equals(segments[0])) {
-            return Optional.empty();
-        }
-        NegotiationType parsedType = parseTypeSegment(segments[1]);
-        if (parsedType == null) {
-            return Optional.empty();
-        }
-        if (!phaseSegmentMatches(segments[2], expectedPhase)) {
-            return Optional.empty();
-        }
-        if (!URI_VERSION_SEGMENT.equals(segments[3])) {
-            return Optional.empty();
-        }
-        return Optional.of(new NegotiationReference(parsedType, expectedPhase, language));
+        return TemplateUri.parse(templateUri).flatMap(uri -> fromTemplateUri(uri, expectedPhase, language));
     }
 
     /**

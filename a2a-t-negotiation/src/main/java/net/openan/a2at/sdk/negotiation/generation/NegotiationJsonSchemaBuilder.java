@@ -24,9 +24,6 @@ final class NegotiationJsonSchemaBuilder {
     private static final List<String> ACTION_ENUM =
             List.of("REQUEST_FEASIBILITY_EVALUATION", "PROPOSE_ALTERNATIVE_ON_FAILURE");
 
-    private static final List<String> NEGOTIATION_TYPE_ENUM =
-            Arrays.asList("information", "target", "feasibility", null);
-
     /**
      * Builds the content extraction schema of one (negotiation type, phase) pair.
      *
@@ -47,35 +44,6 @@ final class NegotiationJsonSchemaBuilder {
                     ? feasibilityProposeSchema()
                     : feasibilityEndingSchema();
         };
-    }
-
-    /**
-     * Builds the merged schema of the semantic validation step around a caller-provided parameter schema.
-     *
-     * <p>The merged schema requires exactly the four keys {@code semantic_verdict}, {@code negotiation_type},
-     * {@code errors} and {@code params} and allows no additional properties. The caller schema is embedded as the
-     * {@code params} property; a caller schema without a {@code type} keyword is wrapped as an object schema first.
-     *
-     * @param callerSchema parameter schema provided by the caller of the validation API
-     * @return merged JSON Schema of the semantic validation LLM call
-     * @throws NullPointerException if the caller schema is null
-     */
-    public Map<String, Object> buildSemanticValidationSchema(Map<String, Object> callerSchema) {
-        Objects.requireNonNull(callerSchema, "Caller parameter schema must not be null.");
-        Map<String, Object> schema = new LinkedHashMap<>();
-        schema.put("type", "object");
-        Map<String, Object> properties = new LinkedHashMap<>();
-        properties.put("semantic_verdict", Map.of("type", "boolean"));
-        Map<String, Object> negotiationType = new LinkedHashMap<>();
-        negotiationType.put("type", List.of("string", "null"));
-        negotiationType.put("enum", NEGOTIATION_TYPE_ENUM);
-        properties.put("negotiation_type", negotiationType);
-        properties.put("errors", errorsSchema());
-        properties.put("params", wrapCallerSchema(callerSchema));
-        schema.put("properties", properties);
-        schema.put("required", List.of("semantic_verdict", "negotiation_type", "errors", "params"));
-        schema.put("additionalProperties", false);
-        return schema;
     }
 
     private static Map<String, Object> informationProposeSchema() {
@@ -126,31 +94,6 @@ final class NegotiationJsonSchemaBuilder {
         properties.put("conclusion", conclusionSchema());
         properties.put("feasibility_summary", Map.of("type", "string"));
         return objectSchema(properties, List.of("conclusion", "feasibility_summary"));
-    }
-
-    private static Map<String, Object> errorsSchema() {
-        Map<String, Object> errorProperties = new LinkedHashMap<>();
-        errorProperties.put("slot_name", Map.of("type", "string"));
-        errorProperties.put("code", Map.of("type", "string"));
-        errorProperties.put("message", Map.of("type", "string"));
-        Map<String, Object> errorItem = new LinkedHashMap<>();
-        errorItem.put("type", "object");
-        errorItem.put("properties", errorProperties);
-        errorItem.put("required", List.of("slot_name", "code", "message"));
-        Map<String, Object> errors = new LinkedHashMap<>();
-        errors.put("type", "array");
-        errors.put("items", errorItem);
-        return errors;
-    }
-
-    private static Map<String, Object> wrapCallerSchema(Map<String, Object> callerSchema) {
-        if (callerSchema.containsKey("type")) {
-            return callerSchema;
-        }
-        Map<String, Object> wrapped = new LinkedHashMap<>();
-        wrapped.put("type", "object");
-        wrapped.putAll(callerSchema);
-        return wrapped;
     }
 
     private static Map<String, Object> itemArraySchema() {

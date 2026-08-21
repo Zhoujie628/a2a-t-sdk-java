@@ -32,6 +32,7 @@ public final class TaskPromptRenderer implements SectionedTemplateRenderer {
     @Override
     public String render(String templateText, Map<String, String> slots) {
         Objects.requireNonNull(templateText, "Template text must not be null.");
+        Map<String, String> safeSlots = slots == null ? Map.of() : slots;
         if (!balancedBraces(templateText)) {
             throw new TaskPromptRenderException("Template text has unbalanced braces.");
         }
@@ -40,10 +41,10 @@ public final class TaskPromptRenderer implements SectionedTemplateRenderer {
         StringBuffer rendered = new StringBuffer();
         while (matcher.find()) {
             String slotName = matcher.group(1).trim();
-            if (!slots.containsKey(slotName)) {
+            if (!safeSlots.containsKey(slotName)) {
                 throw new TaskPromptRenderException("Unknown slot referenced by template: " + slotName);
             }
-            String replacement = slots.get(slotName);
+            String replacement = safeSlots.get(slotName);
             matcher.appendReplacement(rendered, Matcher.quoteReplacement(Optional.ofNullable(replacement).orElse("")));
         }
         matcher.appendTail(rendered);

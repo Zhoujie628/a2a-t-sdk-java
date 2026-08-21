@@ -44,7 +44,9 @@ final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
     /**
      * Creates a semantic validator backed by the given LLM client and prompt resources for the specified language.
      *
-     * @param llmClient LLM client for structured calls; may be {@code null} and set later
+     * @param llmClient LLM client for structured calls; may be {@code null}, in which case {@link #validate}
+     *     fails with {@code ContentValidationException} carrying
+     *     {@code VALIDATION_LLM_INFRASTRUCTURE_ERROR}; there is no late injection point
      * @param language language code for prompt resource loading
      * @param promptResourceAccess prompt resource access for loading validation prompts
      * @throws net.openan.a2at.sdk.core.exception.ResourceNotFoundException if prompt resources are missing

@@ -40,7 +40,7 @@ public final class DropBlankSlotSectionRenderer implements SectionedTemplateRend
     @Override
     public String render(String templateText, Map<String, String> slots) {
         if (templateText == null) {
-            throw new IllegalArgumentException("Template text must not be null.");
+            throw new NullPointerException("Template text must not be null.");
         }
         Map<String, String> safeSlots = slots == null ? Map.of() : slots;
         List<Section> sections = splitSections(templateText);

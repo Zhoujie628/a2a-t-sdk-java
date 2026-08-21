@@ -80,6 +80,12 @@ class NegotiationDeliveredResourceContractTest {
         expected.put("VALIDATION_SEMANTIC_REJECTED", "validation_semantic_rejected");
         expected.put("VALIDATION_LLM_INFRASTRUCTURE_ERROR", "validation_llm_infrastructure_error");
         expected.put("VALIDATION_PROMPT_RESOURCE_NOT_FOUND", "validation_prompt_resource_not_found");
+        expected.put("PROMPT_RESOURCE_LOAD_ERROR", "prompt_resource_load_error");
+        expected.put("SLOT_SCHEMA_NOT_FOUND", "slot_schema_not_found");
+        expected.put("LLM_INVOCATION_FAILED", "llm_invocation_failed");
+        expected.put("RENDER_FAILED", "render_failed");
+        expected.put("SLOT_VALIDATION_ERROR", "slot_validation_error");
+        expected.put("PROCESSED_PROMPT_PARSE_ERROR", "processed_prompt_parse_error");
 
         java.util.Map<String, String> actual = new java.util.LinkedHashMap<>();
         for (java.lang.reflect.Field field : A2ATErrorCodes.class.getDeclaredFields()) {

@@ -98,13 +98,11 @@ class NegotiationPackageStructureTest {
                         "DefaultNegotiationComplianceChecker.java",
                         "DefaultNegotiationSemanticValidator.java",
                         "NegotiationComplianceChecker.java",
-                        "NegotiationParamSchemas.java",
                         "NegotiationRuleCheckResult.java",
                         "NegotiationRuleCheckerAdapter.java",
                         "NegotiationSemanticValidator.java",
                         "NegotiationValidationException.java",
                         "ParamExtractor.java",
-                        "SemanticSchemaBuilder.java",
                         "SemanticValidationResult.java",
                         "package-info.java"),
                 topLevelJavaFiles(negotiationRoot().resolve("validation")));

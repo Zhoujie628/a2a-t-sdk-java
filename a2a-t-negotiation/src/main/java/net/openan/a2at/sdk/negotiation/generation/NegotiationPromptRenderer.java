@@ -16,8 +16,9 @@ import net.openan.a2at.sdk.prompt.taskrendering.SectionedTemplateRenderer;
  * trailing newline.
  *
  * <p>The rendering itself delegates to the shared {@link DropBlankSlotSectionRenderer} of the prompt kernel, which
- * owns the drop policy of the sectioned template grammar; this class keeps the negotiation-specific null-template
- * contract.
+ * owns the drop policy of the sectioned template grammar. Unlike the interface default, this adapter rejects a
+ * null template text with the internal {@link NegotiationRenderException} instead of a {@code NullPointerException},
+ * so the orchestration layer wraps the failure into a typed negotiation generation failure rather than letting it leak.
  *
  * @since 2026-06
  */
@@ -32,7 +33,8 @@ class NegotiationPromptRenderer implements SectionedTemplateRenderer {
      * @param slots slot values keyed by the language-specific slot name; a null or blank value drops the slot section
      * @return rendered message text with sections joined by one blank line and no trailing newline; empty string when
      *     no section remains
-     * @throws NegotiationRenderException if the template text is null
+     * @throws NegotiationRenderException if the template text is null; the orchestration layer wraps this
+     *     internal failure into a typed negotiation generation failure instead of letting it leak
      */
     @Override
     public String render(String templateText, Map<String, String> slots) {

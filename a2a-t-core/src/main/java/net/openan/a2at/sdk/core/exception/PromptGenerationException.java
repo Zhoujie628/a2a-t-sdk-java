@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.core.exception;
 
 import java.util.List;
+import net.openan.a2at.sdk.core.model.SlotValidationError;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -13,7 +14,7 @@ import org.jspecify.annotations.Nullable;
  */
 public final class PromptGenerationException extends A2ATError {
 
-    private final List<FailedParameter> failedParameters;
+    private final List<SlotValidationError> failedParameters;
 
     /**
      * Creates an exception with a stable error code and a human-readable message.
@@ -33,11 +34,11 @@ public final class PromptGenerationException extends A2ATError {
      *
      * @param code stable error code
      * @param message human-readable failure description
-     * @param failedParameters list of failed parameters
+     * @param failedParameters list of failed slot validations
      * @throws NullPointerException if {@code code} is null
      */
     public PromptGenerationException(
-            @NonNull String code, String message, @Nullable List<FailedParameter> failedParameters) {
+            @NonNull String code, String message, @Nullable List<SlotValidationError> failedParameters) {
         super(code, message);
         this.failedParameters = failedParameters == null ? List.of() : List.copyOf(failedParameters);
     }
@@ -61,7 +62,7 @@ public final class PromptGenerationException extends A2ATError {
      *
      * @return failed parameters
      */
-    public @NonNull List<FailedParameter> failedParameters() {
+    public @NonNull List<SlotValidationError> failedParameters() {
         return failedParameters;
     }
 }
