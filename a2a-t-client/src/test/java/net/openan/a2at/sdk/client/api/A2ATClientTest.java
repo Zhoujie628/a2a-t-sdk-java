@@ -177,11 +177,17 @@ class A2ATClientTest {
         Path templatesDir = promptRoot
                 .resolve("templates")
                 .resolve("Task-T")
-                .resolve("v1")
+                .resolve("network-layer")
                 .resolve("private-line-complaint")
+                .resolve("v1")
                 .resolve("zh-CN");
-        Path slotsDir =
-                promptRoot.resolve("slots").resolve("Task-T").resolve("v1").resolve("private-line-complaint").resolve("zh-CN");
+        Path slotsDir = promptRoot
+                .resolve("slots")
+                .resolve("Task-T")
+                .resolve("network-layer")
+                .resolve("private-line-complaint")
+                .resolve("v1")
+                .resolve("zh-CN");
         Files.createDirectories(scenariosDir);
         Files.createDirectories(templatesDir);
         Files.createDirectories(slotsDir);
@@ -253,24 +259,24 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
         A2ATClient client = new A2ATClient(envFile);
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromText("Please analyze Site A.", "Task-T/v1/unconstrained");
+                client.generateTaskPromptFromText("Please analyze Site A.", "Task-T/network-layer/unconstrained/v1");
         MetadataContent authResult =
-                client.generateAuthPromptFromText("Authorize access.", "Task-T/v1/unconstrained");
+                client.generateAuthPromptFromText("Authorize access.", "Task-T/network-layer/unconstrained/v1");
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromText("Report finished.", "Task-T/v1/unconstrained");
+                client.generateNotificationPromptFromText("Report finished.", "Task-T/network-layer/unconstrained/v1");
 
         assertNotNull(taskResult);
-        assertEquals("Task-T/v1/unconstrained", taskResult.templateUri());
+        assertEquals("Task-T/network-layer/unconstrained/v1", taskResult.templateUri());
         assertNotNull(taskResult.promptText());
         assertNotNull(taskResult.extensionUri());
 
         assertNotNull(authResult);
-        assertEquals("Task-T/v1/unconstrained", authResult.templateUri());
+        assertEquals("Task-T/network-layer/unconstrained/v1", authResult.templateUri());
         assertNotNull(authResult.promptText());
         assertNotNull(authResult.extensionUri());
 
         assertNotNull(notificationResult);
-        assertEquals("Task-T/v1/unconstrained", notificationResult.templateUri());
+        assertEquals("Task-T/network-layer/unconstrained/v1", notificationResult.templateUri());
         assertNotNull(notificationResult.promptText());
         assertNotNull(notificationResult.extensionUri());
     }
@@ -311,11 +317,11 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
         A2ATClient client = new A2ATClient(envFile);
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromText("Please analyze Site A.", "Task-T/v1/unconstrained");
+                client.generateTaskPromptFromText("Please analyze Site A.", "Task-T/network-layer/unconstrained/v1");
         MetadataContent authResult =
-                client.generateAuthPromptFromText("Authorize access.", "Task-T/v1/unconstrained");
+                client.generateAuthPromptFromText("Authorize access.", "Task-T/network-layer/unconstrained/v1");
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromText("Report finished.", "Task-T/v1/unconstrained");
+                client.generateNotificationPromptFromText("Report finished.", "Task-T/network-layer/unconstrained/v1");
 
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskResult.extensionUri());
         assertEquals(ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI, authResult.extensionUri());
@@ -389,9 +395,20 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
         Path slotPromptDir =
                 promptRoot.resolve("prompts").resolve("slot_extraction").resolve("zh-CN");
         Path scenariosDir = promptRoot.resolve("scenarios").resolve("zh-CN");
-        Path templatesDir =
-                promptRoot.resolve("templates").resolve("Task-T").resolve("v1").resolve("unconstrained").resolve("zh-CN");
-        Path slotsDir = promptRoot.resolve("slots").resolve("Task-T").resolve("v1").resolve("unconstrained").resolve("zh-CN");
+        Path templatesDir = promptRoot
+                .resolve("templates")
+                .resolve("Task-T")
+                .resolve("network-layer")
+                .resolve("unconstrained")
+                .resolve("v1")
+                .resolve("zh-CN");
+        Path slotsDir = promptRoot
+                .resolve("slots")
+                .resolve("Task-T")
+                .resolve("network-layer")
+                .resolve("unconstrained")
+                .resolve("v1")
+                .resolve("zh-CN");
         Files.createDirectories(scenarioPromptDir);
         Files.createDirectories(slotPromptDir);
         Files.createDirectories(scenariosDir);
@@ -483,9 +500,20 @@ A2AT_LLM_API_KEY=test-key
         Path slotPromptDir =
                 promptRoot.resolve("prompts").resolve("slot_extraction").resolve("zh-CN");
         Path scenariosDir = promptRoot.resolve("scenarios").resolve("zh-CN");
-        Path templatesDir =
-                promptRoot.resolve("templates").resolve("Task-T").resolve("v1").resolve("energy-saving").resolve("zh-CN");
-        Path slotsDir = promptRoot.resolve("slots").resolve("Task-T").resolve("v1").resolve("energy-saving").resolve("zh-CN");
+        Path templatesDir = promptRoot
+                .resolve("templates")
+                .resolve("Task-T")
+                .resolve("network-layer")
+                .resolve("energy-saving")
+                .resolve("v1")
+                .resolve("zh-CN");
+        Path slotsDir = promptRoot
+                .resolve("slots")
+                .resolve("Task-T")
+                .resolve("network-layer")
+                .resolve("energy-saving")
+                .resolve("v1")
+                .resolve("zh-CN");
         Files.createDirectories(scenarioPromptDir);
         Files.createDirectories(slotPromptDir);
         Files.createDirectories(scenariosDir);

@@ -303,7 +303,7 @@ def lint_negotiation(templates_dir: Path) -> list[str]:
     if not negotiation_root.is_dir():
         return [error(negotiation_root, 1, "negotiation-file-set", "Missing Negotiation-T templates directory.")]
     expected = {
-        Path("v1") / type_segment / phase_segment / language / "template.md"
+        Path(type_segment) / phase_segment / "v1" / language / "template.md"
         for type_segment in NEGOTIATION_TYPE_SEGMENTS
         for phase_segment in NEGOTIATION_PHASE_SEGMENTS
         for language in NEGOTIATION_LANGUAGES
@@ -317,7 +317,7 @@ def lint_negotiation(templates_dir: Path) -> list[str]:
             errors.append(error(path, 1, "negotiation-file-set", f"Unexpected Negotiation-T template location: {relative}"))
             continue
         found.add(relative)
-        _, type_segment, phase_segment, language, _ = relative.parts
+        type_segment, phase_segment, _, language, _ = relative.parts
         file_errors, shape = lint_negotiation_file(path, language, type_segment, phase_segment)
         errors.extend(file_errors)
         shapes[(type_segment, phase_segment, language)] = shape
@@ -329,7 +329,7 @@ def lint_negotiation(templates_dir: Path) -> list[str]:
             en_shape = shapes.get((type_segment, phase_segment, "en-US"))
             if zh_shape is None or en_shape is None:
                 continue
-            base = negotiation_root / "v1" / type_segment / phase_segment
+            base = negotiation_root / type_segment / phase_segment / "v1"
             errors.extend(lint_negotiation_alignment(base / "zh-CN" / "template.md", base / "en-US" / "template.md", zh_shape, en_shape))
     return errors
 
@@ -341,14 +341,19 @@ def lint_root(root: Path) -> list[str]:
     if not slots.is_dir():
         return [error(slots, 1, "resource-root", "Missing slots directory.")]
     errors: list[str] = []
-    for template_path in sorted(templates.glob("*/v1/*/*/template.md")):
-        schema_path = slots / template_path.relative_to(templates).parent / "slot.json"
-        if schema_path.is_file():
-            errors.extend(lint_pair(template_path, schema_path))
-    for schema_path in sorted(slots.glob("*/v1/*/*/slot.json")):
-        template_path = templates / schema_path.relative_to(slots).parent / "template.md"
-        if not template_path.is_file():
-            errors.append(error(schema_path, 1, "template-missing", f"Missing paired template: {template_path}"))
+    # Layouts: <type>/network-layer/<scenario>/v1/<lang> for Task-T/Notification-T,
+    # and <type>/<scenario>/v1/<lang> for Authorization-T.
+    template_globs = ("*/network-layer/*/v1/*/template.md", "*/*/v1/*/template.md")
+    for pattern in template_globs:
+        for template_path in sorted(templates.glob(pattern)):
+            schema_path = slots / template_path.relative_to(templates).parent / "slot.json"
+            if schema_path.is_file():
+                errors.extend(lint_pair(template_path, schema_path))
+    for pattern in template_globs:
+        for schema_path in sorted(slots.glob(pattern.replace("template.md", "slot.json"))):
+            template_path = templates / schema_path.relative_to(slots).parent / "template.md"
+            if not template_path.is_file():
+                errors.append(error(schema_path, 1, "template-missing", f"Missing paired template: {template_path}"))
     errors.extend(lint_negotiation(templates))
     return errors
 

@@ -64,11 +64,12 @@ public final class DefaultContentValidator implements ContentValidator {
         String[] parts = templateUri.split("/");
         if (parts.length < 3) {
             throw new IllegalArgumentException(
-                    "Template URI format must be {prefix}/v1/{scenario}, got: " + templateUri);
+                    "Template URI format must be {extensionName}/{pathSegments}/{templateVersion}, got: "
+                            + templateUri);
         }
 
         String prefix = parts[0];
-        String version = parts[1];
+        String templateVersion = parts[parts.length - 1];
 
         if (!extensionName.equals(prefix)) {
             throw new IllegalArgumentException(
@@ -76,11 +77,12 @@ public final class DefaultContentValidator implements ContentValidator {
                             + "'.");
         }
 
-        if (!"v1".equals(version)) {
-            throw new IllegalArgumentException("Unsupported template URI version: " + version);
+        if (!TemplateUri.DEFAULT_TEMPLATE_VERSION.equals(templateVersion)) {
+            throw new IllegalArgumentException("Unsupported template URI version: " + templateVersion);
         }
 
-        TemplateUri reference = TemplateUri.of(prefix, version, java.util.Arrays.copyOfRange(parts, 2, parts.length));
+        TemplateUri reference = TemplateUri.of(
+                prefix, templateVersion, java.util.Arrays.copyOfRange(parts, 1, parts.length - 1));
         return pipeline().validate(prompt, schema, reference);
     }
 

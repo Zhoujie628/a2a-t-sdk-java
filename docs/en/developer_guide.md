@@ -224,8 +224,8 @@ When customizing scenarios, prepare local resources with the following structure
 ```text
 prompt_resources/
   scenarios/zh-CN/scenarios.json
-  slots/{scenario_code}/zh-CN/slot.json
-  templates/{scenario_code}/zh-CN/template.md
+  slots/{extension_name}/{path_segments}/{version}/zh-CN/slot.json
+  templates/{extension_name}/{path_segments}/{version}/zh-CN/template.md
   prompts/scenario_recognition/zh-CN/system.md
   prompts/scenario_recognition/zh-CN/user.md
   prompts/slot_extraction/zh-CN/system.md
@@ -233,6 +233,8 @@ prompt_resources/
   prompts/semantic_validation/zh-CN/system.md
   prompts/semantic_validation/zh-CN/user.md
 ```
+
+The `slots/` and `templates/` directory paths mirror the template URI segment by segment: `{extension_name}/{path_segments}/{version}` is the template URI, with `{version}` (`v1` by default) as the trailing segment. For example, the `energy-saving` scenario resolves to `templates/Task-T/network-layer/energy-saving/v1/zh-CN/template.md` and `slots/Task-T/network-layer/energy-saving/v1/zh-CN/slot.json`; negotiation templates follow `templates/Negotiation-T/information-negotiation/propose/v1/zh-CN/template.md`.
 
 Then specify in `.env`:
 
@@ -471,19 +473,19 @@ A missing template or an unusable URI yields an empty result with a warning log.
 The template URI format is:
 
 ```text
-Negotiation-T/v1/{type}-negotiation/{phase}
+Negotiation-T/{type}-negotiation/{phase}/v1
 ```
 
-where `{type}` is `information`, `target`, or `feasibility`, and `{phase}` is `propose` or `accept-reject`. URI parsing never throws: `NegotiationReference.tryParse` returns an `Optional<NegotiationReference>`, and a null, blank or malformed URI (wrong segment count, prefix, version, type or phase segment) simply yields an empty result. Six built-in templates ship with the SDK, one per combination, each in `zh-CN` and `en-US`:
+where `{type}` is `information`, `target`, or `feasibility`, `{phase}` is `propose` or `accept-reject`, and the trailing `v1` is the template version (the default version). URI parsing never throws: `NegotiationReference.tryParse` returns an `Optional<NegotiationReference>`, and a null, blank or malformed URI (wrong segment count, prefix, version, type or phase segment) simply yields an empty result. Six built-in templates ship with the SDK, one per combination, each in `zh-CN` and `en-US`:
 
 | Template URI | Purpose |
 |--|--|
-| `Negotiation-T/v1/information-negotiation/propose` | Request missing information |
-| `Negotiation-T/v1/information-negotiation/accept-reject` | Accept or reject an information negotiation |
-| `Negotiation-T/v1/target-negotiation/propose` | Propose a target negotiation |
-| `Negotiation-T/v1/target-negotiation/accept-reject` | Accept or reject a target negotiation |
-| `Negotiation-T/v1/feasibility-negotiation/propose` | Request a feasibility evaluation or propose an alternative |
-| `Negotiation-T/v1/feasibility-negotiation/accept-reject` | Accept or reject a feasibility negotiation |
+| `Negotiation-T/information-negotiation/propose/v1` | Request missing information |
+| `Negotiation-T/information-negotiation/accept-reject/v1` | Accept or reject an information negotiation |
+| `Negotiation-T/target-negotiation/propose/v1` | Propose a target negotiation |
+| `Negotiation-T/target-negotiation/accept-reject/v1` | Accept or reject a target negotiation |
+| `Negotiation-T/feasibility-negotiation/propose/v1` | Request a feasibility evaluation or propose an alternative |
+| `Negotiation-T/feasibility-negotiation/accept-reject/v1` | Accept or reject a feasibility negotiation |
 
 Negotiation templates are resolved with a **dual-root fallback** that is independent of `A2AT_PROMPT_SOURCE_TYPE`: a template file that exists under the local resource root configured by `A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR` wins, otherwise the built-in classpath template of the same URI is used. The built-in templates therefore always remain available as a safety net. Only templates are taken from the local root; LLM prompt resources always come from the classpath.
 
@@ -491,7 +493,7 @@ To override one template (for example the information propose template in Chines
 
 ```text
 {A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR}/
-  templates/Negotiation-T/v1/information-negotiation/propose/zh-CN/template.md
+  templates/Negotiation-T/information-negotiation/propose/v1/zh-CN/template.md
 ```
 
 ### 1.10.4 Data Models
@@ -579,11 +581,11 @@ InfoProposeContent content = new InfoProposeContent(
 
 MetadataContent propose = client.generateNegotiationProposePromptFromData(
         new NegotiationProposeData(context, content),
-        "Negotiation-T/v1/information-negotiation/propose");
+        "Negotiation-T/information-negotiation/propose/v1");
 
 // This two-key map travels in the A2A message metadata.
 Map<String, String> metadata = propose.buildMetadataContent();
-// metadata.get("templateUri")  -> "Negotiation-T/v1/information-negotiation/propose"
+// metadata.get("templateUri")  -> "Negotiation-T/information-negotiation/propose/v1"
 // metadata.get(propose.extensionUri()) -> the rendered message text
 
 // --- Server side: validate the received message and extract parameters ---
@@ -598,7 +600,7 @@ Map<String, Object> schema = Map.of(
 
 try {
     FilledParamData params = server.validateAndFillingProposeData(
-            propose.promptText(), schema, "Negotiation-T/v1/information-negotiation/propose");
+            propose.promptText(), schema, "Negotiation-T/information-negotiation/propose/v1");
     // params.data() holds the extracted parameters plus the context parameters.
 } catch (A2ATParamExtractionError failure) {
     // Branch on failure.getCode(): negotiation_invalid_input, negotiation_rule_violation,
@@ -612,11 +614,11 @@ InfoEndingContent ending = new InfoEndingContent(
 
 MetadataContent accept = server.generateNegotiationAcceptPromptFromData(
         new NegotiationEndingData(context, ending),
-        "Negotiation-T/v1/information-negotiation/accept-reject");
+        "Negotiation-T/information-negotiation/accept-reject/v1");
 
 // The client validates the accept message the same way, with the accept-reject URI:
 // client.validateAndFillingAcceptData(accept.promptText(), schema,
-//         "Negotiation-T/v1/information-negotiation/accept-reject");
+//         "Negotiation-T/information-negotiation/accept-reject/v1");
 ```
 
 When modifying the negotiation content layer, run:

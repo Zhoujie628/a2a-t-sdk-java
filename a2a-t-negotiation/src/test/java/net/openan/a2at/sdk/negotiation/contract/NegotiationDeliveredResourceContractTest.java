@@ -43,9 +43,9 @@ class NegotiationDeliveredResourceContractTest {
                             "/",
                             "templates",
                             "Negotiation-T",
-                            "v1",
                             type.typeSegment(),
                             phase.uriSegment(),
+                            "v1",
                             language,
                             "template.md");
                     byte[] packaged = readClasspathBytes("prompt_resources/" + relativePath);

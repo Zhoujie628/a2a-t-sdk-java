@@ -30,6 +30,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -164,9 +165,9 @@ class A2ATClientNegotiationEnvConfigTest {
         Path customTemplate = tempDir.resolve("custom-root")
                 .resolve("templates")
                 .resolve("Negotiation-T")
-                .resolve("v1")
                 .resolve("information-negotiation")
                 .resolve("propose")
+                .resolve("v1")
                 .resolve("zh-CN")
                 .resolve("template.md");
         Files.createDirectories(customTemplate.getParent());
@@ -178,10 +179,11 @@ class A2ATClientNegotiationEnvConfigTest {
     }
 
     private static String builtinTemplate(String templateUri, String language) throws IOException {
-        String typeSegment = templateUri.split("/")[2];
-        String phaseSegment = templateUri.split("/")[3];
-        String classpathPath = "prompt_resources/templates/Negotiation-T/v1/" + typeSegment + "/" + phaseSegment + "/"
-                + language + "/template.md";
+        String[] segments = templateUri.split("/");
+        String typeSegment = segments[1];
+        String phaseSegment = segments[2];
+        String classpathPath = "prompt_resources/templates/Negotiation-T/" + typeSegment + "/" + phaseSegment + "/"
+                + TemplateUri.DEFAULT_TEMPLATE_VERSION + "/" + language + "/template.md";
         InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(classpathPath);
         assertFalse(stream == null, "the built-in template must exist on the classpath: " + classpathPath);
         try (stream) {

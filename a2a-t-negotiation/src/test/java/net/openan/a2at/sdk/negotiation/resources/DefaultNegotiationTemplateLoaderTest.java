@@ -74,9 +74,9 @@ class DefaultNegotiationTemplateLoaderTest {
         Path customTemplatePath = customRootDir
                 .resolve("templates")
                 .resolve("Negotiation-T")
-                .resolve("v1")
                 .resolve("information-negotiation")
                 .resolve("propose")
+                .resolve("v1")
                 .resolve("zh-CN")
                 .resolve("template.md");
         writeTemplate(customTemplatePath, "<!-- custom template -->\n\n## 协商上下文\n自定义标记内容\n");
@@ -107,9 +107,9 @@ class DefaultNegotiationTemplateLoaderTest {
         Path customTemplatePath = customRootDir
                 .resolve("templates")
                 .resolve("Negotiation-T")
-                .resolve("v1")
                 .resolve("target-negotiation")
                 .resolve("propose")
+                .resolve("v1")
                 .resolve("zh-CN")
                 .resolve("template.md");
         writeTemplate(customTemplatePath, "<!-- custom target -->\n\n## 目标协商\n自定义目标内容\n");

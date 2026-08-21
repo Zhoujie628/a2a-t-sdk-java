@@ -1,11 +1,12 @@
 package net.openan.a2at.sdk.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import org.junit.jupiter.api.Test;
 
 class ClasspathPromptResourceLoaderTest {
@@ -25,29 +26,38 @@ class ClasspathPromptResourceLoaderTest {
     void rejectsResourceTraversalSegments() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> new PromptResourceKey("prompts", "../escape", "en-US", "system.md"));
+                () -> new PromptResourceKey("prompts", List.of("../escape"), "en-US", "system.md"));
     }
 
     @Test
     void raisesTypedErrorWhenResourceIsMissing() {
-        PromptResourceKey key = PromptResourceKey.template("Task-T", "missing_scenario", "en-US", "template.md");
+        PromptResourceKey key = PromptResourceKey.template(
+                TemplateUri.of("Task-T", "v1", "network-layer", "missing_scenario"), "en-US", "template.md");
 
         ResourceNotFoundException error = assertThrows(ResourceNotFoundException.class, () -> loader.loadText(key));
 
-        assertEquals("prompt_resources/templates/Task-T/v1/missing_scenario/en-US/template.md", error.resourcePath().replace('\\', '/'));
+        assertEquals(
+                "prompt_resources/templates/Task-T/network-layer/missing_scenario/v1/en-US/template.md",
+                error.resourcePath().replace('\\', '/'));
     }
 
     @Test
     void loadsPackagedScenarioCatalogForZhCn() {
-        String text = loader.loadText(new PromptResourceKey("scenarios", "catalog", "zh-CN", "scenarios.json"));
+        String text = loader.loadText(PromptResourceKey.scenario("zh-CN", "scenarios.json"));
 
-        org.junit.jupiter.api.Assertions.assertTrue(text.contains("subscribe-incident"));
-        org.junit.jupiter.api.Assertions.assertTrue(text.contains("energy-saving"));
+        assertTrue(text.contains("subscribe-incident"));
+        assertTrue(text.contains("energy-saving"));
     }
 
     @Test
     void loadsPackagedSubscribeIncidentSlotSchemaWithSemanticHint() {
-        String text = loader.loadText(new PromptResourceKey("slots", "Notification-T", "subscribe-incident", "zh-CN", "slot.json"));
+        PromptResourceKey key =
+                PromptResourceKey.slotSchema(
+                        TemplateUri.of("Notification-T", "v1", "network-layer", "subscribe-incident"),
+                        "zh-CN",
+                        "slot.json");
+
+        String text = loader.loadText(key);
 
         assertTrue(text.contains("\"required\": []"));
         assertTrue(text.contains("x-a2at-value-constraint"));

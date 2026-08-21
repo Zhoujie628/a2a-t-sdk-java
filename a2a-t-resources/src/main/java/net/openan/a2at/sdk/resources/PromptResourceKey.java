@@ -1,37 +1,39 @@
 package net.openan.a2at.sdk.resources;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 
 /**
  * Identifies one resource bundled with the SDK prompt resource tree.
  *
- * @param category resource category such as prompts or templates
- * @param templateType template type segment such as {@code Task-T} or {@code Notification-T}; may be {@code null} for non-template resources
- * @param subject scenario code or prompt action
+ * <p>Template resources mirror the {@link TemplateUri} layout one-to-one, so a template or slot schema for the URI
+ * {@code Task-T/network-layer/energy-saving/v1} lives at
+ * {@code prompt_resources/templates/Task-T/network-layer/energy-saving/v1/<language>/<fileName>}.
+ *
+ * @param category resource category such as prompts, templates, slots or scenarios
+ * @param pathSegments segments between the category and the language, such as {@code [slot_extraction]} for a prompt
+ *     or the full template URI segments for a template resource; empty for scenarios
  * @param language locale identifier
  * @param fileName target file name
  * @since 2026-06
  */
-public record PromptResourceKey(
-        String category, String templateType, String subject, String language, String fileName) {
+public record PromptResourceKey(String category, List<String> pathSegments, String language, String fileName) {
 
     /**
-     * Backward-compatible constructor for resources without a template type.
+     * Validates the components and defensively copies the path segment list.
      *
-     * @param category resource category
-     * @param subject scenario code or prompt action
-     * @param language locale identifier
-     * @param fileName target file name
+     * @throws NullPointerException if any component is null
+     * @throws IllegalArgumentException if any component is blank or not a simple path segment
      */
-    public PromptResourceKey(String category, String subject, String language, String fileName) {
-        this(category, null, subject, language, fileName);
-    }
-
     public PromptResourceKey {
         validateSegment("category", category);
-        if (templateType != null) {
-            validateSegment("templateType", templateType);
+        Objects.requireNonNull(pathSegments, "pathSegments must not be null");
+        for (String segment : pathSegments) {
+            validateSegment("path segment", segment);
         }
-        validateSegment("subject", subject);
+        pathSegments = List.copyOf(pathSegments);
         validateSegment("language", language);
         validateSegment("fileName", fileName);
     }
@@ -42,23 +44,55 @@ public record PromptResourceKey(
      * @param action prompt action name
      * @param language locale identifier
      * @param fileName target file name
-     * @return prompt resource key
+     * @return prompt resource key resolving to {@code prompt_resources/prompts/<action>/<language>/<fileName>}
      */
     public static PromptResourceKey prompt(String action, String language, String fileName) {
-        return new PromptResourceKey("prompts", null, action, language, fileName);
+        return new PromptResourceKey("prompts", List.of(action), language, fileName);
     }
 
     /**
-     * Creates a template resource key for one scenario bundle.
+     * Creates a template resource key for one template bundle, mirroring the template URI layout.
      *
-     * @param templateType template type segment such as {@code Task-T}
-     * @param scenarioCode scenario code
+     * @param templateUri template URI identifying the bundle
      * @param language locale identifier
      * @param fileName target file name
-     * @return template resource key
+     * @return template resource key resolving to
+     *     {@code prompt_resources/templates/<templateUri>/<language>/<fileName>}
      */
-    public static PromptResourceKey template(String templateType, String scenarioCode, String language, String fileName) {
-        return new PromptResourceKey("templates", templateType, scenarioCode, language, fileName);
+    public static PromptResourceKey template(TemplateUri templateUri, String language, String fileName) {
+        List<String> segments = new ArrayList<>();
+        segments.add(templateUri.extensionName());
+        segments.addAll(templateUri.pathSegments());
+        segments.add(templateUri.templateVersion());
+        return new PromptResourceKey("templates", List.copyOf(segments), language, fileName);
+    }
+
+    /**
+     * Creates a slot schema resource key for one template bundle, mirroring the template URI layout.
+     *
+     * @param templateUri template URI identifying the bundle
+     * @param language locale identifier
+     * @param fileName target file name
+     * @return slot schema resource key resolving to
+     *     {@code prompt_resources/slots/<templateUri>/<language>/<fileName>}
+     */
+    public static PromptResourceKey slotSchema(TemplateUri templateUri, String language, String fileName) {
+        List<String> segments = new ArrayList<>();
+        segments.add(templateUri.extensionName());
+        segments.addAll(templateUri.pathSegments());
+        segments.add(templateUri.templateVersion());
+        return new PromptResourceKey("slots", List.copyOf(segments), language, fileName);
+    }
+
+    /**
+     * Creates a scenario catalog resource key.
+     *
+     * @param language locale identifier
+     * @param fileName target file name
+     * @return scenario resource key resolving to {@code prompt_resources/scenarios/<language>/<fileName>}
+     */
+    public static PromptResourceKey scenario(String language, String fileName) {
+        return new PromptResourceKey("scenarios", List.of(), language, fileName);
     }
 
     /**
@@ -67,13 +101,15 @@ public record PromptResourceKey(
      * @return relative path under {@code prompt_resources/}
      */
     public String relativePath() {
-        if (templateType != null) {
-            return String.join("/", "prompt_resources", category, templateType, "v1", subject, language, fileName);
+        List<String> all = new ArrayList<>();
+        all.add("prompt_resources");
+        all.add(category);
+        if (!"scenarios".equals(category)) {
+            all.addAll(pathSegments);
         }
-        if ("scenarios".equals(category)) {
-            return String.join("/", "prompt_resources", category, language, fileName);
-        }
-        return String.join("/", "prompt_resources", category, subject, language, fileName);
+        all.add(language);
+        all.add(fileName);
+        return String.join("/", all);
     }
 
     private static void validateSegment(String fieldName, String value) {

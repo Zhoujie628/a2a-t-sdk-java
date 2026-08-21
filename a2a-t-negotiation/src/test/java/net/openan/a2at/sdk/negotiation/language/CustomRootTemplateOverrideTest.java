@@ -110,9 +110,9 @@ class CustomRootTemplateOverrideTest {
         Path customTemplate = customRoot
                 .resolve("templates")
                 .resolve("Negotiation-T")
-                .resolve("v1")
                 .resolve("information-negotiation")
                 .resolve("propose")
+                .resolve("v1")
                 .resolve("zh-CN")
                 .resolve("template.md");
         Files.createDirectories(customTemplate.getParent());

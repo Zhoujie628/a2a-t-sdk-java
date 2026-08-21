@@ -61,43 +61,47 @@ class NegotiationReferenceTest {
         assertTrue(NegotiationReference.tryParse("information-negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
                 .isEmpty());
         assertTrue(NegotiationReference.tryParse(
-                        "Negotiation-T/v1/information-negotiation/propose/extra", NegotiationPhase.PROPOSE, "zh-CN")
+                        "Negotiation-T/information-negotiation/propose/v1/extra", NegotiationPhase.PROPOSE, "zh-CN")
                 .isEmpty());
         assertTrue(NegotiationReference.tryParse("foo", NegotiationPhase.PROPOSE, "zh-CN").isEmpty());
     }
 
     @Test
     void tryParseRejectsWrongPrefixAndVersion() {
-        assertTrue(NegotiationReference.tryParse("Task-T/v1/information-negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
+        assertTrue(NegotiationReference.tryParse(
+                        "Task-T/information-negotiation/propose/v1", NegotiationPhase.PROPOSE, "zh-CN")
                 .isEmpty());
         assertTrue(NegotiationReference.tryParse(
-                        "negotiation-t/v1/information-negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
+                        "negotiation-t/information-negotiation/propose/v1", NegotiationPhase.PROPOSE, "zh-CN")
                 .isEmpty());
-        assertTrue(NegotiationReference.tryParse("Negotiation-T/v2/information-negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
+        assertTrue(NegotiationReference.tryParse(
+                        "Negotiation-T/information-negotiation/propose/v2", NegotiationPhase.PROPOSE, "zh-CN")
                 .isEmpty());
     }
 
     @Test
     void tryParseRejectsMissingTypeSegmentSuffixAndUnderscoreVariant() {
-        assertTrue(NegotiationReference.tryParse("Negotiation-T/v1/information/propose", NegotiationPhase.PROPOSE, "zh-CN")
+        assertTrue(NegotiationReference.tryParse("Negotiation-T/information/propose/v1", NegotiationPhase.PROPOSE, "zh-CN")
                 .isEmpty());
         assertTrue(NegotiationReference.tryParse(
-                        "Negotiation-T/v1/information_negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
+                        "Negotiation-T/information_negotiation/propose/v1", NegotiationPhase.PROPOSE, "zh-CN")
                 .isEmpty());
     }
 
     @Test
     void tryParseRejectsUnknownType() {
-        assertTrue(NegotiationReference.tryParse("Negotiation-T/v1/unknown-negotiation/propose", NegotiationPhase.PROPOSE, "zh-CN")
+        assertTrue(NegotiationReference.tryParse(
+                        "Negotiation-T/unknown-negotiation/propose/v1", NegotiationPhase.PROPOSE, "zh-CN")
                 .isEmpty());
     }
 
     @Test
     void tryParseRejectsIllegalPhaseSegment() {
         assertTrue(NegotiationReference.tryParse(
-                        "Negotiation-T/v1/information-negotiation/propose-x", NegotiationPhase.PROPOSE, "zh-CN")
+                        "Negotiation-T/information-negotiation/propose-x/v1", NegotiationPhase.PROPOSE, "zh-CN")
                 .isEmpty());
-        assertTrue(NegotiationReference.tryParse("Negotiation-T/v1/information-negotiation/accept", NegotiationPhase.PROPOSE, "zh-CN")
+        assertTrue(NegotiationReference.tryParse(
+                        "Negotiation-T/information-negotiation/accept/v1", NegotiationPhase.PROPOSE, "zh-CN")
                 .isEmpty());
     }
 
@@ -121,11 +125,11 @@ class NegotiationReferenceTest {
     }
 
     private static String proposeUri(NegotiationType type) {
-        return "Negotiation-T/v1/" + type.typeSegment() + "/propose";
+        return "Negotiation-T/" + type.typeSegment() + "/propose/v1";
     }
 
     private static String acceptRejectUri(NegotiationType type) {
-        return "Negotiation-T/v1/" + type.typeSegment() + "/accept-reject";
+        return "Negotiation-T/" + type.typeSegment() + "/accept-reject/v1";
     }
 
     private static NegotiationReference requirePresent(Optional<NegotiationReference> reference) {

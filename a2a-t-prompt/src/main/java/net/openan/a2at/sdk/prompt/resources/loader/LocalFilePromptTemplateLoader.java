@@ -36,7 +36,7 @@ public final class LocalFilePromptTemplateLoader implements PromptTemplateTextLo
             try (var typePaths = Files.list(templatesRoot)) {
                 Optional<Path> match = typePaths
                         .filter(Files::isDirectory)
-                        .map(typeDir -> typeDir.resolve("v1").resolve(scenarioCode).resolve(language).resolve("template.md"))
+                        .map(typeDir -> resolveBareCode(typeDir, scenarioCode, language, "template.md"))
                         .filter(Files::exists)
                         .findFirst();
                 templatePath = match.orElse(null);
@@ -54,11 +54,23 @@ public final class LocalFilePromptTemplateLoader implements PromptTemplateTextLo
         }
     }
 
+    /**
+     * Resolves a bare scenario code under one template type directory, preferring the {@code network-layer} domain
+     * layout over the plain layout.
+     */
+    private static Path resolveBareCode(Path typeDir, String scenarioCode, String language, String fileName) {
+        Path networkLayer = typeDir.resolve("network-layer").resolve(scenarioCode).resolve("v1");
+        if (Files.exists(networkLayer.resolve(language).resolve(fileName))) {
+            return networkLayer.resolve(language).resolve(fileName);
+        }
+        return typeDir.resolve(scenarioCode).resolve("v1").resolve(language).resolve(fileName);
+    }
+
     private ResourceNotFoundException notFound(String scenarioCode, String language) {
         String pathHint = scenarioCode.contains("/")
                 ? promptRootDir.resolve("templates").resolve(scenarioCode).resolve(language).resolve("template.md").toString()
                 : promptRootDir.resolve("templates").toString()
-                        + "/*/v1/" + scenarioCode + "/" + language + "/template.md";
+                        + "/*/network-layer/" + scenarioCode + "/v1/" + language + "/template.md (or the layout without the network-layer segment)";
         return new ResourceNotFoundException("Prompt resource file does not exist.", pathHint);
     }
 }

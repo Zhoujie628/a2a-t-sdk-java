@@ -38,7 +38,7 @@ public final class LocalFilePromptSlotSchemaLoader implements PromptSlotSchemaLo
             try (var typePaths = Files.list(slotsRoot)) {
                 Optional<Path> match = typePaths
                         .filter(Files::isDirectory)
-                        .map(typeDir -> typeDir.resolve("v1").resolve(scenarioCode).resolve(language).resolve("slot.json"))
+                        .map(typeDir -> resolveBareCode(typeDir, scenarioCode, language))
                         .filter(Files::exists)
                         .findFirst();
                 schemaPath = match.orElse(null);
@@ -57,11 +57,24 @@ public final class LocalFilePromptSlotSchemaLoader implements PromptSlotSchemaLo
         }
     }
 
+    /**
+     * Resolves a bare scenario code under one slot type directory, preferring the {@code network-layer} domain layout
+     * over the plain layout.
+     */
+    private static Path resolveBareCode(Path typeDir, String scenarioCode, String language) {
+        Path networkLayer = typeDir.resolve("network-layer").resolve(scenarioCode).resolve("v1");
+        if (Files.exists(networkLayer.resolve(language).resolve("slot.json"))) {
+            return networkLayer.resolve(language).resolve("slot.json");
+        }
+        return typeDir.resolve(scenarioCode).resolve("v1").resolve(language).resolve("slot.json");
+    }
+
     private ResourceNotFoundException notFound(String scenarioCode, String language) {
         String pathHint = scenarioCode.contains("/")
                 ? promptRootDir.resolve("slots").resolve(scenarioCode).resolve(language).resolve("slot.json").toString()
                 : promptRootDir.resolve("slots").toString()
-                        + "/*/v1/" + scenarioCode + "/" + language + "/slot.json";
+                        + "/*/network-layer/" + scenarioCode + "/v1/" + language
+                        + "/slot.json (or the layout without the network-layer segment)";
         return new ResourceNotFoundException("Prompt resource file does not exist.", pathHint);
     }
 }
