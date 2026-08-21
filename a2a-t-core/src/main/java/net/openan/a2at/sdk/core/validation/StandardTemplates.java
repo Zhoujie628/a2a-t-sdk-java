@@ -10,7 +10,9 @@ import java.util.List;
  * bound by the SDK, not by the caller. Use these constants instead of hand-written URI strings to get compile-time
  * safety against spelling drift.
  *
- * <p>Example: {@code StandardTemplates.ENERGY_SAVING.uri()} is {@code Task-T/v1/energy-saving}.
+ * <p>Example: {@code StandardTemplates.ENERGY_SAVING.uri()} is {@code Task-T/network-layer/energy-saving/v1}. The
+ * Task-T and Notification-T templates carry the {@code network-layer} domain segment; Authorization-T and
+ * Negotiation-T templates do not.
  *
  * @since 2026-08
  */
@@ -32,48 +34,54 @@ public final class StandardTemplates {
     /** Extension name of the Negotiation-T template family. */
     public static final String NEGOTIATION_EXTENSION_NAME = "Negotiation-T";
 
+    /** Domain segment carried by the Task-T and Notification-T template paths. */
+    public static final String NETWORK_LAYER_SEGMENT = "network-layer";
+
+    private static final String V1 = TemplateUri.DEFAULT_TEMPLATE_VERSION;
+
     /** Task-T template for the energy-saving scenario. */
-    public static final TemplateUri ENERGY_SAVING = TemplateUri.of(TASK_EXTENSION_NAME, "v1", "energy-saving");
+    public static final TemplateUri ENERGY_SAVING =
+            TemplateUri.of(TASK_EXTENSION_NAME, V1, NETWORK_LAYER_SEGMENT, "energy-saving");
 
     /** Task-T template for the private-line-complaint scenario. */
     public static final TemplateUri PRIVATE_LINE_COMPLAINT =
-            TemplateUri.of(TASK_EXTENSION_NAME, "v1", "private-line-complaint");
+            TemplateUri.of(TASK_EXTENSION_NAME, V1, NETWORK_LAYER_SEGMENT, "private-line-complaint");
 
     /** Notification-T template for the subscribe-incident scenario. */
     public static final TemplateUri SUBSCRIBE_INCIDENT =
-            TemplateUri.of(NOTIFICATION_EXTENSION_NAME, "v1", "subscribe-incident");
+            TemplateUri.of(NOTIFICATION_EXTENSION_NAME, V1, NETWORK_LAYER_SEGMENT, "subscribe-incident");
 
     /** Notification-T template for the service-recovery scenario. */
     public static final TemplateUri SERVICE_RECOVERY =
-            TemplateUri.of(NOTIFICATION_EXTENSION_NAME, "v1", "service-recovery");
+            TemplateUri.of(NOTIFICATION_EXTENSION_NAME, V1, NETWORK_LAYER_SEGMENT, "service-recovery");
 
-    /** Authorization-T template for the authz-policy-mgr scenario. */
-    public static final TemplateUri AUTHZ_POLICY_MGR =
-            TemplateUri.of(AUTHORIZATION_EXTENSION_NAME, "v1", "authz-policy-mgr");
+    /** Authorization-T template for the authorization-policy-management scenario. */
+    public static final TemplateUri AUTHORIZATION_POLICY_MANAGEMENT =
+            TemplateUri.of(AUTHORIZATION_EXTENSION_NAME, V1, "authorization-policy-management");
 
     /** Negotiation-T propose template for information negotiation. */
     public static final TemplateUri INFORMATION_NEGOTIATION_PROPOSE =
-            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, "v1", "information-negotiation", "propose");
+            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, V1, "information-negotiation", "propose");
 
     /** Negotiation-T accept-reject template for information negotiation. */
     public static final TemplateUri INFORMATION_NEGOTIATION_ACCEPT_REJECT =
-            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, "v1", "information-negotiation", "accept-reject");
+            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, V1, "information-negotiation", "accept-reject");
 
     /** Negotiation-T propose template for target negotiation. */
     public static final TemplateUri TARGET_NEGOTIATION_PROPOSE =
-            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, "v1", "target-negotiation", "propose");
+            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, V1, "target-negotiation", "propose");
 
     /** Negotiation-T accept-reject template for target negotiation. */
     public static final TemplateUri TARGET_NEGOTIATION_ACCEPT_REJECT =
-            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, "v1", "target-negotiation", "accept-reject");
+            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, V1, "target-negotiation", "accept-reject");
 
     /** Negotiation-T propose template for feasibility negotiation. */
     public static final TemplateUri FEASIBILITY_NEGOTIATION_PROPOSE =
-            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, "v1", "feasibility-negotiation", "propose");
+            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, V1, "feasibility-negotiation", "propose");
 
     /** Negotiation-T accept-reject template for feasibility negotiation. */
     public static final TemplateUri FEASIBILITY_NEGOTIATION_ACCEPT_REJECT =
-            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, "v1", "feasibility-negotiation", "accept-reject");
+            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, V1, "feasibility-negotiation", "accept-reject");
 
     /** All built-in Task-T templates. */
     public static final List<TemplateUri> TASK = List.of(ENERGY_SAVING, PRIVATE_LINE_COMPLAINT);
@@ -82,7 +90,7 @@ public final class StandardTemplates {
     public static final List<TemplateUri> NOTIFICATION = List.of(SUBSCRIBE_INCIDENT, SERVICE_RECOVERY);
 
     /** All built-in Authorization-T templates. */
-    public static final List<TemplateUri> AUTHORIZATION = List.of(AUTHZ_POLICY_MGR);
+    public static final List<TemplateUri> AUTHORIZATION = List.of(AUTHORIZATION_POLICY_MANAGEMENT);
 
     /** All built-in Negotiation-T templates. */
     public static final List<TemplateUri> NEGOTIATION = List.of(

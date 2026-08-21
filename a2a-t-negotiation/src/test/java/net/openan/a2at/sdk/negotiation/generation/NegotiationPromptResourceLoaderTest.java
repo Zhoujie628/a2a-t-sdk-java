@@ -93,8 +93,8 @@ class NegotiationPromptResourceLoaderTest {
 
         String userPrompt = messages.get(1).get("content");
         assertTrue(userPrompt.contains("Declared negotiation type: information"));
-        assertTrue(
-                userPrompt.contains("Declared template identifier: Negotiation-T/v1/information-negotiation/propose"));
+        assertTrue(userPrompt.contains(
+                "Declared template identifier: " + StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri()));
         assertTrue(userPrompt.contains("Parameter schema:"));
         assertTrue(userPrompt.contains("{\"type\":\"object\"}"));
         assertTrue(userPrompt.contains("Negotiation message to validate:"));

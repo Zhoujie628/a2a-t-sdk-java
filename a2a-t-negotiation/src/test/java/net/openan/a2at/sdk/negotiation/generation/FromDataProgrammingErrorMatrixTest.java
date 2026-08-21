@@ -223,35 +223,35 @@ class FromDataProgrammingErrorMatrixTest {
                         "template URI with too many segments",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                "Negotiation-T/v1/information-negotiation/propose/extra"),
+                                "Negotiation-T/information-negotiation/propose/v1/extra"),
                         IllegalArgumentException.class,
                         "Template URI is malformed or contradicts the expected phase PROPOSE (propose)"),
                 new MatrixRow(
                         "template URI with wrong prefix",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                "Task-T/v1/information-negotiation/propose"),
+                                "Task-T/information-negotiation/propose/v1"),
                         IllegalArgumentException.class,
                         "Template URI is malformed or contradicts the expected phase PROPOSE (propose)"),
                 new MatrixRow(
                         "template URI with wrong version",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                "Negotiation-T/v2/information-negotiation/propose"),
+                                "Negotiation-T/information-negotiation/propose/v2"),
                         IllegalArgumentException.class,
                         "Template URI is malformed or contradicts the expected phase PROPOSE (propose)"),
                 new MatrixRow(
                         "template URI with underscore type segment",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                "Negotiation-T/v1/information_negotiation/propose"),
+                                "Negotiation-T/information_negotiation/propose/v1"),
                         IllegalArgumentException.class,
                         "Template URI is malformed or contradicts the expected phase PROPOSE (propose)"),
                 new MatrixRow(
                         "template URI with unknown type",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                "Negotiation-T/v1/unknown-negotiation/propose"),
+                                "Negotiation-T/unknown-negotiation/propose/v1"),
                         IllegalArgumentException.class,
                         "Template URI is malformed or contradicts the expected phase PROPOSE (propose)"),
                 new MatrixRow(

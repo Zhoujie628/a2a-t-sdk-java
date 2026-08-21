@@ -82,7 +82,10 @@ class ClasspathPromptLoadersTest {
                 assertThrows(ResourceNotFoundException.class, () -> new ClasspathPromptTemplateLoader(resourceLoader)
                         .loadTemplate("missing_scenario", "en"));
 
-        assertEquals("prompt_resources/templates/*/v1/missing_scenario/en/template.md", exception.resourcePath());
+        assertEquals(
+                "prompt_resources/templates/*/network-layer/missing_scenario/v1/en/template.md"
+                        + " (or the layout without the network-layer segment)",
+                exception.resourcePath());
     }
 
     @Test

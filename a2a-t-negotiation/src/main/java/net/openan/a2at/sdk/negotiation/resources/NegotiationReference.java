@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import net.openan.a2at.sdk.core.resources.PathSegments;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 
@@ -23,7 +24,7 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
 
     private static final String URI_PREFIX = StandardTemplates.NEGOTIATION_EXTENSION_NAME;
 
-    private static final String URI_VERSION_SEGMENT = "v1";
+    private static final String URI_VERSION_SEGMENT = TemplateUri.DEFAULT_TEMPLATE_VERSION;
 
     private static final String TYPE_SEGMENT_SUFFIX = "-negotiation";
 
@@ -54,10 +55,10 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
     /**
      * Returns the template URI of the referenced template.
      *
-     * @return template URI such as {@code Negotiation-T/v1/information-negotiation/propose}
+     * @return template URI such as {@code Negotiation-T/information-negotiation/propose/v1}
      */
     public String uri() {
-        return String.join("/", URI_PREFIX, URI_VERSION_SEGMENT, typeSegment(), phase.uriSegment());
+        return String.join("/", URI_PREFIX, typeSegment(), phase.uriSegment(), URI_VERSION_SEGMENT);
     }
 
     /**
@@ -66,12 +67,12 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
      * <p>The URI layer cannot distinguish accept from reject because both share the {@code accept-reject} segment; the
      * expected phase disambiguates the parsed result, which therefore always carries the expected phase.
      *
-     * @param templateUri template URI to parse, such as {@code Negotiation-T/v1/target-negotiation/accept-reject}
+     * @param templateUri template URI to parse, such as {@code Negotiation-T/target-negotiation/accept-reject/v1}
      * @param expectedPhase API-level phase the caller is operating on; the parsed reference carries this phase
      * @param language locale identifier for the parsed reference
      * @return reference addressed by the URI carrying the expected phase, or an empty result when the URI is null,
-     *     blank or malformed (wrong segment count, prefix, version or type segment) or its phase segment does not match
-     *     the expected phase
+     *     blank or malformed (wrong segment count, prefix, type segment or trailing version segment) or its phase
+     *     segment does not match the expected phase
      * @throws NullPointerException if the expected phase is null
      */
     public static Optional<NegotiationReference> tryParse(
@@ -87,14 +88,14 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
         if (!URI_PREFIX.equals(segments[0])) {
             return Optional.empty();
         }
-        if (!URI_VERSION_SEGMENT.equals(segments[1])) {
-            return Optional.empty();
-        }
-        NegotiationType parsedType = parseTypeSegment(segments[2]);
+        NegotiationType parsedType = parseTypeSegment(segments[1]);
         if (parsedType == null) {
             return Optional.empty();
         }
-        if (!phaseSegmentMatches(segments[3], expectedPhase)) {
+        if (!phaseSegmentMatches(segments[2], expectedPhase)) {
+            return Optional.empty();
+        }
+        if (!URI_VERSION_SEGMENT.equals(segments[3])) {
             return Optional.empty();
         }
         return Optional.of(new NegotiationReference(parsedType, expectedPhase, language));

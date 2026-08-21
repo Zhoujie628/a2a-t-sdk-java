@@ -73,7 +73,7 @@ class NegotiationTemplateQueryBoundaryTest {
         assertEquals(
                 EXPECTED_URI_ORDER, templates.stream().map(PromptTemplate::uri).toList());
         for (PromptTemplate template : templates) {
-            String typeSegment = template.uri().split("/")[2];
+            String typeSegment = template.uri().split("/")[1];
             assertFalse(typeSegment.contains("_"), "type segments must use hyphens: " + template.uri());
             assertTrue(typeSegment.endsWith("-negotiation"), "type segment must carry the suffix: " + template.uri());
             assertFalse(template.content().isBlank());
@@ -104,7 +104,7 @@ class NegotiationTemplateQueryBoundaryTest {
         NegotiationGenerationOrchestrator orchestrator = orchestrator("zh-CN");
 
         Optional<PromptTemplate> template =
-                orchestrator.getNegotiationPrompt("Negotiation-T/v1/unknown-negotiation/propose");
+                orchestrator.getNegotiationPrompt("Negotiation-T/unknown-negotiation/propose/v1");
 
         assertTrue(template.isEmpty());
         assertTrue(hasWarning("negotiation_template_not_found", "A2AT_LANGUAGE"));

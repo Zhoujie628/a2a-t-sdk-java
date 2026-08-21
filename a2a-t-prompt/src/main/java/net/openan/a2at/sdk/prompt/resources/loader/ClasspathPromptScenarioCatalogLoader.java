@@ -23,8 +23,7 @@ public final class ClasspathPromptScenarioCatalogLoader {
     }
 
     public List<ScenarioDefinition> load(String language) {
-        String payload =
-                resourceLoader.loadText(new PromptResourceKey("scenarios", "catalog", language, "scenarios.json"));
+        String payload = resourceLoader.loadText(PromptResourceKey.scenario(language, "scenarios.json"));
         try {
             return PromptResourceJsonParser.parse(payload, ScenarioCatalog.class)
                     .scenarios();

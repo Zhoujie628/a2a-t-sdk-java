@@ -51,7 +51,7 @@ class TemplateUriEntryMatrixTest {
     private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
 
     private static final String BUILTIN_INFORMATION_PROPOSE_TEMPLATE =
-            "templates/Negotiation-T/v1/information-negotiation/propose/zh-CN/template.md";
+            "templates/Negotiation-T/information-negotiation/propose/v1/zh-CN/template.md";
 
     /**
      * Entry (a): every one of the six built-in URIs reaches its template and renders output byte-identical to the
@@ -117,14 +117,14 @@ class TemplateUriEntryMatrixTest {
                 "foo",
                 "foo/bar",
                 "information-negotiation/propose",
-                "Negotiation-T/v1/information-negotiation/propose/extra",
-                "Task-T/v1/information-negotiation/propose",
-                "Negotiation-T/v2/information-negotiation/propose",
-                "Negotiation-T/v1/information/propose",
-                "Negotiation-T/v1/information_negotiation/propose",
-                "Negotiation-T/v1/unknown-negotiation/propose",
-                "Negotiation-T/v1/information-negotiation/propose-x",
-                "Negotiation-T/v1/information-negotiation/accept"
+                "Negotiation-T/information-negotiation/propose/v1/extra",
+                "Task-T/information-negotiation/propose/v1",
+                "Negotiation-T/information-negotiation/propose/v2",
+                "Negotiation-T/information/propose/v1",
+                "Negotiation-T/information_negotiation/propose/v1",
+                "Negotiation-T/unknown-negotiation/propose/v1",
+                "Negotiation-T/information-negotiation/propose-x/v1",
+                "Negotiation-T/information-negotiation/accept/v1"
             })
     void malformedUriIsRejectedAsATemplateUriProgrammingError(String templateUri) {
         CountingClient llm = new CountingClient();

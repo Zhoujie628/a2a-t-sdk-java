@@ -132,7 +132,7 @@ class NegotiationGenerationOrchestratorTest {
                 .getNegotiationPrompt(StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri())
                 .isPresent());
         assertFalse(zhOrchestrator()
-                .getNegotiationPrompt("Negotiation-T/v1/unknown-negotiation/propose")
+                .getNegotiationPrompt("Negotiation-T/unknown-negotiation/propose/v1")
                 .isPresent());
         assertFalse(zhOrchestrator().getNegotiationPrompt("malformed-uri").isPresent());
     }

@@ -8,6 +8,7 @@ import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceDirectories;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotJsonSchema;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
 import net.openan.a2at.sdk.resources.ClasspathPromptResourceLoader;
@@ -37,21 +38,47 @@ public final class ClasspathPromptSlotSchemaLoader implements PromptSlotSchemaLo
 
     @Override
     public PromptSlotSchema loadSlotSchema(String scenarioCode, String language) {
+        java.util.Optional<TemplateUri> parsed = TemplateUri.parse(scenarioCode);
+        if (parsed.isPresent()) {
+            return load(parsed.orElseThrow(), scenarioCode, language);
+        }
         for (String slotType : SLOT_TYPES) {
-            try {
-                String payload = resourceLoader.loadText(
-                        new PromptResourceKey("slots", slotType, scenarioCode, language, "slot.json"));
-                return PromptResourceJsonParser.parse(payload, PromptSlotJsonSchema.class)
-                        .toPromptSlotSchema(scenarioCode);
-            } catch (ResourceNotFoundException ignored) {
-                // try next slot type
-            } catch (JsonProcessingException exception) {
-                throw new A2ATError("Failed to parse slot schema: " + scenarioCode, exception);
+            for (TemplateUri candidate : bareCodeCandidates(slotType, scenarioCode)) {
+                try {
+                    return load(candidate, scenarioCode, language);
+                } catch (ResourceNotFoundException ignored) {
+                    // try next candidate layout
+                }
             }
         }
         throw new ResourceNotFoundException(
                 "Prompt resource file does not exist.",
-                "prompt_resources/slots/*/v1/" + scenarioCode + "/" + language + "/slot.json");
+                "prompt_resources/slots/*/network-layer/" + scenarioCode + "/v1/" + language
+                        + "/slot.json (or the layout without the network-layer segment)");
+    }
+
+    private PromptSlotSchema load(TemplateUri candidate, String scenarioCode, String language) {
+        try {
+            String payload = resourceLoader.loadText(PromptResourceKey.slotSchema(candidate, language, "slot.json"));
+            return PromptResourceJsonParser.parse(payload, PromptSlotJsonSchema.class)
+                    .toPromptSlotSchema(scenarioCode);
+        } catch (JsonProcessingException exception) {
+            throw new A2ATError("Failed to parse slot schema: " + scenarioCode, exception);
+        }
+    }
+
+    /**
+     * Returns the candidate template URIs a bare scenario code can address under one slot type: the
+     * {@code network-layer} domain layout first, then the plain layout.
+     */
+    private static List<TemplateUri> bareCodeCandidates(String slotType, String scenarioCode) {
+        return List.of(
+                TemplateUri.of(
+                        slotType,
+                        TemplateUri.DEFAULT_TEMPLATE_VERSION,
+                        StandardTemplates.NETWORK_LAYER_SEGMENT,
+                        scenarioCode),
+                TemplateUri.of(slotType, TemplateUri.DEFAULT_TEMPLATE_VERSION, scenarioCode));
     }
 
     private static List<String> discoverSlotTypes() {

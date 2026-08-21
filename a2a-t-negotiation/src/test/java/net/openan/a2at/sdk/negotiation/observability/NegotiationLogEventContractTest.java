@@ -365,7 +365,7 @@ class NegotiationLogEventContractTest {
             @Override
             public List<PromptTemplate> loadAll() {
                 throw new net.openan.a2at.sdk.core.exception.ResourceNotFoundException(
-                        "No negotiation template exists for the configured language.", "templates/Negotiation-T/v1");
+                        "No negotiation template exists for the configured language.", "templates/Negotiation-T");
             }
         };
     }

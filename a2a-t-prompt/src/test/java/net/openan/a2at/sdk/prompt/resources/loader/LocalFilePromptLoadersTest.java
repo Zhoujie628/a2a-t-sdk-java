@@ -63,8 +63,9 @@ class LocalFilePromptLoadersTest {
                 promptRootDir
                         .resolve("templates")
                         .resolve("Task-T")
-                        .resolve("v1")
+                        .resolve("network-layer")
                         .resolve("incident_triage")
+                        .resolve("v1")
                         .resolve("en")
                         .resolve("template.md"),
                 """
@@ -92,8 +93,9 @@ class LocalFilePromptLoadersTest {
                 promptRootDir
                         .resolve("slots")
                         .resolve("Task-T")
-                        .resolve("v1")
+                        .resolve("network-layer")
                         .resolve("incident_triage")
+                        .resolve("v1")
                         .resolve("en")
                         .resolve("slot.json"),
                 """
@@ -139,7 +141,8 @@ class LocalFilePromptLoadersTest {
                         .loadTemplate("incident_triage", "en"));
 
         String expected = (promptRootDir.resolve("templates").toString()
-                + "/*/v1/incident_triage/en/template.md").replace('\\', '/');
+                + "/*/network-layer/incident_triage/v1/en/template.md"
+                + " (or the layout without the network-layer segment)").replace('\\', '/');
         assertEquals(expected, exception.resourcePath().replace('\\', '/'));
     }
 
@@ -149,8 +152,9 @@ class LocalFilePromptLoadersTest {
                 promptRootDir
                         .resolve("slots")
                         .resolve("Task-T")
-                        .resolve("v1")
+                        .resolve("network-layer")
                         .resolve("incident_triage")
+                        .resolve("v1")
                         .resolve("en")
                         .resolve("slot.json"),
                 "{ \"required\": [\"severity\"], \"properties\": ");

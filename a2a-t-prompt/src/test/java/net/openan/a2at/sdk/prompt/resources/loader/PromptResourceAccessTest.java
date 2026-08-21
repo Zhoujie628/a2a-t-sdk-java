@@ -33,8 +33,9 @@ class PromptResourceAccessTest {
                 promptRootDir
                         .resolve("templates")
                         .resolve("Task-T")
-                        .resolve("v1")
+                        .resolve("network-layer")
                         .resolve("incident_triage")
+                        .resolve("v1")
                         .resolve("en")
                         .resolve("template.md"),
                 "Local template for {{service}}.");
@@ -56,8 +57,9 @@ class PromptResourceAccessTest {
                 promptRootDir
                         .resolve("slots")
                         .resolve("Task-T")
-                        .resolve("v1")
+                        .resolve("network-layer")
                         .resolve("incident_triage")
+                        .resolve("v1")
                         .resolve("en")
                         .resolve("slot.json"),
                 """

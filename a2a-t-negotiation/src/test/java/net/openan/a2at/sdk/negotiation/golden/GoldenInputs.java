@@ -235,10 +235,10 @@ public final class GoldenInputs {
         /**
          * Returns the built-in template URI addressed by this fixture.
          *
-         * @return template URI such as {@code Negotiation-T/v1/information-negotiation/propose}
+         * @return template URI such as {@code Negotiation-T/information-negotiation/propose/v1}
          */
         public String templateUri() {
-            return "Negotiation-T/v1/" + typeSegment + "/" + phase.uriSegment();
+            return "Negotiation-T/" + typeSegment + "/" + phase.uriSegment() + "/v1";
         }
 
         /**
