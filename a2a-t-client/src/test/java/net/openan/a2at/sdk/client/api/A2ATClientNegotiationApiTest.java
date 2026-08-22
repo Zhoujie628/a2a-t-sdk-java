@@ -98,7 +98,7 @@ class A2ATClientNegotiationApiTest {
                 .getNegotiationPrompt(TemplateUri.of("Negotiation-T", List.of("information-negotiation", "propose"), "v9"))
                 .isPresent());
         PromptTemplate template = client.getNegotiationPrompt(INFORMATION_PROPOSE).orElseThrow();
-        assertEquals(INFORMATION_PROPOSE_URI, template.uri());
+        assertEquals(INFORMATION_PROPOSE, template.templateUri());
         assertFalse(template.content().isBlank());
     }
 

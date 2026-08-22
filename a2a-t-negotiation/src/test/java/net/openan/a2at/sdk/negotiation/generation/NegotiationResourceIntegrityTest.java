@@ -93,16 +93,16 @@ class NegotiationResourceIntegrityTest {
                 assertTrue(
                         matcher.matches(),
                         "the slot marker line of section " + section.title + " in "
-                                + template.uri() + " must use the marker script of " + language + ": "
+                                + template.templateUri().uri() + " must use the marker script of " + language + ": "
                                 + section.slotMarkerLine);
                 String slotName = matcher.group(1);
                 assertTrue(
                         valuesToKeys.containsKey(slotName),
-                        "the slot name " + slotName + " of " + template.uri() + " must be a vocabulary value of "
+                        "the slot name " + slotName + " of " + template.templateUri().uri() + " must be a vocabulary value of "
                                 + language);
                 assertTrue(
                         valuesToKeys.containsKey(section.title),
-                        "the section title " + section.title + " of " + template.uri()
+                        "the section title " + section.title + " of " + template.templateUri().uri()
                                 + " must be a vocabulary value of " + language);
                 allSlotNames.add(slotName);
                 if (!slotName.equals(section.title)) {
@@ -111,7 +111,7 @@ class NegotiationResourceIntegrityTest {
                 assertTrue(
                         section.bodyLines.stream().anyMatch(line -> line.equals(requirementsMarker)),
                         "every slot section must keep its requirements line: " + section.title + " in "
-                                + template.uri());
+                                + template.templateUri().uri());
             }
         }
 

@@ -112,9 +112,12 @@ final class PromptTemplateCatalog {
                 continue;
             }
             String content = entry.getValue();
-            templates.add(new PromptTemplate(uri, TemplateDescriptions.extract(content), content));
+            TemplateUri templateUri = TemplateUri.parse(uri)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Catalogable template URI could not be parsed: " + uri + " (path: " + path + ")"));
+            templates.add(new PromptTemplate(templateUri, TemplateDescriptions.extract(content), content));
         }
-        templates.sort(Comparator.comparing(PromptTemplate::uri));
+        templates.sort(Comparator.comparing(template -> template.templateUri().uri()));
         LOGGER.atDebug().log("prompt_templates_listed count={} language={}", templates.size(), language);
         return List.copyOf(templates);
     }
@@ -129,11 +132,11 @@ final class PromptTemplateCatalog {
      */
     public Optional<PromptTemplate> load(@NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
-        String uri = templateUri.uri();
-        String relativePath = String.join("/", TEMPLATE_DIRECTORY, uri, language, TEMPLATE_FILE_NAME);
+        String relativePath = String.join(
+                "/", TEMPLATE_DIRECTORY, templateUri.uri(), language, TEMPLATE_FILE_NAME);
         try {
             String content = readTemplate(relativePath);
-            return Optional.of(new PromptTemplate(uri, TemplateDescriptions.extract(content), content));
+            return Optional.of(new PromptTemplate(templateUri, TemplateDescriptions.extract(content), content));
         } catch (A2ATError exception) {
             return Optional.empty();
         }

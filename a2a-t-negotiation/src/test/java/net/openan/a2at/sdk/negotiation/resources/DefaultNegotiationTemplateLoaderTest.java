@@ -51,7 +51,7 @@ class DefaultNegotiationTemplateLoaderTest {
         PromptTemplate template =
                 loader.load(new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "en-US"));
 
-        assertEquals(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(), template.uri());
+        assertEquals(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE, template.templateUri());
         assertTrue(template.content().startsWith("## Negotiation Context"));
     }
 
@@ -120,7 +120,7 @@ class DefaultNegotiationTemplateLoaderTest {
 
         assertEquals(EXPECTED_LOAD_ALL_URIS, urisOf(templates));
         PromptTemplate overriddenTemplate = templates.get(2);
-        assertEquals(StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(), overriddenTemplate.uri());
+        assertEquals(StandardTemplates.TARGET_NEGOTIATION_PROPOSE, overriddenTemplate.templateUri());
         assertTrue(overriddenTemplate.content().contains("自定义目标内容"));
     }
 
@@ -138,7 +138,7 @@ class DefaultNegotiationTemplateLoaderTest {
     }
 
     private static List<String> urisOf(List<PromptTemplate> templates) {
-        return templates.stream().map(PromptTemplate::uri).toList();
+        return templates.stream().map(template -> template.templateUri().uri()).toList();
     }
 
     private static void writeTemplate(Path file, String content) throws IOException {

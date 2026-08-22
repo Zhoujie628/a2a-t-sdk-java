@@ -72,11 +72,14 @@ class NegotiationTemplateQueryBoundaryTest {
 
         assertEquals(6, templates.size());
         assertEquals(
-                EXPECTED_URI_ORDER, templates.stream().map(PromptTemplate::uri).toList());
+                EXPECTED_URI_ORDER, templates.stream().map(template -> template.templateUri().uri()).toList());
         for (PromptTemplate template : templates) {
-            String typeSegment = template.uri().split("/")[1];
-            assertFalse(typeSegment.contains("_"), "type segments must use hyphens: " + template.uri());
-            assertTrue(typeSegment.endsWith("-negotiation"), "type segment must carry the suffix: " + template.uri());
+            String typeSegment = template.templateUri().pathSegments().get(0);
+            assertFalse(
+                    typeSegment.contains("_"), "type segments must use hyphens: " + template.templateUri().uri());
+            assertTrue(
+                    typeSegment.endsWith("-negotiation"),
+                    "type segment must carry the suffix: " + template.templateUri().uri());
             assertFalse(template.content().isBlank());
         }
     }
@@ -90,9 +93,7 @@ class NegotiationTemplateQueryBoundaryTest {
                 orchestrator.getNegotiationPrompt(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE);
 
         assertTrue(template.isPresent());
-        assertEquals(
-                StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
-                template.orElseThrow().uri());
+        assertEquals(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE, template.orElseThrow().templateUri());
         String contextTitle = "zh-CN".equals(language) ? "## 协商上下文" : "## Negotiation Context";
         assertTrue(template.orElseThrow().content().contains(contextTitle));
         assertTrue(
