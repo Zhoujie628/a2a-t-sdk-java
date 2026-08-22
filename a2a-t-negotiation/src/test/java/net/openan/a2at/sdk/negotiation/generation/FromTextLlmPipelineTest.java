@@ -527,8 +527,8 @@ class FromTextLlmPipelineTest {
     }
 
     /**
-     * IT-B-008: the negotiation context of the rendered message comes from the caller-supplied context: the extraction
-     * schema sent to the LLM has no context fields and the output carries exactly the caller's context values.
+     * IT-B-008: the negotiation context of the generated message comes from the caller-supplied context: the
+     * extraction schema sent to the LLM has no context fields and the metadata carries exactly the caller's context.
      */
     @Test
     void contextIsInjectedFromTheCallerWithoutAnyLlmInvolvement() {
@@ -544,10 +544,10 @@ class FromTextLlmPipelineTest {
         assertFalse(schemaProperties.containsKey("id"), "the extraction schema must not ask for the context id");
         assertFalse(schemaProperties.containsKey("round"), "the extraction schema must not ask for the round");
         assertFalse(schemaProperties.containsKey("maxRounds"), "the extraction schema must not ask for the limit");
-        String promptText = result.promptText();
-        assertTrue(promptText.contains("- id: " + GoldenInputs.SESSION_ID));
-        assertTrue(promptText.contains("- round: 4"));
-        assertTrue(promptText.contains("- maxRounds: 7"));
+        assertEquals(context, result.negotiationContext(), "the caller context travels in the metadata");
+        assertFalse(
+                result.promptText().contains("- id: " + GoldenInputs.SESSION_ID),
+                "the context lines must not be rendered into the message");
     }
 
     private static NegotiationGenerationOrchestrator orchestrator(

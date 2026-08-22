@@ -1,8 +1,3 @@
-## 协商上下文
-- id: 3dbc13b5-bd57-4c2b-b503-24e381b6c8d3
-- round: 1
-- maxRounds: 5
-
 ## 目标协商
 The intent understanding of the wireless energy-saving optimization task is listed in <Intent Understanding Statement>; open questions remain about the area and the time range, see <Content to Clarify>; please clarify and confirm.
 

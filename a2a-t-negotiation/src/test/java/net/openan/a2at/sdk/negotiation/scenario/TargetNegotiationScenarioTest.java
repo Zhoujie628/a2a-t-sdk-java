@@ -62,7 +62,7 @@ class TargetNegotiationScenarioTest {
         assertTrue(
                 !firstProposal.promptText().contains("## 理解对齐与疑问澄清"), "round 1 must not carry the alignment section");
         assertTrue(firstProposal.promptText().contains("## 待澄清内容"));
-        assertTrue(firstProposal.promptText().contains("- round: 1"));
+        assertEquals(1, firstProposal.negotiationContext().round());
 
         FilledParamData firstRoundParameters = responder.validateProposePromptAndDataFilling(
                 firstProposal.promptText(), firstRound, nestedParameterSchema(), TARGET_PROPOSE_URI);
@@ -82,7 +82,7 @@ class TargetNegotiationScenarioTest {
                 TARGET_ACCEPT_URI);
         assertTrue(rejection.promptText().contains("## 目标协商结果\nReject"));
         assertTrue(rejection.promptText().contains("节能区域信息因站点清单不可用而无法完整澄清"));
-        assertTrue(rejection.promptText().contains("- round: 1"));
+        assertEquals(1, rejection.negotiationContext().round());
 
         requester.validateRejectPromptAndDataFilling(
                 rejection.promptText(), firstRound, parameterSchema(), TARGET_ACCEPT_URI);
@@ -108,7 +108,7 @@ class TargetNegotiationScenarioTest {
         assertTrue(
                 !secondProposal.promptText().contains("## 待澄清内容"),
                 "an empty clarification list must drop the whole section");
-        assertTrue(secondProposal.promptText().contains("- round: 2"));
+        assertEquals(2, secondProposal.negotiationContext().round());
 
         MetadataContent acceptance = responder.generateAcceptFromData(
                 new NegotiationEndingData(
@@ -118,7 +118,7 @@ class TargetNegotiationScenarioTest {
                 TARGET_ACCEPT_URI);
         assertTrue(acceptance.promptText().contains("## 目标协商结果\nAccept"));
         assertTrue(acceptance.promptText().contains("最终确认意图：08:00-18:00对松山湖站点启用无线节能优化"));
-        assertTrue(acceptance.promptText().contains("- round: 2"));
+        assertEquals(2, acceptance.negotiationContext().round());
 
         FilledParamData terminalParameters = requester.validateAcceptPromptAndDataFilling(
                 acceptance.promptText(), secondRound, parameterSchema(), TARGET_ACCEPT_URI);

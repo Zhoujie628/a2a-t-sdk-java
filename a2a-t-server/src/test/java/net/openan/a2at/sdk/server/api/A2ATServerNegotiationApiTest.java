@@ -42,8 +42,7 @@ class A2ATServerNegotiationApiTest {
 
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertFalse(result.promptText().isBlank());
-        assertTrue(result.promptText().contains("- id: " + UUID));
-        assertTrue(result.promptText().contains("协商上下文"));
+        assertFalse(result.promptText().contains("协商上下文"), "the context section must not be rendered");
         Map<String, Object> metadata = result.buildMetadataContent();
         assertEquals(3, metadata.size());
         assertEquals(result.promptText(), metadata.get(result.extensionUri()));
@@ -63,7 +62,7 @@ class A2ATServerNegotiationApiTest {
 
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertFalse(result.promptText().isBlank());
-        assertTrue(result.promptText().contains("Negotiation Context"));
+        assertFalse(result.promptText().contains("Negotiation Context"), "the context section must not be rendered");
         assertTrue(result.promptText().contains("Required Information Items"));
     }
 

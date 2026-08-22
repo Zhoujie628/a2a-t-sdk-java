@@ -32,7 +32,6 @@ final class AbortGenerator extends AbstractNegotiationGenerator {
             NegotiationContext context, NegotiationContent content, PromptTemplate template, Vocabulary vocabulary) {
         NegotiationAbortContent abortContent = contentOf(content, NegotiationAbortContent.class, "Abort generator");
         Map<String, String> slots = new LinkedHashMap<>();
-        slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(
                 vocabulary.get("slot.termination_reason"),
                 requiredText(

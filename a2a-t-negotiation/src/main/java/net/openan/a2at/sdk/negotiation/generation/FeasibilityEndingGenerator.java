@@ -38,7 +38,6 @@ final class FeasibilityEndingGenerator extends AbstractNegotiationGenerator {
                 "content.feasibilitySummary",
                 "Feasibility summary of a terminal feasibility negotiation message");
         Map<String, String> slots = new LinkedHashMap<>();
-        slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(
                 vocabulary.get("slot.feasibility_conclusion"),
                 endingContent.conclusion().literal());

@@ -33,7 +33,6 @@ final class InformationProposeGenerator extends AbstractNegotiationGenerator {
         InformationProposeContent proposeContent =
                 contentOf(content, InformationProposeContent.class, "Information propose generator");
         Map<String, String> slots = new LinkedHashMap<>();
-        slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(vocabulary.get("slot.info_items"), itemsSlotValue(proposeContent, vocabulary));
         return render(template, slots);
     }

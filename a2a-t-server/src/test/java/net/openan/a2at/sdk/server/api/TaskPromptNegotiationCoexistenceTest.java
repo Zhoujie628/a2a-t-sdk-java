@@ -90,7 +90,7 @@ class TaskPromptNegotiationCoexistenceTest {
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_TEMPLATE);
         assertEquals(INFORMATION_PROPOSE_URI, negotiationMessage.templateUri());
-        assertTrue(negotiationMessage.promptText().contains("- id: " + UUID));
+        assertEquals(UUID, negotiationMessage.negotiationContext().id());
     }
 
     @Test
@@ -109,7 +109,7 @@ class TaskPromptNegotiationCoexistenceTest {
                         new NegotiationContext(UUID, 2, 5),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_TEMPLATE);
-        assertTrue(negotiationMessage.promptText().contains("- round: 2"));
+        assertEquals(2, negotiationMessage.negotiationContext().round());
 
         Map<String, Object> startedAgain = server.startNegotiation(NegotiationType.TARGET, "请澄清目标。", Map.of());
         assertEquals(

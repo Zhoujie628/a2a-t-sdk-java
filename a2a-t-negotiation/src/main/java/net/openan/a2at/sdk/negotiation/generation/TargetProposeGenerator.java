@@ -38,7 +38,6 @@ final class TargetProposeGenerator extends AbstractNegotiationGenerator {
                 "content.targetNegotiationDescription",
                 "Target negotiation description");
         Map<String, String> slots = new LinkedHashMap<>();
-        slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(vocabulary.get("slot.target"), proposeContent.targetNegotiationDescription());
         if (context.round() == 1) {
             slots.put(

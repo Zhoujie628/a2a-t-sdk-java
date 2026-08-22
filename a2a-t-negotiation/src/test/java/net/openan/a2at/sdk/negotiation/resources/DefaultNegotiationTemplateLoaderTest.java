@@ -56,7 +56,7 @@ class DefaultNegotiationTemplateLoaderTest {
                 zhCnLoader.load(new NegotiationReference(null, NegotiationPhase.ABORT, "zh-CN"));
 
         assertEquals(StandardTemplates.NEGOTIATION_ABORT, englishTemplate.templateUri());
-        assertTrue(englishTemplate.content().startsWith("## Negotiation Context"));
+        assertTrue(englishTemplate.content().startsWith("## Negotiation Result"));
         assertTrue(englishTemplate.content().contains("## Negotiation Termination Reason"));
         assertTrue(englishTemplate.content().contains("{{negotiation_termination_reason}}"));
         assertEquals(StandardTemplates.NEGOTIATION_ABORT, chineseTemplate.templateUri());
@@ -97,7 +97,7 @@ class DefaultNegotiationTemplateLoaderTest {
                 loader.load(new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "en-US"));
 
         assertEquals(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE, template.templateUri());
-        assertTrue(template.content().startsWith("## Negotiation Context"));
+        assertTrue(template.content().startsWith("## Information Negotiation"));
     }
 
     @Test
@@ -142,7 +142,7 @@ class DefaultNegotiationTemplateLoaderTest {
 
         PromptTemplate fallback =
                 loader.load(new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN"));
-        assertTrue(fallback.content().contains("## 协商上下文"));
+        assertTrue(fallback.content().contains("## 信息协商"));
         assertTrue(!fallback.content().contains("自定义标记内容"));
         assertEquals("", fallback.description());
     }

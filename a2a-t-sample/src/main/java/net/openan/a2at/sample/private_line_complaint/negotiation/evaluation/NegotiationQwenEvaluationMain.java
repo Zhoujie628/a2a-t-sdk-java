@@ -110,8 +110,8 @@ public final class NegotiationQwenEvaluationMain {
         result.put("expected_propose", testCase.expectedPropose());
         result.put("expected_ending", testCase.expectedEnding());
         NegotiationContext context = new NegotiationContext(UUID.randomUUID().toString(), 1, 3);
-        result.put("client_supplement", testCase.clientSupplement(context.id(), context.round(), context.maxRounds()));
-        result.put("ending_input", testCase.endingGenerationText(context.id(), context.round(), context.maxRounds()));
+        result.put("client_supplement", testCase.clientSupplement());
+        result.put("ending_input", testCase.endingGenerationText());
         result.put("actual_propose", null);
         result.put("actual_ending", null);
         result.put("propose_generation_succeeded", false);
@@ -222,7 +222,7 @@ public final class NegotiationQwenEvaluationMain {
             List<Map<String, Object>> apiTrace) throws IOException {
         long startedAt = System.nanoTime();
         try {
-            String endingInput = testCase.endingGenerationText(context.id(), context.round(), context.maxRounds());
+            String endingInput = testCase.endingGenerationText();
             MetadataContent content = "accept".equals(testCase.decision())
                     ? server.generateNegotiationAcceptPromptFromText(
                             endingInput, context, NegotiationSampleFlow.ENDING_TEMPLATE_URI)
@@ -230,16 +230,16 @@ public final class NegotiationQwenEvaluationMain {
                             endingInput, context, NegotiationSampleFlow.ENDING_TEMPLATE_URI);
             writeStage(processLogger, apiTrace, stageEvent(runId, testCase, "generate_" + testCase.decision(), testCase.decision(), context,
                     Map.of("text", endingInput,
-                            "client_supplement", testCase.clientSupplement(context.id(), context.round(), context.maxRounds()),
+                            "client_supplement", testCase.clientSupplement(),
                             "template_uri", NegotiationSampleFlow.ENDING_TEMPLATE_URI.uri()),
                     Map.of("prompt", content.promptText(), "template_uri", content.templateUri(),
                             "extension_uri", content.extensionUri()), startedAt, null));
             return content;
         } catch (RuntimeException exception) {
-            String endingInput = testCase.endingGenerationText(context.id(), context.round(), context.maxRounds());
+            String endingInput = testCase.endingGenerationText();
             writeStage(processLogger, apiTrace, stageEvent(runId, testCase, "generate_" + testCase.decision(), testCase.decision(), context,
                     Map.of("text", endingInput,
-                            "client_supplement", testCase.clientSupplement(context.id(), context.round(), context.maxRounds()),
+                            "client_supplement", testCase.clientSupplement(),
                             "template_uri", NegotiationSampleFlow.ENDING_TEMPLATE_URI.uri()), null, startedAt, exception));
             throw exception;
         }

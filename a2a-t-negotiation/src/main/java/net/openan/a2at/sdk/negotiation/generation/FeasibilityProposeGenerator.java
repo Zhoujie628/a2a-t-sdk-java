@@ -44,7 +44,6 @@ final class FeasibilityProposeGenerator extends AbstractNegotiationGenerator {
                 action,
                 "Feasibility negotiation action must not be null; it selects the conditional sections of the message.");
         Map<String, String> slots = new LinkedHashMap<>();
-        slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(vocabulary.get("slot.feasibility"), proposeContent.feasibilityNegotiationDescription());
         if (action == NegotiationAction.REQUEST_FEASIBILITY_EVALUATION) {
             slots.put(

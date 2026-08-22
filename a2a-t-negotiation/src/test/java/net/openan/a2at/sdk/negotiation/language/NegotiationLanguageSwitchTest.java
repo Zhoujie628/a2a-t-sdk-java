@@ -58,24 +58,24 @@ class NegotiationLanguageSwitchTest {
     @ValueSource(strings = {GoldenInputs.ZH_CN, GoldenInputs.EN_US})
     void templateQueriesReturnTheTemplatesOfTheConfiguredLanguage(String language) {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(language);
-        String contextTitle = GoldenInputs.ZH_CN.equals(language) ? "## 协商上下文" : "## Negotiation Context";
-        String otherLanguageTitle = GoldenInputs.ZH_CN.equals(language) ? "## Negotiation Context" : "## 协商上下文";
+        String requirementLabel = GoldenInputs.ZH_CN.equals(language) ? "要求：" : "Requirement:";
+        String otherLanguageLabel = GoldenInputs.ZH_CN.equals(language) ? "Requirement:" : "要求：";
 
         List<PromptTemplate> templates = orchestrator.getNegotiationPrompts();
 
         assertEquals(7, templates.size());
         for (PromptTemplate template : templates) {
             assertTrue(
-                    template.content().contains(contextTitle),
+                    template.content().contains(requirementLabel),
                     template.templateUri().uri() + " must be a " + language + " template");
             assertTrue(
-                    !template.content().contains(otherLanguageTitle),
+                    !template.content().contains(otherLanguageLabel),
                     template.templateUri().uri() + " must not leak the other language");
         }
 
         PromptTemplate queriedTemplate =
                 orchestrator.getNegotiationPrompt(INFORMATION_PROPOSE_URI).orElseThrow();
-        assertTrue(queriedTemplate.content().contains(contextTitle));
+        assertTrue(queriedTemplate.content().contains(requirementLabel));
     }
 
     @Test

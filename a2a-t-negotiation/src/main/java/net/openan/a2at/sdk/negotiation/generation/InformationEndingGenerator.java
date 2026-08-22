@@ -32,7 +32,6 @@ final class InformationEndingGenerator extends AbstractNegotiationGenerator {
         InformationEndingContent endingContent = contentOf(content, InformationEndingContent.class, "Information ending generator");
         renderableConclusion(endingContent.conclusion());
         Map<String, String> slots = new LinkedHashMap<>();
-        slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(
                 vocabulary.get("slot.info_conclusion"),
                 endingContent.conclusion().literal());

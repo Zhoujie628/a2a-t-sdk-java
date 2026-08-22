@@ -49,7 +49,7 @@ class MaxRoundsExhaustionScenarioTest {
         assertTrue(terminal.promptText().contains("## 协商结果\nAbort"));
         assertTrue(terminal.promptText().contains("## 协商终止原因"));
         assertTrue(terminal.promptText().contains("达到协商轮次上限，本次协商确认结束。"));
-        assertTrue(terminal.promptText().contains("- round: 5"));
+        assertEquals(5, terminal.negotiationContext().round());
 
         FilledParamData terminalParameters = peer.validateAbortPromptAndDataFilling(
                 terminal.promptText(), lastRound, parameterSchema(), StandardTemplates.NEGOTIATION_ABORT);

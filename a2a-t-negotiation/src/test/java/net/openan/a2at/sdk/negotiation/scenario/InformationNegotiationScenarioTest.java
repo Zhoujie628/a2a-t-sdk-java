@@ -70,7 +70,7 @@ class InformationNegotiationScenarioTest {
                 INFORMATION_PROPOSE_URI);
         assertTrue(request.promptText().contains("## 所需信息项"));
         assertTrue(request.promptText().contains("1. 节能区域信息：如松山湖"));
-        assertTrue(request.promptText().contains("- round: 1"));
+        assertEquals(1, request.negotiationContext().round());
 
         FilledParamData requestParameters = responder.validateProposePromptAndDataFilling(
                 request.promptText(), round, parameterSchema(), INFORMATION_PROPOSE_URI);
@@ -92,7 +92,7 @@ class InformationNegotiationScenarioTest {
         assertTrue(answer.promptText().contains("## 信息协商结果\nAccept"));
         assertTrue(answer.promptText().contains("## 信息协商结果内容"));
         assertTrue(answer.promptText().contains("1. 节能区域信息：松山湖"));
-        assertTrue(answer.promptText().contains("- round: 1"), "the terminal answer shares the round of the request");
+        assertEquals(1, answer.negotiationContext().round(), "the terminal answer shares the round of the request");
 
         FilledParamData answerParameters =
                 requester.validateAcceptPromptAndDataFilling(

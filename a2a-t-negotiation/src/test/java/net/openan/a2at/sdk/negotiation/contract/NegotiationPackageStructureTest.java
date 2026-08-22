@@ -75,7 +75,6 @@ class NegotiationPackageStructureTest {
                         "InformationProposeGenerator.java",
                         "NegotiationContentExtractor.java",
                         "NegotiationContentService.java",
-                        "NegotiationContextRenderer.java",
                         "NegotiationGenerationOrchestrator.java",
                         "NegotiationGenerationOrchestratorBuilder.java",
                         "NegotiationGenerator.java",

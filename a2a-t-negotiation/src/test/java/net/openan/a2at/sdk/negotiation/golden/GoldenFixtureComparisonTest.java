@@ -127,12 +127,9 @@ class GoldenFixtureComparisonTest {
         String promptText = result.promptText();
 
         String contextTitle = "zh-CN".equals(language) ? "协商上下文" : "Negotiation Context";
-        assertTrue(promptText.startsWith("## " + contextTitle + "\n"), "message must start with the context section");
-        assertTrue(
-                promptText.contains("- id: " + GoldenInputs.SESSION_ID + "\n- round: "
-                        + goldenCase.context().round() + "\n- maxRounds: "
-                        + goldenCase.context().maxRounds()),
-                "context section must be the fixed three-line list");
+        assertFalse(promptText.contains(contextTitle), "the context section must not be rendered into the message");
+        assertFalse(promptText.contains("- id: " + GoldenInputs.SESSION_ID), "context lines must not be rendered");
+        assertEquals(goldenCase.context(), result.negotiationContext(), "the context travels in the metadata");
         assertFalse(promptText.endsWith("\n"), "message must not end with a newline");
         assertFalse(promptText.contains("\n\n\n"), "sections must be joined by exactly one blank line");
         assertFalse(promptText.contains("{{"), "no unreplaced slot placeholder may remain");

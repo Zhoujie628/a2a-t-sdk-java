@@ -47,10 +47,7 @@ class NegotiationGenerationOrchestratorTest {
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertEquals(NegotiationHandler.NEGOTIATION_T_URI, result.extensionUri());
         assertFalse(result.promptText().isBlank());
-        assertTrue(result.promptText().contains("- id: " + UUID));
-        assertTrue(result.promptText().contains("- round: 1"));
-        assertTrue(result.promptText().contains("- maxRounds: 5"));
-        assertTrue(result.promptText().contains("协商上下文"));
+        assertFalse(result.promptText().contains("协商上下文"), "the context section must not be rendered");
         assertTrue(result.promptText().contains("所需信息项"));
 
         Map<String, Object> metadata = result.buildMetadataContent();
@@ -77,8 +74,8 @@ class NegotiationGenerationOrchestratorTest {
 
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertFalse(result.promptText().isBlank());
-        assertTrue(result.promptText().contains("- id: " + UUID));
-        assertTrue(result.promptText().contains("Negotiation Context"));
+        assertFalse(result.promptText().contains("Negotiation Context"), "the context section must not be rendered");
+        assertEquals(new NegotiationContext(UUID, 2, 5), result.negotiationContext());
         assertTrue(result.promptText().contains("Required Information Items"));
     }
 
@@ -97,7 +94,7 @@ class NegotiationGenerationOrchestratorTest {
         assertEquals(1, llm.calls);
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertFalse(result.promptText().isBlank());
-        assertTrue(result.promptText().contains("- round: 2"));
+        assertEquals(2, result.negotiationContext().round());
         assertTrue(result.promptText().contains("故障发生时间"));
     }
 

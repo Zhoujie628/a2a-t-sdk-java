@@ -31,12 +31,12 @@ NEGOTIATION_PHASE_SEGMENTS = ("propose", "accept-reject")
 NEGOTIATION_LANGUAGES = ("zh-CN", "en-US")
 NEGOTIATION_STATIC_SECTIONS = {"info_static"}
 NEGOTIATION_PROFILES = {
-    ("information-negotiation", "propose"): ("context", "info_static", "info_items"),
-    ("information-negotiation", "accept-reject"): ("context", "info_conclusion", "info_result_content"),
-    ("target-negotiation", "propose"): ("context", "target", "target_intent", "target_alignment", "target_clarification"),
-    ("target-negotiation", "accept-reject"): ("context", "target_conclusion", "target_result_content"),
-    ("feasibility-negotiation", "propose"): ("context", "feasibility", "feasibility_evaluate", "feasibility_infeasible"),
-    ("feasibility-negotiation", "accept-reject"): ("context", "feasibility_conclusion", "feasibility_confirm"),
+    ("information-negotiation", "propose"): ("info_static", "info_items"),
+    ("information-negotiation", "accept-reject"): ("info_conclusion", "info_result_content"),
+    ("target-negotiation", "propose"): ("target", "target_intent", "target_alignment", "target_clarification"),
+    ("target-negotiation", "accept-reject"): ("target_conclusion", "target_result_content"),
+    ("feasibility-negotiation", "propose"): ("feasibility", "feasibility_evaluate", "feasibility_infeasible"),
+    ("feasibility-negotiation", "accept-reject"): ("feasibility_conclusion", "feasibility_confirm"),
 }
 NEGOTIATION_MARKER = re.compile(
     r"^\{\{(?P<slot>[^{}]+)\}\}(?:(?P<zh>（(?P<zh_kind>必填|选填)）)| \((?P<en_kind>required|optional)\))\s*$"
@@ -320,8 +320,6 @@ def lint_negotiation_file(
             errors.append(error(path, marker_line_no, "negotiation-slot-name", f"Slot name '{{{{{marker.group('slot')}}}}}' must be '{expected_slot}'."))
         if not any(text.rstrip() == requirements_label for _, text in body):
             errors.append(error(path, line_no, "negotiation-requirements", f"Slot section '{title}' must contain a '{requirements_label}' line."))
-        if key == "context" and required is not True:
-            errors.append(error(path, marker_line_no, "negotiation-context", "The negotiation context section must be marked as required."))
         shape.append((key, required, marker.group("slot") == expected_slot, line_no))
     for key in profile:
         if key not in seen:

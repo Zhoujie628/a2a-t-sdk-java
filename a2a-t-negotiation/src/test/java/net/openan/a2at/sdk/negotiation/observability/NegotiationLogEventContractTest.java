@@ -243,7 +243,7 @@ class NegotiationLogEventContractTest {
                         new NegotiationContext(UUID, 1, 5),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_URI);
-        assertTrue(result.promptText().contains("协商上下文"));
+        assertEquals(new NegotiationContext(UUID, 1, 5), result.negotiationContext());
     }
 
     private void driveSuccessfulGenerationFromText() {

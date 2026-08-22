@@ -20,8 +20,6 @@ abstract class AbstractNegotiationGenerator implements NegotiationGenerator {
 
     private final NegotiationPromptRenderer promptRenderer = new NegotiationPromptRenderer();
 
-    private final NegotiationContextRenderer contextRenderer = new NegotiationContextRenderer();
-
     private final NegotiationItemFormatter itemFormatter = new NegotiationItemFormatter();
 
     /**
@@ -97,17 +95,6 @@ abstract class AbstractNegotiationGenerator implements NegotiationGenerator {
             throw new IllegalArgumentException(description + " must contain at least one item.");
         }
         return items;
-    }
-
-    /**
-     * Builds the slot value for the negotiation context section.
-     *
-     * @param context negotiation context of the message
-     * @param vocabulary vocabulary of the message language
-     * @return rendered context list
-     */
-    protected String contextSlotValue(NegotiationContext context, Vocabulary vocabulary) {
-        return contextRenderer.render(context);
     }
 
     /**

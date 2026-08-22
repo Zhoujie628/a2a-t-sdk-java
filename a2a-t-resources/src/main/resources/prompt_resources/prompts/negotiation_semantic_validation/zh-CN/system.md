@@ -35,7 +35,6 @@
 
 ## slot_name 规范
 语义错误与结构语义错误的 slot_name 必须使用以下语言无关的规范键，按出错的报文板块选择：
-- section.context：协商上下文（Negotiation Context）
 - section.termination_reason：协商终止原因（Negotiation Termination Reason）
 - section.info_static：信息协商（Information Negotiation）
 - section.info_items：所需信息项（Required Information Items）
@@ -67,7 +66,6 @@ message 必须为英文。
   "negotiation_type": "feasibility",
   "errors": [],
   "params": {
-    "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
     "confirmed_rate_mbps": 2
   }
 }
