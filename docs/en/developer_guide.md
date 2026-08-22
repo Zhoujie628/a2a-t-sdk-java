@@ -489,7 +489,7 @@ where `{type}` is `information`, `target`, or `feasibility`, `{phase}` is `propo
 | `Negotiation-T/feasibility-negotiation/propose/v1` | Request a feasibility evaluation or propose an alternative |
 | `Negotiation-T/feasibility-negotiation/accept-reject/v1` | Accept or reject a feasibility negotiation |
 
-Negotiation templates are resolved with a **dual-root fallback** that is independent of `A2AT_PROMPT_SOURCE_TYPE`: a template file that exists under the local resource root configured by `A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR` wins, otherwise the built-in classpath template of the same URI is used. The built-in templates therefore always remain available as a safety net. Only templates are taken from the local root; LLM prompt resources always come from the classpath.
+Negotiation templates are resolved with a **dual-root fallback** that is independent of `A2AT_PROMPT_SOURCE_TYPE`: a template file that exists under the local resource root configured by `A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR` wins, otherwise the built-in classpath template of the same URI is used. The built-in templates therefore always remain available as a safety net. Templates and the negotiation vocabulary are taken from the local root; LLM prompt resources always come from the classpath. The negotiation vocabulary follows the same dual-root regime: each language's section titles, slot marker names, appended-line labels and list punctuation live in `prompt_resources/negotiation-vocabulary/{lang}/vocabulary.json`, so a file placed at `{A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR}/negotiation-vocabulary/{lang}/vocabulary.json` overrides the built-in classpath vocabulary. A vocabulary file must define exactly the canonical key set shared by both bundled languages; anything else fails fast.
 
 To override one template (for example the information propose template in Chinese), place a file under the local root following the bundled layout:
 
@@ -553,7 +553,9 @@ Retry semantics: a failing LLM step carrying a retryable code is re-run up to th
 
 ### 1.10.6 Language Configuration
 
-The negotiation templates and the vocabulary used for rendering and section recognition are keyed by `A2AT_LANGUAGE`. Supported values are exactly `zh-CN` and `en-US`; there is no fallback — any other value fails with an `IllegalArgumentException` when the vocabulary is resolved. Set the language explicitly in `client.env` / `server.env`:
+The negotiation templates and the vocabulary used for rendering and section recognition are keyed by `A2AT_LANGUAGE`. Supported values are exactly `zh-CN` and `en-US`; there is no fallback — any other value fails with an `IllegalArgumentException` when the vocabulary is resolved, and the failure message points at `A2AT_LANGUAGE`.
+
+The vocabulary itself is file-driven: each language's constants live in `prompt_resources/negotiation-vocabulary/{lang}/vocabulary.json`, a flat JSON object mapping the 33 canonical keys (section titles, slot marker names, appended-line labels, list punctuation) to that language's text. It follows the same dual-root local-override regime as the templates — a file under `A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR` wins, otherwise the built-in classpath file is used — and resolution is fail-fast with no silent degradation: a vocabulary that exists in neither root, is unreadable, is malformed, or does not define exactly the canonical key set raises an `IllegalArgumentException` naming the language and the file origin. Adding a new language therefore still requires the full resource set — the negotiation templates and the LLM prompt resources — not just a vocabulary file. Set the language explicitly in `client.env` / `server.env`:
 
 ```properties
 A2AT_LANGUAGE=zh-CN
