@@ -160,7 +160,7 @@ public final class NegotiationContentService {
      * Generates a propose-phase negotiation message from free text through one LLM content-extraction step.
      *
      * @param text free-text input describing the message content
-     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI whose phase segment must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the context or the template URI is null
@@ -179,7 +179,7 @@ public final class NegotiationContentService {
      * Generates an accept-phase negotiation message from free text through one LLM content-extraction step.
      *
      * @param text free-text input describing the message content
-     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the context or the template URI is null
@@ -198,7 +198,7 @@ public final class NegotiationContentService {
      * Generates a reject-phase negotiation message from free text through one LLM content-extraction step.
      *
      * @param text free-text input describing the message content
-     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the context or the template URI is null
@@ -217,7 +217,7 @@ public final class NegotiationContentService {
      * Generates an abort negotiation message from free text through one LLM content-extraction step.
      *
      * @param text free-text input stating the termination reason
-     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the context or the template URI is null
