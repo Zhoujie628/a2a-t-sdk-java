@@ -246,9 +246,9 @@ public final class ClientSampleFlow {
         checks.add(expectation(
                 label + ": prompt carries the recovery plan execution status",
                 content.promptText() != null
-                        && content.promptText().contains(ServiceRecoverySampleInputs.SLOT_RECOVERY_PLAN_EXECUTION_STATUS),
+                        && content.promptText().contains("业务抢通方案执行状态"),
                 "promptText does not carry the required "
-                        + ServiceRecoverySampleInputs.SLOT_RECOVERY_PLAN_EXECUTION_STATUS + " slot"));
+                        + "业务抢通方案执行状态" + " slot"));
     }
 
     private static VerificationCheck expectation(String name, boolean passed, String failureDetail) {
