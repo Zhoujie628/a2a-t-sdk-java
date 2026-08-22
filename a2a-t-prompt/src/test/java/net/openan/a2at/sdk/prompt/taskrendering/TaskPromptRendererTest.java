@@ -106,7 +106,15 @@ class TaskPromptRendererTest {
     void renderRaisesWhenTemplateReferencesUnknownSlot() {
         assertThrows(
                 TaskPromptRenderException.class,
-                () -> renderer.render("Site: {site}\nTime Range: {time_range}", Map.of("site", "Site A")));
+                () -> renderer.render("Site: {{site}}\nTime Range: {{time_range}}", Map.of("site", "Site A")));
+    }
+
+    @Test
+    void renderKeepsSingleBraceExampleTextVerbatim() {
+        // example prose such as "{00:00~06:00,2Mbps}" inside requirement text is not a slot placeholder
+        String prompt = renderer.render(
+                "Rate target: {00:00~06:00,2Mbps}\nSite: {{site}}", Map.of("site", "Site A"));
+        assertEquals("Rate target: {00:00~06:00,2Mbps}\nSite: Site A", prompt);
     }
 
     @Test

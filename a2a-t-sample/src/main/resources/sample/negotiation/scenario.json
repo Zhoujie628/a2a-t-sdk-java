@@ -1,0 +1,144 @@
+{
+  "scenario": "private-line complaint diagnosis with negotiation",
+  "task_schema": {
+    "type": "object",
+    "properties": {
+      "任务对象": {
+        "type": "string",
+        "description": "专线名称，接入端口名称，接入端口资源ID参数，3个参数下发其中一个用于标识专线业务对象",
+        "examples": [
+          "接入端口资源ID：f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        ]
+      },
+      "任务上下文": {
+        "type": "string",
+        "description": "提供专线业务的故障现象描述和诊断任务的上下文信息",
+        "examples": [
+          "故障现象:专线中断。故障流水号：fault-id-1-017-20230511-09013"
+        ]
+      }
+    },
+    "required": [
+      "任务上下文"
+    ]
+  },
+  "missing_params": {
+    "任务对象": "",
+    "任务上下文": "2. 问题发生时间：2026-05-11T08:21:46Z\n3. OSS侧事件流水号：event-id-20260511-09013\n4. 投诉详情：深圳访问广州响应延迟骤升，交易接口频繁报连接超时"
+  },
+  "filled_params": {
+    "任务对象": "P781-珠江新城-PTN7900-23-TPA1EG24-17",
+    "任务上下文": "1. 投诉分类：专线质差\n2. 问题发生时间：2026-05-11T08:21:46Z\n3. OSS侧事件流水号：event-id-20260511-09013\n4. 投诉详情：深圳访问广州响应延迟骤升，交易接口频繁报连接超时"
+  },
+  "negotiation_phrasing": {
+    "missing_item_hint": "请提供{slot}：{description}",
+    "propose_relationship": "以上参数均为必选，缺少无法启动诊断",
+    "from_text_propose_prefix": "请提供以下缺失信息：",
+    "from_text_accept_prefix": "同意补充以下信息：",
+    "from_text_accept_suffix": "信息已完整，可以启动诊断。"
+  },
+  "diagnosis": {
+    "result_line": "1. 诊断结果：成功",
+    "detail_line": "2. 诊断结果详情：{params}",
+    "advice_line": "3. 修复建议：检查接入端口物理连接和光模块状态，必要时恢复供电或重新开启端口"
+  },
+  "negotiation_cases": {
+    "information": {
+      "propose": {
+        "items": [
+          {
+            "name": "接入端口名称",
+            "value": "请提供业务接入端口名称"
+          },
+          {
+            "name": "投诉分类",
+            "value": "专线中断或专线质差"
+          }
+        ],
+        "relationship": "两个参数均为必选，缺少无法启动诊断"
+      },
+      "accept": {
+        "items": [
+          {
+            "name": "接入端口名称",
+            "value": "{filled:任务对象}"
+          },
+          {
+            "name": "投诉分类",
+            "value": "专线质差"
+          }
+        ]
+      },
+      "reject": {
+        "items": [
+          {
+            "name": "接入端口名称",
+            "value": "站点清单不可用，无法提供"
+          }
+        ]
+      }
+    },
+    "target": {
+      "propose": {
+        "description": "对无线节点节能优化任务的意图理解待澄清",
+        "intent_understanding": [
+          {
+            "name": "任务意图",
+            "value": "08:00-18:00对目标站点启用无线节点节能优化"
+          }
+        ],
+        "request_for_clarification": [
+          {
+            "name": "节能区域",
+            "value": "松山湖还是其他站点？"
+          }
+        ]
+      },
+      "accept": {
+        "confirmed_intent": "最终确认意图：08:00-18:00对松山湖站点启用无线节点节能优化，速率保障不低于10Mbps"
+      },
+      "reject": {
+        "rejection_reason": "节能区域信息因站点清单不可用而无法完整澄清"
+      }
+    },
+    "feasibility": {
+      "propose": {
+        "description": "请评估无线节点节能优化在高峰时段是否可行",
+        "action": "REQUEST_FEASIBILITY_EVALUATION",
+        "contents_to_evaluate": [
+          {
+            "name": "评估对象",
+            "value": "松山湖站点08:00-18:00节能窗口"
+          },
+          {
+            "name": "评估约束",
+            "value": "速率保障不低于10Mbps"
+          }
+        ]
+      },
+      "accept": {
+        "summary": "高峰时段节能优化可行，速率保障满足10Mbps下限，可启用"
+      },
+      "reject": {
+        "summary": "节能目标在现有供电约束下无法实现，需调整方案"
+      }
+    },
+    "from_text_cases": {
+      "information": {
+        "propose": "请提供以下缺失信息：1. 接入端口名称：请提供业务接入端口名称；2. 投诉分类：专线中断或专线质差。两个参数均为必选，缺少无法启动诊断。两者共同定位专线故障原因。",
+        "accept": "同意补充以下信息：1. 接入端口名称：{filled:任务对象}；2. 投诉分类：专线质差。信息已完整，可以启动诊断。",
+        "reject": "拒绝补充信息：接入端口名称因站点清单不可用而无法提供，本次协商结束。"
+      },
+      "target": {
+        "propose": "对无线节点节能优化任务的意图理解如下：任务意图：08:00-18:00对目标站点启用无线节点节能优化。待澄清内容：节能区域松山湖还是其他站点？",
+        "accept": "确认意图：08:00-18:00对松山湖站点启用无线节点节能优化，速率保障不低于10Mbps。最终意图已明确，可以执行。",
+        "reject": "拒绝：节能区域信息因站点清单不可用而无法完整澄清，本次协商结束。"
+      },
+      "feasibility": {
+        "propose": "请评估无线节点节能优化在高峰时段是否可行。评估对象：松山湖站点08:00-18:00节能窗口。评估约束：速率保障不低于10Mbps。",
+        "accept": "同意：高峰时段节能优化可行，速率保障满足10Mbps下限，可启用。评估结果：可行。",
+        "reject": "拒绝：节能目标在现有供电约束下无法实现，需调整方案。评估结果：不可行。"
+      }
+    }
+  }
+}

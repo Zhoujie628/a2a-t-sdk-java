@@ -130,6 +130,18 @@ ${sample.jar.path}${path.separator}${sample.runtime.classpath}
 net.openan.a2at.sample.subscribe_incident.client.ClientSampleMain
 client.env
 </echo>
+                                <echo file="${project.build.directory}/negotiation.javaargs.txt">-cp
+${sample.jar.path}${path.separator}${sample.runtime.classpath}
+net.openan.a2at.sample.negotiation.NegotiationDemoApp
+</echo>
+                                <echo file="${project.build.directory}/fromdata.javaargs.txt">-cp
+${sample.jar.path}${path.separator}${sample.runtime.classpath}
+net.openan.a2at.sample.negotiation.fromdata.FromDataNegotiationSample
+</echo>
+                                <echo file="${project.build.directory}/fromtext.javaargs.txt">-cp
+${sample.jar.path}${path.separator}${sample.runtime.classpath}
+net.openan.a2at.sample.negotiation.fromtext.FromTextNegotiationSample
+</echo>
                             </target>
                         </configuration>
                     </execution>
