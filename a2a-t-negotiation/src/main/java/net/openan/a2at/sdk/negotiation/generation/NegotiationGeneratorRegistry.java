@@ -3,6 +3,7 @@ package net.openan.a2at.sdk.negotiation.generation;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
+import net.openan.a2at.sdk.negotiation.content.AbortContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
@@ -15,6 +16,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +25,9 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Dispatch requires an exact runtime type match between the content and the addressed (type, phase) pair: propose
  * phases only accept propose content, terminal phases only accept ending content whose conclusion matches the phase,
- * and the content type must match the negotiation type. Subtype matching is deliberately not supported; new content
- * types must be registered explicitly.
+ * and the content type must match the negotiation type. The abort phase dispatches to the type-independent abort
+ * generator and requires abort content. Subtype matching is deliberately not supported; new content types must be
+ * registered explicitly.
  *
  * @since 2026-08
  */
@@ -36,7 +39,9 @@ final class NegotiationGeneratorRegistry {
 
     private final Map<NegotiationType, NegotiationGenerator> endingGenerators = new EnumMap<>(NegotiationType.class);
 
-    /** Creates a registry holding the six built-in negotiation generators. */
+    private final NegotiationGenerator abortGenerator = new AbortGenerator();
+
+    /** Creates a registry holding the built-in negotiation generators. */
     public NegotiationGeneratorRegistry() {
         proposeGenerators.put(NegotiationType.INFORMATION, new InformationProposeGenerator());
         proposeGenerators.put(NegotiationType.TARGET, new TargetProposeGenerator());
@@ -49,18 +54,33 @@ final class NegotiationGeneratorRegistry {
     /**
      * Resolves the generator for one (type, phase, content) triple.
      *
-     * @param type negotiation type addressed by the template URI
+     * @param type negotiation type addressed by the template URI; null only for the type-independent abort phase
      * @param phase API-level phase addressed by the calling method
      * @param content typed content of the message
      * @return generator registered for the exact (type, phase) pair
-     * @throws NullPointerException if any argument is null
+     * @throws NullPointerException if the phase or content is null, or the type is null on a typed phase
      * @throws IllegalArgumentException if the content family does not match the phase, the content runtime type does
      *     not match the negotiation type, or an ending content carries a conclusion that does not match the phase
      */
-    public NegotiationGenerator resolve(NegotiationType type, NegotiationPhase phase, NegotiationContent content) {
-        Objects.requireNonNull(type, "Negotiation type must not be null.");
+    public NegotiationGenerator resolve(
+            @Nullable NegotiationType type, NegotiationPhase phase, NegotiationContent content) {
         Objects.requireNonNull(phase, "Negotiation phase must not be null.");
         Objects.requireNonNull(content, "Negotiation content must not be null.");
+        if (phase == NegotiationPhase.ABORT) {
+            if (type != null) {
+                throw new IllegalArgumentException(
+                        "The ABORT phase is type-independent and must not carry a type but carried " + type + ".");
+            }
+            if (content.getClass() != AbortContent.class) {
+                throw new IllegalArgumentException(
+                        "The ABORT phase requires abort content but received " + content.getClass().getSimpleName()
+                                + ".");
+            }
+            LOGGER.atDebug()
+                    .log("negotiation_generator_dispatched generator=AbortGenerator type=common phase=ABORT");
+            return abortGenerator;
+        }
+        Objects.requireNonNull(type, "Negotiation type must not be null for the " + phase + " phase.");
         boolean proposePhase = phase == NegotiationPhase.PROPOSE;
         boolean proposeContent = content instanceof NegotiationProposeContent;
         if (proposePhase != proposeContent) {

@@ -12,6 +12,7 @@ import net.openan.a2at.sdk.core.model.PromptRuntimeConfig;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMClient;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
@@ -136,6 +137,23 @@ public final class NegotiationContentService {
     public MetadataContent generateRejectFromData(
             @NonNull NegotiationEndingData data, @NonNull TemplateUri templateUri) {
         return orchestrator.generateRejectFromData(data, templateUri);
+    }
+
+    /**
+     * Generates an abort negotiation message from typed data, deterministically without any LLM call.
+     *
+     * @param data typed abort input carrying the termination reason
+     * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @throws NullPointerException if the data, its context or the template URI is null
+     * @throws IllegalArgumentException if the template URI does not address the common abort template or the
+     *     termination reason is blank
+     * @throws NegotiationGenerationException with the code {@code template_not_found} or
+     *     {@code negotiation_slot_missing} when loading or rendering the template fails
+     */
+    public MetadataContent generateAbortFromData(
+            @NonNull NegotiationAbortData data, @NonNull TemplateUri templateUri) {
+        return orchestrator.generateAbortFromData(data, templateUri);
     }
 
     /**

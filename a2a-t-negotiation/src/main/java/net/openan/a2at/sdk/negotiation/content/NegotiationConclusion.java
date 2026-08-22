@@ -3,8 +3,9 @@ package net.openan.a2at.sdk.negotiation.content;
 /**
  * Terminal outcome of a negotiation as expressed in negotiation result sections.
  *
- * <p>Only {@code ACCEPT} and {@code REJECT} are renderable conclusions; {@code ABORT} exists in the model but no
- * bundled template carries it, so generation methods reject it as a programming error.
+ * <p>Only {@code ACCEPT} and {@code REJECT} are renderable conclusions of the typed negotiation templates; the
+ * {@code ABORT} outcome is rendered through the type-independent common abort template, whose fixed conclusion section
+ * carries no conclusion slot, so the typed generation methods reject it as a programming error.
  *
  * @since 2026-08
  */

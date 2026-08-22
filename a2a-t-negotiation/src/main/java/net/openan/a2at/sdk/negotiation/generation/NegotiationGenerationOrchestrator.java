@@ -14,6 +14,7 @@ import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
@@ -153,6 +154,27 @@ public final class NegotiationGenerationOrchestrator {
             @NonNull NegotiationEndingData data, @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(data, "Negotiation ending data must not be null.");
         return generateFromData(data.context(), data.content(), templateUri, NegotiationPhase.REJECT);
+    }
+
+    /**
+     * Generates an abort negotiation message from typed data.
+     *
+     * <p>This variant is deterministic and never calls an LLM. Abort messages are type-independent: the addressed
+     * template must be the common abort template and the content carries only the termination reason.
+     *
+     * @param data typed abort input carrying the negotiation context and the termination reason
+     * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @throws NullPointerException if the data, its context or the template URI is null
+     * @throws IllegalArgumentException if the template URI does not address the common abort template or the
+     *     termination reason is blank
+     * @throws NegotiationGenerationException with the code {@code template_not_found} when no template exists for the
+     *     URI in any resource root, or the code {@code negotiation_slot_missing} when rendering the template fails
+     */
+    public MetadataContent generateAbortFromData(
+            @NonNull NegotiationAbortData data, @NonNull TemplateUri templateUri) {
+        Objects.requireNonNull(data, "Negotiation abort data must not be null.");
+        return generateFromData(data.context(), data.content(), templateUri, NegotiationPhase.ABORT);
     }
 
     /**
@@ -471,8 +493,10 @@ public final class NegotiationGenerationOrchestrator {
     private Optional<NegotiationReference> parseQueryReference(TemplateUri templateUri) {
         // The URI layer cannot distinguish accept from reject because both phases share the accept-reject template
         // segment. The query therefore addresses the shared template through the ACCEPT phase; the parsed phase is an
-        // addressing artifact only and must never be read as the phase of any message.
-        for (NegotiationPhase phase : List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT)) {
+        // addressing artifact only and must never be read as the phase of any message. The abort phase addresses the
+        // type-independent common abort template.
+        for (NegotiationPhase phase :
+                List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT, NegotiationPhase.ABORT)) {
             Optional<NegotiationReference> reference = NegotiationReference.fromTemplateUri(templateUri, phase, language);
             if (reference.isPresent()) {
                 return reference;
