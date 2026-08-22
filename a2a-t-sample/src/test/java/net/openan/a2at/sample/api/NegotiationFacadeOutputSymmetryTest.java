@@ -67,9 +67,9 @@ class NegotiationFacadeOutputSymmetryTest {
             "generateNegotiationRejectPromptFromText",
             "getNegotiationPrompts",
             "getNegotiationPrompt",
-            "validateAndFillingProposeData",
-            "validateAndFillingAcceptData",
-            "validateAndFillingRejectData");
+            "validateProposePromptAndDataFilling",
+            "validateAcceptPromptAndDataFilling",
+            "validateRejectPromptAndDataFilling");
 
     @TempDir
     Path tempDir;

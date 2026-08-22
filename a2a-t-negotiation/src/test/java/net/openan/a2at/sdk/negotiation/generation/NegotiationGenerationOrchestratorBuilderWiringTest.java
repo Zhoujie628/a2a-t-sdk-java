@@ -125,7 +125,7 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
                 .complianceChecker(checker)
                 .build();
 
-        orchestrator.validateAndFillingProposeData(
+        orchestrator.validateProposePromptAndDataFilling(
                 "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
                 Map.of("type", "object"),
                 INFORMATION_PROPOSE_URI);
@@ -156,7 +156,7 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
                 .build();
         org.junit.jupiter.api.Assertions.assertThrows(
                 net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException.class,
-                () -> validationOrchestrator.validateAndFillingProposeData(
+                () -> validationOrchestrator.validateProposePromptAndDataFilling(
                         "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI));

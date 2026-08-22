@@ -30,9 +30,9 @@ class NegotiationFacadeApiSymmetryTest {
             "generateNegotiationRejectPromptFromText",
             "getNegotiationPrompts",
             "getNegotiationPrompt",
-            "validateAndFillingProposeData",
-            "validateAndFillingAcceptData",
-            "validateAndFillingRejectData");
+            "validateProposePromptAndDataFilling",
+            "validateAcceptPromptAndDataFilling",
+            "validateRejectPromptAndDataFilling");
 
     @Test
     void bothFacadesExposeTheSameElevenNegotiationApiMethods() {

@@ -109,7 +109,7 @@ class NegotiationGenerationOrchestratorTest {
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE);
 
-        FilledParamData filled = orchestrator.validateAndFillingProposeData(
+        FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                 message.promptText(),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                 INFORMATION_PROPOSE);
@@ -201,7 +201,7 @@ class NegotiationGenerationOrchestratorTest {
 
         NegotiationParamExtractionException extractionFailure = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> validationOrchestrator.validateAndFillingProposeData(
+                () -> validationOrchestrator.validateProposePromptAndDataFilling(
                         "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE));
@@ -219,7 +219,7 @@ class NegotiationGenerationOrchestratorTest {
 
         NegotiationParamExtractionException failure = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(
+                () -> orchestrator.validateProposePromptAndDataFilling(
                         "plain text without any negotiation section",
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE));

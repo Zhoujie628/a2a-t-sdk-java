@@ -74,7 +74,7 @@ class TaskPromptNegotiationCoexistenceTest {
 
         NegotiationParamExtractionException negotiationFailure = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> server.validateAndFillingProposeData(
+                () -> server.validateProposePromptAndDataFilling(
                         TASK_T_MESSAGE,
                         Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                         INFORMATION_PROPOSE_TEMPLATE));
