@@ -429,9 +429,10 @@ Every method that identifies a template takes the value type `net.openan.a2at.sd
 MetadataContent generateNegotiationProposePromptFromData(NegotiationProposeData data, TemplateUri templateUri)
 MetadataContent generateNegotiationAcceptPromptFromData(NegotiationEndingData data, TemplateUri templateUri)
 MetadataContent generateNegotiationRejectPromptFromData(NegotiationEndingData data, TemplateUri templateUri)
+MetadataContent generateNegotiationAbortPromptFromData(NegotiationAbortData data, TemplateUri templateUri)
 ```
 
-The typed content is validated, dispatched to the generator of the negotiation type addressed by the template URI, and rendered from that template. The accept variant requires `content.conclusion() == ACCEPT`, the reject variant `REJECT`; a mismatched conclusion (including `ABORT`) is rejected with `IllegalArgumentException` as a programming error.
+The typed content is validated, dispatched to the generator of the negotiation type addressed by the template URI, and rendered from that template. The accept variant requires `content.conclusion() == ACCEPT`, the reject variant `REJECT`; a mismatched conclusion (including `ABORT`) is rejected with `IllegalArgumentException` as a programming error. The abort variant is type-independent: it renders the single common abort template `StandardTemplates.NEGOTIATION_ABORT` from a `NegotiationAbortData(context, AbortContent(terminationReason))` bundle, and the fixed `Abort` conclusion is carried by the template itself.
 
 **Generation from free text — one LLM extraction step with configurable retry:**
 
@@ -439,9 +440,10 @@ The typed content is validated, dispatched to the generator of the negotiation t
 MetadataContent generateNegotiationProposePromptFromText(String text, NegotiationContext context, TemplateUri templateUri)
 MetadataContent generateNegotiationAcceptPromptFromText(String text, NegotiationContext context, TemplateUri templateUri)
 MetadataContent generateNegotiationRejectPromptFromText(String text, NegotiationContext context, TemplateUri templateUri)
+MetadataContent generateNegotiationAbortPromptFromText(String text, NegotiationContext context, TemplateUri templateUri)
 ```
 
-The template is loaded before the LLM call; a missing template fails fast without consuming an LLM request. The LLM step extracts the typed content from the free text constrained by the template URI, then rendering proceeds deterministically like the from-data variant. The `NegotiationContext` is injected into the rendered message without any LLM involvement. The extraction step is retried up to the configured attempt limit on the retryable failure codes (see 1.10.5).
+The template is loaded before the LLM call; a missing template fails fast without consuming an LLM request. The LLM step extracts the typed content from the free text constrained by the template URI, then rendering proceeds deterministically like the from-data variant. The `NegotiationContext` is injected into the rendered message without any LLM involvement. The extraction step is retried up to the configured attempt limit on the retryable failure codes (see 1.10.5). The abort variant extracts the termination reason from the free text against the common abort template.
 
 **Compliance checking and parameter extraction:**
 
@@ -449,6 +451,7 @@ The template is loaded before the LLM call; a missing template fails fast withou
 FilledParamData validateAndFillingProposeData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
 FilledParamData validateAndFillingAcceptData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
 FilledParamData validateAndFillingRejectData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateAndFillingAbortData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
 ```
 
 The pipeline runs in a fixed order:
@@ -504,7 +507,7 @@ All types live in `net.openan.a2at.sdk.negotiation.content`.
 
 **NegotiationContext** — the session context carried by every message: `record NegotiationContext(String id, int round, int maxRounds)`. It is immutable; `nextRound()` returns a context with the round incremented, and `isExhausted()` reports whether the round is strictly greater than `maxRounds`. `NegotiationContext.of(id, round)` applies the default round budget of `DEFAULT_MAX_ROUNDS = 5`.
 
-**Input bundles** — `NegotiationProposeData(context, content)` and `NegotiationEndingData(context, content)` pair the context with the typed content. The content types are sealed hierarchies per negotiation type:
+**Input bundles** — `NegotiationProposeData(context, content)` and `NegotiationEndingData(context, content)` pair the context with the typed content, and `NegotiationAbortData(context, AbortContent)` pairs it with the type-independent abort content. The content types are sealed hierarchies per negotiation type:
 
 | Negotiation type | Propose content | Ending content |
 |--|--|--|
@@ -512,7 +515,7 @@ All types live in `net.openan.a2at.sdk.negotiation.content`.
 | Target | `TargetProposeContent(description, intentUnderstanding, alignmentAndClarification, requestForClarification)` | `TargetEndingContent(conclusion, confirmedIntent, failureReason)` |
 | Feasibility | `FeasibilityProposeContent(description, action, contentsToEvaluate, infeasibilityDetailsAndProposal)` | `FeasibilityEndingContent(conclusion, feasibilitySummary)` |
 
-`NegotiationItem(name, value)` is one named entry of an item list. `NegotiationConclusion` carries `ACCEPT`, `REJECT`, and `ABORT`; only `Accept` and `Reject` are renderable — generation methods reject `ABORT` with an `IllegalArgumentException` (a programming error outside the `A2ATError` tree). `NegotiationAction` (`REQUEST_FEASIBILITY_EVALUATION`, `PROPOSE_ALTERNATIVE_ON_FAILURE`) selects the conditional sections of the feasibility propose template.
+`NegotiationItem(name, value)` is one named entry of an item list. `NegotiationConclusion` carries `ACCEPT`, `REJECT`, and `ABORT`; only `Accept` and `Reject` are renderable conclusions of the typed negotiation templates — the typed generation methods reject `ABORT` with an `IllegalArgumentException` (a programming error outside the `A2ATError` tree). The `ABORT` outcome is rendered through the type-independent common abort template: `AbortContent(terminationReason)` is the only content it carries and `NegotiationAbortData(context, content)` is its input bundle. `NegotiationAction` (`REQUEST_FEASIBILITY_EVALUATION`, `PROPOSE_ALTERNATIVE_ON_FAILURE`) selects the conditional sections of the feasibility propose template.
 
 **MetadataContent** — the generation result: `record MetadataContent(String templateUri, String promptText, String extensionUri)`. `buildMetadataContent()` returns exactly two keys: the TMF extension URI (`https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1`) mapping to the rendered message, and `templateUri` mapping to the template URI. This map is what travels in the A2A message metadata.
 

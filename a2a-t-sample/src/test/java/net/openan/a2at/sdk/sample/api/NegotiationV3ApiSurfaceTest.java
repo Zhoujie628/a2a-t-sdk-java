@@ -31,20 +31,23 @@ class NegotiationV3ApiSurfaceTest {
             Map.entry("generateNegotiationProposePromptFromData", 2),
             Map.entry("generateNegotiationAcceptPromptFromData", 2),
             Map.entry("generateNegotiationRejectPromptFromData", 2),
+            Map.entry("generateNegotiationAbortPromptFromData", 2),
             Map.entry("generateNegotiationProposePromptFromText", 3),
             Map.entry("generateNegotiationAcceptPromptFromText", 3),
             Map.entry("generateNegotiationRejectPromptFromText", 3),
+            Map.entry("generateNegotiationAbortPromptFromText", 3),
             Map.entry("getNegotiationPrompts", 0),
             Map.entry("getNegotiationPrompt", 1),
             Map.entry("validateAndFillingProposeData", 3),
             Map.entry("validateAndFillingAcceptData", 3),
-            Map.entry("validateAndFillingRejectData", 3));
+            Map.entry("validateAndFillingRejectData", 3),
+            Map.entry("validateAndFillingAbortData", 3));
 
     private static final List<String> REMOVED_V2_METHOD_NAME_FRAGMENTS =
             List.of("FromNl", "FromJsonData", "validateAndExtractParams");
 
     @Test
-    void bothFacadesExposeExactlyTheElevenV3NegotiationMethods() {
+    void bothFacadesExposeExactlyTheFourteenV3NegotiationMethods() {
         assertExactNegotiationSurface(A2ATClient.class);
         assertExactNegotiationSurface(A2ATServer.class);
     }
@@ -74,13 +77,14 @@ class NegotiationV3ApiSurfaceTest {
                         || method.getName().startsWith("getNegotiation")
                         || "validateAndFillingProposeData".equals(method.getName())
                         || "validateAndFillingAcceptData".equals(method.getName())
-                        || "validateAndFillingRejectData".equals(method.getName()))
+                        || "validateAndFillingRejectData".equals(method.getName())
+                        || "validateAndFillingAbortData".equals(method.getName()))
                 .toList();
         Set<String> names = negotiationMethods.stream().map(Method::getName).collect(Collectors.toSet());
         assertEquals(
                 EXPECTED_NEGOTIATION_METHOD_PARAMETERS.keySet(),
                 names,
-                facade.getSimpleName() + " must expose exactly the eleven v3 negotiation methods");
+                facade.getSimpleName() + " must expose exactly the fourteen v3 negotiation methods");
         assertEquals(
                 EXPECTED_NEGOTIATION_METHOD_PARAMETERS.size(),
                 negotiationMethods.size(),

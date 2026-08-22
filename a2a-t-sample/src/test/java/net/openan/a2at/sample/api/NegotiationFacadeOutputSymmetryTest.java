@@ -238,6 +238,7 @@ class NegotiationFacadeOutputSymmetryTest {
                 case PROPOSE -> propose.generate((NegotiationProposeData) data, templateUri);
                 case ACCEPT -> accept.generate((NegotiationEndingData) data, templateUri);
                 case REJECT -> reject.generate((NegotiationEndingData) data, templateUri);
+                case ABORT -> throw new IllegalArgumentException("The symmetry cases carry no abort phase.");
             };
         }
     }
