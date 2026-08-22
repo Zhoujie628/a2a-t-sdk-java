@@ -18,16 +18,15 @@ import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
-import net.openan.a2at.sdk.llm.LLMConfigLoader;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
 import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationRole;
-import net.openan.a2at.sdk.prompt.resources.catalog.TemplateQueryService;
 import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
+import net.openan.a2at.sdk.prompt.resources.catalog.TemplateQueryService;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import net.openan.a2at.sdk.prompt.taskrendering.TaskPromptRenderer;
@@ -46,6 +45,8 @@ public final class DefaultA2ATClientBuilder {
     private A2ATConfig config;
 
     private Path envPath;
+
+    private LLMClient llmClient;
 
     /**
      * Creates one new builder instance.
@@ -98,7 +99,7 @@ public final class DefaultA2ATClientBuilder {
                 newClientTemplateLoader(resources, config.prompt().sourceType());
         String language = config.prompt().language();
 
-        LLMClient llmClient = createLlmClient();
+        LLMClient client = llmClient();
 
         String scenarioSystemPrompt = resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "system.md");
         String scenarioUserPrompt = resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "user.md");
@@ -106,14 +107,14 @@ public final class DefaultA2ATClientBuilder {
         String slotUserPrompt = resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "user.md");
 
         ClientScenarioRecognizer scenarioRecognizer =
-                new SingleScenarioAwareRecognizer(scenarios, new ScenarioRecognizer(llmClient)::recognize);
+                new SingleScenarioAwareRecognizer(scenarios, new ScenarioRecognizer(client)::recognize);
         ClientSlotValueExtractor slotValueExtractor = new StructuredInputAwareSlotValueExtractor(
                 new DefaultTemplateDrivenSlotValueExtractor(slotSchemaLoader),
                 new DefaultStructuredClientSlotValueExtractor(
-                        llmClient, slotSchemaLoader, slotSystemPrompt, slotUserPrompt));
+                        client, slotSchemaLoader, slotSystemPrompt, slotUserPrompt));
 
         return ClientPromptGenerationOrchestratorBuilder.builder()
-                .llmClient(llmClient)
+                .llmClient(client)
                 .scenarios(scenarios)
                 .language(language)
                 .scenarioSystemPrompt(scenarioSystemPrompt)
@@ -156,7 +157,7 @@ public final class DefaultA2ATClientBuilder {
         require(config, "Unified SDK config must be configured.");
         requireSupportedConfig();
         require(envPath, "Unified SDK env path must be configured.");
-        return NegotiationContentService.buildOrchestrator(config, createLlmClient());
+        return NegotiationContentService.buildOrchestrator(config, llmClient());
     }
 
     /**
@@ -190,9 +191,11 @@ public final class DefaultA2ATClientBuilder {
         }
     }
 
-    private LLMClient createLlmClient() {
-        LLMClientConfig loadedConfig = LLMConfigLoader.load(envPath);
-        return LLMClientFactory.create(loadedConfig.provider(), loadedConfig);
+    private synchronized LLMClient llmClient() {
+        if (llmClient == null) {
+            llmClient = LLMClientFactory.create(config.llm().provider(), LLMClientConfig.from(config.llm()));
+        }
+        return llmClient;
     }
 
     private static void require(Object value, String message) {

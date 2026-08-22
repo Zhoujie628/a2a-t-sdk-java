@@ -8,7 +8,6 @@ import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
-import net.openan.a2at.sdk.llm.LLMConfigLoader;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
@@ -40,6 +39,10 @@ public final class DefaultA2ATServerBuilder {
     private A2ATConfig config;
 
     private Path envPath;
+
+    private LLMClient llmClient;
+
+    private DefaultServerPromptComplianceOrchestrator promptComplianceOrchestrator;
 
     /**
      * Creates one new builder instance.
@@ -77,17 +80,20 @@ public final class DefaultA2ATServerBuilder {
      *
      * @return assembled prompt-compliance orchestrator
      */
-    public DefaultServerPromptComplianceOrchestrator buildPromptComplianceOrchestrator() {
+    public synchronized DefaultServerPromptComplianceOrchestrator buildPromptComplianceOrchestrator() {
         require(config, "Unified SDK config must be configured.");
         require(envPath, "Unified SDK env path must be configured.");
         requireSupportedConfig();
+        if (promptComplianceOrchestrator != null) {
+            return promptComplianceOrchestrator;
+        }
 
         PromptResourceAccess resources = PromptResourceAccess.create(config.prompt());
         String language = config.prompt().language();
         List<ScenarioDefinition> scenarios = resources.loadScenarios(language);
         PromptTemplateTextLoader templateLoader = resources.templateLoader();
         PromptSlotSchemaLoader slotSchemaLoader = resources.slotSchemaLoader();
-        LLMClient llmClient = createLlmClient();
+        LLMClient client = llmClient();
 
         String scenarioSystemPrompt = resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "system.md");
         String scenarioUserPrompt = resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "user.md");
@@ -96,9 +102,9 @@ public final class DefaultA2ATServerBuilder {
         String semanticSystemPrompt = resources.loadPrompt(SEMANTIC_VALIDATION_PROMPT, language, "system.md");
         String semanticUserPrompt = resources.loadPrompt(SEMANTIC_VALIDATION_PROMPT, language, "user.md");
 
-        return new DefaultServerPromptComplianceOrchestrator(
+        promptComplianceOrchestrator = new DefaultServerPromptComplianceOrchestrator(
                 new LlmBackedPromptMetadataExtractor(
-                        new ScenarioRecognizer(llmClient),
+                        new ScenarioRecognizer(client),
                         scenarios,
                         language,
                         scenarioSystemPrompt,
@@ -106,9 +112,10 @@ public final class DefaultA2ATServerBuilder {
                         templateLoader,
                         slotSchemaLoader,
                         new DefaultStructuredPromptSlotValueExtractor(
-                                llmClient, slotSchemaLoader, slotSystemPrompt, slotUserPrompt)),
+                                client, slotSchemaLoader, slotSystemPrompt, slotUserPrompt)),
                 new LlmBackedPromptSemanticValidator(
-                        llmClient, slotSchemaLoader, semanticSystemPrompt, semanticUserPrompt));
+                        client, slotSchemaLoader, semanticSystemPrompt, semanticUserPrompt));
+        return promptComplianceOrchestrator;
     }
 
     /**
@@ -137,7 +144,7 @@ public final class DefaultA2ATServerBuilder {
         require(config, "Unified SDK config must be configured.");
         requireSupportedConfig();
         require(envPath, "Unified SDK env path must be configured.");
-        return NegotiationContentService.buildOrchestrator(config, createLlmClient());
+        return NegotiationContentService.buildOrchestrator(config, llmClient());
     }
 
     /**
@@ -163,15 +170,7 @@ public final class DefaultA2ATServerBuilder {
      * @return assembled task content validator
      */
     public ContentValidator buildTaskContentValidator() {
-        require(config, "Unified SDK config must be configured.");
-        requireSupportedConfig();
-        require(envPath, "Unified SDK env path must be configured.");
-        return new DefaultContentValidator(
-                StandardTemplates.TASK_EXTENSION_NAME,
-                config.prompt().language(),
-                config.llm().maxAttempts(),
-                createLlmClient(),
-                PromptResourceAccess.create(config.prompt()));
+        return buildContentValidator(StandardTemplates.TASK_EXTENSION_NAME);
     }
 
     /**
@@ -183,15 +182,7 @@ public final class DefaultA2ATServerBuilder {
      * @return assembled notification content validator
      */
     public ContentValidator buildNotificationContentValidator() {
-        require(config, "Unified SDK config must be configured.");
-        requireSupportedConfig();
-        require(envPath, "Unified SDK env path must be configured.");
-        return new DefaultContentValidator(
-                StandardTemplates.NOTIFICATION_EXTENSION_NAME,
-                config.prompt().language(),
-                config.llm().maxAttempts(),
-                createLlmClient(),
-                PromptResourceAccess.create(config.prompt()));
+        return buildContentValidator(StandardTemplates.NOTIFICATION_EXTENSION_NAME);
     }
 
     /**
@@ -203,14 +194,18 @@ public final class DefaultA2ATServerBuilder {
      * @return assembled authorization content validator
      */
     public ContentValidator buildAuthContentValidator() {
+        return buildContentValidator(StandardTemplates.AUTHORIZATION_EXTENSION_NAME);
+    }
+
+    private ContentValidator buildContentValidator(String extensionName) {
         require(config, "Unified SDK config must be configured.");
         requireSupportedConfig();
         require(envPath, "Unified SDK env path must be configured.");
         return new DefaultContentValidator(
-                StandardTemplates.AUTHORIZATION_EXTENSION_NAME,
+                extensionName,
                 config.prompt().language(),
                 config.llm().maxAttempts(),
-                createLlmClient(),
+                llmClient(),
                 PromptResourceAccess.create(config.prompt()));
     }
 
@@ -235,9 +230,11 @@ public final class DefaultA2ATServerBuilder {
         }
     }
 
-    private LLMClient createLlmClient() {
-        LLMClientConfig loadedConfig = LLMConfigLoader.load(envPath);
-        return LLMClientFactory.create(loadedConfig.provider(), loadedConfig);
+    private synchronized LLMClient llmClient() {
+        if (llmClient == null) {
+            llmClient = LLMClientFactory.create(config.llm().provider(), LLMClientConfig.from(config.llm()));
+        }
+        return llmClient;
     }
 
 }

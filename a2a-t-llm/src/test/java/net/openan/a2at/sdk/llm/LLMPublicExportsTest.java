@@ -13,7 +13,6 @@ class LLMPublicExportsTest {
         List<String> publicTypes = List.of(
                 "net.openan.a2at.sdk.llm.LLMClient",
                 "net.openan.a2at.sdk.llm.LLMClientFactory",
-                "net.openan.a2at.sdk.llm.LLMConfigLoader",
                 "net.openan.a2at.sdk.llm.LLMClientConfig",
                 "net.openan.a2at.sdk.llm.LLMResponse",
                 "net.openan.a2at.sdk.llm.LLMError",

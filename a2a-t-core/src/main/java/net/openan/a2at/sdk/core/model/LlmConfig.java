@@ -1,83 +1,90 @@
 package net.openan.a2at.sdk.core.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Structured LLM runtime configuration resolved from unified SDK config.
  *
  * @since 2026-06
  */
+@Slf4j
 public record LlmConfig(
         String provider,
         String model,
         String apiKey,
         String baseUrl,
         int historyWindow,
-        int maxTokens,
-        double temperature,
-        double timeoutSeconds,
+        Integer maxTokens,
+        Double temperature,
+        Double timeoutSeconds,
+        boolean disableSystemProxy,
+        String reasoningEffort,
         int sessionMaxTotal,
         int sessionMaxPerProvider,
-        int maxAttempts) {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(LlmConfig.class);
+        int maxAttempts,
+        List<String> parseErrors) {
 
     private static final String DEFAULT_PROVIDER = "openai";
 
-    private static final int DEFAULT_HISTORY_WINDOW = 12;
-
-    private static final int DEFAULT_MAX_TOKENS = 2048;
-
-    private static final double DEFAULT_TEMPERATURE = 0.2d;
-
-    private static final double DEFAULT_TIMEOUT_SECONDS = 30.0d;
+    private static final int DEFAULT_HISTORY_WINDOW = 10;
 
     private static final int DEFAULT_SESSION_MAX_TOTAL = 300;
 
     private static final int DEFAULT_SESSION_MAX_PER_PROVIDER = 100;
 
-    private static final int DEFAULT_MAX_ATTEMPTS = 3;
+    public static final int DEFAULT_MAX_ATTEMPTS = 3;
 
     private static final int MAX_ATTEMPTS_LOWER_BOUND = 1;
 
     private static final int MAX_ATTEMPTS_UPPER_BOUND = 10;
 
+    private static final String NON_NUMERIC_MESSAGE_FORMAT = "%s: non-numeric value '%s'";
+
+    private static final String INVALID_BOOLEAN_MESSAGE_FORMAT = "%s: invalid boolean value '%s'";
+
+    public LlmConfig {
+        parseErrors = List.copyOf(parseErrors);
+    }
+
     /**
-     * Builds one LLM config from raw `.env` values.
+     * Builds one LLM config from raw {@code .env} values.
      *
      * @param values raw config values
      * @return resolved LLM config
      */
     public static LlmConfig fromMap(Map<String, String> values) {
+        List<String> parseErrors = new ArrayList<>();
         return new LlmConfig(
                 StringUtils.defaultIfBlank(values.get(A2ATConfigKeys.Llm.PROVIDER), DEFAULT_PROVIDER),
                 StringUtils.defaultIfBlank(values.get(A2ATConfigKeys.Llm.MODEL), ""),
                 StringUtils.defaultIfBlank(values.get(A2ATConfigKeys.Llm.API_KEY), ""),
                 StringUtils.defaultIfBlank(values.get(A2ATConfigKeys.Llm.BASE_URL), ""),
-                NumberUtils.toInt(values.get(A2ATConfigKeys.Llm.HISTORY_WINDOW), DEFAULT_HISTORY_WINDOW),
-                NumberUtils.toInt(values.get(A2ATConfigKeys.Llm.MAX_TOKENS), DEFAULT_MAX_TOKENS),
-                NumberUtils.toDouble(values.get(A2ATConfigKeys.Llm.TEMPERATURE), DEFAULT_TEMPERATURE),
-                NumberUtils.toDouble(values.get(A2ATConfigKeys.Llm.TIMEOUT_SECONDS), DEFAULT_TIMEOUT_SECONDS),
-                NumberUtils.toInt(values.get(A2ATConfigKeys.Llm.SESSION_MAX_TOTAL), DEFAULT_SESSION_MAX_TOTAL),
-                NumberUtils.toInt(
-                        values.get(A2ATConfigKeys.Llm.SESSION_MAX_PER_PROVIDER), DEFAULT_SESSION_MAX_PER_PROVIDER),
-                parseMaxAttempts(values.get(A2ATConfigKeys.Llm.MAX_ATTEMPTS)));
+                parseInt(values.get(A2ATConfigKeys.Llm.HISTORY_WINDOW),
+                        A2ATConfigKeys.Llm.HISTORY_WINDOW, DEFAULT_HISTORY_WINDOW, parseErrors),
+                parseOptionalNumeric(values.get(A2ATConfigKeys.Llm.MAX_TOKENS),
+                        A2ATConfigKeys.Llm.MAX_TOKENS, parseErrors, Integer::parseInt),
+                parseOptionalNumeric(values.get(A2ATConfigKeys.Llm.TEMPERATURE),
+                        A2ATConfigKeys.Llm.TEMPERATURE, parseErrors, Double::parseDouble),
+                parseOptionalNumeric(values.get(A2ATConfigKeys.Llm.TIMEOUT_SECONDS),
+                        A2ATConfigKeys.Llm.TIMEOUT_SECONDS, parseErrors, Double::parseDouble),
+                parseBoolean(values.get(A2ATConfigKeys.Llm.DISABLE_SYSTEM_PROXY),
+                        A2ATConfigKeys.Llm.DISABLE_SYSTEM_PROXY, false, parseErrors),
+                parseReasoningEffort(values.get(A2ATConfigKeys.Llm.REASONING_EFFORT)),
+                parseInt(values.get(A2ATConfigKeys.Llm.SESSION_MAX_TOTAL),
+                        A2ATConfigKeys.Llm.SESSION_MAX_TOTAL, DEFAULT_SESSION_MAX_TOTAL, parseErrors),
+                parseInt(values.get(A2ATConfigKeys.Llm.SESSION_MAX_PER_PROVIDER),
+                        A2ATConfigKeys.Llm.SESSION_MAX_PER_PROVIDER, DEFAULT_SESSION_MAX_PER_PROVIDER, parseErrors),
+                parseMaxAttempts(values.get(A2ATConfigKeys.Llm.MAX_ATTEMPTS)),
+                Collections.unmodifiableList(parseErrors));
     }
 
-    /**
-     * Resolves the retry attempt limit for LLM steps from one raw config value.
-     *
-     * <p>Missing or blank values use the default of 3. Unparseable values fall back to the default. Values outside the
-     * allowed range 1-10 are clamped to the nearest bound. Both the fallback and the clamp cases emit a warning log
-     * carrying the raw value.
-     *
-     * @param rawValue raw config value, may be null or blank
-     * @return resolved attempt limit between 1 and 10 inclusive
-     */
     private static int parseMaxAttempts(String rawValue) {
         if (StringUtils.isBlank(rawValue)) {
             return DEFAULT_MAX_ATTEMPTS;
@@ -85,32 +92,79 @@ public record LlmConfig(
         try {
             int parsed = Integer.parseInt(rawValue.trim());
             if (parsed < MAX_ATTEMPTS_LOWER_BOUND) {
-                LOGGER.atWarn()
+                log.atWarn()
                         .log(
-                                "LLM max attempts value is below the allowed minimum, clamped to bound. key={} raw_value={} clamped_value={}",
-                                A2ATConfigKeys.Llm.MAX_ATTEMPTS,
-                                rawValue,
+                        "LLM max attempts value is below the allowed minimum, clamped to bound. key={} raw_value={} clamped_value={}",
+                        A2ATConfigKeys.Llm.MAX_ATTEMPTS,
+                        rawValue.trim(),
                                 MAX_ATTEMPTS_LOWER_BOUND);
                 return MAX_ATTEMPTS_LOWER_BOUND;
             }
             if (parsed > MAX_ATTEMPTS_UPPER_BOUND) {
-                LOGGER.atWarn()
+                log.atWarn()
                         .log(
-                                "LLM max attempts value is above the allowed maximum, clamped to bound. key={} raw_value={} clamped_value={}",
-                                A2ATConfigKeys.Llm.MAX_ATTEMPTS,
-                                rawValue,
+"LLM max attempts value is above the allowed maximum, clamped to bound. key={} raw_value={} clamped_value={}",
+                        A2ATConfigKeys.Llm.MAX_ATTEMPTS,
+                        rawValue.trim(),
                                 MAX_ATTEMPTS_UPPER_BOUND);
                 return MAX_ATTEMPTS_UPPER_BOUND;
             }
             return parsed;
         } catch (NumberFormatException error) {
-            LOGGER.atWarn()
+            log.atWarn()
                     .log(
-                            "LLM max attempts value is not a valid integer, falling back to default. key={} raw_value={} default_value={}",
-                            A2ATConfigKeys.Llm.MAX_ATTEMPTS,
-                            rawValue,
+"LLM max attempts value is not a valid integer, falling back to default. key={} raw_value={} default_value={}",
+                        A2ATConfigKeys.Llm.MAX_ATTEMPTS,
+                        rawValue.trim(),
                             DEFAULT_MAX_ATTEMPTS);
             return DEFAULT_MAX_ATTEMPTS;
         }
+    }
+
+    private static <T> T parseOptionalNumeric(
+            String rawValue, String key, List<String> parseErrors, Function<String, T> parser) {
+        if (StringUtils.isBlank(rawValue)) {
+            return null;
+        }
+        try {
+            return parser.apply(rawValue.trim());
+        } catch (NumberFormatException error) {
+            parseErrors.add(String.format(NON_NUMERIC_MESSAGE_FORMAT, key, rawValue.trim()));
+            return null;
+        }
+    }
+
+    private static int parseInt(String rawValue, String key, int defaultValue, List<String> parseErrors) {
+        if (StringUtils.isBlank(rawValue)) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(rawValue.trim());
+        } catch (NumberFormatException error) {
+            parseErrors.add(String.format(NON_NUMERIC_MESSAGE_FORMAT, key, rawValue.trim()));
+            return defaultValue;
+        }
+    }
+
+    private static boolean parseBoolean(String rawValue, String key, boolean defaultValue, List<String> parseErrors) {
+        if (StringUtils.isBlank(rawValue)) {
+            return defaultValue;
+        }
+        String trimmed = rawValue.trim();
+        if ("true".equalsIgnoreCase(trimmed)) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(trimmed)) {
+            return false;
+        }
+        parseErrors.add(String.format(INVALID_BOOLEAN_MESSAGE_FORMAT, key, trimmed));
+        return defaultValue;
+    }
+
+    private static String parseReasoningEffort(String rawValue) {
+        if (StringUtils.isBlank(rawValue)) {
+            return null;
+        }
+        return rawValue.trim().toLowerCase(Locale.ROOT);
     }
 }

@@ -22,7 +22,6 @@ class LlmPackageStructureTest {
                         "LLMClientConfig.java",
                         "LLMClientFactory.java",
                         "LLMConfigError.java",
-                        "LLMConfigLoader.java",
                         "LLMError.java",
                         "LLMResponse.java",
                         "LLMRuntimeError.java",
