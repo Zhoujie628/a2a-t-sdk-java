@@ -18,7 +18,8 @@ class LLMConfigLoaderTest {
 
     @Test
     void loadsRequiredValuesAndDefaultsFromEnvFile() throws IOException {
-        Path envFile = writeEnv("""
+        Path envFile = writeEnv(
+                """
                 A2AT_LLM_PROVIDER=openai
                 A2AT_LLM_MODEL=gpt-4o-mini
                 A2AT_LLM_API_KEY=sk-test
@@ -40,7 +41,8 @@ class LLMConfigLoaderTest {
 
     @Test
     void loadsOptionalValuesFromEnvFile() throws IOException {
-        Path envFile = writeEnv("""
+        Path envFile = writeEnv(
+                """
                 A2AT_LLM_PROVIDER=openai
                 A2AT_LLM_MODEL=gpt-4o-mini
                 A2AT_LLM_API_KEY=sk-test
@@ -66,7 +68,8 @@ class LLMConfigLoaderTest {
 
     @Test
     void rejectsMissingRequiredValues() throws IOException {
-        Path envFile = writeEnv("""
+        Path envFile = writeEnv(
+                """
                 A2AT_LLM_PROVIDER=openai
                 A2AT_LLM_API_KEY=sk-test
                 """);
@@ -79,7 +82,8 @@ class LLMConfigLoaderTest {
 
     @Test
     void rejectsInvalidOptionalNumber() throws IOException {
-        Path envFile = writeEnv("""
+        Path envFile = writeEnv(
+                """
                 A2AT_LLM_PROVIDER=openai
                 A2AT_LLM_MODEL=gpt-4o-mini
                 A2AT_LLM_API_KEY=sk-test
@@ -94,7 +98,8 @@ class LLMConfigLoaderTest {
 
     @Test
     void rejectsOutOfRangeReservedValues() throws IOException {
-        Path envFile = writeEnv("""
+        Path envFile = writeEnv(
+                """
                 A2AT_LLM_PROVIDER=openai
                 A2AT_LLM_MODEL=gpt-4o-mini
                 A2AT_LLM_API_KEY=sk-test
@@ -109,7 +114,8 @@ class LLMConfigLoaderTest {
 
     @Test
     void rejectsSessionTotalSmallerThanPerProviderLimit() throws IOException {
-        Path envFile = writeEnv("""
+        Path envFile = writeEnv(
+                """
                 A2AT_LLM_PROVIDER=openai
                 A2AT_LLM_MODEL=gpt-4o-mini
                 A2AT_LLM_API_KEY=sk-test
@@ -121,6 +127,52 @@ class LLMConfigLoaderTest {
 
         assertTrue(error.getMessage().contains("A2AT_LLM_SESSION_MAX_TOTAL"));
         assertTrue(error.getMessage().contains("A2AT_LLM_SESSION_MAX_PER_PROVIDER"));
+    }
+
+    @Test
+    void loadsReasoningEffortAndNormalizesCase() throws IOException {
+        Path envFile = writeEnv(
+                """
+                A2AT_LLM_PROVIDER=openai
+                A2AT_LLM_MODEL=gpt-4o-mini
+                A2AT_LLM_API_KEY=sk-test
+                A2AT_LLM_REASONING_EFFORT=HIGH
+                """);
+
+        LLMClientConfig config = LLMConfigLoader.load(envFile);
+
+        assertEquals("high", config.reasoningEffort());
+    }
+
+    @Test
+    void leavesReasoningEffortUnsetWhenKeyIsBlank() throws IOException {
+        Path envFile = writeEnv(
+                """
+                A2AT_LLM_PROVIDER=openai
+                A2AT_LLM_MODEL=gpt-4o-mini
+                A2AT_LLM_API_KEY=sk-test
+                A2AT_LLM_REASONING_EFFORT=
+                """);
+
+        LLMClientConfig config = LLMConfigLoader.load(envFile);
+
+        assertNull(config.reasoningEffort());
+    }
+
+    @Test
+    void rejectsUnknownReasoningEffortValue() throws IOException {
+        Path envFile = writeEnv(
+                """
+                A2AT_LLM_PROVIDER=openai
+                A2AT_LLM_MODEL=gpt-4o-mini
+                A2AT_LLM_API_KEY=sk-test
+                A2AT_LLM_REASONING_EFFORT=middle
+                """);
+
+        LLMConfigError error = assertThrows(LLMConfigError.class, () -> LLMConfigLoader.load(envFile));
+
+        assertTrue(error.getMessage().contains("A2AT_LLM_REASONING_EFFORT"));
+        assertTrue(error.getMessage().contains("middle"));
     }
 
     private Path writeEnv(String content) throws IOException {

@@ -116,6 +116,11 @@ A2AT_LLM_API_KEY={your_api_key}
 A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
 ```
 
+For reasoning models, the optional `A2AT_LLM_REASONING_EFFORT` key tunes the reasoning effort passed to the
+provider: one of `none`, `minimal`, `low`, `medium`, `high`, `xhigh` (case-insensitive). Leave the key unset for
+non-reasoning models — the parameter is then not sent at all. An unsupported value fails at configuration load
+time with an `LLMConfigError` instead of surfacing as a provider error on the first LLM call.
+
 
 ## 1.6 SDK Basic Usage
 
