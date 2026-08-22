@@ -505,7 +505,7 @@ public final class NegotiationGenerationOrchestrator {
                 context.round(),
                 context.id());
         return new MetadataContent(
-                reference.uri(), promptText, ExtensionUriConstants.NEGOTIATION_T_EXTENSION_URI);
+                reference.uri(), promptText, ExtensionUriConstants.NEGOTIATION_T_EXTENSION_URI, context);
     }
 
     private FilledParamData validatePromptAndDataFilling(

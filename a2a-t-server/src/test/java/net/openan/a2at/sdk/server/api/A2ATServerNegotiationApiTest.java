@@ -44,10 +44,11 @@ class A2ATServerNegotiationApiTest {
         assertFalse(result.promptText().isBlank());
         assertTrue(result.promptText().contains("- id: " + UUID));
         assertTrue(result.promptText().contains("协商上下文"));
-        Map<String, String> metadata = result.buildMetadataContent();
-        assertEquals(2, metadata.size());
+        Map<String, Object> metadata = result.buildMetadataContent();
+        assertEquals(3, metadata.size());
         assertEquals(result.promptText(), metadata.get(result.extensionUri()));
         assertEquals(result.templateUri(), metadata.get(MetadataContent.TEMPLATE_URI_METADATA_KEY));
+        assertEquals(new NegotiationContext(UUID, 1, 5), result.negotiationContext());
     }
 
     @Test

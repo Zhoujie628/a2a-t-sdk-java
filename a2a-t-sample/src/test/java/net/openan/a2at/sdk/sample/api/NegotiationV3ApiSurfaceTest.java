@@ -62,7 +62,7 @@ class NegotiationV3ApiSurfaceTest {
     @Test
     void resultRecordsExposeTheirPinnedFieldFaces() {
         List<String> metadataComponents = componentNames(MetadataContent.class);
-        assertEquals(List.of("templateUri", "promptText", "extensionUri"), metadataComponents);
+        assertEquals(List.of("templateUri", "promptText", "extensionUri", "negotiationContext"), metadataComponents);
         List<String> filledComponents = componentNames(FilledParamData.class);
         assertEquals(List.of("data"), filledComponents);
         assertTrue(

@@ -119,10 +119,17 @@ class FromTextLlmPipelineTest {
         assertEquals(fromData.promptText(), fromText.promptText());
         assertEquals(readGoldenFixture(goldenCase, ZH_CN), fromText.promptText());
 
-        Map<String, String> metadata = fromText.buildMetadataContent();
-        assertEquals(2, metadata.size());
+        Map<String, Object> metadata = fromText.buildMetadataContent();
+        assertEquals(3, metadata.size());
         assertEquals(fromText.promptText(), metadata.get(fromText.extensionUri()));
         assertEquals(fromText.templateUri(), metadata.get(MetadataContent.TEMPLATE_URI_METADATA_KEY));
+        assertEquals(goldenCase.context(), fromText.negotiationContext());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> nestedContext =
+                (Map<String, Object>) metadata.get(MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY);
+        assertEquals(goldenCase.context().id(), nestedContext.get("id"));
+        assertEquals(goldenCase.context().round(), nestedContext.get("round"));
+        assertEquals(goldenCase.context().maxRounds(), nestedContext.get("maxRounds"));
 
         assertEquals(
                 2, llm.lastMessages.size(), "the extraction step must be a single system-plus-user message exchange");

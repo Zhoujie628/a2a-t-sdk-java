@@ -53,10 +53,17 @@ class NegotiationGenerationOrchestratorTest {
         assertTrue(result.promptText().contains("协商上下文"));
         assertTrue(result.promptText().contains("所需信息项"));
 
-        Map<String, String> metadata = result.buildMetadataContent();
-        assertEquals(2, metadata.size());
+        Map<String, Object> metadata = result.buildMetadataContent();
+        assertEquals(3, metadata.size());
         assertEquals(result.promptText(), metadata.get(NegotiationHandler.NEGOTIATION_T_URI));
         assertEquals(result.templateUri(), metadata.get(MetadataContent.TEMPLATE_URI_METADATA_KEY));
+        assertEquals(new NegotiationContext(UUID, 1, 5), result.negotiationContext());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> nestedContext =
+                (Map<String, Object>) metadata.get(MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY);
+        assertEquals(UUID, nestedContext.get("id"));
+        assertEquals(1, nestedContext.get("round"));
+        assertEquals(5, nestedContext.get("maxRounds"));
     }
 
     @Test
