@@ -3,6 +3,7 @@ package net.openan.a2at.sdk.prompt.validation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -136,7 +137,27 @@ class DefaultSemanticValidatorTest {
 
 
     @Test
-    void validateFiltersNullParamValues() {
+    void pipelineCarriesNullParamsIntoFilledParamData() {
+        // the semantic validator passed overall, but one schema slot is explicitly null: the merged
+        // FilledParamData must carry the key with a null value so callers scanning for blank slots can see the
+        // missing parameter and trigger negotiation for it
+        String llmJson =
+                "{\"semantic_verdict\": true, \"errors\": []," + "\"params\": {\"任务对象\": \"端口A\", \"任务上下文\": null}}";
+        DefaultSemanticValidator validator =
+                new DefaultSemanticValidator(new StubClient(llmJson), "zh-CN", new RecordingResourceAccess());
+
+        ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 2);
+
+        FilledParamData result = pipeline.validate(
+                "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
+
+        assertEquals(2, result.data().size());
+        assertEquals("端口A", result.data().get("任务对象"));
+        assertNull(result.data().get("任务上下文"));
+    }
+
+    @Test
+    void validatePreservesNullParamValuesAsMissingSlots() {
         String llmJson =
                 "{\"semantic_verdict\": true, \"errors\": []," + "\"params\": {\"任务对象\": \"端口A\", \"任务上下文\": null}}";
         DefaultSemanticValidator validator =
@@ -146,9 +167,12 @@ class DefaultSemanticValidatorTest {
                 validator.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
 
         assertTrue(result.verdict());
-        // Map.copyOf rejects null values; the validator must drop them instead of throwing NPE
-        assertEquals(Map.of("任务对象", "端口A"), result.params());
-        assertFalse(result.params().containsKey("任务上下文"));
+        // a null param is the validator's signal that a schema slot is missing from the content; the key must stay
+        // present with a null value so downstream missing-slot detection (negotiation triggering) can see it
+        assertEquals(2, result.params().size());
+        assertEquals("端口A", result.params().get("任务对象"));
+        assertTrue(result.params().containsKey("任务上下文"));
+        assertNull(result.params().get("任务上下文"));
     }
 
     private static final class RecordingClient implements LLMClient {
