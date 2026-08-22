@@ -3,6 +3,7 @@ package net.openan.a2at.sdk.prompt.validation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -171,18 +172,19 @@ final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
         return List.copyOf(normalized);
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Normalizes the LLM-extracted parameter map. Keys with a {@code null} value are preserved: a {@code null}
+     * parameter is the semantic validator's explicit signal that a schema slot is missing from the content, and
+     * downstream missing-parameter detection (negotiation triggering) relies on the key being present with a null
+     * value. Dropping the key would make a missing slot indistinguishable from an absent one.
+     */
     private static Map<String, Object> parseParams(Object paramsValue) {
         if (!(paramsValue instanceof Map<?, ?> params)) {
             return Map.of();
         }
         Map<String, Object> normalized = new LinkedHashMap<>();
-        params.forEach((key, value) -> {
-            if (value != null) {
-                normalized.put(String.valueOf(key), value);
-            }
-        });
-        return Map.copyOf(normalized);
+        params.forEach((key, value) -> normalized.put(String.valueOf(key), value));
+        return Collections.unmodifiableMap(normalized);
     }
 
     private static String asString(Object value) {
