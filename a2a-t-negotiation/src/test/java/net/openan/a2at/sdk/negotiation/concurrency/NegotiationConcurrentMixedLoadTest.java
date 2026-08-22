@@ -58,7 +58,7 @@ class NegotiationConcurrentMixedLoadTest {
         MetadataContent fromDataBase = orchestrator.generateProposeFromData(proposeData, INFORMATION_PROPOSE_URI);
         MetadataContent fromTextBase = orchestrator.generateProposeFromText(
                 "请提供节能区域信息。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
-        FilledParamData validateBase = orchestrator.validateAndFillingProposeData(
+        FilledParamData validateBase = orchestrator.validateProposePromptAndDataFilling(
                 fromDataBase.promptText(), Map.of("type", "object"), INFORMATION_PROPOSE_URI);
         int baselineExtractionCalls = llm.extractionCalls.get();
         int baselineSemanticCalls = llm.semanticCalls.get();
@@ -85,7 +85,7 @@ class NegotiationConcurrentMixedLoadTest {
             } else {
                 validateThreads++;
                 workers.add(callableOf(() -> {
-                    FilledParamData filled = orchestrator.validateAndFillingProposeData(
+                    FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                             fromDataBase.promptText(), Map.of("type", "object"), INFORMATION_PROPOSE_URI);
                     assertEquals(validateBase.data(), filled.data(), "validation baseline");
                 }));

@@ -187,7 +187,7 @@ class AbortMessageGenerationTest {
                 ABORT_URI);
 
         FilledParamData parameters =
-                peer.validateAndFillingAbortData(abortMessage.promptText(), Map.of("type", "object"), ABORT_URI);
+                peer.validateAbortPromptAndDataFilling(abortMessage.promptText(), Map.of("type", "object"), ABORT_URI);
 
         assertEquals(SESSION_ID, parameters.data().get("id"));
         assertEquals(5, parameters.data().get("round"));
@@ -213,7 +213,7 @@ class AbortMessageGenerationTest {
 
         NegotiationParamExtractionException failure = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> peer.validateAndFillingAbortData(beyondBudget.promptText(), Map.of("type", "object"), ABORT_URI));
+                () -> peer.validateAbortPromptAndDataFilling(beyondBudget.promptText(), Map.of("type", "object"), ABORT_URI));
         assertEquals(A2ATErrorCodes.NEGOTIATION_RULE_VIOLATION, failure.getCode());
         assertTrue(
                 failure.getErrors().stream().anyMatch(error -> "round".equals(error.slotName())),
@@ -230,7 +230,7 @@ class AbortMessageGenerationTest {
 
         IllegalArgumentException failure = assertThrows(
                 IllegalArgumentException.class,
-                () -> orchestrator.validateAndFillingAbortData("任意文本", Map.of("type", "object"),
+                () -> orchestrator.validateAbortPromptAndDataFilling("任意文本", Map.of("type", "object"),
                         StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE));
         assertTrue(failure.getMessage().contains("abort"));
         assertEquals(0, llm.calls);

@@ -94,8 +94,10 @@ public final class DefaultStructuredPromptSlotValueExtractor implements PromptSl
                 + slotLines;
         if (dataSchema != null && !dataSchema.isEmpty()) {
             content += "\n\n[data_schema]\n";
-            for (Map.Entry<String, Object> entry : dataSchema.entrySet()) {
-                content += "- " + entry.getKey() + ": " + String.valueOf(entry.getValue()) + "\n";
+            try {
+                content += OBJECT_MAPPER.writeValueAsString(dataSchema);
+            } catch (JsonProcessingException e) {
+                throw new A2ATError("Failed to serialize data schema to JSON.", e);
             }
         }
         return List.of(new PromptMessage("system", systemPrompt), new PromptMessage("user", content));

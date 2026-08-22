@@ -92,7 +92,12 @@ class DefaultStructuredClientSlotValueExtractorTest {
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
-        Map<String, Object> dataSchema = Map.of("site", "site description", "severity", "severity description");
+        Map<String, Object> dataSchema = Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "site", Map.of("type", "string", "description", "site description"),
+                        "severity", Map.of("type", "string", "description", "severity description")),
+                "required", List.of("site"));
         Map<String, String> slots = extractor.extractSlotsWithSchema(
                 "Analyze Site A with critical severity.",
                 "energy-saving",
@@ -108,7 +113,8 @@ class DefaultStructuredClientSlotValueExtractorTest {
                         "severity", "high"),
                 slots);
         assertTrue(llmClient.lastMessages().get(1).get("content").contains("[data_schema]"));
-        assertTrue(llmClient.lastMessages().get(1).get("content").contains("site: site description"));
+        assertTrue(llmClient.lastMessages().get(1).get("content").contains("\"site\""));
+        assertTrue(llmClient.lastMessages().get(1).get("content").contains("\"site description\""));
     }
 
     @Test

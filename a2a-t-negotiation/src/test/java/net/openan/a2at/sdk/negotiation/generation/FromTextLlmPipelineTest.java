@@ -506,7 +506,7 @@ class FromTextLlmPipelineTest {
                 llm.lastMessages.get(1).get("content").contains("propose"),
                 "the user prompt must carry the phase token");
 
-        FilledParamData filled = orchestrator.validateAndFillingProposeData(
+        FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                 message.promptText(),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                 goldenCase.template());

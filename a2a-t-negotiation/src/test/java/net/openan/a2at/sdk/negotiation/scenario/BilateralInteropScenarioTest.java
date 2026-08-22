@@ -60,9 +60,9 @@ class BilateralInteropScenarioTest {
         assertEquals(fromData.templateUri(), fromText.templateUri());
         assertEquals(1, initiatingSideLlm.callCount(), "the from-text generation performs exactly one extraction call");
 
-        FilledParamData respondingSideParameters = respondingSide.validateAndFillingProposeData(
+        FilledParamData respondingSideParameters = respondingSide.validateProposePromptAndDataFilling(
                 fromData.promptText(), parameterSchema(), INFORMATION_PROPOSE_URI);
-        FilledParamData initiatingSideParameters = initiatingSide.validateAndFillingProposeData(
+        FilledParamData initiatingSideParameters = initiatingSide.validateProposePromptAndDataFilling(
                 fromData.promptText(), parameterSchema(), INFORMATION_PROPOSE_URI);
         assertEquals(
                 respondingSideParameters,
@@ -83,7 +83,7 @@ class BilateralInteropScenarioTest {
         assertEquals(respondingSideAnswer.buildMetadataContent(), initiatingSideAnswer.buildMetadataContent());
         assertTrue(respondingSideAnswer.promptText().contains("## 信息协商结果\nAccept"));
 
-        FilledParamData validatedAnswer = initiatingSide.validateAndFillingAcceptData(
+        FilledParamData validatedAnswer = initiatingSide.validateAcceptPromptAndDataFilling(
                 respondingSideAnswer.promptText(), parameterSchema(), INFORMATION_ACCEPT_URI);
         assertEquals(SESSION_ID, validatedAnswer.data().get("id"));
         assertEquals(1, validatedAnswer.data().get("round"));
