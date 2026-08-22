@@ -118,6 +118,7 @@ class NegotiationGenerationOrchestratorTest {
 
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                 message.promptText(),
+                new NegotiationContext(UUID, 1, 5),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                 INFORMATION_PROPOSE);
 
@@ -209,7 +210,8 @@ class NegotiationGenerationOrchestratorTest {
         NegotiationParamExtractionException extractionFailure = assertThrows(
                 NegotiationParamExtractionException.class,
                 () -> validationOrchestrator.validateProposePromptAndDataFilling(
-                        "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
+                        "## 所需信息项\n1. 区域\n",
+                        new NegotiationContext(UUID, 1, 5),
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE));
         assertEquals(A2ATErrorCodes.TEMPLATE_NOT_FOUND, extractionFailure.getCode());
@@ -228,6 +230,7 @@ class NegotiationGenerationOrchestratorTest {
                 NegotiationParamExtractionException.class,
                 () -> orchestrator.validateProposePromptAndDataFilling(
                         "plain text without any negotiation section",
+                        null,
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE));
 

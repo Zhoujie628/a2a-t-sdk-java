@@ -67,11 +67,20 @@ public final class NegotiationClientMain {
                         NegotiationDecision decision = prompt.matches("(?s).*## 信息协商结果\\R\\s*Reject.*")
                                 ? NegotiationDecision.REJECT
                                 : NegotiationDecision.ACCEPT;
+                        NegotiationContext endingContext = NegotiationMetadataReader.readContext(endingMetadata);
                         Map<String, Object> result = decision == NegotiationDecision.ACCEPT
                                 ? client.validateAcceptPromptAndDataFilling(
-                                        prompt, InformationNegotiationSchemas.accept(), NegotiationSampleFlow.ENDING_TEMPLATE_URI).data()
+                                        prompt,
+                                        endingContext,
+                                        InformationNegotiationSchemas.accept(),
+                                        NegotiationSampleFlow.ENDING_TEMPLATE_URI)
+                                        .data()
                                 : client.validateRejectPromptAndDataFilling(
-                                        prompt, InformationNegotiationSchemas.reject(), NegotiationSampleFlow.ENDING_TEMPLATE_URI).data();
+                                        prompt,
+                                        endingContext,
+                                        InformationNegotiationSchemas.reject(),
+                                        NegotiationSampleFlow.ENDING_TEMPLATE_URI)
+                                        .data();
                         System.out.println("[negotiation-client] result=" + result);
                     }
                 }

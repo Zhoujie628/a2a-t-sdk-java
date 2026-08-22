@@ -382,6 +382,8 @@ public final class A2ATServer {
      * parameters with the rule-level context parameters; context parameters win on conflict.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code propose}
@@ -396,9 +398,12 @@ public final class A2ATServer {
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateProposePromptAndDataFilling(
-            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
+            @NonNull String prompt,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
         requireTemplateUri(templateUri);
-        return negotiationContentService.validateProposePromptAndDataFilling(prompt, schema, templateUri);
+        return negotiationContentService.validateProposePromptAndDataFilling(prompt, context, schema, templateUri);
     }
 
     /**
@@ -409,6 +414,8 @@ public final class A2ATServer {
      * satisfy the accept-phase semantic constraints.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code accept-reject}
@@ -423,9 +430,12 @@ public final class A2ATServer {
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateAcceptPromptAndDataFilling(
-            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
+            @NonNull String prompt,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
         requireTemplateUri(templateUri);
-        return negotiationContentService.validateAcceptPromptAndDataFilling(prompt, schema, templateUri);
+        return negotiationContentService.validateAcceptPromptAndDataFilling(prompt, context, schema, templateUri);
     }
 
     /**
@@ -436,6 +446,8 @@ public final class A2ATServer {
      * satisfy the reject-phase semantic constraints.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code accept-reject}
@@ -450,9 +462,12 @@ public final class A2ATServer {
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateRejectPromptAndDataFilling(
-            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
+            @NonNull String prompt,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
         requireTemplateUri(templateUri);
-        return negotiationContentService.validateRejectPromptAndDataFilling(prompt, schema, templateUri);
+        return negotiationContentService.validateRejectPromptAndDataFilling(prompt, context, schema, templateUri);
     }
 
     /**
@@ -463,6 +478,8 @@ public final class A2ATServer {
      * abort-phase semantic constraints.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
      * @return filled parameter data carrying the context parameters and the extracted parameters
@@ -476,15 +493,20 @@ public final class A2ATServer {
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateAbortPromptAndDataFilling(
-            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
+            @NonNull String prompt,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
         requireTemplateUri(templateUri);
-        return negotiationContentService.validateAbortPromptAndDataFilling(prompt, schema, templateUri);
+        return negotiationContentService.validateAbortPromptAndDataFilling(prompt, context, schema, templateUri);
     }
 
     /**
      * Validates a task prompt and extracts its parameters.
      *
      * @param prompt rendered task prompt text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI declaring the expected task template; its prefix segment must be
      *     {@code Task-T}
@@ -506,6 +528,8 @@ public final class A2ATServer {
      * Validates a notification prompt and extracts its parameters.
      *
      * @param prompt rendered notification prompt text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI declaring the expected notification template; its prefix segment must be
      *     {@code Notification-T}
@@ -527,6 +551,8 @@ public final class A2ATServer {
      * Validates an authorization prompt and extracts its parameters.
      *
      * @param prompt rendered authorization prompt text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI declaring the expected authorization template; its prefix segment must be
      *     {@code Authorization-T}

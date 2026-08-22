@@ -63,7 +63,8 @@ class NegotiationExceptionTreeRootCatchTest {
                 .build();
 
         RuntimeException failure = catchThroughRoot(() -> orchestrator.validateProposePromptAndDataFilling(
-                "## 协商上下文\n- id: " + UUID + "\n- round: 9\n- maxRounds: 5",
+                "## 所需信息项\n1. 区域\n",
+                new NegotiationContext(UUID, 9, 5),
                 Map.of("type", "object"),
                 INFORMATION_PROPOSE_URI));
 
@@ -83,7 +84,8 @@ class NegotiationExceptionTreeRootCatchTest {
                 .build();
 
         RuntimeException failure = catchThroughRoot(() -> orchestrator.validateProposePromptAndDataFilling(
-                "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
+                "## 所需信息项\n1. 区域\n",
+                new NegotiationContext(UUID, 1, 5),
                 Map.of("type", "object"),
                 INFORMATION_PROPOSE_URI));
 
@@ -102,7 +104,8 @@ class NegotiationExceptionTreeRootCatchTest {
                 .build();
 
         RuntimeException failure = catchThroughRoot(() -> orchestrator.validateProposePromptAndDataFilling(
-                "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
+                "## 所需信息项\n1. 区域\n",
+                new NegotiationContext(UUID, 1, 5),
                 Map.of("type", "object"),
                 INFORMATION_PROPOSE_URI));
 
@@ -119,7 +122,7 @@ class NegotiationExceptionTreeRootCatchTest {
                 .build();
 
         RuntimeException failure = catchThroughRoot(() -> orchestrator.validateProposePromptAndDataFilling(
-                "plain text without any negotiation section", Map.of("type", "object"), INFORMATION_PROPOSE_URI));
+                "plain text without any negotiation section", null, Map.of("type", "object"), INFORMATION_PROPOSE_URI));
 
         assertTrue(failure instanceof NegotiationParamExtractionException);
         assertEquals(
@@ -168,7 +171,7 @@ class NegotiationExceptionTreeRootCatchTest {
 
         NullPointerException failure = assertThrows(
                 NullPointerException.class,
-                () -> orchestrator.validateProposePromptAndDataFilling(null, Map.of("type", "object"), INFORMATION_PROPOSE_URI));
+                () -> orchestrator.validateProposePromptAndDataFilling(null, new NegotiationContext(UUID, 1, 5), Map.of("type", "object"), INFORMATION_PROPOSE_URI));
 
         assertFalse(A2ATError.class.isInstance(failure), "a null prompt is a programming error and must stay outside the A2ATError tree");
     }
@@ -182,7 +185,7 @@ class NegotiationExceptionTreeRootCatchTest {
         IllegalArgumentException failure = assertThrows(
                 IllegalArgumentException.class,
                 () -> orchestrator.validateProposePromptAndDataFilling(
-                        "   ", Map.of("type", "object"), INFORMATION_PROPOSE_URI));
+                        "   ", new NegotiationContext(UUID, 1, 5), Map.of("type", "object"), INFORMATION_PROPOSE_URI));
 
         assertFalse(
                 A2ATError.class.isInstance(failure),

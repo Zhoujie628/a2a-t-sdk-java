@@ -13,7 +13,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
-import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.negotiation.resources.DefaultNegotiationTemplateLoader;
 import net.openan.a2at.sdk.negotiation.validation.DefaultNegotiationComplianceChecker;
 import net.openan.a2at.sdk.negotiation.validation.NegotiationRuleCheckResult;
@@ -64,10 +63,9 @@ class NegotiationContextImmutabilityTest {
 
     @Test
     void ruleCheckerIsPureUnderConcurrentCalls() throws Exception {
-        String prompt = "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5";
-        Vocabulary vocabulary = Vocabulary.forLanguage("zh-CN");
+        NegotiationContext context = new NegotiationContext(UUID, 1, 5);
         DefaultNegotiationComplianceChecker checker = new DefaultNegotiationComplianceChecker();
-        NegotiationRuleCheckResult baseline = checker.check(prompt, vocabulary);
+        NegotiationRuleCheckResult baseline = checker.check(context);
 
         ExecutorService pool = Executors.newFixedThreadPool(THREADS);
         try {
@@ -75,11 +73,9 @@ class NegotiationContextImmutabilityTest {
             for (int index = 0; index < THREADS; index++) {
                 futures.add(pool.submit(() -> {
                     for (int iteration = 0; iteration < ITERATIONS; iteration++) {
-                        NegotiationRuleCheckResult result = checker.check(prompt, vocabulary);
+                        NegotiationRuleCheckResult result = checker.check(context);
                         assertEquals(baseline.passed(), result.passed());
-                        assertEquals(baseline.isNegotiation(), result.isNegotiation());
                         assertEquals(baseline.errors(), result.errors());
-                        assertEquals(baseline.context(), result.context());
                     }
                     return null;
                 }));

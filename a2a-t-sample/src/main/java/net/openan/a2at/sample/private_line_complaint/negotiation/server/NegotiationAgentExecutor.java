@@ -7,7 +7,6 @@ import net.openan.a2at.sample.private_line_complaint.negotiation.shared.Negotiat
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationMetadataReader;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationSampleFlow;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationScenario;
-import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.server.A2ATServer;
@@ -38,11 +37,15 @@ public final class NegotiationAgentExecutor implements AgentExecutor {
         try {
             NegotiationMetadataReader.requireExtension(extensionHeader(requestContext));
             Message message = requestContext.getMessage();
+            Map<String, ?> metadata = message == null ? null : message.metadata();
             String proposePrompt = NegotiationMetadataReader.readPrompt(
-                    message == null ? null : message.metadata(), NegotiationSampleFlow.PROPOSE_TEMPLATE_URI);
-            FilledParamData proposeData = server.validateProposePromptAndDataFilling(
-                    proposePrompt, InformationNegotiationSchemas.propose(), NegotiationSampleFlow.PROPOSE_TEMPLATE_URI);
-            NegotiationContext context = NegotiationSampleFlow.contextFrom(proposeData.data());
+                    metadata, NegotiationSampleFlow.PROPOSE_TEMPLATE_URI);
+            NegotiationContext context = NegotiationMetadataReader.readContext(metadata);
+            server.validateProposePromptAndDataFilling(
+                    proposePrompt,
+                    context,
+                    InformationNegotiationSchemas.propose(),
+                    NegotiationSampleFlow.PROPOSE_TEMPLATE_URI);
             MetadataContent ending = decision == NegotiationDecision.ACCEPT
                     ? server.generateNegotiationAcceptPromptFromText(
                             scenario.acceptText(), context, NegotiationSampleFlow.ENDING_TEMPLATE_URI)

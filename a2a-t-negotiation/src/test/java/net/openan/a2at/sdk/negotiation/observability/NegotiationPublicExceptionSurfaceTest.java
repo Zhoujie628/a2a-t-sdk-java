@@ -74,7 +74,8 @@ class NegotiationPublicExceptionSurfaceTest {
                 failureMessageOf(() -> orchestrator.generateProposeFromText(
                         "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI)),
                 failureMessageOf(() -> orchestrator.validateProposePromptAndDataFilling(
-                        "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
+                        "## 所需信息项\n1. 区域\n",
+                        new NegotiationContext(UUID, 1, 5),
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI)),
                 failureMessageOf(() -> new NegotiationContext(" ", 1, 5)),
@@ -106,7 +107,8 @@ class NegotiationPublicExceptionSurfaceTest {
         NegotiationParamExtractionException extractionFailure = catchFailure(
                 NegotiationParamExtractionException.class,
                 () -> orchestrator.validateProposePromptAndDataFilling(
-                        "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
+                        "## 所需信息项\n1. 区域\n",
+                        new NegotiationContext(UUID, 1, 5),
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI));
         assertTrue(extractionFailure.getCode().equals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR));

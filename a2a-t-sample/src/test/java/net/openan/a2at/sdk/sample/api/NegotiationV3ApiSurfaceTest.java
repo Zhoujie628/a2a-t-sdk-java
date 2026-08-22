@@ -39,10 +39,10 @@ class NegotiationV3ApiSurfaceTest {
             Map.entry("generateNegotiationAbortPromptFromText", 3),
             Map.entry("getNegotiationPrompts", 0),
             Map.entry("getNegotiationPrompt", 1),
-            Map.entry("validateProposePromptAndDataFilling", 3),
-            Map.entry("validateAcceptPromptAndDataFilling", 3),
-            Map.entry("validateRejectPromptAndDataFilling", 3),
-            Map.entry("validateAbortPromptAndDataFilling", 3));
+            Map.entry("validateProposePromptAndDataFilling", 4),
+            Map.entry("validateAcceptPromptAndDataFilling", 4),
+            Map.entry("validateRejectPromptAndDataFilling", 4),
+            Map.entry("validateAbortPromptAndDataFilling", 4));
 
     private static final List<String> REMOVED_V2_METHOD_NAME_FRAGMENTS =
             List.of("FromNl", "FromJsonData", "validateAndExtractParams");

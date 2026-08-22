@@ -64,7 +64,10 @@ class FeasibilityNegotiationScenarioTest {
         NegotiationParamExtractionException rejection = assertThrows(
                 NegotiationParamExtractionException.class,
                 () -> responder.validateProposePromptAndDataFilling(
-                        evaluationRequest.promptText(), parameterSchema(), FEASIBILITY_PROPOSE_URI));
+                        evaluationRequest.promptText(),
+                        GoldenCase.FEASIBILITY_PROPOSE.context(),
+                        parameterSchema(),
+                        FEASIBILITY_PROPOSE_URI));
         assertEquals(A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED, rejection.getCode());
         assertEquals(1, responderLlm.callCount(), "a semantic rejection must not be retried");
         List<SlotValidationError> errors = rejection.getErrors();
@@ -102,7 +105,7 @@ class FeasibilityNegotiationScenarioTest {
                 "the summary must fill the exception slot of the feasibility result confirmation section");
 
         FilledParamData terminalParameters = requester.validateAcceptPromptAndDataFilling(
-                acceptance.promptText(), parameterSchema(), FEASIBILITY_ACCEPT_URI);
+                acceptance.promptText(), GoldenInputs.defaultContext(), parameterSchema(), FEASIBILITY_ACCEPT_URI);
         assertEquals(1, requesterLlm.callCount());
         assertEquals(GoldenInputs.SESSION_ID, terminalParameters.data().get("id"));
         assertEquals(2, terminalParameters.data().get("round"));

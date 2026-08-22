@@ -51,6 +51,8 @@ class NegotiationErrorCodeUsageMatrixTest {
 
     private static final Map<String, Object> SCHEMA = Map.of("type", "object");
 
+    private static final NegotiationContext CONTEXT = new NegotiationContext(UUID, 1, 5);
+
     @TestFactory
     Stream<DynamicTest> everyErrorCodeRowOfTheMatrixBehavesAsPinned() {
         return Stream.of(
@@ -127,7 +129,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .build()
                                 .validateProposePromptAndDataFilling(
-                                        "plain text without any negotiation section", SCHEMA, INFORMATION_PROPOSE_URI),
+                                        "plain text without any negotiation section", null, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_INVALID_INPUT),
                 row(
@@ -139,7 +141,8 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .build()
                                 .validateProposePromptAndDataFilling(
-                                        "## 协商上下文\n- id: " + UUID + "\n- round: 9\n- maxRounds: 5",
+                                        "## 所需信息项\n1. 区域\n",
+                                        new NegotiationContext(UUID, 9, 5),
                                         SCHEMA,
                                         INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
@@ -155,7 +158,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .maxAttempts(3)
                                 .build()
-                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, CONTEXT, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED),
                 row(
@@ -167,7 +170,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .maxAttempts(2)
                                 .build()
-                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, CONTEXT, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR),
                 row(
@@ -202,7 +205,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .maxAttempts(2)
                                 .build()
-                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, CONTEXT, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR),
                 row(
@@ -214,7 +217,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .semanticValidator(throwingSemanticValidator())
                                 .build()
-                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, CONTEXT, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.TEMPLATE_NOT_FOUND));
     }

@@ -515,6 +515,7 @@ class FromTextLlmPipelineTest {
 
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                 message.promptText(),
+                goldenCase.context(),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                 goldenCase.template());
 

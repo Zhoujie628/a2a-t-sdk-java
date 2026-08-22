@@ -78,6 +78,7 @@ class CustomRootPromptsIgnoredTest {
 
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                 message.promptText(),
+                new NegotiationContext(UUID, 1, 5),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                 INFORMATION_PROPOSE_URI);
 

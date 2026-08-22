@@ -49,6 +49,7 @@ class InformationNegotiationScenarioTest {
                 NegotiationParamExtractionException.class,
                 () -> responder.validateProposePromptAndDataFilling(
                         "A task prompt describing an energy-saving optimization without any negotiation section.",
+                        null,
                         parameterSchema(),
                         INFORMATION_PROPOSE_URI));
         assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, notNegotiable.getCode());
@@ -72,7 +73,7 @@ class InformationNegotiationScenarioTest {
         assertTrue(request.promptText().contains("- round: 1"));
 
         FilledParamData requestParameters = responder.validateProposePromptAndDataFilling(
-                request.promptText(), parameterSchema(), INFORMATION_PROPOSE_URI);
+                request.promptText(), round, parameterSchema(), INFORMATION_PROPOSE_URI);
         assertEquals(1, responderLlm.callCount());
         assertEquals(SESSION_ID, requestParameters.data().get("id"));
         assertEquals(1, requestParameters.data().get("round"));
@@ -94,7 +95,8 @@ class InformationNegotiationScenarioTest {
         assertTrue(answer.promptText().contains("- round: 1"), "the terminal answer shares the round of the request");
 
         FilledParamData answerParameters =
-                requester.validateAcceptPromptAndDataFilling(answer.promptText(), parameterSchema(), INFORMATION_ACCEPT_URI);
+                requester.validateAcceptPromptAndDataFilling(
+                        answer.promptText(), round, parameterSchema(), INFORMATION_ACCEPT_URI);
         assertEquals(1, requesterLlm.callCount());
         assertEquals(SESSION_ID, answerParameters.data().get("id"));
         assertEquals(1, answerParameters.data().get("round"));

@@ -65,7 +65,7 @@ class TargetNegotiationScenarioTest {
         assertTrue(firstProposal.promptText().contains("- round: 1"));
 
         FilledParamData firstRoundParameters = responder.validateProposePromptAndDataFilling(
-                firstProposal.promptText(), nestedParameterSchema(), TARGET_PROPOSE_URI);
+                firstProposal.promptText(), firstRound, nestedParameterSchema(), TARGET_PROPOSE_URI);
         assertEquals(1, responderLlm.callCount());
         Object timeRateTargets = firstRoundParameters.data().get("timeRateTargets");
         assertTrue(timeRateTargets instanceof List, "the nested parameter list must pass through");
@@ -84,7 +84,8 @@ class TargetNegotiationScenarioTest {
         assertTrue(rejection.promptText().contains("节能区域信息因站点清单不可用而无法完整澄清"));
         assertTrue(rejection.promptText().contains("- round: 1"));
 
-        requester.validateRejectPromptAndDataFilling(rejection.promptText(), parameterSchema(), TARGET_ACCEPT_URI);
+        requester.validateRejectPromptAndDataFilling(
+                rejection.promptText(), firstRound, parameterSchema(), TARGET_ACCEPT_URI);
         assertEquals(1, requesterLlm.callCount());
 
         NegotiationContext secondRound = firstRound.nextRound();
@@ -119,8 +120,8 @@ class TargetNegotiationScenarioTest {
         assertTrue(acceptance.promptText().contains("最终确认意图：08:00-18:00对松山湖站点启用无线节能优化"));
         assertTrue(acceptance.promptText().contains("- round: 2"));
 
-        FilledParamData terminalParameters =
-                requester.validateAcceptPromptAndDataFilling(acceptance.promptText(), parameterSchema(), TARGET_ACCEPT_URI);
+        FilledParamData terminalParameters = requester.validateAcceptPromptAndDataFilling(
+                acceptance.promptText(), secondRound, parameterSchema(), TARGET_ACCEPT_URI);
         assertEquals(2, requesterLlm.callCount());
         assertEquals(SESSION_ID, terminalParameters.data().get("id"));
         assertEquals(2, terminalParameters.data().get("round"));

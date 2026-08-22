@@ -126,7 +126,8 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
                 .build();
 
         orchestrator.validateProposePromptAndDataFilling(
-                "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
+                "## 所需信息项\n1. 区域\n",
+                new NegotiationContext(UUID, 1, 5),
                 Map.of("type", "object"),
                 INFORMATION_PROPOSE_URI);
 
@@ -157,7 +158,8 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
         org.junit.jupiter.api.Assertions.assertThrows(
                 net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException.class,
                 () -> validationOrchestrator.validateProposePromptAndDataFilling(
-                        "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
+                        "## 所需信息项\n1. 区域\n",
+                        new NegotiationContext(UUID, 1, 5),
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI));
         assertEquals(2, semanticClient.calls.get(), "semantic validation chain must retry up to the limit");
@@ -178,9 +180,9 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
         private final AtomicInteger calls = new AtomicInteger();
 
         @Override
-        public NegotiationRuleCheckResult check(String prompt, Vocabulary vocabulary) {
+        public NegotiationRuleCheckResult check(net.openan.a2at.sdk.core.model.NegotiationContext context) {
             calls.incrementAndGet();
-            return new NegotiationRuleCheckResult(true, true, List.of(), new NegotiationContext(UUID, 1, 5));
+            return new NegotiationRuleCheckResult(true, List.of());
         }
     }
 

@@ -74,8 +74,8 @@ public final class FromTextProbe {
             System.out.println("--- promptText ---");
             System.out.println(content.promptText());
             System.out.println("--- metadata map ---");
-            for (Map.Entry<String, String> entry : content.buildMetadataContent().entrySet()) {
-                System.out.println("  " + entry.getKey() + " = " + summarize(entry.getValue()));
+            for (Map.Entry<String, Object> entry : content.buildMetadataContent().entrySet()) {
+                System.out.println("  " + entry.getKey() + " = " + summarize(String.valueOf(entry.getValue())));
             }
         } catch (RuntimeException error) {
             long elapsed = System.currentTimeMillis() - start;

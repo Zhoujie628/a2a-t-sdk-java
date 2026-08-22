@@ -61,9 +61,9 @@ class BilateralInteropScenarioTest {
         assertEquals(1, initiatingSideLlm.callCount(), "the from-text generation performs exactly one extraction call");
 
         FilledParamData respondingSideParameters = respondingSide.validateProposePromptAndDataFilling(
-                fromData.promptText(), parameterSchema(), INFORMATION_PROPOSE_URI);
+                fromData.promptText(), round, parameterSchema(), INFORMATION_PROPOSE_URI);
         FilledParamData initiatingSideParameters = initiatingSide.validateProposePromptAndDataFilling(
-                fromData.promptText(), parameterSchema(), INFORMATION_PROPOSE_URI);
+                fromData.promptText(), round, parameterSchema(), INFORMATION_PROPOSE_URI);
         assertEquals(
                 respondingSideParameters,
                 initiatingSideParameters,
@@ -84,7 +84,7 @@ class BilateralInteropScenarioTest {
         assertTrue(respondingSideAnswer.promptText().contains("## 信息协商结果\nAccept"));
 
         FilledParamData validatedAnswer = initiatingSide.validateAcceptPromptAndDataFilling(
-                respondingSideAnswer.promptText(), parameterSchema(), INFORMATION_ACCEPT_URI);
+                respondingSideAnswer.promptText(), round, parameterSchema(), INFORMATION_ACCEPT_URI);
         assertEquals(SESSION_ID, validatedAnswer.data().get("id"));
         assertEquals(1, validatedAnswer.data().get("round"));
         assertEquals("松山湖", validatedAnswer.data().get("region"));
