@@ -127,7 +127,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
-                (scenarioCode, language) -> "Scenario: {scenario}\nMissing: {missing_slot}",
+                (scenarioCode, language) -> "Scenario: {scenario}\nMissing: {{missing_slot}}",
                 (userInput, scenarioCode, language, templateText) -> Map.of("scenario", scenarioCode),
                 new TaskPromptRenderer(),
                 EMPTY_SCHEMA_LOADER);
@@ -380,7 +380,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void generateFromTemplateUriWithMetadataPropagatesRenderException() {
         DefaultClientPromptGenerationOrchestrator orchestrator = newTemplateUriOrchestrator(
                 new RecordingScenarioRecognizer(),
-                new FakeTemplateLoader("Site: {site}\nMissing: {missing_slot}"),
+                new FakeTemplateLoader("Site: {site}\nMissing: {{missing_slot}}"),
                 new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
         PromptGenerationException ex = assertThrows(
@@ -489,7 +489,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void generateFromDataWithSchemaPropagatesRenderException() {
         DefaultClientPromptGenerationOrchestrator orchestrator = newTemplateUriOrchestrator(
                 new RecordingScenarioRecognizer(),
-                new FakeTemplateLoader("Site: {site}\nMissing: {missing_slot}"),
+                new FakeTemplateLoader("Site: {site}\nMissing: {{missing_slot}}"),
                 new FakeSlotValueExtractorWithSchema(Map.of("site", "Site A")));
 
         PromptGenerationException ex = assertThrows(
