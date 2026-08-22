@@ -10,4 +10,4 @@ package net.openan.a2at.sdk.negotiation.content;
  *     a timeout or a token budget exhaustion
  * @since 2026-08
  */
-public record AbortContent(String terminationReason) implements NegotiationContent {}
+public record NegotiationAbortContent(String terminationReason) implements NegotiationContent {}

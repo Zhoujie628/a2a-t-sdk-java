@@ -2,7 +2,7 @@ package net.openan.a2at.sdk.negotiation.generation;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import net.openan.a2at.sdk.negotiation.content.AbortContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
@@ -30,7 +30,7 @@ final class AbortGenerator extends AbstractNegotiationGenerator {
     @Override
     public String generate(
             NegotiationContext context, NegotiationContent content, PromptTemplate template, Vocabulary vocabulary) {
-        AbortContent abortContent = contentOf(content, AbortContent.class, "Abort generator");
+        NegotiationAbortContent abortContent = contentOf(content, NegotiationAbortContent.class, "Abort generator");
         Map<String, String> slots = new LinkedHashMap<>();
         slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(

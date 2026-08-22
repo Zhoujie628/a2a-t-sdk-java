@@ -15,7 +15,7 @@ import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.AbortContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -49,7 +49,7 @@ class AbortMessageGenerationTest {
                 .generateAbortFromData(
                         new NegotiationAbortData(
                                 new NegotiationContext(SESSION_ID, 5, 5),
-                                new AbortContent("达到协商轮次上限，本次协商确认结束。")),
+                                new NegotiationAbortContent("达到协商轮次上限，本次协商确认结束。")),
                         ABORT_URI);
 
         assertEquals(ABORT_URI.uri(), result.templateUri());
@@ -71,7 +71,7 @@ class AbortMessageGenerationTest {
                 .generateAbortFromData(
                         new NegotiationAbortData(
                                 new NegotiationContext(SESSION_ID, 3, 5),
-                                new AbortContent("Reached the negotiation round limit. This negotiation is confirmed and ended.")),
+                                new NegotiationAbortContent("Reached the negotiation round limit. This negotiation is confirmed and ended.")),
                         ABORT_URI);
 
         assertEquals(ABORT_URI.uri(), result.templateUri());
@@ -92,7 +92,7 @@ class AbortMessageGenerationTest {
                 () -> orchestrator("zh-CN")
                         .generateAbortFromData(
                                 new NegotiationAbortData(
-                                        new NegotiationContext(SESSION_ID, 1, 5), new AbortContent(" ")),
+                                        new NegotiationContext(SESSION_ID, 1, 5), new NegotiationAbortContent(" ")),
                                 ABORT_URI));
         assertTrue(failure.getMessage().contains("Termination reason"), "message must point at the offending field");
         assertEquals(0, llm.calls);
@@ -106,7 +106,7 @@ class AbortMessageGenerationTest {
                         .generateAbortFromData(
                                 new NegotiationAbortData(
                                         new NegotiationContext(SESSION_ID, 1, 5),
-                                        new AbortContent("达到协商轮次上限。")),
+                                        new NegotiationAbortContent("达到协商轮次上限。")),
                                 StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT));
         assertTrue(failure.getMessage().contains("abort"));
     }
@@ -143,7 +143,7 @@ class AbortMessageGenerationTest {
 
         MetadataContent result = service.generateAbortFromData(
                 new NegotiationAbortData(
-                        new NegotiationContext(SESSION_ID, 2, 5), new AbortContent("token 消耗超限，协商终止。")),
+                        new NegotiationContext(SESSION_ID, 2, 5), new NegotiationAbortContent("token 消耗超限，协商终止。")),
                 ABORT_URI);
 
         assertEquals(ABORT_URI.uri(), result.templateUri());
@@ -183,7 +183,7 @@ class AbortMessageGenerationTest {
 
         MetadataContent abortMessage = agent.generateAbortFromData(
                 new NegotiationAbortData(
-                        new NegotiationContext(SESSION_ID, 5, 5), new AbortContent("达到协商轮次上限，本次协商确认结束。")),
+                        new NegotiationContext(SESSION_ID, 5, 5), new NegotiationAbortContent("达到协商轮次上限，本次协商确认结束。")),
                 ABORT_URI);
 
         FilledParamData parameters =
@@ -209,7 +209,7 @@ class AbortMessageGenerationTest {
 
         MetadataContent beyondBudget = agent.generateAbortFromData(
                 new NegotiationAbortData(
-                        new NegotiationContext(SESSION_ID, 6, 5), new AbortContent("轮次预算耗尽。")), ABORT_URI);
+                        new NegotiationContext(SESSION_ID, 6, 5), new NegotiationAbortContent("轮次预算耗尽。")), ABORT_URI);
 
         NegotiationParamExtractionException failure = assertThrows(
                 NegotiationParamExtractionException.class,

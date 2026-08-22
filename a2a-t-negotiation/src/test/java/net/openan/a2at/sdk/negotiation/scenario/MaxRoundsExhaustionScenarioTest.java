@@ -11,7 +11,7 @@ import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.AbortContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -44,7 +44,7 @@ class MaxRoundsExhaustionScenarioTest {
 
         MetadataContent terminal = agent.generateAbortFromData(
                 new NegotiationAbortData(
-                        lastRound, new AbortContent("达到协商轮次上限，本次协商确认结束。")),
+                        lastRound, new NegotiationAbortContent("达到协商轮次上限，本次协商确认结束。")),
                 StandardTemplates.NEGOTIATION_ABORT);
         assertTrue(terminal.promptText().contains("## 协商结果\nAbort"));
         assertTrue(terminal.promptText().contains("## 协商终止原因"));
@@ -59,7 +59,7 @@ class MaxRoundsExhaustionScenarioTest {
         assertEquals(5, terminalParameters.data().get("maxRounds"));
 
         MetadataContent beyondBudgetMessage = agent.generateAbortFromData(
-                new NegotiationAbortData(beyondBudget, new AbortContent("This message exceeds the round budget.")),
+                new NegotiationAbortData(beyondBudget, new NegotiationAbortContent("This message exceeds the round budget.")),
                 StandardTemplates.NEGOTIATION_ABORT);
         NegotiationParamExtractionException ruleFailure = assertThrows(
                 NegotiationParamExtractionException.class,

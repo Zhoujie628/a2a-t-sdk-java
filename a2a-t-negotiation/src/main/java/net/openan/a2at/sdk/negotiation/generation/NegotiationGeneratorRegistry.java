@@ -3,7 +3,7 @@ package net.openan.a2at.sdk.negotiation.generation;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
-import net.openan.a2at.sdk.negotiation.content.AbortContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
@@ -71,7 +71,7 @@ final class NegotiationGeneratorRegistry {
                 throw new IllegalArgumentException(
                         "The ABORT phase is type-independent and must not carry a type but carried " + type + ".");
             }
-            if (content.getClass() != AbortContent.class) {
+            if (content.getClass() != NegotiationAbortContent.class) {
                 throw new IllegalArgumentException(
                         "The ABORT phase requires abort content but received " + content.getClass().getSimpleName()
                                 + ".");

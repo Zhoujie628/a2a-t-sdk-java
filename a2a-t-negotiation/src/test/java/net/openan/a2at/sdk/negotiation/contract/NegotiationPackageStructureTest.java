@@ -23,11 +23,11 @@ class NegotiationPackageStructureTest {
     void contentPackageExposesExactlyThePinnedTypes() throws IOException {
         assertEquals(
                 List.of(
-                        "AbortContent.java",
                         "FeasibilityEndingContent.java",
                         "FeasibilityProposeContent.java",
                         "InformationEndingContent.java",
                         "InformationProposeContent.java",
+                        "NegotiationAbortContent.java",
                         "NegotiationAbortData.java",
                         "NegotiationAction.java",
                         "NegotiationConclusion.java",

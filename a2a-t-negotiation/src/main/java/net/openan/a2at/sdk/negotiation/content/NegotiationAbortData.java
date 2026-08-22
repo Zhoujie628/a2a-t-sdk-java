@@ -10,4 +10,4 @@ package net.openan.a2at.sdk.negotiation.content;
  * @param content typed abort content carrying the termination reason
  * @since 2026-08
  */
-public record NegotiationAbortData(NegotiationContext context, AbortContent content) {}
+public record NegotiationAbortData(NegotiationContext context, NegotiationAbortContent content) {}

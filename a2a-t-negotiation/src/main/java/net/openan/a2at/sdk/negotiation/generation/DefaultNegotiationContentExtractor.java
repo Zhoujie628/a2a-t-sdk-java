@@ -9,7 +9,7 @@ import net.openan.a2at.sdk.core.json.JacksonJsonValueParser;
 import net.openan.a2at.sdk.core.json.JsonValueParser;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.AbortContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
@@ -160,7 +160,7 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
     private static NegotiationContent mapContent(
             Map<String, Object> payload, @Nullable NegotiationType type, NegotiationPhase phase) {
         if (phase == NegotiationPhase.ABORT) {
-            return new AbortContent(requiredString(payload, "termination_reason"));
+            return new NegotiationAbortContent(requiredString(payload, "termination_reason"));
         }
         if (phase == NegotiationPhase.PROPOSE) {
             return mapProposeContent(payload, type);

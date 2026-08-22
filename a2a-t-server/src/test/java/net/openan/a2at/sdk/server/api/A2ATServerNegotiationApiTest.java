@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.negotiation.content.AbortContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
@@ -81,7 +81,7 @@ class A2ATServerNegotiationApiTest {
         MetadataContent result = server.generateNegotiationAbortPromptFromData(
                 new NegotiationAbortData(
                         new NegotiationContext(UUID, 5, 5),
-                        new AbortContent("达到协商轮次上限，本次协商确认结束。")),
+                        new NegotiationAbortContent("达到协商轮次上限，本次协商确认结束。")),
                 StandardTemplates.NEGOTIATION_ABORT);
 
         assertEquals(StandardTemplates.NEGOTIATION_ABORT.uri(), result.templateUri());

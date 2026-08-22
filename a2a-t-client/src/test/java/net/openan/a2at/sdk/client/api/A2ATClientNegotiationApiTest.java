@@ -14,7 +14,7 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.AbortContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
@@ -95,7 +95,7 @@ class A2ATClientNegotiationApiTest {
         MetadataContent result = client.generateNegotiationAbortPromptFromData(
                 new NegotiationAbortData(
                         new NegotiationContext(UUID, 5, 5),
-                        new AbortContent("达到协商轮次上限，本次协商确认结束。")),
+                        new NegotiationAbortContent("达到协商轮次上限，本次协商确认结束。")),
                 StandardTemplates.NEGOTIATION_ABORT);
 
         assertEquals(StandardTemplates.NEGOTIATION_ABORT.uri(), result.templateUri());
@@ -112,7 +112,7 @@ class A2ATClientNegotiationApiTest {
         MetadataContent result = client.generateNegotiationAbortPromptFromData(
                 new NegotiationAbortData(
                         new NegotiationContext(UUID, 3, 5),
-                        new AbortContent("Reached the negotiation round limit. This negotiation is confirmed and ended.")),
+                        new NegotiationAbortContent("Reached the negotiation round limit. This negotiation is confirmed and ended.")),
                 StandardTemplates.NEGOTIATION_ABORT);
 
         assertEquals(StandardTemplates.NEGOTIATION_ABORT.uri(), result.templateUri());
