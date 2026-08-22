@@ -99,7 +99,7 @@ public final class DefaultSampleServerRuntime implements SampleServerRuntime, A2
         TemplateUri templateUri = TemplateUri.parse(ServiceRecoverySampleInputs.TEMPLATE_URI)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Malformed template URI: " + ServiceRecoverySampleInputs.TEMPLATE_URI));
-        return promptText -> server.validateAndFillingNotificationData(
+        return promptText -> server.validateNotificationPromptAndDataFilling(
                 promptText,
                 ServiceRecoverySampleInputs.validationParamSchema(),
                 templateUri);

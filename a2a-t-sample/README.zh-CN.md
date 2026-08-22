@@ -8,15 +8,20 @@
 
 ## 入口类
 
-- 客户端：`net.openan.a2at.sample.subscribe_incident.client.ClientSampleMain`
-- 服务端：`net.openan.a2at.sample.subscribe_incident.server.ServerSampleMain`
+- 服务恢复样例客户端：`net.openan.a2at.sample.service_recovery.client.ClientSampleMain`
+- 服务恢复样例服务端：`net.openan.a2at.sample.service_recovery.server.ServerSampleMain`
+- 订阅事件样例客户端：`net.openan.a2at.sample.subscribe_incident.client.ClientSampleMain`
+- 订阅事件样例服务端：`net.openan.a2at.sample.subscribe_incident.server.ServerSampleMain`
 - 协商端到端样例（4报文）：`net.openan.a2at.sample.negotiation.NegotiationDemoApp`
 - 结构化数据协商样例（fromData 3x3）：`net.openan.a2at.sample.negotiation.fromdata.FromDataNegotiationSample`
 - 自然语言协商样例（fromText 3x3）：`net.openan.a2at.sample.negotiation.fromtext.FromTextNegotiationSample`
 
 ## 模块内资源
 
-- 客户端环境模板：`sample/subscribe_incident/client/client.env`
+- 服务恢复样例客户端环境模板：`sample/service-recovery/client/client.env`
+- 服务恢复样例服务端环境模板：`sample/service-recovery/server/server.env`
+- 服务恢复样例客户端场景输入：`sample/service-recovery/client/input-with-text.txt`、`sample/service-recovery/client/input-with-data.json`、`sample/service-recovery/client/schema.json`
+- 订阅事件客户端环境模板：`sample/subscribe_incident/client/client.env`
 - 服务端环境模板：`sample/subscribe_incident/server/server.env`
 - 客户端场景输入：`sample/subscribe_incident/client/scenario.json`
 - 协商样例环境模板：`sample/negotiation/negotiation.env`
@@ -65,6 +70,29 @@ java @a2a-t-sample/target/negotiation.javaargs.txt --no-stream /path/to/.env
 ```
 
 如果不传参数，`NegotiationDemoApp` 会回退到包内的 `sample/negotiation/negotiation.env`（该模板 key 为空，仅用于占位）。Windows 控制台如遇中文乱码，先执行 `chcp 65001`。
+
+## 服务恢复（Service Recovery）样例
+
+验证 `generateNotificationPromptFromText` / `generateNotificationPromptFromDataWithSchema` / `validateAndFillingNotificationData` 三个 API。客户端在一个进程内跑两轮订阅：轮① 自然语言输入，轮② 结构化输入 + 数据 schema，经服务端校验并建立真实订阅。每个订阅任务上报 5 个 notification 后自动完结。
+
+支持 mock LLM 降级：未填 `A2AT_LLM_API_KEY` 时自动使用确定性 mock 响应，无需外部依赖即可完整跑通。
+
+### 服务恢复样例启动
+
+1. 修改仓库根目录下的 `client.env`，补充可用的 `A2AT_LLM_API_KEY`（可选，缺省时自动使用 mock LLM）
+2. 启动服务端：
+
+```bash
+java @a2a-t-sample/target/service-recovery-server.javaargs.txt
+```
+
+3. 另开一个窗口启动客户端：
+
+```bash
+java @a2a-t-sample/target/service-recovery-client.javaargs.txt
+```
+
+如果不传参数，会回退到包内的 `sample/service-recovery/{client,server}/{client,server}.env`。
 
 ## 结构化数据协商样例（fromData）
 
@@ -126,13 +154,13 @@ mvn "-Dmaven.repo.local=.mvn/repository" -pl a2a-t-sample -am -DskipTests packag
 启动服务端：
 
 ```bash
-java @a2a-t-sample/target/server.javaargs.txt
+java @a2a-t-sample/target/service-recovery-server.javaargs.txt
 ```
 
 另开一个窗口启动客户端：
 
 ```bash
-java @a2a-t-sample/target/client.javaargs.txt
+java @a2a-t-sample/target/service-recovery-client.javaargs.txt
 ```
 
 协商样例（无需启动服务端，单进程，需指定含 LLM key 的 .env）：

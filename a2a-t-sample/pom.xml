@@ -135,6 +135,14 @@ net.openan.a2at.sample.negotiation.fromdata.FromDataNegotiationSample
 ${sample.jar.path}${path.separator}${sample.runtime.classpath}
 net.openan.a2at.sample.negotiation.fromtext.FromTextNegotiationSample
 </echo>
+                                <echo file="${project.build.directory}/service-recovery-server.javaargs.txt">-cp
+${sample.jar.path}${path.separator}${sample.runtime.classpath}
+net.openan.a2at.sample.service_recovery.server.ServerSampleMain
+</echo>
+                                <echo file="${project.build.directory}/service-recovery-client.javaargs.txt">-cp
+${sample.jar.path}${path.separator}${sample.runtime.classpath}
+net.openan.a2at.sample.service_recovery.client.ClientSampleMain
+</echo>
                             </target>
                         </configuration>
                     </execution>
