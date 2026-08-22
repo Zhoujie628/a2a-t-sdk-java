@@ -25,17 +25,20 @@ class NegotiationFacadeApiSymmetryTest {
             "generateNegotiationProposePromptFromData",
             "generateNegotiationAcceptPromptFromData",
             "generateNegotiationRejectPromptFromData",
+            "generateNegotiationAbortPromptFromData",
             "generateNegotiationProposePromptFromText",
             "generateNegotiationAcceptPromptFromText",
             "generateNegotiationRejectPromptFromText",
+            "generateNegotiationAbortPromptFromText",
             "getNegotiationPrompts",
             "getNegotiationPrompt",
             "validateProposePromptAndDataFilling",
             "validateAcceptPromptAndDataFilling",
-            "validateRejectPromptAndDataFilling");
+            "validateRejectPromptAndDataFilling",
+            "validateAbortPromptAndDataFilling");
 
     @Test
-    void bothFacadesExposeTheSameElevenNegotiationApiMethods() {
+    void bothFacadesExposeTheSameFourteenNegotiationApiMethods() {
         Map<String, String> clientSurface = negotiationApiSurface(A2ATClient.class);
         Map<String, String> serverSurface = negotiationApiSurface(A2ATServer.class);
 
