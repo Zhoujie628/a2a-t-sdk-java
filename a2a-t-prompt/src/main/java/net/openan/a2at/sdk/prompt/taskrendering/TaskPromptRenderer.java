@@ -18,6 +18,15 @@ import net.openan.a2at.sdk.prompt.taskrendering.exception.TaskPromptRenderExcept
 public final class TaskPromptRenderer implements SectionedTemplateRenderer {
 
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{?\\s*([^{}]+?)\\s*\\}\\}?");
+
+    /**
+     * Matches the literal single-brace example values a template may carry in its requirement prose (for example
+     * {@code {00:00~06:00,2Mbps}}). Such text is never a slot placeholder; skipping it keeps example values verbatim
+     * in the rendered prompt instead of failing with an unknown-slot error.
+     */
+    private static boolean isKnownSlotPlaceholder(String candidate, Map<String, String> slots) {
+        return slots.containsKey(candidate);
+    }
     private static final Pattern SECTION_HEADER_PATTERN = Pattern.compile("^##\\s+.+$");
     private static final Pattern STANDALONE_SLOT_LINE_PATTERN = Pattern.compile(
             "^\\s*(\\{\\{?\\s*[^{}]+?\\s*\\}\\}?)(?:\\s*(?:\\(Required\\)|\\(Optional\\)|（必选）|（可选）))?\\s*$");
@@ -41,7 +50,12 @@ public final class TaskPromptRenderer implements SectionedTemplateRenderer {
         StringBuffer rendered = new StringBuffer();
         while (matcher.find()) {
             String slotName = matcher.group(1).trim();
+            boolean doubleBraced = matcher.group(0).startsWith("{{");
             if (!safeSlots.containsKey(slotName)) {
+                if (!doubleBraced && !isKnownSlotPlaceholder(slotName, safeSlots)) {
+                    // single-brace text that is not a slot is example prose (e.g. {00:00~06:00,2Mbps}); keep verbatim
+                    continue;
+                }
                 throw new TaskPromptRenderException("Unknown slot referenced by template: " + slotName);
             }
             String replacement = safeSlots.get(slotName);
