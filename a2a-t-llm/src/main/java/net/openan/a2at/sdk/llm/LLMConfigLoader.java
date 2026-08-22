@@ -26,6 +26,10 @@ public final class LLMConfigLoader {
 
     private static final int MAX_SESSION_MAX_PER_PROVIDER = 1000;
 
+    /** Reasoning effort levels accepted by A2AT_LLM_REASONING_EFFORT (mirrors the OpenAI API enum). */
+    private static final java.util.Set<String> REASONING_EFFORT_VALUES =
+            java.util.Set.of("none", "minimal", "low", "medium", "high", "xhigh");
+
     private LLMConfigLoader() {}
 
     public static LLMClientConfig load(Path envPath) {
@@ -50,9 +54,8 @@ public final class LLMConfigLoader {
                 DEFAULT_SESSION_MAX_PER_PROVIDER,
                 MAX_SESSION_MAX_PER_PROVIDER);
         if (sessionMaxTotal < sessionMaxPerProvider) {
-            throw new LLMConfigError(
-                    "A2AT_LLM_SESSION_MAX_TOTAL must be greater than or equal to "
-                            + "A2AT_LLM_SESSION_MAX_PER_PROVIDER");
+            throw new LLMConfigError("A2AT_LLM_SESSION_MAX_TOTAL must be greater than or equal to "
+                    + "A2AT_LLM_SESSION_MAX_PER_PROVIDER");
         }
 
         OptionalInt maxTokens = parseOptionalInt(values.get("A2AT_LLM_MAX_TOKENS"), "A2AT_LLM_MAX_TOKENS");
@@ -70,7 +73,8 @@ public final class LLMConfigLoader {
                 temperature.isPresent() ? temperature.getAsDouble() : null,
                 timeoutSeconds.isPresent() ? timeoutSeconds.getAsDouble() : null,
                 sessionMaxTotal,
-                sessionMaxPerProvider);
+                sessionMaxPerProvider,
+                parseReasoningEffort(values.get("A2AT_LLM_REASONING_EFFORT")));
     }
 
     private static String required(Map<String, String> values, String key) {
@@ -129,5 +133,26 @@ public final class LLMConfigLoader {
             throw new LLMConfigError(key + " must be less than or equal to " + maxValue);
         }
         return parsed;
+    }
+
+    /**
+     * Parses the optional reasoning effort level.
+     *
+     * @param rawValue raw value of A2AT_LLM_REASONING_EFFORT; null or blank means the key is not set
+     * @return the validated effort level, or null when the key is not set
+     * @throws LLMConfigError when the value is not one of the supported levels; failing at config load time beats
+     *     discovering a bad value through a provider 400 on the first LLM call
+     */
+    private static String parseReasoningEffort(String rawValue) {
+        Optional<String> value = optional(rawValue);
+        if (!value.isPresent()) {
+            return null;
+        }
+        String effort = value.orElseThrow().toLowerCase(java.util.Locale.ROOT);
+        if (!REASONING_EFFORT_VALUES.contains(effort)) {
+            throw new LLMConfigError(
+                    "A2AT_LLM_REASONING_EFFORT must be one of " + REASONING_EFFORT_VALUES + " but was " + effort);
+        }
+        return effort;
     }
 }

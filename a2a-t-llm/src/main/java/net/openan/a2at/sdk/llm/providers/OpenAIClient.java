@@ -3,6 +3,7 @@ package net.openan.a2at.sdk.llm.providers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.ReasoningEffort;
 import com.openai.models.ResponseFormatJsonObject;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
@@ -87,6 +88,9 @@ public class OpenAIClient implements LLMClient {
         if (resolvedMaxTokens != null) {
             builder.maxTokens(resolvedMaxTokens);
         }
+        if (config.reasoningEffort() != null && !config.reasoningEffort().isBlank()) {
+            builder.reasoningEffort(ReasoningEffort.of(config.reasoningEffort()));
+        }
         return builder.build();
     }
 
@@ -132,6 +136,9 @@ public class OpenAIClient implements LLMClient {
     private String extractJsonObjectString(ChatCompletion response) {
         String rawContent = extractMessageText(response);
         try {
+            if (rawContent == null || rawContent.isBlank()) {
+                throw new LLMRuntimeError(config.provider() + " returned empty content (rate limit or model timeout)");
+            }
             Object parsed = OBJECT_MAPPER.readValue(rawContent, Object.class);
             if (!(parsed instanceof Map<?, ?>)) {
                 throw new LLMRuntimeError(config.provider() + " must return a JSON object string");

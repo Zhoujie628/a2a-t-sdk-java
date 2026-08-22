@@ -82,7 +82,7 @@ class LLMClientFactoryTest {
     }
 
     private static LLMClientConfig buildConfig(String provider) {
-        return new LLMClientConfig(provider, "test-model", "sk-test", null, 10, null, null, null, 300, 100);
+        return new LLMClientConfig(provider, "test-model", "sk-test", null, 10, null, null, null, 300, 100, null);
     }
 
     public static final class CustomClient implements LLMClient {

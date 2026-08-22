@@ -13,6 +13,8 @@ package net.openan.a2at.sdk.llm;
  * @param timeoutSeconds optional provider timeout in seconds
  * @param sessionMaxTotal reserved total session limit
  * @param sessionMaxPerProvider reserved per-provider session limit
+ * @param reasoningEffort optional reasoning effort for reasoning models (none/minimal/low/medium/high/xhigh); null
+ *     leaves the parameter unset
  * @since 2026-06
  */
 public record LLMClientConfig(
@@ -25,4 +27,5 @@ public record LLMClientConfig(
         Double temperature,
         Double timeoutSeconds,
         int sessionMaxTotal,
-        int sessionMaxPerProvider) {}
+        int sessionMaxPerProvider,
+        String reasoningEffort) {}
