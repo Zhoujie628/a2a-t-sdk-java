@@ -1,3 +1,48 @@
 {
-  "reportFormat": "业务抢通事件数据包含：业务抢通方案执行状态（未启动、已结束）、投诉诊断任务流水号、OSS侧事件流水号、接入端口名称、是否已授权OMC自动抢通（是、否）、业务抢通方案名称、业务抢通方案详情、业务抢通方案执行结束时间、业务抢通方案执行结果（成功、失败）及业务抢通方案执行失败原因。"
+  "condition": "子网名称：xx子网",
+  "reportFormat": [
+    {
+      "name": "业务抢通方案执行状态",
+      "values": ["未启动", "已结束"],
+      "required": true
+    },
+    {
+      "name": "投诉诊断任务流水号",
+      "required": true
+    },
+    {
+      "name": "OSS侧事件流水号",
+      "required": true
+    },
+    {
+      "name": "接入端口名称",
+      "required": true
+    },
+    {
+      "name": "是否已授权OMC自动抢通",
+      "values": ["是", "否"],
+      "required": true
+    },
+    {
+      "name": "业务抢通方案名称",
+      "required": true
+    },
+    {
+      "name": "业务抢通方案详情",
+      "required": true
+    },
+    {
+      "name": "业务抢通方案执行结束时间",
+      "required": false
+    },
+    {
+      "name": "业务抢通方案执行结果",
+      "values": ["成功", "失败"],
+      "required": false
+    },
+    {
+      "name": "业务抢通方案执行失败原因",
+      "required": false
+    }
+  ]
 }

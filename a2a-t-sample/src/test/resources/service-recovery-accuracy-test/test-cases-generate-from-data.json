@@ -1,0 +1,249 @@
+[
+  {
+    "name": "case1-reportFormat是字符串-标准完整",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": "业务抢通事件数据包含：业务抢通方案执行状态（未启动、已结束）、投诉诊断任务流水号、OSS侧事件流水号、接入端口名称、是否已授权OMC自动抢通（是、否）、业务抢通方案名称、业务抢通方案详情、业务抢通方案执行结束时间、业务抢通方案执行结果（成功、失败）及业务抢通方案执行失败原因。"
+    }
+  },
+  {
+    "name": "case2-reportFormat是字符串-精简",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": "业务抢通方案执行状态、投诉诊断任务流水号、OSS侧事件流水号、接入端口名称、是否已授权OMC自动抢通、业务抢通方案名称、业务抢通方案详情。"
+    }
+  },
+  {
+    "name": "case3-reportFormat是字符串-空",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": ""
+    }
+  },
+  {
+    "name": "case4-reportFormat是数组-标准完整",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": [
+        {"name": "业务抢通方案执行状态", "values": ["未启动", "已结束"], "required": true},
+        {"name": "投诉诊断任务流水号", "required": true},
+        {"name": "OSS侧事件流水号", "required": true},
+        {"name": "接入端口名称", "required": true},
+        {"name": "是否已授权OMC自动抢通", "values": ["是", "否"], "required": true},
+        {"name": "业务抢通方案名称", "required": true},
+        {"name": "业务抢通方案详情", "required": true},
+        {"name": "业务抢通方案执行结束时间", "required": false},
+        {"name": "业务抢通方案执行结果", "values": ["成功", "失败"], "required": false},
+        {"name": "业务抢通方案执行失败原因", "required": false}
+      ]
+    }
+  },
+  {
+    "name": "case5-reportFormat是数组-仅必选7字段",
+    "data": {
+      "condition": "",
+      "reportFormat": [
+        {"name": "业务抢通方案执行状态", "values": ["未启动", "已结束"], "required": true},
+        {"name": "投诉诊断任务流水号", "required": true},
+        {"name": "OSS侧事件流水号", "required": true},
+        {"name": "接入端口名称", "required": true},
+        {"name": "是否已授权OMC自动抢通", "values": ["是", "否"], "required": true},
+        {"name": "业务抢通方案名称", "required": true},
+        {"name": "业务抢通方案详情", "required": true}
+      ]
+    }
+  },
+  {
+    "name": "case6-reportFormat是数组-精简仅name",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": [
+        {"name": "业务抢通方案执行状态"},
+        {"name": "投诉诊断任务流水号"},
+        {"name": "OSS侧事件流水号"},
+        {"name": "接入端口名称"},
+        {"name": "是否已授权OMC自动抢通"},
+        {"name": "业务抢通方案名称"},
+        {"name": "业务抢通方案详情"}
+      ]
+    }
+  },
+  {
+    "name": "case7-reportFormat是数组-空数组",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": []
+    }
+  },
+  {
+    "name": "case8-reportFormat是数组-含未知字段",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": [
+        {"name": "业务抢通方案执行状态", "values": ["未启动", "已结束"], "required": true},
+        {"name": "投诉诊断任务流水号", "required": true},
+        {"name": "OSS侧事件流水号", "required": true},
+        {"name": "接入端口名称", "required": true},
+        {"name": "是否已授权OMC自动抢通", "values": ["是", "否"], "required": true},
+        {"name": "业务抢通方案名称", "required": true},
+        {"name": "业务抢通方案详情", "required": true},
+        {"name": "业务抢通方案执行结束时间", "required": false},
+        {"name": "业务抢通方案执行结果", "values": ["成功", "失败"], "required": false},
+        {"name": "业务抢通方案执行失败原因", "required": false},
+        {"name": "客户经理姓名", "required": false},
+        {"name": "故障工单编号", "values": ["TICKET-001", "TICKET-002"], "required": false}
+      ]
+    }
+  },
+  {
+    "name": "case9-reportFormat是数组-含重复字段和缺name条目",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": [
+        {"name": "业务抢通方案执行状态", "values": ["未启动", "已结束"], "required": true},
+        {"name": "投诉诊断任务流水号", "required": true},
+        {"name": "OSS侧事件流水号", "required": true},
+        {"name": "接入端口名称", "required": true},
+        {"name": "是否已授权OMC自动抢通", "values": ["是", "否"], "required": true},
+        {"name": "业务抢通方案名称", "required": true},
+        {"name": "业务抢通方案详情", "required": true},
+        {"name": "业务抢通方案执行结束时间", "required": false},
+        {"name": "业务抢通方案执行结果", "values": ["成功", "失败"], "required": false},
+        {"name": "业务抢通方案执行失败原因", "required": false},
+        {"name": "业务抢通方案执行状态", "values": ["进行中"], "required": true},
+        {"name": "", "required": false},
+        {"values": ["A", "B"], "required": true}
+      ]
+    }
+  },
+  {
+    "name": "case10-reportFormat是数组-枚举值含非法项",
+    "data": {
+      "condition": "",
+      "reportFormat": [
+        {"name": "业务抢通方案执行状态", "values": ["未启动", "已结束", "暂停"], "required": true},
+        {"name": "投诉诊断任务流水号", "required": true},
+        {"name": "OSS侧事件流水号", "required": true},
+        {"name": "接入端口名称", "required": true},
+        {"name": "是否已授权OMC自动抢通", "values": ["是", "否", "未知"], "required": true},
+        {"name": "业务抢通方案名称", "required": true},
+        {"name": "业务抢通方案详情", "required": true},
+        {"name": "业务抢通方案执行结束时间", "required": false},
+        {"name": "业务抢通方案执行结果", "values": ["成功", "失败", "未知"], "required": false},
+        {"name": "业务抢通方案执行失败原因", "required": false}
+      ]
+    }
+  },
+  {
+    "name": "case11-reportFormat是数组-可选字段误标必选",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": [
+        {"name": "业务抢通方案执行状态", "values": ["未启动", "已结束"], "required": true},
+        {"name": "投诉诊断任务流水号", "required": true},
+        {"name": "OSS侧事件流水号", "required": true},
+        {"name": "接入端口名称", "required": true},
+        {"name": "是否已授权OMC自动抢通", "values": ["是", "否"], "required": true},
+        {"name": "业务抢通方案名称", "required": true},
+        {"name": "业务抢通方案详情", "required": true},
+        {"name": "业务抢通方案执行结束时间", "required": true},
+        {"name": "业务抢通方案执行结果", "values": ["成功", "失败"], "required": true},
+        {"name": "业务抢通方案执行失败原因", "required": true}
+      ]
+    }
+  },
+  {
+    "name": "case12-reportFormat是数组-必选字段缺失",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": [
+        {"name": "业务抢通方案执行状态", "values": ["未启动", "已结束"], "required": true},
+        {"name": "投诉诊断任务流水号", "required": true},
+        {"name": "业务抢通方案名称", "required": true}
+      ]
+    }
+  },
+  {
+    "name": "case13-reportFormat是数组-完整含样例",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": [
+        {"name": "业务抢通方案执行状态", "values": ["未启动", "已结束"], "required": true, "example": "已结束"},
+        {"name": "投诉诊断任务流水号", "required": true, "example": "9de168c0-6179-4778-8b72-4279582c0a3f"},
+        {"name": "OSS侧事件流水号", "required": true, "example": "event-id-202606250128"},
+        {"name": "接入端口名称", "required": true, "example": "P781-珠江新城-PTN7900-23-TPA1EG24-17"},
+        {"name": "是否已授权OMC自动抢通", "values": ["是", "否"], "required": true, "example": "是"},
+        {"name": "业务抢通方案名称", "required": true, "example": "隧道调优"},
+        {"name": "业务抢通方案详情", "required": true, "example": "将流量带宽，时延越限和丢包越限受影响的隧道列表，调优到新的路径列表中。"},
+        {"name": "业务抢通方案执行结束时间", "required": false, "example": "2026-05-11T08:21:46Z"},
+        {"name": "业务抢通方案执行结果", "values": ["成功", "失败"], "required": false, "example": "成功"},
+        {"name": "业务抢通方案执行失败原因", "required": false, "example": "调优后隧道链路C已被占用，无法执行隧道调优"}
+      ]
+    }
+  },
+  {
+    "name": "case14-reportFormat是对象-字段名到描述的映射",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": {
+        "业务抢通方案执行状态": {"values": ["未启动", "已结束"], "required": true},
+        "投诉诊断任务流水号": {"required": true},
+        "OSS侧事件流水号": {"required": true},
+        "接入端口名称": {"required": true},
+        "是否已授权OMC自动抢通": {"values": ["是", "否"], "required": true},
+        "业务抢通方案名称": {"required": true},
+        "业务抢通方案详情": {"required": true},
+        "业务抢通方案执行结束时间": {"required": false},
+        "业务抢通方案执行结果": {"values": ["成功", "失败"], "required": false},
+        "业务抢通方案执行失败原因": {"required": false}
+      }
+    }
+  },
+  {
+    "name": "case15-reportFormat是对象-空对象",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": {}
+    }
+  },
+  {
+    "name": "case16-reportFormat是null",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": null
+    }
+  },
+  {
+    "name": "case17-reportFormat字段缺失",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。"
+    }
+  },
+  {
+    "name": "case18-reportFormat是布尔值",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": true
+    }
+  },
+  {
+    "name": "case19-reportFormat是数字",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": 12345
+    }
+  },
+  {
+    "name": "case20-reportFormat是多类型混合的怪异结构",
+    "data": {
+      "condition": "子网名称为：珠江新城子网。",
+      "reportFormat": {
+        "fields": [
+          {"name": "业务抢通方案执行状态", "values": ["未启动", "已结束"]},
+          "投诉诊断任务流水号"
+        ],
+        "description": "业务抢通事件"
+      }
+    }
+  }
+]
