@@ -8,8 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.extractor.ClientSlotValueExtractor;
 import net.openan.a2at.sdk.client.prompt.loader.ClientSlotSchemaLoader;
@@ -19,6 +17,8 @@ import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.PromptGenerationException;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
+import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
@@ -34,8 +34,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
     private static final ClientSlotSchemaLoader EMPTY_SCHEMA_LOADER =
             (scenarioCode, language) -> new PromptSlotSchema(scenarioCode, List.of());
 
-    private static final TemplateUri AUTH_DATABASE_READ =
-            TemplateUri.of("Authorization-T", "database_read");
+    private static final TemplateUri AUTH_DATABASE_READ = TemplateUri.of("Authorization-T", "database_read");
 
     @Test
     void generateTaskPromptLoadsTemplateAndRendersExtractedSlotsWhenScenarioIsMatched() {
@@ -168,7 +167,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
         assertEquals("generation", result.failure().stage());
     }
 
-private static DefaultClientPromptGenerationOrchestrator newTemplateUriOrchestrator(
+    private static DefaultClientPromptGenerationOrchestrator newTemplateUriOrchestrator(
             ClientScenarioRecognizer recognizer,
             ClientTemplateLoader templateLoader,
             ClientSlotValueExtractor slotValueExtractor) {
@@ -269,7 +268,10 @@ private static DefaultClientPromptGenerationOrchestrator newTemplateUriOrchestra
 
         @Override
         public Map<String, String> extractSlotsWithSchema(
-                Object userInput, String scenarioCode, String language, String templateText,
+                Object userInput,
+                String scenarioCode,
+                String language,
+                String templateText,
                 Map<String, Object> dataSchema) {
             this.lastUserInput = userInput;
             this.lastScenarioCode = scenarioCode;
@@ -295,7 +297,10 @@ private static DefaultClientPromptGenerationOrchestrator newTemplateUriOrchestra
 
         @Override
         public Map<String, String> extractSlotsWithSchema(
-                Object userInput, String scenarioCode, String language, String templateText,
+                Object userInput,
+                String scenarioCode,
+                String language,
+                String templateText,
                 Map<String, Object> dataSchema) {
             throw exception;
         }
@@ -310,7 +315,8 @@ private static DefaultClientPromptGenerationOrchestrator newTemplateUriOrchestra
         DefaultClientPromptGenerationOrchestrator orchestrator =
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
-        MetadataContent result = orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING);
+        MetadataContent result =
+                orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING);
 
         assertEquals(StandardTemplates.ENERGY_SAVING.uri(), result.templateUri());
         assertEquals("Site: Site A", result.promptText());
@@ -321,8 +327,8 @@ private static DefaultClientPromptGenerationOrchestrator newTemplateUriOrchestra
     void generateFromTemplateUriWithMetadataScenarioRecognizerIsNotInvoked() {
         RecordingScenarioRecognizer recognizer = new RecordingScenarioRecognizer();
         FakeTemplateLoader templateLoader = new FakeTemplateLoader("Site: {site}");
-        DefaultClientPromptGenerationOrchestrator orchestrator =
-                newTemplateUriOrchestrator(recognizer, templateLoader, new FakeSlotValueExtractor(Map.of("site", "Site A")));
+        DefaultClientPromptGenerationOrchestrator orchestrator = newTemplateUriOrchestrator(
+                recognizer, templateLoader, new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
         orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING);
 
@@ -344,6 +350,18 @@ private static DefaultClientPromptGenerationOrchestrator newTemplateUriOrchestra
     }
 
     @Test
+    void generateTaskPromptFromTextRejectsNullText() {
+        RecordingScenarioRecognizer recognizer = new RecordingScenarioRecognizer();
+        CountingFailingTemplateLoader templateLoader = new CountingFailingTemplateLoader();
+        DefaultClientPromptGenerationOrchestrator orchestrator =
+                newTemplateUriOrchestrator(recognizer, templateLoader, new FakeSlotValueExtractor(Map.of()));
+
+        assertThrows(
+                NullPointerException.class,
+                () -> orchestrator.generateTaskPromptFromText(null, StandardTemplates.ENERGY_SAVING));
+    }
+
+    @Test
     void generateFromTemplateUriWithMetadataPropagatesResourceNotFoundException() {
         DefaultClientPromptGenerationOrchestrator orchestrator = newTemplateUriOrchestrator(
                 new RecordingScenarioRecognizer(),
@@ -352,7 +370,8 @@ private static DefaultClientPromptGenerationOrchestrator newTemplateUriOrchestra
                 },
                 new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
-PromptGenerationException ex = assertThrows(PromptGenerationException.class,
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
                 () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
         assertEquals("template_not_found", ex.getCode());
     }
@@ -364,7 +383,8 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 new FakeTemplateLoader("Site: {site}\nMissing: {missing_slot}"),
                 new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
-PromptGenerationException ex = assertThrows(PromptGenerationException.class,
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
                 () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
         assertEquals("render_failed", ex.getCode());
     }
@@ -378,7 +398,8 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                     throw new LLMRuntimeError("LLM invocation failed.");
                 });
 
-PromptGenerationException ex = assertThrows(PromptGenerationException.class,
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
                 () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
         assertEquals("llm_invocation_failed", ex.getCode());
     }
@@ -410,7 +431,8 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
         Map<String, Object> schema = Map.of("site", "string", "count", "number");
-        orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), schema, StandardTemplates.ENERGY_SAVING);
+        orchestrator.generateTaskPromptFromDataWithSchema(
+                Map.of("site", "Site A"), schema, StandardTemplates.ENERGY_SAVING);
 
         assertEquals(schema, slotValueExtractor.lastSchema);
         assertEquals(StandardTemplates.ENERGY_SAVING.uri(), slotValueExtractor.lastScenarioCode);
@@ -418,33 +440,33 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
     }
 
     @Test
-    void generateFromDataWithSchemaNullSchemaHandledGracefully() {
+    void generateTaskPromptFromDataWithSchemaRejectsNullSchema() {
         FakeTemplateLoader templateLoader = new FakeTemplateLoader("Site: {site}");
         FakeSlotValueExtractorWithSchema slotValueExtractor =
                 new FakeSlotValueExtractorWithSchema(Map.of("site", "Site A"));
         DefaultClientPromptGenerationOrchestrator orchestrator =
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
-        MetadataContent result = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), null, StandardTemplates.ENERGY_SAVING);
-
-        assertEquals("Site: Site A", result.promptText());
-        assertEquals(null, slotValueExtractor.lastSchema);
+        NullPointerException ex = assertThrows(
+                NullPointerException.class,
+                () -> orchestrator.generateTaskPromptFromDataWithSchema(
+                        Map.of("site", "Site A"), null, StandardTemplates.ENERGY_SAVING));
+        assertEquals("schema", ex.getMessage());
     }
 
     @Test
-    void generateFromDataWithSchemaEmptySchemaHandledSameAsNull() {
+    void generateTaskPromptFromDataWithSchemaRejectsEmptySchema() {
         FakeTemplateLoader templateLoader = new FakeTemplateLoader("Site: {site}");
         FakeSlotValueExtractorWithSchema slotValueExtractor =
                 new FakeSlotValueExtractorWithSchema(Map.of("site", "Site A"));
         DefaultClientPromptGenerationOrchestrator orchestrator =
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
-        MetadataContent result = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING);
-
-        assertEquals("Site: Site A", result.promptText());
-        assertEquals(Map.of(), slotValueExtractor.lastSchema);
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> orchestrator.generateTaskPromptFromDataWithSchema(
+                        Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING));
+        assertTrue(ex.getMessage().contains("Data schema must not be empty"));
     }
 
     @Test
@@ -456,8 +478,10 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 },
                 new FakeSlotValueExtractorWithSchema(Map.of("site", "Site A")));
 
-PromptGenerationException ex = assertThrows(PromptGenerationException.class,
-                () -> orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING));
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
+                () -> orchestrator.generateTaskPromptFromDataWithSchema(
+                        Map.of("site", "Site A"), Map.of("site", "string"), StandardTemplates.ENERGY_SAVING));
         assertEquals("template_not_found", ex.getCode());
     }
 
@@ -468,8 +492,10 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 new FakeTemplateLoader("Site: {site}\nMissing: {missing_slot}"),
                 new FakeSlotValueExtractorWithSchema(Map.of("site", "Site A")));
 
-PromptGenerationException ex = assertThrows(PromptGenerationException.class,
-                () -> orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING));
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
+                () -> orchestrator.generateTaskPromptFromDataWithSchema(
+                        Map.of("site", "Site A"), Map.of("site", "string"), StandardTemplates.ENERGY_SAVING));
         assertEquals("render_failed", ex.getCode());
     }
 
@@ -480,8 +506,10 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 new FakeTemplateLoader("Site: {site}"),
                 new FailingExtractSlotsWithSchema(new LLMRuntimeError("LLM invocation failed.")));
 
-PromptGenerationException ex = assertThrows(PromptGenerationException.class,
-                () -> orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING));
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
+                () -> orchestrator.generateTaskPromptFromDataWithSchema(
+                        Map.of("site", "Site A"), Map.of("site", "string"), StandardTemplates.ENERGY_SAVING));
         assertEquals("llm_invocation_failed", ex.getCode());
     }
 
@@ -493,8 +521,10 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 new FailingExtractSlotsWithSchema(
                         new ResourceNotFoundException("Slot schema file does not exist.", "energy-saving")));
 
-PromptGenerationException ex = assertThrows(PromptGenerationException.class,
-                () -> orchestrator.generateTaskPromptFromDataWithSchema(Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING));
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
+                () -> orchestrator.generateTaskPromptFromDataWithSchema(
+                        Map.of("site", "Site A"), Map.of("site", "string"), StandardTemplates.ENERGY_SAVING));
         assertEquals("slot_schema_not_found", ex.getCode());
     }
 
@@ -508,15 +538,17 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
         DefaultClientPromptGenerationOrchestrator orchestrator =
                 newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
 
-        MetadataContent taskText = orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING);
+        MetadataContent taskText =
+                orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING);
         MetadataContent taskData = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING);
+                Map.of("site", "Site A"), Map.of("site", "string"), StandardTemplates.ENERGY_SAVING);
         MetadataContent authText = orchestrator.generateAuthPromptFromText("Grant access.", AUTH_DATABASE_READ);
         MetadataContent authData = orchestrator.generateAuthPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), AUTH_DATABASE_READ);
-        MetadataContent notifText = orchestrator.generateNotificationPromptFromText("Report finished.", StandardTemplates.ENERGY_SAVING);
+                Map.of("site", "Site A"), Map.of("site", "string"), AUTH_DATABASE_READ);
+        MetadataContent notifText =
+                orchestrator.generateNotificationPromptFromText("Report finished.", StandardTemplates.ENERGY_SAVING);
         MetadataContent notifData = orchestrator.generateNotificationPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING);
+                Map.of("site", "Site A"), Map.of("site", "string"), StandardTemplates.ENERGY_SAVING);
 
         assertTrue(taskText.promptText().contains("Site A"));
         assertTrue(taskData.promptText().contains("Site A"));
@@ -530,17 +562,21 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
     void eachMetadataEntryPointUsesCorrectExtensionUri() {
         FakeTemplateLoader templateLoader = new FakeTemplateLoader("Site: {site}");
         DefaultClientPromptGenerationOrchestrator orchestrator = newTemplateUriOrchestrator(
-                new RecordingScenarioRecognizer(), templateLoader, new FakeSlotValueExtractor(Map.of("site", "Site A")));
+                new RecordingScenarioRecognizer(),
+                templateLoader,
+                new FakeSlotValueExtractor(Map.of("site", "Site A")));
 
-        MetadataContent taskText = orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING);
+        MetadataContent taskText =
+                orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING);
         MetadataContent taskData = orchestrator.generateTaskPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING);
+                Map.of("site", "Site A"), Map.of("site", "string"), StandardTemplates.ENERGY_SAVING);
         MetadataContent authText = orchestrator.generateAuthPromptFromText("Grant access.", AUTH_DATABASE_READ);
         MetadataContent authData = orchestrator.generateAuthPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), AUTH_DATABASE_READ);
-        MetadataContent notifText = orchestrator.generateNotificationPromptFromText("Report finished.", StandardTemplates.ENERGY_SAVING);
+                Map.of("site", "Site A"), Map.of("site", "string"), AUTH_DATABASE_READ);
+        MetadataContent notifText =
+                orchestrator.generateNotificationPromptFromText("Report finished.", StandardTemplates.ENERGY_SAVING);
         MetadataContent notifData = orchestrator.generateNotificationPromptFromDataWithSchema(
-                Map.of("site", "Site A"), Map.of(), StandardTemplates.ENERGY_SAVING);
+                Map.of("site", "Site A"), Map.of("site", "string"), StandardTemplates.ENERGY_SAVING);
 
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskText.extensionUri());
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskData.extensionUri());
@@ -579,17 +615,22 @@ PromptGenerationException ex = assertThrows(PromptGenerationException.class,
 
     @Test
     void validateRequiredSlotsThrowsSlotValidationErrorWhenRequiredSlotsMissing() {
-ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
-                scenarioCode, List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name")));
-            DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
+        ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
+                scenarioCode,
+                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null)));
+        DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
-                "en-US", "", "", new FakeTemplateLoader("Site: {site}"),
+                "en-US",
+                "",
+                "",
+                new FakeTemplateLoader("Site: {site}"),
                 new FakeSlotValueExtractor(Map.of()),
                 new TaskPromptRenderer(),
                 schemaLoader);
 
-        PromptGenerationException ex = assertThrows(PromptGenerationException.class,
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
                 () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
         assertEquals("slot_validation_error", ex.getCode());
         List<SlotValidationError> failed = ex.failedParameters();
@@ -600,19 +641,24 @@ ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlot
 
     @Test
     void validateRequiredSlotsThrowsSlotValidationErrorWhenMultipleRequiredSlotsMissing() {
-        ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(scenarioCode,
+        ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
+                scenarioCode,
                 List.of(
-                        new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name"),
-                        new PromptSlotDefinition("target", true, "string", null, null, null, null, "Target")));
+                        new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null),
+                        new PromptSlotDefinition("target", true, "string", null, null, null, null, "Target", null)));
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
-                "en-US", "", "", new FakeTemplateLoader("Site: {site}\nTarget: {target}"),
+                "en-US",
+                "",
+                "",
+                new FakeTemplateLoader("Site: {site}\nTarget: {target}"),
                 new FakeSlotValueExtractor(Map.of("site", "Site A")),
                 new TaskPromptRenderer(),
                 schemaLoader);
 
-        PromptGenerationException ex = assertThrows(PromptGenerationException.class,
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
                 () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
         assertEquals("slot_validation_error", ex.getCode());
         assertEquals(1, ex.failedParameters().size());
@@ -624,14 +670,18 @@ ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlot
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
-                "en-US", "", "", new FakeTemplateLoader("Site: {site}"),
+                "en-US",
+                "",
+                "",
+                new FakeTemplateLoader("Site: {site}"),
                 new FakeSlotValueExtractor(Map.of("site", "Site A")),
                 new TaskPromptRenderer(),
                 (scenarioCode, language) -> {
                     throw new A2ATError("Schema file is corrupt.");
                 });
 
-        PromptGenerationException ex = assertThrows(PromptGenerationException.class,
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
                 () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
         assertEquals("slot_schema_not_found", ex.getCode());
     }
@@ -641,14 +691,18 @@ ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlot
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
-                "en-US", "", "", new FakeTemplateLoader("Site: {site}"),
+                "en-US",
+                "",
+                "",
+                new FakeTemplateLoader("Site: {site}"),
                 (userInput, scenarioCode, language, templateText) -> {
                     throw new ResourceNotFoundException("Slot schema file does not exist.", scenarioCode);
                 },
                 new TaskPromptRenderer(),
                 EMPTY_SCHEMA_LOADER);
 
-        PromptGenerationException ex = assertThrows(PromptGenerationException.class,
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
                 () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
         assertEquals("slot_schema_not_found", ex.getCode());
     }
@@ -658,14 +712,18 @@ ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlot
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
-                "en-US", "", "", (scenarioCode, language) -> {
+                "en-US",
+                "",
+                "",
+                (scenarioCode, language) -> {
                     throw new A2ATError("Template file is corrupt.");
                 },
                 new FakeSlotValueExtractor(Map.of("site", "Site A")),
                 new TaskPromptRenderer(),
                 EMPTY_SCHEMA_LOADER);
 
-        PromptGenerationException ex = assertThrows(PromptGenerationException.class,
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
                 () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
         assertEquals("prompt_resource_load_error", ex.getCode());
     }
@@ -675,14 +733,18 @@ ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlot
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
-                "en-US", "", "", new FakeTemplateLoader("Site: {site}"),
+                "en-US",
+                "",
+                "",
+                new FakeTemplateLoader("Site: {site}"),
                 (userInput, scenarioCode, language, templateText) -> {
                     throw new A2ATError("Unparseable LLM response.");
                 },
                 new TaskPromptRenderer(),
                 EMPTY_SCHEMA_LOADER);
 
-        PromptGenerationException ex = assertThrows(PromptGenerationException.class,
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
                 () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
         assertEquals("llm_invocation_failed", ex.getCode());
     }

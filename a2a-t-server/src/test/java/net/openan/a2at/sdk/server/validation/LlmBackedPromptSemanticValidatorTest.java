@@ -20,7 +20,8 @@ class LlmBackedPromptSemanticValidatorTest {
     private static final String SLOT_NAME = "notification_topic";
 
     private static final PromptSlotSchemaLoader SLOT_SCHEMA_LOADER = (scenarioCode, language) -> new PromptSlotSchema(
-            scenarioCode, List.of(new PromptSlotDefinition(SLOT_NAME, true, "string", null, null, null, null, null)));
+            scenarioCode,
+            List.of(new PromptSlotDefinition(SLOT_NAME, true, "string", null, null, null, null, null, null)));
 
     @Test
     void validatePassesWhenSemanticValidatorApprovesSlots() {
@@ -60,9 +61,8 @@ class LlmBackedPromptSemanticValidatorTest {
 
     @Test
     void validateReturnsSlotValidationErrorWhenSemanticValidatorRejectsSlots() {
-        LLMClient llmClient = new RecordingClient(
-                "{\"passed\":false,\"errors\":[{\"slot_name\":\"notification_topic\","
-                        + "\"code\":\"semantic_mismatch\",\"message\":\"topic does not match\"}]}");
+        LLMClient llmClient = new RecordingClient("{\"passed\":false,\"errors\":[{\"slot_name\":\"notification_topic\","
+                + "\"code\":\"semantic_mismatch\",\"message\":\"topic does not match\"}]}");
         LlmBackedPromptSemanticValidator validator =
                 new LlmBackedPromptSemanticValidator(llmClient, SLOT_SCHEMA_LOADER, "semantic system", "semantic user");
 
@@ -82,9 +82,8 @@ class LlmBackedPromptSemanticValidatorTest {
 
     @Test
     void validateRejectsWhenPassedTrueButErrorsNonEmpty() {
-        LLMClient llmClient = new RecordingClient(
-                "{\"passed\":true,\"errors\":[{\"slot_name\":\"notification_topic\","
-                        + "\"code\":\"semantic_mismatch\",\"message\":\"topic does not match\"}]}");
+        LLMClient llmClient = new RecordingClient("{\"passed\":true,\"errors\":[{\"slot_name\":\"notification_topic\","
+                + "\"code\":\"semantic_mismatch\",\"message\":\"topic does not match\"}]}");
         LlmBackedPromptSemanticValidator validator =
                 new LlmBackedPromptSemanticValidator(llmClient, SLOT_SCHEMA_LOADER, "semantic system", "semantic user");
 

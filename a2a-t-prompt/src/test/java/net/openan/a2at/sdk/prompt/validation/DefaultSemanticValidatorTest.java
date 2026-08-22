@@ -13,8 +13,8 @@ import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.PromptRuntimeConfig;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
-import net.openan.a2at.sdk.core.validation.TemplateReference;
 import net.openan.a2at.sdk.core.validation.ValidationPipeline;
 import net.openan.a2at.sdk.core.validation.ValidationResult;
 import net.openan.a2at.sdk.llm.LLMClient;
@@ -41,24 +41,8 @@ class DefaultSemanticValidatorTest {
 
         DefaultSemanticValidator validator = new DefaultSemanticValidator(llmClient, "en-US", resources);
 
-        TemplateReference reference = new TemplateReference() {
-            @Override
-            public String uri() {
-                return "Task-T/v1/energy-saving";
-            }
-
-            @Override
-            public String language() {
-                return "en-US";
-            }
-
-            @Override
-            public String extensionPrefix() {
-                return "Task-T";
-            }
-        };
-
-        ValidationResult result = validator.validate("Check Site A power usage.", Map.of("type", "object"), reference);
+        ValidationResult result = validator.validate(
+                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"));
 
         assertTrue(result.verdict());
         assertEquals(Map.of("site", "Site A"), result.params());
@@ -107,24 +91,8 @@ class DefaultSemanticValidatorTest {
 
         ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 2);
 
-        TemplateReference reference = new TemplateReference() {
-            @Override
-            public String uri() {
-                return "Task-T/v1/energy-saving";
-            }
-
-            @Override
-            public String language() {
-                return "en-US";
-            }
-
-            @Override
-            public String extensionPrefix() {
-                return "Task-T";
-            }
-        };
-
-        FilledParamData result = pipeline.validate("Check Site A power usage.", Map.of("type", "object"), reference);
+        FilledParamData result = pipeline.validate(
+                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"));
 
         assertEquals(Map.of("site", "Site A"), result.data());
         assertEquals(2, flakyClient.invocations());
@@ -149,28 +117,12 @@ class DefaultSemanticValidatorTest {
 
         ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 3);
 
-        TemplateReference reference = new TemplateReference() {
-            @Override
-            public String uri() {
-                return "Task-T/v1/energy-saving";
-            }
-
-            @Override
-            public String language() {
-                return "en-US";
-            }
-
-            @Override
-            public String extensionPrefix() {
-                return "Task-T";
-            }
-        };
-
         ContentValidationException exception = assertThrows(
                 ContentValidationException.class,
-                () -> pipeline.validate("Check Site A power usage.", Map.of("type", "object"), reference));
+                () -> pipeline.validate(
+                        "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving")));
 
-        assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.code());
+        assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertInstanceOf(LLMRuntimeError.class, exception.getCause().getCause());
         assertEquals(3, flakyClient.invocations());
     }

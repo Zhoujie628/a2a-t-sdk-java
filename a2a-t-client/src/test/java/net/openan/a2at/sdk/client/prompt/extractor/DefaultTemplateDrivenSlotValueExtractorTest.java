@@ -15,9 +15,10 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
         DefaultTemplateDrivenSlotValueExtractor extractor =
                 new DefaultTemplateDrivenSlotValueExtractor((scenarioCode, language) -> schema(
                         scenarioCode,
-                        new PromptSlotDefinition("site", true, "string", null, null, null, null, null),
-                        new PromptSlotDefinition("additional_notes", false, "string", null, null, null, null, null),
-                        new PromptSlotDefinition("ignored", false, "string", null, null, null, null, null)));
+                        new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null),
+                        new PromptSlotDefinition(
+                                "additional_notes", false, "string", null, null, null, null, null, null),
+                        new PromptSlotDefinition("ignored", false, "string", null, null, null, null, null, null)));
 
         Map<String, String> slots = extractor.extractSlots(
                 Map.of("site", "Site A", "additional_notes", "critical", "ignored", "value"),
@@ -32,7 +33,8 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
     void extractSlotsMapsStringInputToSchemaDefinedInputSlot() {
         DefaultTemplateDrivenSlotValueExtractor extractor =
                 new DefaultTemplateDrivenSlotValueExtractor((scenarioCode, language) -> schema(
-                        scenarioCode, new PromptSlotDefinition("input", true, "string", null, null, null, null, null)));
+                        scenarioCode,
+                        new PromptSlotDefinition("input", true, "string", null, null, null, null, null, null)));
 
         Map<String, String> slots = extractor.extractSlots("Analyze Site A.", "free-text", "en-US", "Input: {input}");
 
@@ -44,9 +46,10 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
         DefaultTemplateDrivenSlotValueExtractor extractor =
                 new DefaultTemplateDrivenSlotValueExtractor((scenarioCode, language) -> schema(
                         scenarioCode,
-                        new PromptSlotDefinition("topic", false, "string", null, null, null, null, null),
-                        new PromptSlotDefinition("condition", false, "string", null, null, null, null, null),
-                        new PromptSlotDefinition("report_format", false, "string", null, null, null, null, null)));
+                        new PromptSlotDefinition("topic", false, "string", null, null, null, null, null, null),
+                        new PromptSlotDefinition("condition", false, "string", null, null, null, null, null, null),
+                        new PromptSlotDefinition(
+                                "report_format", false, "string", null, null, null, null, null, null)));
 
         Map<String, String> slots = extractor.extractSlots(
                 Map.of(
@@ -70,8 +73,9 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
         DefaultTemplateDrivenSlotValueExtractor extractor =
                 new DefaultTemplateDrivenSlotValueExtractor((scenarioCode, language) -> schema(
                         scenarioCode,
-                        new PromptSlotDefinition("site", true, "string", "^Site .+", null, null, null, null),
-                        new PromptSlotDefinition("additional_notes", false, "string", null, null, null, null, null)));
+                        new PromptSlotDefinition("site", true, "string", "^Site .+", null, null, null, null, null),
+                        new PromptSlotDefinition(
+                                "additional_notes", false, "string", null, null, null, null, null, null)));
 
         Map<String, String> slots = extractor.extractSlots(
                 Map.of("site", "invalid", "additional_notes", "critical"),
@@ -87,9 +91,10 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
         DefaultTemplateDrivenSlotValueExtractor extractor =
                 new DefaultTemplateDrivenSlotValueExtractor((scenarioCode, language) -> schema(
                         scenarioCode,
-                        new PromptSlotDefinition("site", true, "string", "^Site .+", null, null, null, null),
-                        new PromptSlotDefinition("additional_notes", false, "string", null, null, null, null, null),
-                        new PromptSlotDefinition("limit", false, "integer", null, 1.0d, 10.0d, null, null),
+                        new PromptSlotDefinition("site", true, "string", "^Site .+", null, null, null, null, null),
+                        new PromptSlotDefinition(
+                                "additional_notes", false, "string", null, null, null, null, null, null),
+                        new PromptSlotDefinition("limit", false, "integer", null, 1.0d, 10.0d, null, null, null),
                         new PromptSlotDefinition(
                                 "severity",
                                 false,
@@ -98,6 +103,7 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
                                 null,
                                 null,
                                 List.of("low", "medium", "high"),
+                                null,
                                 null)));
 
         Map<String, String> slots = extractor.extractSlots(
@@ -124,9 +130,10 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
         DefaultTemplateDrivenSlotValueExtractor extractor =
                 new DefaultTemplateDrivenSlotValueExtractor((scenarioCode, language) -> schema(
                         scenarioCode,
-                        new PromptSlotDefinition("site", true, "string", "^Site .+", null, null, null, null),
-                        new PromptSlotDefinition("additional_notes", false, "string", null, null, null, null, null),
-                        new PromptSlotDefinition("limit", false, "integer", null, 1.0d, 10.0d, null, null),
+                        new PromptSlotDefinition("site", true, "string", "^Site .+", null, null, null, null, null),
+                        new PromptSlotDefinition(
+                                "additional_notes", false, "string", null, null, null, null, null, null),
+                        new PromptSlotDefinition("limit", false, "integer", null, 1.0d, 10.0d, null, null, null),
                         new PromptSlotDefinition(
                                 "severity",
                                 false,
@@ -135,6 +142,7 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
                                 null,
                                 null,
                                 List.of("low", "medium", "high"),
+                                null,
                                 null)));
 
         Map<String, String> slots = extractor.extractSlots(
@@ -165,9 +173,10 @@ class DefaultTemplateDrivenSlotValueExtractorTest {
         DefaultTemplateDrivenSlotValueExtractor extractor =
                 new DefaultTemplateDrivenSlotValueExtractor((scenarioCode, language) -> schema(
                         scenarioCode,
-                        new PromptSlotDefinition("site", true, "string", null, null, null, null, null),
-                        new PromptSlotDefinition("additional_notes", false, "string", null, null, null, null, null),
-                        new PromptSlotDefinition("ignored", false, "string", null, null, null, null, null)));
+                        new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null),
+                        new PromptSlotDefinition(
+                                "additional_notes", false, "string", null, null, null, null, null, null),
+                        new PromptSlotDefinition("ignored", false, "string", null, null, null, null, null, null)));
 
         Map<String, String> slots = extractor.extractSlotsWithSchema(
                 Map.of("site", "Site A", "additional_notes", "critical", "ignored", "value"),

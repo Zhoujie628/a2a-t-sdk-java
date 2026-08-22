@@ -73,7 +73,7 @@ class ClasspathPromptLoadersTest {
                 schema.slotDefinitions().get(1).allowedValues());
         assertEquals(
                 "Business priority from 1 (highest urgency) to 5 (lowest urgency)",
-                schema.slotDefinitions().get(1).description());
+                schema.slotDefinitions().get(1).valueConstraint());
     }
 
     @Test

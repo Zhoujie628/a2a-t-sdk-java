@@ -1,5 +1,6 @@
 package net.openan.a2at.sdk.server.validation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +23,8 @@ import net.openan.a2at.sdk.server.model.ProcessedPromptMetadata;
  */
 public final class LlmBackedPromptSemanticValidator implements ServerPromptSemanticValidator {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER =
+            new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     private final LLMClient llmClient;
 
@@ -131,7 +133,9 @@ public final class LlmBackedPromptSemanticValidator implements ServerPromptSeman
             return Optional.ofNullable(response).orElseGet(Map::of);
         } catch (JsonProcessingException error) {
             throw new PromptComplianceCheckException(
-                    A2ATErrorCodes.SLOT_VALIDATION_ERROR, "semantic validation returned invalid JSON", "slot_validation");
+                    A2ATErrorCodes.SLOT_VALIDATION_ERROR,
+                            "semantic validation returned invalid JSON",
+                            "slot_validation");
         }
     }
 
