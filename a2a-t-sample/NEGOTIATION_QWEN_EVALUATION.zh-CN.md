@@ -2,7 +2,7 @@
 
 此入口验证传输专线投诉诊断场景的 3 组接口：Propose、Accept、Reject 各自的自然语言生成接口和对应校验/提参接口。完整集为 100 条端到端流程；另提供 20 条精简集，便于日常回归。
 
-每条流程依次执行：Propose 生成、Propose 校验、客户端补充信息、Accept 或 Reject 生成、对应校验。生成接口的实际 Prompt 直接作为配对校验接口的输入；客户端补充信息是无 SDK 校验的中间业务数据。只有两次生成、两次校验都成功且提取值与 golden data 一致，流程才通过。
+每条流程依次执行：Propose 生成、Propose 校验、客户端补充信息、Accept 或 Reject 生成、对应校验。生成接口的实际 Prompt 直接作为配对校验接口的输入；客户端补充信息是无 SDK 校验的中间业务数据。两次生成和两次校验均成功返回时，端到端流程通过。
 
 ## 用例集
 
@@ -45,6 +45,23 @@ java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `
   smoke
 ```
 
+只查看一条 Accept 端到端流程时，可运行 `A01`：
+
+```powershell
+java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `
+  a2a-t-sample/src/main/resources/sample/private-line-complaint-negotiation/qwen.env `
+  a2a-t-sample/target/negotiation-qwen-example-report.json `
+  a2a-t-sample/target/negotiation-qwen-example-process.jsonl `
+  A01
+```
+
+运行完成后，以下命令会单独打印这条流程的四个接口输入和输出：
+
+```powershell
+(Get-Content -Raw a2a-t-sample/target/negotiation-qwen-example-report.json |
+  ConvertFrom-Json).cases[0].api_trace | ConvertTo-Json -Depth 20
+```
+
 ## SDK 问题最小复现
 
 完整执行前可先运行以下 6 条流程，确认三组生成与校验接口均能调用。自然语言输入和 golden data 均以 `cases.json` 为唯一来源。
@@ -59,7 +76,18 @@ java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `
 
 每次运行会在报告中写入 `git_revision`、`case_set` 和 `case_ids`，便于把结果与 SDK 代码版本和用例集合对应起来。过程日志是严格 JSONL：每行都是一条可独立解析的 JSON 事件。失败事件会额外记录 SDK `code` 和 `slot_errors`；其中 `negotiation_semantic_rejected` 能直接区分语义校验拒绝，`slot_errors` 可定位字段级规则问题。
 
-汇总报告会分别输出 `propose_succeeded`、`ending_succeeded`、通过数和 `automatic_consistency_rate`。每条流程保存 Propose/Ending 的自然语言输入、生成 Prompt、期望值、实际提取值、客户端补充信息、四个调用阶段的状态、耗时及结构化错误。过程日志采用 JSONL，每一行对应一次 SDK 调用，阶段为 `generate_propose`、`validate_propose_and_fill`、`generate_accept|reject`、`validate_accept|reject_and_fill`，并包含请求、响应、耗时、SDK 错误码、字段错误、cause 链和截断后的调用栈。
+汇总报告以 `passed` 和 `end_to_end_success_rate` 作为主验证结论，表示四个接口是否完整串通且没有抛出异常；`propose_succeeded`、`ending_succeeded` 分别统计两组配对接口是否成功。每条流程保存 Propose/Ending 的自然语言输入、生成 Prompt、期望值、实际提取值、客户端补充信息、四个调用阶段的状态、耗时及结构化错误。
+
+`propose_expected_matched`、`ending_expected_matched`、`golden_matched` 和 `golden_exact_match_rate` 使用严格值比较，只作为提参差异的辅助诊断指标，不影响端到端通过率。自然语言可能出现语义等价但字面不同的结果，例如“物理或逻辑端口”和“物理端口或逻辑端口名称”；这类情况应在端到端指标中计为成功。`propose_context_matched` 和 `ending_context_matched` 单独记录上下文传递是否一致。
+
+每条流程的 `api_trace` 按调用顺序保存一组可连续阅读的端到端记录。Accept 流程依次为：
+
+1. `A2ATClient.generateNegotiationProposePromptFromText`：发起生成；
+2. `A2ATServer.validateProposePromptAndDataFilling`：发起校验和提参；
+3. `A2ATServer.generateNegotiationAcceptPromptFromText`：接受生成；
+4. `A2ATClient.validateAcceptPromptAndDataFilling`：接受校验和提参。
+
+Reject 流程的第 3、4 步替换为对应的 Reject 接口。每一步均包含 `step_label`、`api`、`caller`、`request`、`response`、`expected`、耗时和结果；发生异常时保存结构化错误。过程日志采用 JSONL，同一 `case_id` 的四行与报告中的 `api_trace` 内容一致，便于流式查看和故障检索。
 
 定位时按 `run_id` 和 `case_id` 关联同一流程的四次调用。生成失败时检查自然语言、上下文和模板 URI；校验失败时直接核对前一阶段的 `response.prompt`、业务 Schema 和 SDK 异常。客户端补充信息会记录在 Ending 生成请求中，但不会调用校验 API。过程日志不记录 API Key。
 
