@@ -7,6 +7,9 @@ import java.io.InputStream;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /** Loads the checked-in, manually labelled Qwen evaluation corpus. */
 public final class NegotiationEvaluationCaseLoader {
@@ -71,5 +74,66 @@ public final class NegotiationEvaluationCaseLoader {
     /** Loads the checked-in 20-case smoke set. */
     public static List<NegotiationEvaluationCase> loadSmoke() {
         return loadSelected(SMOKE_CASE_IDS);
+    }
+
+    /**
+     * Assembles every labelled input into a complete propose-to-decision flow. A propose-labelled
+     * input drives the first generation step and is paired with a deterministic ending case; an
+     * accept/reject-labelled input drives the ending step and is paired with a deterministic
+     * propose case. This preserves the original 100 IDs while exercising two matching API pairs
+     * in every run.
+     */
+    public static List<NegotiationEvaluationFlowCase> loadFlows() {
+        List<NegotiationEvaluationCase> cases = load();
+        List<NegotiationEvaluationCase> proposeCases = byPhase(cases, "propose");
+        List<NegotiationEvaluationCase> acceptCases = byPhase(cases, "accept");
+        List<NegotiationEvaluationCase> rejectCases = byPhase(cases, "reject");
+        return java.util.stream.IntStream.range(0, cases.size())
+                .mapToObj(index -> toFlow(cases.get(index), index, proposeCases, acceptCases, rejectCases))
+                .toList();
+    }
+
+    public static List<NegotiationEvaluationFlowCase> loadSelectedFlows(List<String> caseIds) {
+        if (caseIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one evaluation case ID is required");
+        }
+        Map<String, NegotiationEvaluationFlowCase> flowsById = loadFlows().stream().collect(Collectors.toMap(
+                NegotiationEvaluationFlowCase::id, Function.identity()));
+        Set<String> requested = new LinkedHashSet<>(caseIds);
+        if (requested.size() != caseIds.size()) {
+            throw new IllegalArgumentException("Duplicate negotiation evaluation case IDs are not allowed: " + caseIds);
+        }
+        Set<String> unknown = new LinkedHashSet<>(requested);
+        unknown.removeAll(flowsById.keySet());
+        if (!unknown.isEmpty()) {
+            throw new IllegalArgumentException("Unknown negotiation evaluation case IDs: " + unknown);
+        }
+        return caseIds.stream().map(flowsById::get).toList();
+    }
+
+    public static List<NegotiationEvaluationFlowCase> loadSmokeFlows() {
+        return loadSelectedFlows(SMOKE_CASE_IDS);
+    }
+
+    private static List<NegotiationEvaluationCase> byPhase(List<NegotiationEvaluationCase> cases, String phase) {
+        return cases.stream().filter(testCase -> phase.equals(testCase.phase())).toList();
+    }
+
+    private static NegotiationEvaluationFlowCase toFlow(
+            NegotiationEvaluationCase source,
+            int index,
+            List<NegotiationEvaluationCase> proposeCases,
+            List<NegotiationEvaluationCase> acceptCases,
+            List<NegotiationEvaluationCase> rejectCases) {
+        NegotiationEvaluationCase propose = "propose".equals(source.phase())
+                ? source
+                : proposeCases.get(index % proposeCases.size());
+        boolean accept = "accept".equals(source.phase())
+                || ("propose".equals(source.phase()) && index % 2 == 0);
+        NegotiationEvaluationCase ending = "propose".equals(source.phase())
+                ? (accept ? acceptCases : rejectCases).get(index % (accept ? acceptCases.size() : rejectCases.size()))
+                : source;
+        return new NegotiationEvaluationFlowCase(
+                source.id(), source.category(), accept ? "accept" : "reject", propose, ending);
     }
 }

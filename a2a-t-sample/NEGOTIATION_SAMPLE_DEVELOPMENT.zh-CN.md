@@ -424,10 +424,10 @@ java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `
 
 验收时读取 `negotiation-qwen-report.json` 和 `negotiation-qwen-process.jsonl`：
 
-- 每条用例独立提供 `completedPrompt`；生成接口输出用于评估生成质量，不能直接作为校验接口入参。
-- 汇总报告包含每条用例的 `generated_prompt`、`completed_prompt`、`expected`、`actual`、最终 `passed` 及耗时。
-- 过程日志按 `run_id`、`case_id` 关联两个阶段：`generate` 与 `validate_and_fill`。
-- `generate` 失败时，优先检查日志中的 `request.text`、`context`、`template_uri` 和异常；`validate_and_fill` 失败时，核对 Case 补齐报文、`request.schema` 和异常链。
+- 每条评测用例执行完整链路：Propose 生成与校验、客户端补充、Accept/Reject 生成与校验；生成 Prompt 直接传给配对校验接口。
+- 客户端补充信息是中间业务数据，不调用这 6 个接口中的校验接口。
+- 汇总报告分别包含 Propose 和 Ending 的输入、生成 Prompt、期望值、实际提取值、阶段状态、最终 `passed` 及耗时。
+- 过程日志按 `run_id`、`case_id` 关联四个 SDK 调用阶段，可沿前一阶段输出追踪后一阶段校验入参。
 - 两阶段均成功但汇总结果失败时，比较 `expected` 与 `actual`；生成 Prompt 的语义质量单独人工检查。
 
 过程日志不记录 API Key。完成后在验证文档中记录模型、执行时间、报告路径、通过率以及人工抽检结论。详细字段说明见 `NEGOTIATION_QWEN_EVALUATION.zh-CN.md`。

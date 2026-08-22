@@ -106,7 +106,7 @@ java @a2a-t-sample/target/negotiation-server.javaargs.txt a2a-t-sample/src/main/
 java @a2a-t-sample/target/negotiation-client.javaargs.txt a2a-t-sample/src/main/resources/sample/private-line-complaint-negotiation/qwen.env
 ```
 
-需要批量验证三组自然语言生成接口及对应校验/提参接口时，运行以下命令。默认执行 100 条用例、生成汇总报告和逐调用 JSONL 过程日志；日志可用于区分生成、校验或 Sample 入参问题。将最后一个参数设为 `smoke` 可执行 20 条精简集，或传入 `P01,A28,R21` 这类编号组合执行指定用例：
+需要批量验证三组自然语言生成接口及对应校验/提参接口时，运行以下命令。每条用例会执行 Propose 生成与校验、客户端补充、Accept/Reject 生成与校验。默认执行 100 条完整流程并生成汇总报告和逐调用 JSONL 过程日志；将最后一个参数设为 `smoke` 可执行 20 条精简流程，或传入 `P01,A28,R21` 这类编号组合执行指定流程：
 
 ```powershell
 java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `

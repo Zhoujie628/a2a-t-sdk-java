@@ -42,6 +42,30 @@ class NegotiationEvaluationCaseLoaderTest {
     }
 
     @Test
+    void assemblesEveryCorpusEntryIntoAnEndToEndFlow() {
+        var flows = NegotiationEvaluationCaseLoader.loadFlows();
+
+        assertEquals(100, flows.size());
+        assertEquals(50, flows.stream().filter(flow -> flow.decision().equals("accept")).count());
+        assertEquals(50, flows.stream().filter(flow -> flow.decision().equals("reject")).count());
+        assertTrue(flows.stream().allMatch(flow -> flow.proposeCase().phase().equals("propose")));
+        assertTrue(flows.stream().allMatch(flow -> flow.endingCase().phase().equals(flow.decision())));
+        assertTrue(flows.stream().allMatch(flow -> flow.clientSupplement("context", 1, 3)
+                .contains("## 客户端补充信息")));
+    }
+
+    @Test
+    void assemblesTwentySmokeFlowsUsingTheExistingSelectorIds() {
+        var flows = NegotiationEvaluationCaseLoader.loadSmokeFlows();
+
+        assertEquals(20, flows.size());
+        assertEquals(NegotiationEvaluationCaseLoader.SMOKE_CASE_IDS,
+                flows.stream().map(flow -> flow.id()).toList());
+        assertTrue(flows.stream().anyMatch(flow -> flow.decision().equals("accept")));
+        assertTrue(flows.stream().anyMatch(flow -> flow.decision().equals("reject")));
+    }
+
+    @Test
     void rendersCompletedPromptsWithTheRuntimeNegotiationContext() {
         var cases = NegotiationEvaluationCaseLoader.load();
 
