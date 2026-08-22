@@ -7,8 +7,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
-import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.A2ATError;
+import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.json.JacksonJsonValueParser;
 import net.openan.a2at.sdk.core.json.JsonValueParser;
 import net.openan.a2at.sdk.core.model.PromptMessage;
@@ -52,7 +52,7 @@ final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
      * @param promptResourceAccess prompt resource access for loading validation prompts
      * @throws net.openan.a2at.sdk.core.exception.ResourceNotFoundException if prompt resources are missing
      */
-    public DefaultSemanticValidator(
+    DefaultSemanticValidator(
             @Nullable LLMClient llmClient,
             @NonNull String language,
             @NonNull PromptResourceAccess promptResourceAccess) {
@@ -177,7 +177,11 @@ final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
             return Map.of();
         }
         Map<String, Object> normalized = new LinkedHashMap<>();
-        params.forEach((key, value) -> normalized.put(String.valueOf(key), value));
+        params.forEach((key, value) -> {
+            if (value != null) {
+                normalized.put(String.valueOf(key), value);
+            }
+        });
         return Map.copyOf(normalized);
     }
 
