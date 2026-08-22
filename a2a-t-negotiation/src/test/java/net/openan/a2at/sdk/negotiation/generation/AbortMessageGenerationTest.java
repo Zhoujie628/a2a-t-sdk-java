@@ -5,9 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMClient;
@@ -15,6 +18,7 @@ import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.AbortContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -147,6 +151,91 @@ class AbortMessageGenerationTest {
         assertEquals(0, llm.calls);
     }
 
+    @Test
+    void generatesAnAbortMessageFromFreeTextThroughOneExtractionStep() {
+        ScriptedClient extractionLlm = new ScriptedClient("{\"termination_reason\":\"达到协商轮次上限，协商终止。\"}");
+        NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .llmClient(extractionLlm)
+                .build();
+
+        MetadataContent result = orchestrator.generateAbortFromText(
+                "协商已达到轮次上限，无法继续推进，本次协商终止。", new NegotiationContext(SESSION_ID, 5, 5), ABORT_URI);
+
+        assertEquals(ABORT_URI.uri(), result.templateUri());
+        assertTrue(result.promptText().contains("## 协商结果\nAbort"));
+        assertTrue(result.promptText().contains("达到协商轮次上限，协商终止。"));
+        assertFalse(result.promptText().contains("{{"));
+        assertEquals(1, extractionLlm.calls, "the from-text variant runs exactly one extraction step");
+    }
+
+    @Test
+    void peerValidatesAReceivedAbortMessageAndExtractsItsParameters() {
+        NegotiationGenerationOrchestrator agent = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .build();
+        ScriptedClient peerLlm =
+                new ScriptedClient("{\"semantic_verdict\":true,\"negotiation_type\":null,\"errors\":[],\"params\":{}}");
+        NegotiationGenerationOrchestrator peer = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .llmClient(peerLlm)
+                .build();
+
+        MetadataContent abortMessage = agent.generateAbortFromData(
+                new NegotiationAbortData(
+                        new NegotiationContext(SESSION_ID, 5, 5), new AbortContent("达到协商轮次上限，本次协商确认结束。")),
+                ABORT_URI);
+
+        FilledParamData parameters =
+                peer.validateAndFillingAbortData(abortMessage.promptText(), Map.of("type", "object"), ABORT_URI);
+
+        assertEquals(SESSION_ID, parameters.data().get("id"));
+        assertEquals(5, parameters.data().get("round"));
+        assertEquals(5, parameters.data().get("maxRounds"));
+        assertEquals(1, peerLlm.calls, "the validation pipeline runs exactly one semantic step");
+    }
+
+    @Test
+    void abortValidationFailsOnBeyondBudgetRoundsBeforeAnyLlmCall() {
+        NegotiationGenerationOrchestrator agent = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .build();
+        ScriptedClient peerLlm =
+                new ScriptedClient("{\"semantic_verdict\":true,\"negotiation_type\":null,\"errors\":[],\"params\":{}}");
+        NegotiationGenerationOrchestrator peer = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .llmClient(peerLlm)
+                .build();
+
+        MetadataContent beyondBudget = agent.generateAbortFromData(
+                new NegotiationAbortData(
+                        new NegotiationContext(SESSION_ID, 6, 5), new AbortContent("轮次预算耗尽。")), ABORT_URI);
+
+        NegotiationParamExtractionException failure = assertThrows(
+                NegotiationParamExtractionException.class,
+                () -> peer.validateAndFillingAbortData(beyondBudget.promptText(), Map.of("type", "object"), ABORT_URI));
+        assertEquals(A2ATErrorCodes.NEGOTIATION_RULE_VIOLATION, failure.getCode());
+        assertTrue(
+                failure.getErrors().stream().anyMatch(error -> "round".equals(error.slotName())),
+                "the beyond-budget round must be reported on the round slot");
+        assertEquals(0, peerLlm.calls, "the rule gate must fail before any semantic LLM call");
+    }
+
+    @Test
+    void abortValidationRejectsTypedTemplateUris() {
+        NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .llmClient(llm)
+                .build();
+
+        IllegalArgumentException failure = assertThrows(
+                IllegalArgumentException.class,
+                () -> orchestrator.validateAndFillingAbortData("任意文本", Map.of("type", "object"),
+                        StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE));
+        assertTrue(failure.getMessage().contains("abort"));
+        assertEquals(0, llm.calls);
+    }
+
     private static final class CountingClient implements LLMClient {
 
         private int calls;
@@ -159,6 +248,30 @@ class AbortMessageGenerationTest {
                 Integer maxTokens) {
             calls++;
             throw new AssertionError("The from-data abort variant must never call the LLM");
+        }
+    }
+
+    private static final class ScriptedClient implements LLMClient {
+
+        private final String payload;
+
+        private final List<List<Map<String, String>>> recordedMessages = new ArrayList<>();
+
+        private int calls;
+
+        private ScriptedClient(String payload) {
+            this.payload = payload;
+        }
+
+        @Override
+        public LLMResponse structured(
+                List<Map<String, String>> messages,
+                Map<String, Object> jsonSchema,
+                Double temperature,
+                Integer maxTokens) {
+            calls++;
+            recordedMessages.add(List.copyOf(messages));
+            return new LLMResponse(payload, "scripted-abort-model", Map.of(), Map.of());
         }
     }
 }

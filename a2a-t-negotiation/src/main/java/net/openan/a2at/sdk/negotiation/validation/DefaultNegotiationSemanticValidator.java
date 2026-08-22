@@ -193,7 +193,7 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
                 .replace("[phase]", reference.phase().name().toLowerCase(Locale.ROOT))
                 .replace("[input]", prompt)
                 .replace("[template_uri]", reference.uri())
-                .replace("[negotiation_type]", reference.type().name().toLowerCase(Locale.ROOT))
+                .replace("[negotiation_type]", declaredTypeName(reference))
                 .replace("[schema]", toJson(callerSchema));
         return List.of(
                 Map.of("role", "system", "content", systemPrompt), Map.of("role", "user", "content", filledUserPrompt));
@@ -262,7 +262,7 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
         Map<String, Object> params = parseParams(rawParams);
         String negotiationType = (String) typeValue;
 
-        if (verdict) {
+        if (verdict && reference.type() != null) {
             if (negotiationType == null) {
                 List<SlotValidationError> rejectionErrors = new ArrayList<>(errors);
                 rejectionErrors.add(typeConsistencyError(
@@ -329,7 +329,7 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
     }
 
     private static String declaredTypeName(NegotiationReference reference) {
-        return reference.type().name().toLowerCase(Locale.ROOT);
+        return reference.type() == null ? "common" : reference.type().name().toLowerCase(Locale.ROOT);
     }
 
     private static String declaredTypeSectionKey(NegotiationType type) {

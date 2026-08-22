@@ -49,6 +49,7 @@ class NegotiationResourceIntegrityTest {
             "information_negotiation",
             "target_negotiation",
             "feasibility_negotiation",
+            "abort_negotiation",
             "negotiation_semantic_validation");
 
     private static final List<String> EXCEPTION_SLOT_KEYS =

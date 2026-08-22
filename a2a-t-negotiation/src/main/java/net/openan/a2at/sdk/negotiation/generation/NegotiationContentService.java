@@ -214,6 +214,24 @@ public final class NegotiationContentService {
     }
 
     /**
+     * Generates an abort negotiation message from free text through one LLM content-extraction step.
+     *
+     * @param text free-text input stating the termination reason
+     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @throws NullPointerException if the context or the template URI is null
+     * @throws IllegalArgumentException if the template URI does not address the common abort template
+     * @throws NegotiationGenerationException with the code {@code template_not_found},
+     *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when loading or
+     *     extracting fails, or {@code negotiation_slot_missing} when the extracted content misses the termination reason
+     */
+    public MetadataContent generateAbortFromText(
+            String text, @NonNull NegotiationContext context, @NonNull TemplateUri templateUri) {
+        return orchestrator.generateAbortFromText(text, context, templateUri);
+    }
+
+    /**
      * Lists every negotiation template available for the configured language; never throws.
      *
      * @return loadable negotiation templates of the configured language, in a fixed type and phase order; empty when
@@ -290,5 +308,21 @@ public final class NegotiationContentService {
     public FilledParamData validateAndFillingRejectData(
             String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
         return orchestrator.validateAndFillingRejectData(prompt, schema, templateUri);
+    }
+
+    /**
+     * Validates an abort negotiation message and extracts its parameters.
+     *
+     * @param prompt rendered negotiation message text to validate
+     * @param schema caller-provided parameter JSON schema describing the parameters to extract
+     * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
+     * @return filled parameter data carrying the context parameters and the extracted parameters
+     * @throws NullPointerException if the schema or the template URI is null
+     * @throws IllegalArgumentException if the template URI does not address the common abort template
+     * @throws NegotiationParamExtractionException when the validation pipeline fails
+     */
+    public FilledParamData validateAndFillingAbortData(
+            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
+        return orchestrator.validateAndFillingAbortData(prompt, schema, templateUri);
     }
 }

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Builds the JSON Schemas of the negotiation LLM steps.
@@ -27,14 +28,21 @@ final class NegotiationJsonSchemaBuilder {
     /**
      * Builds the content extraction schema of one (negotiation type, phase) pair.
      *
-     * @param type negotiation type whose content is extracted
+     * @param type negotiation type whose content is extracted; null only for the type-independent abort phase
      * @param phase API-level phase of the extraction; accept and reject share the terminal schema
      * @return JSON Schema describing the snake_case extraction output of the pair
-     * @throws NullPointerException if the type or phase is null
+     * @throws NullPointerException if the phase is null, or the type is null on a typed phase
      */
-    public Map<String, Object> buildExtractionSchema(NegotiationType type, NegotiationPhase phase) {
-        Objects.requireNonNull(type, "Negotiation type must not be null.");
+    public Map<String, Object> buildExtractionSchema(@Nullable NegotiationType type, NegotiationPhase phase) {
         Objects.requireNonNull(phase, "Negotiation phase must not be null.");
+        if (phase == NegotiationPhase.ABORT) {
+            if (type != null) {
+                throw new IllegalArgumentException(
+                        "The ABORT phase is type-independent and must not carry a type but carried " + type + ".");
+            }
+            return abortSchema();
+        }
+        Objects.requireNonNull(type, "Negotiation type must not be null for the " + phase + " phase.");
         return switch (type) {
             case INFORMATION -> phase == NegotiationPhase.PROPOSE
                     ? informationProposeSchema()
@@ -44,6 +52,12 @@ final class NegotiationJsonSchemaBuilder {
                     ? feasibilityProposeSchema()
                     : feasibilityEndingSchema();
         };
+    }
+
+    private static Map<String, Object> abortSchema() {
+        Map<String, Object> properties = new LinkedHashMap<>();
+        properties.put("termination_reason", Map.of("type", "string"));
+        return objectSchema(properties, List.of("termination_reason"));
     }
 
     private static Map<String, Object> informationProposeSchema() {

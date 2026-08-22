@@ -113,7 +113,7 @@ class NegotiationJsonSchemaBuilderTest {
     @Test
     void rejectsNullTypeAndPhase() {
         assertEquals(
-                "Negotiation type must not be null.",
+                "Negotiation type must not be null for the PROPOSE phase.",
                 assertThrows(
                                 NullPointerException.class,
                                 () -> builder.buildExtractionSchema(null, NegotiationPhase.PROPOSE))
