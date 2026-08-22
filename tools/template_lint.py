@@ -362,6 +362,9 @@ def lint_negotiation(templates_dir: Path, vocabularies: dict[str, dict[str, str]
         for type_segment in NEGOTIATION_TYPE_SEGMENTS
         for phase_segment in NEGOTIATION_PHASE_SEGMENTS
         for language in NEGOTIATION_LANGUAGES
+    } | {
+        Path("common") / "abort" / "v1" / language / "template.md"
+        for language in NEGOTIATION_LANGUAGES
     }
     errors: list[str] = []
     shapes: dict[tuple[str, str, str], list[tuple] | None] = {}
@@ -373,7 +376,10 @@ def lint_negotiation(templates_dir: Path, vocabularies: dict[str, dict[str, str]
             errors.append(error(path, 1, "negotiation-file-set", f"Unexpected Negotiation-T template location: {relative}"))
             continue
         found.add(relative)
-        type_segment, phase_segment, _, language, _ = relative.parts
+        parts = relative.parts
+        if parts[0] == "common":
+            continue
+        type_segment, phase_segment, _, language, _ = parts
         vocabulary = vocabularies.get(language)
         if vocabulary is None:
             # The vocabulary errors were already reported; without a usable vocabulary the per-file checks cannot run.

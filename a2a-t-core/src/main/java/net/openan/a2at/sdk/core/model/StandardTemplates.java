@@ -83,6 +83,10 @@ public final class StandardTemplates {
     public static final TemplateUri FEASIBILITY_NEGOTIATION_ACCEPT_REJECT =
             TemplateUri.of(NEGOTIATION_EXTENSION_NAME, "feasibility-negotiation", "accept-reject");
 
+    /** Negotiation-T common abort template. */
+    public static final TemplateUri NEGOTIATION_ABORT =
+            TemplateUri.of(NEGOTIATION_EXTENSION_NAME, "common", "abort");
+
     /** All built-in Task-T templates. */
     public static final List<TemplateUri> TASK = List.of(ENERGY_SAVING, PRIVATE_LINE_COMPLAINT);
 
@@ -99,5 +103,6 @@ public final class StandardTemplates {
             TARGET_NEGOTIATION_PROPOSE,
             TARGET_NEGOTIATION_ACCEPT_REJECT,
             FEASIBILITY_NEGOTIATION_PROPOSE,
-            FEASIBILITY_NEGOTIATION_ACCEPT_REJECT);
+            FEASIBILITY_NEGOTIATION_ACCEPT_REJECT,
+            NEGOTIATION_ABORT);
 }

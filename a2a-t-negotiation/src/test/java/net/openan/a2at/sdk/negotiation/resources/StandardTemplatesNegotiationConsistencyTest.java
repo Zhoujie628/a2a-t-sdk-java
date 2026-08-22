@@ -40,6 +40,7 @@ class StandardTemplatesNegotiationConsistencyTest {
                 expected.add(new NegotiationReference(type, phase, "en-US").uri());
             }
         }
+        expected.add(StandardTemplates.NEGOTIATION_ABORT.uri());
         assertEquals(expected.stream().sorted().toList(), composed);
     }
 
