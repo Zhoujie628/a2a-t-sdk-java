@@ -50,9 +50,8 @@ public final class LLMConfigLoader {
                 DEFAULT_SESSION_MAX_PER_PROVIDER,
                 MAX_SESSION_MAX_PER_PROVIDER);
         if (sessionMaxTotal < sessionMaxPerProvider) {
-            throw new LLMConfigError(
-                    "A2AT_LLM_SESSION_MAX_TOTAL must be greater than or equal to "
-                            + "A2AT_LLM_SESSION_MAX_PER_PROVIDER");
+            throw new LLMConfigError("A2AT_LLM_SESSION_MAX_TOTAL must be greater than or equal to "
+                    + "A2AT_LLM_SESSION_MAX_PER_PROVIDER");
         }
 
         OptionalInt maxTokens = parseOptionalInt(values.get("A2AT_LLM_MAX_TOKENS"), "A2AT_LLM_MAX_TOKENS");
@@ -70,7 +69,8 @@ public final class LLMConfigLoader {
                 temperature.isPresent() ? temperature.getAsDouble() : null,
                 timeoutSeconds.isPresent() ? timeoutSeconds.getAsDouble() : null,
                 sessionMaxTotal,
-                sessionMaxPerProvider);
+                sessionMaxPerProvider,
+                optional(values.get("A2AT_LLM_REASONING_EFFORT")).orElse(null));
     }
 
     private static String required(Map<String, String> values, String key) {
