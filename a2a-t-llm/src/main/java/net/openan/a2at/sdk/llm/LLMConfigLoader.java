@@ -62,6 +62,8 @@ public final class LLMConfigLoader {
         OptionalDouble temperature = parseOptionalDouble(values.get("A2AT_LLM_TEMPERATURE"), "A2AT_LLM_TEMPERATURE");
         OptionalDouble timeoutSeconds =
                 parseOptionalDouble(values.get("A2AT_LLM_TIMEOUT_SECONDS"), "A2AT_LLM_TIMEOUT_SECONDS");
+        boolean disableSystemProxy = parseOptionalBoolean(
+                values.get("A2AT_LLM_DISABLE_SYSTEM_PROXY"), "A2AT_LLM_DISABLE_SYSTEM_PROXY", false);
 
         return new LLMClientConfig(
                 provider,
@@ -72,6 +74,7 @@ public final class LLMConfigLoader {
                 maxTokens.isPresent() ? maxTokens.getAsInt() : null,
                 temperature.isPresent() ? temperature.getAsDouble() : null,
                 timeoutSeconds.isPresent() ? timeoutSeconds.getAsDouble() : null,
+                disableSystemProxy,
                 sessionMaxTotal,
                 sessionMaxPerProvider,
                 parseReasoningEffort(values.get("A2AT_LLM_REASONING_EFFORT")));
@@ -113,6 +116,20 @@ public final class LLMConfigLoader {
         } catch (NumberFormatException exception) {
             throw new LLMConfigError(key + " must be a float", exception);
         }
+    }
+
+    private static boolean parseOptionalBoolean(String rawValue, String key, boolean defaultValue) {
+        Optional<String> value = optional(rawValue);
+        if (!value.isPresent()) {
+            return defaultValue;
+        }
+        if ("true".equalsIgnoreCase(value.orElseThrow())) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(value.orElseThrow())) {
+            return false;
+        }
+        throw new LLMConfigError(key + " must be true or false");
     }
 
     private static int parseBoundedInt(String rawValue, String key, int defaultValue, int maxValue) {

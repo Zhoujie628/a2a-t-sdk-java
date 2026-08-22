@@ -11,6 +11,7 @@ package net.openan.a2at.sdk.llm;
  * @param maxTokens optional default max tokens
  * @param temperature optional default temperature
  * @param timeoutSeconds optional provider timeout in seconds
+ * @param disableSystemProxy whether to bypass the JVM or operating-system HTTP proxy
  * @param sessionMaxTotal reserved total session limit
  * @param sessionMaxPerProvider reserved per-provider session limit
  * @param reasoningEffort optional reasoning effort for reasoning models (none/minimal/low/medium/high/xhigh); null
@@ -26,6 +27,7 @@ public record LLMClientConfig(
         Integer maxTokens,
         Double temperature,
         Double timeoutSeconds,
+        boolean disableSystemProxy,
         int sessionMaxTotal,
         int sessionMaxPerProvider,
         String reasoningEffort) {}

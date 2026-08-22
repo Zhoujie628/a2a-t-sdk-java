@@ -1,0 +1,148 @@
+package net.openan.a2at.sample.service_recovery.shared.logging;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
+/**
+ * Formatting helpers for sample logs.
+ *
+ * @since 2026-05
+ */
+public final class SampleLoggingFormatter {
+    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+    private static final List<String> SECRET_KEYWORDS =
+            List.of("api_key", "authorization", "token", "secret", "password");
+
+    private SampleLoggingFormatter() {
+    }
+
+    public static String formatStageLog(String actor, String stage, String detail) {
+        return timestamp() + " [" + actor + "] " + stage + ": " + detail;
+    }
+
+    /**
+     * Prefixes one log message with the sample timestamp.
+     *
+     * <p>Multi-line messages keep their internal line breaks, but every blank line is removed so
+     * the log output never contains empty lines.
+     *
+     * @param message log message, may span multiple lines — only the first line carries the stamp
+     * @return timestamped log line without any blank line
+     */
+    public static String timestamped(String message) {
+        if (message == null) {
+            return "";
+        }
+        StringBuilder compact = new StringBuilder();
+        for (String line : message.split("\r?\n", -1)) {
+            if (line.isBlank()) {
+                continue;
+            }
+            if (compact.length() > 0) {
+                compact.append('\n');
+            }
+            compact.append(line);
+        }
+        if (compact.length() == 0) {
+            return "";
+        }
+        return timestamp() + " " + compact;
+    }
+
+    public static String formatPayloadLog(String actor, String stage, Object payload) {
+        try {
+            Object normalized = normalizePayload(payload, null);
+            return timestamp() + " [" + actor + "] " + stage + ": " + OBJECT_MAPPER.writeValueAsString(normalized);
+        } catch (IOException exception) {
+            return timestamp() + " [" + actor + "] " + stage + ": <payload-format-error: " + exception.getMessage()
+                    + ">";
+        }
+    }
+
+    private static String timestamp() {
+        return LocalDateTime.now().format(TIMESTAMP_FORMATTER);
+    }
+
+    private static Object normalizePayload(Object value, String keyName) throws IOException {
+        if (keyName != null && isSecretKey(keyName)) {
+            return "***";
+        }
+        if (value == null || value instanceof Boolean || value instanceof Number || value instanceof String) {
+            return value;
+        }
+        if (value instanceof Map<?, ?> mapValue) {
+            Map<String, Object> normalized = new TreeMap<>();
+            for (Map.Entry<?, ?> entry : mapValue.entrySet()) {
+                String childKey = String.valueOf(entry.getKey());
+                normalized.put(childKey, normalizePayload(entry.getValue(), childKey));
+            }
+            return normalized;
+        }
+        if (value instanceof Collection<?> collection) {
+            List<Object> normalized = new ArrayList<>();
+            for (Object item : collection) {
+                normalized.add(normalizePayload(item, null));
+            }
+            return normalized;
+        }
+        if (value.getClass().isArray()) {
+            List<Object> normalized = new ArrayList<>();
+            int length = Array.getLength(value);
+            for (int index = 0; index < length; index++) {
+                normalized.add(normalizePayload(Array.get(value, index), null));
+            }
+            return normalized;
+        }
+        if (value instanceof Iterable<?> iterable) {
+            List<Object> normalized = new ArrayList<>();
+            for (Object item : iterable) {
+                normalized.add(normalizePayload(item, null));
+            }
+            return normalized;
+        }
+        if (value instanceof java.util.Set<?> setValue) {
+            TreeSet<String> normalized = new TreeSet<>();
+            for (Object item : setValue) {
+                normalized.add(String.valueOf(normalizePayload(item, null)));
+            }
+            return normalized;
+        }
+
+        return OBJECT_MAPPER.readValue(OBJECT_MAPPER.writeValueAsBytes(value), Object.class);
+    }
+
+    private static boolean isSecretKey(String keyName) {
+        String normalizedKeyName = keyName.toLowerCase(Locale.ROOT);
+        for (String keyword : SECRET_KEYWORDS) {
+            if (normalizedKeyName.equals(keyword)) {
+                return true;
+            }
+        }
+        if (normalizedKeyName.endsWith("_key")
+                || normalizedKeyName.endsWith("_secret")
+                || normalizedKeyName.endsWith("_password")) {
+            return true;
+        }
+        // Avoid masking the harmless max_tokens field while still masking api_token etc.
+        return normalizedKeyName.endsWith("_token") && !normalizedKeyName.endsWith("max_tokens");
+    }
+}
+
+

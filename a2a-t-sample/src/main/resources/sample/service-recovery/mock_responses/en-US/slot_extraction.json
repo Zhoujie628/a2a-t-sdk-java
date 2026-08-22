@@ -1,0 +1,7 @@
+{
+  "slots": {
+    "subscribe_condition": null,
+    "notification_data_format": "The service recovery event data contains the following fields: 1. Service recovery plan execution status, allowed values: not started, ended (required); 2. Complaint diagnosis task sequence number (required); 3. OSS-side event sequence number (required); 4. Access port name (required); 5. Whether OMC automatic recovery is authorized, allowed values: yes, no (required); 6. Service recovery plan name (required); 7. Service recovery plan details (required); 8. Service recovery plan execution end time (optional)."
+  },
+  "slot_errors": []
+}

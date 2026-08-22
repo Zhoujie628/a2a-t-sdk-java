@@ -10,6 +10,7 @@ import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import com.openai.models.chat.completions.ChatCompletionMessageParam;
 import com.openai.models.chat.completions.ChatCompletionSystemMessageParam;
 import com.openai.models.chat.completions.ChatCompletionUserMessageParam;
+import java.net.Proxy;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -196,6 +197,9 @@ public class OpenAIClient implements LLMClient {
         if (sdkClient == null) {
             OpenAIOkHttpClient.Builder builder =
                     OpenAIOkHttpClient.builder().apiKey(runtimeConfig.apiKey()).baseUrl(runtimeConfig.baseUrl());
+            if (runtimeConfig.disableSystemProxy()) {
+                builder.proxy(Proxy.NO_PROXY);
+            }
             if (runtimeConfig.timeoutSeconds() != null && runtimeConfig.timeoutSeconds() > 0.0d) {
                 builder.timeout(Duration.ofMillis(Math.max(1L, Math.round(runtimeConfig.timeoutSeconds() * 1000.0d))));
             }
