@@ -120,7 +120,7 @@
  |---|---|
  | `negotiation/shared/NegotiationMessage.java` | A2A metadata 桥接（Task-T/Negotiation-T prompt + context 序列化） |
  | `negotiation/shared/DemoConstants.java` | 扩展 URI、模板 URI 常量 |
- | `negotiation/shared/ScenarioData.java` | 参数缺失/补齐场景数据 + slot schema |
+ | `negotiation/shared/ScenarioData.java` | 场景数据加载器（从 `scenario.json` 读取 slot schema + 参数缺失/补齐数据） |
  | `negotiation/shared/NegotiationSampleSupport.java` | fromData/fromText 样例公共辅助（SessionId、URI 常量、summary） |
  
  ### API 验证样例（3 类型 × 3 阶段 = 9 用例）

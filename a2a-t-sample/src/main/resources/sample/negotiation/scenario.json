@@ -1,0 +1,27 @@
+{
+  "scenario": "private-line complaint diagnosis with negotiation",
+  "task_schema": {
+    "type": "object",
+    "properties": {
+      "任务对象": {
+        "type": "string",
+        "description": "专线名称，接入端口名称，接入端口资源ID参数，3个参数下发其中一个用于标识专线业务对象",
+        "examples": ["接入端口资源ID：f47ac10b-58cc-4372-a567-0e02b2c3d479"]
+      },
+      "任务上下文": {
+        "type": "string",
+        "description": "提供专线业务的故障现象描述和诊断任务的上下文信息",
+        "examples": ["故障现象:专线中断。故障流水号：fault-id-1-017-20230511-09013"]
+      }
+    },
+    "required": ["任务上下文"]
+  },
+  "missing_params": {
+    "任务对象": "",
+    "任务上下文": "2. 问题发生时间：2026-05-11T08:21:46Z\n3. OSS侧事件流水号：event-id-20260511-09013\n4. 投诉详情：深圳访问广州响应延迟骤升，交易接口频繁报连接超时"
+  },
+  "filled_params": {
+    "任务对象": "P781-珠江新城-PTN7900-23-TPA1EG24-17",
+    "任务上下文": "1. 投诉分类：专线质差\n2. 问题发生时间：2026-05-11T08:21:46Z\n3. OSS侧事件流水号：event-id-20260511-09013\n4. 投诉详情：深圳访问广州响应延迟骤升，交易接口频繁报连接超时"
+  }
+}

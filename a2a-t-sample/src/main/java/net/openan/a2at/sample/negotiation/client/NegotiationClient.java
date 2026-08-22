@@ -78,7 +78,7 @@ public final class NegotiationClient {
         // -- message 1: Task-T with missing params --
         emit("[client] === message 1: Task-T (params missing) ===");
         MetadataContent taskMissing = client.generateTaskPromptFromDataWithSchema(
-                ScenarioData.missingParams(), ScenarioData.TASK_SCHEMA, DemoConstants.TASK_TEMPLATE);
+                ScenarioData.missingParams(), ScenarioData.taskSchema(), DemoConstants.TASK_TEMPLATE);
         emit("[client] Task-T prompt rendered (params missing)");
 
         // start the negotiation state machine with the missing-params prompt
@@ -96,7 +96,7 @@ public final class NegotiationClient {
         // -- message 3: Task-T with filled params + Negotiation-T accept --
         emit("[client] === message 3: Task-T (params filled) + Negotiation-T accept ===");
         MetadataContent taskFilled = client.generateTaskPromptFromDataWithSchema(
-                ScenarioData.filledParams(), ScenarioData.TASK_SCHEMA, DemoConstants.TASK_TEMPLATE);
+                ScenarioData.filledParams(), ScenarioData.taskSchema(), DemoConstants.TASK_TEMPLATE);
         emit("[client] Task-T prompt rendered (params filled)");
 
         MetadataContent acceptPrompt = strategy.generateAccept(

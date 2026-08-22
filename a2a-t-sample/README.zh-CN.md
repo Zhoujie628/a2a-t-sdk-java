@@ -20,6 +20,7 @@
 - 服务端环境模板：`sample/subscribe_incident/server/server.env`
 - 客户端场景输入：`sample/subscribe_incident/client/scenario.json`
 - 协商样例环境模板：`sample/negotiation/negotiation.env`
+- 协商样例场景输入（slot schema + 参数缺失/补齐数据）：`sample/negotiation/scenario.json`
 
 ## 协商（Negotiation）端到端样例
 
@@ -45,7 +46,7 @@
 | `negotiation/` | 入口 `NegotiationDemoApp`：启动嵌入式 HTTP server + 跑 client，`--fromText` 切换策略 |
 | `negotiation/client/` | `NegotiationClient`：4 报文编排（Task-T 缺失→收协商→补齐→收诊断） |
 | `negotiation/server/` | `NegotiationAgentExecutor`（validateAndFillingTaskData→缺失检测→协商请求→诊断）+ `NegotiationServerRuntime`（HTTP server 装配）+ `DiagnosisService`（从 FilledParamData 动态生成诊断） |
-| `negotiation/shared/` | 策略层（`NegotiationStrategy` + `FromDataStrategy`/`FromTextStrategy`）、A2A metadata 桥接（`NegotiationMessage`）、扩展/模板 URI 常量（`DemoConstants`）、场景数据（`ScenarioData`）、样例公共辅助（`NegotiationSampleSupport`） |
+| `negotiation/shared/` | 策略层（`NegotiationStrategy` + `FromDataStrategy`/`FromTextStrategy`）、A2A metadata 桥接（`NegotiationMessage`）、扩展/模板 URI 常量（`DemoConstants`）、场景数据加载器（`ScenarioData`，数据在 `scenario.json`）、样例公共辅助（`NegotiationSampleSupport`） |
 | `negotiation/fromdata/`、`negotiation/fromtext/` | 9 用例 API 验证样例（见下文两节） |
 
 ### 协商样例启动

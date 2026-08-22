@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import net.openan.a2at.sample.negotiation.shared.NegotiationSampleSupport;
+import net.openan.a2at.sample.negotiation.shared.ScenarioData;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -71,8 +72,12 @@ public final class FromTextNegotiationSample {
         results.add(NegotiationSampleSupport.summary("information", "propose", propose, logSink));
 
         // accept: deliver the requested information
-        String acceptText =
-                "同意补充以下信息：" + "1. 接入端口名称：P781-珠江新城-PTN7900-23-TPA1EG24-17；" + "2. 投诉分类：专线质差。" + "信息已完整，可以启动诊断。";
+        String acceptText = "同意补充以下信息："
+                + "1. 接入端口名称："
+                + ScenarioData.filledParams().get("任务对象")
+                + "；"
+                + "2. 投诉分类：专线质差。"
+                + "信息已完整，可以启动诊断。";
         MetadataContent accept = client.generateNegotiationAcceptPromptFromText(
                 acceptText, ctx, NegotiationSampleSupport.INFO_ACCEPT_REJECT_URI);
         results.add(NegotiationSampleSupport.summary("information", "accept", accept, logSink));

@@ -80,7 +80,7 @@ public final class NegotiationAgentExecutor implements AgentExecutor {
             List<NegotiationItem> missingItems;
             try {
                 params = server.validateAndFillingTaskData(
-                        taskPrompt, ScenarioData.TASK_SCHEMA, DemoConstants.TASK_TEMPLATE);
+                        taskPrompt, ScenarioData.taskSchema(), DemoConstants.TASK_TEMPLATE);
                 emit("[server] extracted params: " + params.data());
                 missingItems = findMissingItems(params);
             } catch (ContentValidationException e) {

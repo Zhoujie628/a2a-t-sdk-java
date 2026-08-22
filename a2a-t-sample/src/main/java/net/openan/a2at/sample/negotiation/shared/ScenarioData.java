@@ -1,57 +1,66 @@
 package net.openan.a2at.sample.negotiation.shared;
 
-import java.util.List;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.Map;
 
 /**
- * Fixed scenario data for the SPN private-line-complaint diagnosis: one map with missing required params (triggering
- * negotiation) and one with the params filled in (completing the negotiation).
+ * Scenario data for the negotiation demo, loaded from the bundled {@code sample/negotiation/scenario.json}.
  *
- * <p>The slot keys ({@code 任务对象} / {@code 任务上下文}) match the bundled {@code private-line-complaint} slot schema. An
- * empty {@code 任务对象} triggers the server-side information negotiation (message 2); filling it in completes the
- * negotiation (message 3-4).
+ * <p>The scenario file carries the Task-T slot schema and the two parameter maps driving the 4-message flow: one with a
+ * missing required param (triggering the server-side information negotiation) and one with the params filled in
+ * (completing the negotiation). Keeping the data in a resource file — the same pattern as the subscribe-incident
+ * sample's {@code scenario.json} — means the demo scenario changes without touching Java code: edit the JSON (or point
+ * the loader at another file with the same shape) and the whole flow, from slot extraction to the diagnosis text,
+ * adapts to the new inputs.
+ *
+ * <p>The slot schema mirrors {@code slots/Task-T/network-layer/private-line-complaint/.../slot.json}; when the bundled
+ * schema changes, copy the updated schema into this scenario file.
  *
  * @since 2026-08
  */
 public final class ScenarioData {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    private static final String SCENARIO_RESOURCE = "sample/negotiation/scenario.json";
+
     private ScenarioData() {}
 
     /** Slot schema describing the Task-T parameters (passed to validateAndFillingTaskData). */
-    public static final Map<String, Object> TASK_SCHEMA = Map.of(
-            "type", "object",
-            "properties",
-                    Map.of(
-                            "任务对象", Map.of("type", "string"),
-                            "任务上下文", Map.of("type", "string")),
-            "required", List.of("任务上下文"));
-
-    /**
-     * Scenario data with missing required params: the access port name is empty and the complaint category is blank,
-     * which triggers the server-side information negotiation.
-     */
-    public static Map<String, Object> missingParams() {
-        return Map.of(
-                "任务对象",
-                "",
-                "任务上下文",
-                "2. 问题发生时间：2026-05-11T08:21:46Z\n"
-                        + "3. OSS侧事件流水号：event-id-20260511-09013\n"
-                        + "4. 投诉详情：深圳访问广州响应延迟骤升，交易接口频繁报连接超时");
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> taskSchema() {
+        return (Map<String, Object>) scenarioMap().get("task_schema");
     }
 
     /**
-     * Scenario data with all params filled in: the access port name and complaint category are provided, completing the
-     * negotiation so the server can run the diagnosis.
+     * Scenario data with a missing required param: the {@code 任务对象} slot is empty, which triggers the server-side
+     * information negotiation.
      */
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> missingParams() {
+        return (Map<String, Object>) scenarioMap().get("missing_params");
+    }
+
+    /** Scenario data with all params filled in, completing the negotiation so the server can run the diagnosis. */
+    @SuppressWarnings("unchecked")
     public static Map<String, Object> filledParams() {
-        return Map.of(
-                "任务对象",
-                "P781-珠江新城-PTN7900-23-TPA1EG24-17",
-                "任务上下文",
-                "1. 投诉分类：专线质差\n"
-                        + "2. 问题发生时间：2026-05-11T08:21:46Z\n"
-                        + "3. OSS侧事件流水号：event-id-20260511-09013\n"
-                        + "4. 投诉详情：深圳访问广州响应延迟骤升，交易接口频繁报连接超时");
+        return (Map<String, Object>) scenarioMap().get("filled_params");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> scenarioMap() {
+        try (InputStream stream = ScenarioData.class.getClassLoader().getResourceAsStream(SCENARIO_RESOURCE)) {
+            if (stream == null) {
+                throw new IllegalStateException("Scenario resource not found: " + SCENARIO_RESOURCE);
+            }
+            Map<String, Object> scenario = MAPPER.readValue(stream, new TypeReference<Map<String, Object>>() {});
+            return scenario == null ? Map.of() : scenario;
+        } catch (IOException exception) {
+            throw new UncheckedIOException("Failed to read scenario resource: " + SCENARIO_RESOURCE, exception);
+        }
     }
 }
