@@ -421,12 +421,14 @@ The content layer is stateless. It deliberately does not own a session state mac
 
 All thirteen methods exist on both `A2ATClient` and `A2ATServer` with identical signatures and semantics.
 
+Every method that identifies a template takes the value type `net.openan.a2at.sdk.core.validation.TemplateUri` instead of a raw string. A `TemplateUri` is always well-formed — its constructor validates the extension name, path segments, and version — so malformed URIs cannot reach these APIs. Build one with `TemplateUri.of("Negotiation-T", "v1", "information-negotiation", "propose")`, or better, use the constants in `StandardTemplates` from the same package (for example `StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE`, whose `uri()` is `Negotiation-T/information-negotiation/propose/v1`). When a URI string arrives from outside the code, `TemplateUri.parse(String)` returns an `Optional<TemplateUri>` and never throws.
+
 **Generation from typed data — deterministic, never calls an LLM:**
 
 ```java
-MetadataContent generateNegotiationProposePromptFromData(NegotiationProposeData data, String templateUri)
-MetadataContent generateNegotiationAcceptPromptFromData(NegotiationEndingData data, String templateUri)
-MetadataContent generateNegotiationRejectPromptFromData(NegotiationEndingData data, String templateUri)
+MetadataContent generateNegotiationProposePromptFromData(NegotiationProposeData data, TemplateUri templateUri)
+MetadataContent generateNegotiationAcceptPromptFromData(NegotiationEndingData data, TemplateUri templateUri)
+MetadataContent generateNegotiationRejectPromptFromData(NegotiationEndingData data, TemplateUri templateUri)
 ```
 
 The typed content is validated, dispatched to the generator of the negotiation type addressed by the template URI, and rendered from that template. The accept variant requires `content.conclusion() == ACCEPT`, the reject variant `REJECT`; a mismatched conclusion (including `ABORT`) is rejected with `IllegalArgumentException` as a programming error.
@@ -434,9 +436,9 @@ The typed content is validated, dispatched to the generator of the negotiation t
 **Generation from free text — one LLM extraction step with configurable retry:**
 
 ```java
-MetadataContent generateNegotiationProposePromptFromText(String text, NegotiationContext context, String templateUri)
-MetadataContent generateNegotiationAcceptPromptFromText(String text, NegotiationContext context, String templateUri)
-MetadataContent generateNegotiationRejectPromptFromText(String text, NegotiationContext context, String templateUri)
+MetadataContent generateNegotiationProposePromptFromText(String text, NegotiationContext context, TemplateUri templateUri)
+MetadataContent generateNegotiationAcceptPromptFromText(String text, NegotiationContext context, TemplateUri templateUri)
+MetadataContent generateNegotiationRejectPromptFromText(String text, NegotiationContext context, TemplateUri templateUri)
 ```
 
 The template is loaded before the LLM call; a missing template fails fast without consuming an LLM request. The LLM step extracts the typed content from the free text constrained by the template URI, then rendering proceeds deterministically like the from-data variant. The `NegotiationContext` is injected into the rendered message without any LLM involvement. The extraction step is retried up to the configured attempt limit on the retryable failure codes (see 1.10.5).
@@ -444,9 +446,9 @@ The template is loaded before the LLM call; a missing template fails fast withou
 **Compliance checking and parameter extraction:**
 
 ```java
-FilledParamData validateAndFillingProposeData(String prompt, Map<String, Object> schema, String templateUri)
-FilledParamData validateAndFillingAcceptData(String prompt, Map<String, Object> schema, String templateUri)
-FilledParamData validateAndFillingRejectData(String prompt, Map<String, Object> schema, String templateUri)
+FilledParamData validateAndFillingProposeData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateAndFillingAcceptData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateAndFillingRejectData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
 ```
 
 The pipeline runs in a fixed order:
@@ -460,13 +462,13 @@ The pipeline runs in a fixed order:
 
 ```java
 List<PromptTemplate> getPrompts()   // templates of ALL extensions for the configured language, sorted by URI
-Optional<PromptTemplate> getPrompt(String templateUri)  // one template by URI across all extensions; empty on miss
+Optional<PromptTemplate> getPrompt(TemplateUri templateUri)  // one template by URI across all extensions; empty on miss
 
 List<PromptTemplate> getNegotiationPrompts()   // negotiation templates of the configured language, fixed order
-Optional<PromptTemplate> getNegotiationPrompt(String templateUri)  // one negotiation template by URI; empty on miss
+Optional<PromptTemplate> getNegotiationPrompt(TemplateUri templateUri)  // one negotiation template by URI; empty on miss
 ```
 
-A missing template or an unusable URI yields an empty result with a warning log. `PromptTemplate` is a record `(uri, description, content)`. The generic pair discovers the extension directories from the bundled resource tree itself — a template directory added under `prompt_resources/templates/` (for example a future `Authorization-T/`) is listed automatically without code changes. Local templates under the configured local resource root override built-in templates of the same path. Note that the SDK does not yet bundle Authorization-T template resources; `generateAuthPromptFromText` / `generateAuthPromptFromDataWithSchema` answer `template_not_found` under the classpath source until such templates are added or provided through the local resource root.
+A missing template yields an empty result with a warning log; because the argument is a validated `TemplateUri`, an unusable URI cannot occur, and a null argument raises `NullPointerException`. `PromptTemplate` is a record `(uri, description, content)`. The generic pair discovers the extension directories from the bundled resource tree itself — a template directory added under `prompt_resources/templates/` (for example a future `Authorization-T/`) is listed automatically without code changes. Local templates under the configured local resource root override built-in templates of the same path. Note that the SDK does not yet bundle Authorization-T template resources; `generateAuthPromptFromText` / `generateAuthPromptFromDataWithSchema` answer `template_not_found` under the classpath source until such templates are added or provided through the local resource root.
 
 ### 1.10.3 Template URIs and Custom Templates
 
@@ -476,7 +478,7 @@ The template URI format is:
 Negotiation-T/{type}-negotiation/{phase}/v1
 ```
 
-where `{type}` is `information`, `target`, or `feasibility`, `{phase}` is `propose` or `accept-reject`, and the trailing `v1` is the template version (the default version). URI parsing never throws: `NegotiationReference.tryParse` returns an `Optional<NegotiationReference>`, and a null, blank or malformed URI (wrong segment count, prefix, version, type or phase segment) simply yields an empty result. Six built-in templates ship with the SDK, one per combination, each in `zh-CN` and `en-US`:
+where `{type}` is `information`, `target`, or `feasibility`, `{phase}` is `propose` or `accept-reject`, and the trailing `v1` is the template version (the default version). The facade APIs take this as the typed `TemplateUri` value; one built-in constant exists per template in `StandardTemplates`. String-level parsing never throws: `TemplateUri.parse(String)` returns an `Optional<TemplateUri>`, and `NegotiationReference.tryParse` returns an `Optional<NegotiationReference>` — a null, blank or malformed URI (wrong segment count, prefix, version, type or phase segment) simply yields an empty result. Six built-in templates ship with the SDK, one per combination, each in `zh-CN` and `en-US`:
 
 | Template URI | Purpose |
 |--|--|
@@ -531,7 +533,7 @@ All SDK processing failures share one root, while programming errors stay outsid
   - `PromptComplianceCheckException` — a compliance-check failure carrying the code and the compliance stage (`getStage()`); raised by the server-side compliance pipeline with the codes `processed_prompt_parse_error`, `slot_validation_error` and `template_not_found`.
   - The remaining processing failures — prompt generation (`PromptGenerationException`), content validation (`ContentValidationException`), template rendering (`TaskPromptRenderException`), resource resolution (`ResourceNotFoundException`, `ConfigFileNotFoundException`), scenario recognition (`ScenarioRecognitionException`) and negotiation state access (`NegotiationStateException`) — are part of the same tree.
 
-Programming errors — argument-contract violations by the caller — intentionally stay **outside** the `A2ATError` tree, as standard JDK exceptions, so a generic `catch (A2ATError)` handler cannot swallow them: a null argument raises `NullPointerException`, and a blank, malformed or semantically contradictory argument (blank context id, malformed template URI, phase or conclusion mismatch, unsupported language) raises `IllegalArgumentException`. The former `NegotiationContentException` has been removed; the violations it used to report now surface as these standard exceptions, and each facade method documents them with `@throws` tags.
+Programming errors — argument-contract violations by the caller — intentionally stay **outside** the `A2ATError` tree, as standard JDK exceptions, so a generic `catch (A2ATError)` handler cannot swallow them: a null argument raises `NullPointerException`, and a blank or semantically contradictory argument (blank context id, invalid segments passed to the `TemplateUri` constructor, phase or conclusion mismatch, unsupported language) raises `IllegalArgumentException`. The former `NegotiationContentException` has been removed; the violations it used to report now surface as these standard exceptions, and each facade method documents them with `@throws` tags.
 
 Error codes and their meaning:
 
@@ -566,6 +568,7 @@ import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.exception.A2ATParamExtractionError;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
 import net.openan.a2at.sdk.negotiation.content.*;
 import net.openan.a2at.sdk.server.A2ATServer;
 
@@ -581,7 +584,7 @@ InfoProposeContent content = new InfoProposeContent(
 
 MetadataContent propose = client.generateNegotiationProposePromptFromData(
         new NegotiationProposeData(context, content),
-        "Negotiation-T/information-negotiation/propose/v1");
+        StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE);
 
 // This two-key map travels in the A2A message metadata.
 Map<String, String> metadata = propose.buildMetadataContent();
@@ -600,7 +603,7 @@ Map<String, Object> schema = Map.of(
 
 try {
     FilledParamData params = server.validateAndFillingProposeData(
-            propose.promptText(), schema, "Negotiation-T/information-negotiation/propose/v1");
+            propose.promptText(), schema, StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE);
     // params.data() holds the extracted parameters plus the context parameters.
 } catch (A2ATParamExtractionError failure) {
     // Branch on failure.getCode(): negotiation_invalid_input, negotiation_rule_violation,
@@ -614,11 +617,11 @@ InfoEndingContent ending = new InfoEndingContent(
 
 MetadataContent accept = server.generateNegotiationAcceptPromptFromData(
         new NegotiationEndingData(context, ending),
-        "Negotiation-T/information-negotiation/accept-reject/v1");
+        StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT);
 
-// The client validates the accept message the same way, with the accept-reject URI:
+// The client validates the accept message the same way, with the accept-reject template:
 // client.validateAndFillingAcceptData(accept.promptText(), schema,
-//         "Negotiation-T/information-negotiation/accept-reject/v1");
+//         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT);
 ```
 
 When modifying the negotiation content layer, run:

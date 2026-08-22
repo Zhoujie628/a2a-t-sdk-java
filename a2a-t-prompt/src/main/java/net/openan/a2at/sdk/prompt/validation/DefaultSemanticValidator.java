@@ -20,6 +20,8 @@ import net.openan.a2at.sdk.core.validation.ValidationResult;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +50,9 @@ public final class DefaultSemanticValidator implements SemanticValidator<Templat
      * @throws net.openan.a2at.sdk.core.exception.ResourceNotFoundException if prompt resources are missing
      */
     public DefaultSemanticValidator(
-            LLMClient llmClient, String language, PromptResourceAccess promptResourceAccess) {
+            @Nullable LLMClient llmClient,
+            @NonNull String language,
+            @NonNull PromptResourceAccess promptResourceAccess) {
         this.llmClient = llmClient;
         this.systemPrompt = promptResourceAccess.loadPrompt("content_validation", language, "system");
         this.userPromptTemplate = promptResourceAccess.loadPrompt("content_validation", language, "user");
@@ -56,7 +60,8 @@ public final class DefaultSemanticValidator implements SemanticValidator<Templat
     }
 
     @Override
-    public ValidationResult validate(String prompt, Map<String, Object> schema, TemplateUri reference) {
+    public ValidationResult validate(
+            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri reference) {
         if (llmClient == null) {
             throw new ContentValidationException(
                     A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR,

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
@@ -29,27 +30,28 @@ import org.junit.jupiter.api.Test;
 /**
  * Verifies the programming-error matrix of the from-data generation as one table-driven suite.
  *
- * <p>Every row of the input-validation matrix of the from-data variants — method-data mismatch, malformed or
- * mismatching template URIs, phase-conclusion mismatch, missing required fields and empty conditional content — fails
- * with a standard {@link NullPointerException} (pure null arguments) or {@link IllegalArgumentException} (blank,
- * malformed, range and semantic-contract violations) that is not part of the SDK processing-error hierarchy and
- * carries an English message pointing at the offending input. No row ever reaches the LLM.
+ * <p>Every row of the input-validation matrix of the from-data variants — method-data mismatch, template URIs that
+ * do not address a negotiation template of the expected phase, phase-conclusion mismatch, missing required fields and
+ * empty conditional content — fails with a standard {@link NullPointerException} (pure null arguments) or
+ * {@link IllegalArgumentException} (blank, range and semantic-contract violations) that is not part of the SDK
+ * processing-error hierarchy and carries an English message pointing at the offending input. No row ever reaches the
+ * LLM. Structural URI malformation is impossible by construction of {@link TemplateUri} and is therefore not a row.
  */
 class FromDataProgrammingErrorMatrixTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE;
 
-    private static final String INFORMATION_ACCEPT_URI = StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri();
+    private static final TemplateUri INFORMATION_ACCEPT_URI = StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT;
 
-    private static final String TARGET_PROPOSE_URI = StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri TARGET_PROPOSE_URI = StandardTemplates.TARGET_NEGOTIATION_PROPOSE;
 
-    private static final String FEASIBILITY_PROPOSE_URI = StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri FEASIBILITY_PROPOSE_URI = StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE;
 
-    private static final String FEASIBILITY_ACCEPT_URI = StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri();
+    private static final TemplateUri FEASIBILITY_ACCEPT_URI = StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT;
 
-    private static final String TARGET_ACCEPT_URI = StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri();
+    private static final TemplateUri TARGET_ACCEPT_URI = StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT;
 
     private final CountingClient llm = new CountingClient();
 
@@ -64,7 +66,7 @@ class FromDataProgrammingErrorMatrixTest {
 
         // The propose-versus-ending family mismatch of UT-GEN-002 is deliberately absent here: the typed data records
         // make that mismatch a compile-time error at the facade, so it cannot occur at runtime.
-        assertEquals(24, matrix.size(), "the full matrix must be exercised");
+        assertEquals(22, matrix.size(), "the full matrix must be exercised");
         for (MatrixRow row : matrix) {
             RuntimeException failure = assertThrows(
                     row.expectedException(), () -> row.call().get(), "row must fail: " + row.label());
@@ -213,54 +215,40 @@ class FromDataProgrammingErrorMatrixTest {
                         IllegalArgumentException.class,
                         "must not be blank"),
                 new MatrixRow(
-                        "template URI with too few segments",
-                        () -> orchestrator.generateProposeFromData(
-                                new NegotiationProposeData(context, informationProposeContent()),
-                                "information-negotiation/propose"),
-                        IllegalArgumentException.class,
-                        "Template URI is malformed or contradicts the expected phase PROPOSE (propose)"),
-                new MatrixRow(
-                        "template URI with too many segments",
-                        () -> orchestrator.generateProposeFromData(
-                                new NegotiationProposeData(context, informationProposeContent()),
-                                "Negotiation-T/information-negotiation/propose/v1/extra"),
-                        IllegalArgumentException.class,
-                        "Template URI is malformed or contradicts the expected phase PROPOSE (propose)"),
-                new MatrixRow(
                         "template URI with wrong prefix",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                "Task-T/information-negotiation/propose/v1"),
+                                TemplateUri.of("Task-T", "v1", "information-negotiation", "propose")),
                         IllegalArgumentException.class,
-                        "Template URI is malformed or contradicts the expected phase PROPOSE (propose)"),
+                        "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
                 new MatrixRow(
                         "template URI with wrong version",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                "Negotiation-T/information-negotiation/propose/v2"),
+                                TemplateUri.of("Negotiation-T", "v2", "information-negotiation", "propose")),
                         IllegalArgumentException.class,
-                        "Template URI is malformed or contradicts the expected phase PROPOSE (propose)"),
+                        "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
                 new MatrixRow(
                         "template URI with underscore type segment",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                "Negotiation-T/information_negotiation/propose/v1"),
+                                TemplateUri.of("Negotiation-T", "v1", "information_negotiation", "propose")),
                         IllegalArgumentException.class,
-                        "Template URI is malformed or contradicts the expected phase PROPOSE (propose)"),
+                        "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
                 new MatrixRow(
                         "template URI with unknown type",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                "Negotiation-T/unknown-negotiation/propose/v1"),
+                                TemplateUri.of("Negotiation-T", "v1", "unknown-negotiation", "propose")),
                         IllegalArgumentException.class,
-                        "Template URI is malformed or contradicts the expected phase PROPOSE (propose)"),
+                        "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
                 new MatrixRow(
                         "template URI phase contradicts the method",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
                                 INFORMATION_ACCEPT_URI),
                         IllegalArgumentException.class,
-                        "Template URI is malformed or contradicts the expected phase PROPOSE (propose)"),
+                        "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
                 new MatrixRow(
                         "template URI type contradicts the content type",
                         () -> orchestrator.generateProposeFromData(

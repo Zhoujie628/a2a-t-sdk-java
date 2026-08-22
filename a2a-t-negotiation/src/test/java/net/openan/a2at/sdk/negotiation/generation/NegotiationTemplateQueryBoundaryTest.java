@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,9 +26,9 @@ import org.slf4j.LoggerFactory;
  * Verifies the boundary behavior of the template query API of the negotiation content layer.
  *
  * <p>The list query returns exactly the six built-in templates of the configured language in the fixed type and phase
- * order; the single-template query resolves a valid URI into its template record, and answers a missing or malformed
- * URI with an empty result plus a {@code negotiation_template_not_found} warning that mentions the language
- * configuration hint. Neither query ever throws.
+ * order; the single-template query resolves a valid URI into its template record, and answers a URI that addresses no
+ * negotiation template with an empty result plus a {@code negotiation_template_not_found} warning that mentions the
+ * language configuration hint. Neither query ever throws.
  */
 class NegotiationTemplateQueryBoundaryTest {
 
@@ -86,7 +87,7 @@ class NegotiationTemplateQueryBoundaryTest {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(language);
 
         Optional<PromptTemplate> template =
-                orchestrator.getNegotiationPrompt(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri());
+                orchestrator.getNegotiationPrompt(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE);
 
         assertTrue(template.isPresent());
         assertEquals(
@@ -103,18 +104,18 @@ class NegotiationTemplateQueryBoundaryTest {
     void singleQueryAnswersAMissingUriWithEmptyAndAWarning() {
         NegotiationGenerationOrchestrator orchestrator = orchestrator("zh-CN");
 
-        Optional<PromptTemplate> template =
-                orchestrator.getNegotiationPrompt("Negotiation-T/unknown-negotiation/propose/v1");
+        Optional<PromptTemplate> template = orchestrator.getNegotiationPrompt(
+                TemplateUri.of("Negotiation-T", "v1", "unknown-negotiation", "propose"));
 
         assertTrue(template.isEmpty());
         assertTrue(hasWarning("negotiation_template_not_found", "A2AT_LANGUAGE"));
     }
 
     @Test
-    void singleQueryAnswersAMalformedUriWithEmptyAndAWarning() {
+    void singleQueryAnswersANonNegotiationUriWithEmptyAndAWarning() {
         NegotiationGenerationOrchestrator orchestrator = orchestrator("zh-CN");
 
-        Optional<PromptTemplate> template = orchestrator.getNegotiationPrompt("malformed-uri");
+        Optional<PromptTemplate> template = orchestrator.getNegotiationPrompt(StandardTemplates.ENERGY_SAVING);
 
         assertTrue(template.isEmpty());
         assertTrue(hasWarning("negotiation_template_not_found", "A2AT_LANGUAGE"));

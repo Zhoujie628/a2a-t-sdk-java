@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Stream;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
@@ -31,7 +32,7 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 class NegotiationLanguageSwitchTest {
 
-    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE;
 
     static Stream<GoldenCase> goldenCases() {
         return Stream.of(GoldenCase.values());
@@ -85,8 +86,8 @@ class NegotiationLanguageSwitchTest {
                 .getNegotiationPrompt(INFORMATION_PROPOSE_URI)
                 .orElseThrow();
 
-        assertEquals(INFORMATION_PROPOSE_URI, zhCnTemplate.uri());
-        assertEquals(INFORMATION_PROPOSE_URI, enUsTemplate.uri());
+        assertEquals(INFORMATION_PROPOSE_URI.uri(), zhCnTemplate.uri());
+        assertEquals(INFORMATION_PROPOSE_URI.uri(), enUsTemplate.uri());
         assertNotEquals(zhCnTemplate.content(), enUsTemplate.content());
         assertEquals(
                 orchestrator(GoldenInputs.ZH_CN).getNegotiationPrompts().stream()

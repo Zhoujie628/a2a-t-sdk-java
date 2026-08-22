@@ -20,6 +20,7 @@ import java.util.Map;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.model.LlmConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
@@ -64,7 +65,7 @@ class FromTextLlmPipelineTest {
 
     private static final String EN_US = GoldenInputs.EN_US;
 
-    private static final String INFORMATION_PROPOSE_URI = GoldenCase.INFORMATION_PROPOSE.templateUri();
+    private static final TemplateUri INFORMATION_PROPOSE_URI = GoldenCase.INFORMATION_PROPOSE.template();
 
     private final ListAppender<ILoggingEvent> orchestratorAppender = new ListAppender<>();
 
@@ -108,7 +109,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(ZH_CN, llm, 3);
 
         MetadataContent fromText = orchestrator.generateProposeFromText(
-                "请补充节能区域、节能速率保障目标与VLANId信息。", goldenCase.context(), goldenCase.templateUri());
+                "请补充节能区域、节能速率保障目标与VLANId信息。", goldenCase.context(), goldenCase.template());
 
         assertEquals(1, llm.calls, "from-text generation must run exactly one content extraction call");
         assertEquals(goldenCase.templateUri(), fromText.templateUri());
@@ -202,7 +203,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(ZH_CN, llm, 3);
 
         MetadataContent result =
-                orchestrator.generateProposeFromText("请提供区域。", goldenCase.context(), goldenCase.templateUri());
+                orchestrator.generateProposeFromText("请提供区域。", goldenCase.context(), goldenCase.template());
 
         assertEquals(3, llm.calls, "two failures followed by one success must result in three calls");
         assertEquals(readGoldenFixture(goldenCase, ZH_CN), result.promptText());
@@ -308,7 +309,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> orchestrator.generateAcceptFromText(
-                        "请接受。", GoldenCase.INFORMATION_ACCEPT.context(), GoldenCase.INFORMATION_ACCEPT.templateUri()));
+                        "请接受。", GoldenCase.INFORMATION_ACCEPT.context(), GoldenCase.INFORMATION_ACCEPT.template()));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, failure.getCode());
         assertEquals(1, llm.calls, "non-retryable failures must not be attempted again");
@@ -374,10 +375,10 @@ class FromTextLlmPipelineTest {
                 () -> orchestrator.generateProposeFromText(
                         "请提供区域。",
                         GoldenCase.INFORMATION_PROPOSE.context(),
-                        GoldenCase.INFORMATION_ACCEPT.templateUri()));
+                        GoldenCase.INFORMATION_ACCEPT.template()));
 
         assertTrue(
-                failure.getMessage().contains("Template URI is malformed or contradicts the expected phase PROPOSE"),
+                failure.getMessage().contains("Template URI does not address a negotiation template of the expected phase PROPOSE"),
                 "the failure must point at the template URI but was: " + failure.getMessage());
         assertEquals(0, llm.calls);
     }
@@ -440,7 +441,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationOrchestrator recoveringOrchestrator = orchestrator(ZH_CN, recovering, large.maxAttempts());
 
         MetadataContent result = recoveringOrchestrator.generateProposeFromText(
-                "请提供区域。", goldenCase.context(), goldenCase.templateUri());
+                "请提供区域。", goldenCase.context(), goldenCase.template());
 
         assertEquals(10, recovering.calls, "nine failed attempts plus one success must consume the clamped limit");
         assertEquals(readGoldenFixture(goldenCase, ZH_CN), result.promptText());
@@ -458,7 +459,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> failingOrchestrator.generateProposeFromText(
-                        "请提供区域。", goldenCase.context(), goldenCase.templateUri()));
+                        "请提供区域。", goldenCase.context(), goldenCase.template()));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_CONTENT_EXTRACT_FAILED, failure.getCode());
         assertEquals(1, failing.calls);
@@ -494,7 +495,7 @@ class FromTextLlmPipelineTest {
                 orchestrator(config.prompt().language(), llm, config.llm().maxAttempts());
 
         MetadataContent message =
-                orchestrator.generateProposeFromText(inputText, goldenCase.context(), goldenCase.templateUri());
+                orchestrator.generateProposeFromText(inputText, goldenCase.context(), goldenCase.template());
 
         assertEquals(1, llm.calls, "the en-US from-text chain needs exactly one extraction call");
         assertEquals(readGoldenFixture(goldenCase, EN_US), message.promptText());
@@ -508,7 +509,7 @@ class FromTextLlmPipelineTest {
         FilledParamData filled = orchestrator.validateAndFillingProposeData(
                 message.promptText(),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
-                goldenCase.templateUri());
+                goldenCase.template());
 
         assertEquals(2, llm.calls, "the validation pipeline adds exactly one semantic validation call");
         assertEquals(goldenCase.context().id(), filled.data().get("id"));
@@ -553,9 +554,9 @@ class FromTextLlmPipelineTest {
     private static MetadataContent generateFromText(
             NegotiationGenerationOrchestrator orchestrator, GoldenCase goldenCase, String text) {
         return switch (goldenCase.phase()) {
-            case PROPOSE -> orchestrator.generateProposeFromText(text, goldenCase.context(), goldenCase.templateUri());
-            case ACCEPT -> orchestrator.generateAcceptFromText(text, goldenCase.context(), goldenCase.templateUri());
-            case REJECT -> orchestrator.generateRejectFromText(text, goldenCase.context(), goldenCase.templateUri());
+            case PROPOSE -> orchestrator.generateProposeFromText(text, goldenCase.context(), goldenCase.template());
+            case ACCEPT -> orchestrator.generateAcceptFromText(text, goldenCase.context(), goldenCase.template());
+            case REJECT -> orchestrator.generateRejectFromText(text, goldenCase.context(), goldenCase.template());
         };
     }
 

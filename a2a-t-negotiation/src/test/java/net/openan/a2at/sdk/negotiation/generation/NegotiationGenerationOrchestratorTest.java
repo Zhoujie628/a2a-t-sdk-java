@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.llm.LLMClient;
@@ -30,7 +31,9 @@ class NegotiationGenerationOrchestratorTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri INFORMATION_PROPOSE = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE;
+
+    private static final String INFORMATION_PROPOSE_URI = INFORMATION_PROPOSE.uri();
 
     @Test
     void generatesInformationProposeFromDataInChinese() {
@@ -39,7 +42,7 @@ class NegotiationGenerationOrchestratorTest {
                         new NegotiationProposeData(
                                 new NegotiationContext(UUID, 1, 5),
                                 new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
-                        INFORMATION_PROPOSE_URI);
+                        INFORMATION_PROPOSE);
 
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertEquals(NegotiationHandler.NEGOTIATION_T_URI, result.extensionUri());
@@ -63,7 +66,7 @@ class NegotiationGenerationOrchestratorTest {
                         new NegotiationProposeData(
                                 new NegotiationContext(UUID, 2, 5),
                                 new InfoProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
-                        INFORMATION_PROPOSE_URI);
+                        INFORMATION_PROPOSE);
 
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertFalse(result.promptText().isBlank());
@@ -82,7 +85,7 @@ class NegotiationGenerationOrchestratorTest {
                 .build();
 
         MetadataContent result = orchestrator.generateProposeFromText(
-                "请提供故障发生时间。", new NegotiationContext(UUID, 2, 5), INFORMATION_PROPOSE_URI);
+                "请提供故障发生时间。", new NegotiationContext(UUID, 2, 5), INFORMATION_PROPOSE);
 
         assertEquals(1, llm.calls);
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
@@ -104,12 +107,12 @@ class NegotiationGenerationOrchestratorTest {
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
                         new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
-                INFORMATION_PROPOSE_URI);
+                INFORMATION_PROPOSE);
 
         FilledParamData filled = orchestrator.validateAndFillingProposeData(
                 message.promptText(),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
-                INFORMATION_PROPOSE_URI);
+                INFORMATION_PROPOSE);
 
         assertEquals(1, llm.calls);
         assertEquals(UUID, filled.data().get("id"));
@@ -126,15 +129,16 @@ class NegotiationGenerationOrchestratorTest {
 
     @Test
     void queriesSingleTemplateByUri() {
-        assertTrue(
-                zhOrchestrator().getNegotiationPrompt(INFORMATION_PROPOSE_URI).isPresent());
+        assertTrue(zhOrchestrator().getNegotiationPrompt(INFORMATION_PROPOSE).isPresent());
         assertTrue(zhOrchestrator()
-                .getNegotiationPrompt(StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri())
+                .getNegotiationPrompt(StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT)
                 .isPresent());
-        assertFalse(zhOrchestrator()
-                .getNegotiationPrompt("Negotiation-T/unknown-negotiation/propose/v1")
-                .isPresent());
-        assertFalse(zhOrchestrator().getNegotiationPrompt("malformed-uri").isPresent());
+        assertFalse(
+                zhOrchestrator()
+                        .getNegotiationPrompt(
+                                TemplateUri.of("Negotiation-T", "v1", "unknown-negotiation", "propose"))
+                        .isPresent());
+        assertFalse(zhOrchestrator().getNegotiationPrompt(StandardTemplates.ENERGY_SAVING).isPresent());
     }
 
     @Test
@@ -147,7 +151,7 @@ class NegotiationGenerationOrchestratorTest {
                 .build();
 
         MetadataContent result = orchestrator.generateProposeFromText(
-                "请提供区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
+                "请提供区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE);
 
         assertEquals(3, llm.calls);
         assertFalse(result.promptText().isBlank());
@@ -165,7 +169,7 @@ class NegotiationGenerationOrchestratorTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> orchestrator.generateProposeFromText(
-                        "请提供区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI));
+                        "请提供区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE));
 
         assertEquals(2, llm.calls);
         assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, failure.getCode());
@@ -184,7 +188,7 @@ class NegotiationGenerationOrchestratorTest {
                         new NegotiationProposeData(
                                 new NegotiationContext(UUID, 1, 5),
                                 new InfoProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
-                        INFORMATION_PROPOSE_URI));
+                        INFORMATION_PROPOSE));
         assertEquals(A2ATErrorCodes.TEMPLATE_NOT_FOUND, generationFailure.getCode());
 
         NegotiationGenerationOrchestrator validationOrchestrator = NegotiationGenerationOrchestratorBuilder.builder()
@@ -200,7 +204,7 @@ class NegotiationGenerationOrchestratorTest {
                 () -> validationOrchestrator.validateAndFillingProposeData(
                         "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
                         Map.of("type", "object"),
-                        INFORMATION_PROPOSE_URI));
+                        INFORMATION_PROPOSE));
         assertEquals(A2ATErrorCodes.TEMPLATE_NOT_FOUND, extractionFailure.getCode());
     }
 
@@ -218,35 +222,37 @@ class NegotiationGenerationOrchestratorTest {
                 () -> orchestrator.validateAndFillingProposeData(
                         "plain text without any negotiation section",
                         Map.of("type", "object"),
-                        INFORMATION_PROPOSE_URI));
+                        INFORMATION_PROPOSE));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, failure.getCode());
         assertEquals(0, llm.calls);
     }
 
     @Test
-    void rejectsMalformedTemplateUriAsAnIllegalArgument() {
-        IllegalArgumentException malformedUriFailure =
-                assertThrows(IllegalArgumentException.class, () -> zhOrchestrator()
-                        .generateProposeFromData(
-                                new NegotiationProposeData(
-                                        new NegotiationContext(UUID, 1, 5),
-                                        new InfoProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
-                                "information-negotiation/propose"));
-        assertTrue(malformedUriFailure
-                .getMessage()
-                .contains("Template URI is malformed or contradicts the expected phase PROPOSE (propose)"));
-
+    void rejectsTemplateUriThatDoesNotAddressTheExpectedPhase() {
         IllegalArgumentException phaseMismatchFailure =
                 assertThrows(IllegalArgumentException.class, () -> zhOrchestrator()
                         .generateProposeFromData(
                                 new NegotiationProposeData(
                                         new NegotiationContext(UUID, 1, 5),
                                         new InfoProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
-                                StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri()));
+                                StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT));
         assertTrue(phaseMismatchFailure
                 .getMessage()
-                .contains("Template URI is malformed or contradicts the expected phase PROPOSE (propose)"));
+                .contains("Template URI does not address a negotiation template of the expected phase PROPOSE"
+                        + " (propose)"));
+
+        IllegalArgumentException wrongExtensionFailure =
+                assertThrows(IllegalArgumentException.class, () -> zhOrchestrator()
+                        .generateProposeFromData(
+                                new NegotiationProposeData(
+                                        new NegotiationContext(UUID, 1, 5),
+                                        new InfoProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
+                                StandardTemplates.ENERGY_SAVING));
+        assertTrue(wrongExtensionFailure
+                .getMessage()
+                .contains("Template URI does not address a negotiation template of the expected phase PROPOSE"
+                        + " (propose)"));
     }
 
     private static NegotiationGenerationOrchestrator zhOrchestrator() {

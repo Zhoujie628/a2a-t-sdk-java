@@ -8,6 +8,7 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import net.openan.a2at.sdk.negotiation.validation.NegotiationSemanticValidator;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ class ValidateAndFillingSignatureContractTest {
             assertEquals(3, parameterTypes.length, methodName + " must take exactly three parameters");
             assertEquals(String.class, parameterTypes[0], methodName + " first parameter is the prompt text");
             assertEquals(Map.class, parameterTypes[1], methodName + " second parameter is the caller parameter schema");
-            assertEquals(String.class, parameterTypes[2], methodName + " third parameter is the template URI");
+            assertEquals(TemplateUri.class, parameterTypes[2], methodName + " third parameter is the template URI");
         }
     }
 

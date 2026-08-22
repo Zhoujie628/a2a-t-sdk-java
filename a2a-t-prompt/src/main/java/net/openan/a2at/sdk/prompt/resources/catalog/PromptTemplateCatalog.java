@@ -14,6 +14,7 @@ import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
@@ -21,6 +22,9 @@ import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 import net.openan.a2at.sdk.core.resources.PathSegments;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,9 +34,9 @@ import org.slf4j.LoggerFactory;
  * <p>The catalog enumerates the {@code templates/} tree of the bundled prompt resources by walking its directories,
  * so every extension directory that appears under {@code prompt_resources/templates/} — Task-T, Notification-T,
  * Authorization-T, Negotiation-T and any extension added later — is picked up without a hardcoded extension list.
- * A template file lives at {@code templates/<extension>/<version>/<scenario>[/<sub-template>]/<language>/template.md}
+ * A template file lives at {@code templates/<extensionName>/<pathSegments>/<templateVersion>/<language>/template.md}
  * and is addressed by the URI formed from the segments before the language, for example
- * {@code Negotiation-T/v1/information-negotiation/propose} or {@code Task-T/v1/energy-saving}.
+ * {@code Negotiation-T/information-negotiation/propose/v1} or {@code Task-T/network-layer/energy-saving/v1}.
  *
  * <p>A local file under the configured local resource root overrides the built-in classpath template of the same
  * path, and the classpath is the fallback otherwise. Both query methods never throw: a template or a root that cannot
@@ -66,7 +70,7 @@ public final class PromptTemplateCatalog {
      *     local template overrides
      * @throws IllegalArgumentException if the language is not a simple path segment
      */
-    public PromptTemplateCatalog(String language, String localRootDir) {
+    public PromptTemplateCatalog(@NonNull String language, @Nullable String localRootDir) {
         if (!PathSegments.isSimpleSegment(language)) {
             throw new IllegalArgumentException(
                     "Prompt template catalog language must be a non-blank simple path segment but was " + language
@@ -85,7 +89,7 @@ public final class PromptTemplateCatalog {
      *
      * @return loadable templates of the configured language sorted by URI; empty when none can be loaded
      */
-    public List<PromptTemplate> loadAll() {
+    public @NonNull List<PromptTemplate> loadAll() {
         Map<String, String> contentsByPath = new LinkedHashMap<>();
         try {
             contentsByPath.putAll(classpathTemplates());
@@ -118,16 +122,14 @@ public final class PromptTemplateCatalog {
     /**
      * Loads one template of the configured language by its URI, regardless of the extension.
      *
-     * @param templateUri template URI such as {@code Negotiation-T/v1/target-negotiation/propose} or
-     *     {@code Task-T/v1/energy-saving}
-     * @return the addressed template, or an empty optional when the URI is malformed or no template exists for it in
-     *     the configured language
+     * @param templateUri template URI such as {@code Negotiation-T/information-negotiation/propose/v1} or
+     *     {@code Task-T/network-layer/energy-saving/v1}
+     * @return the addressed template, or an empty optional when no template exists for it in the configured language
+     * @throws NullPointerException if the template URI is null
      */
-    public Optional<PromptTemplate> load(String templateUri) {
-        String uri = templateUri == null ? null : templateUri.strip();
-        if (!isCatalogableUri(uri)) {
-            return Optional.empty();
-        }
+    public Optional<PromptTemplate> load(@NonNull TemplateUri templateUri) {
+        Objects.requireNonNull(templateUri, "templateUri");
+        String uri = templateUri.uri();
         String relativePath = String.join("/", TEMPLATE_DIRECTORY, uri, language, TEMPLATE_FILE_NAME);
         try {
             String content = readTemplate(relativePath);

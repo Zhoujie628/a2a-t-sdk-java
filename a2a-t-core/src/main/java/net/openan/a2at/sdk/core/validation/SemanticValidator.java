@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.core.validation;
 
 import java.util.Map;
+import org.jspecify.annotations.NonNull;
 
 /**
  * LLM-backed semantic validator for content.
@@ -24,5 +25,6 @@ public interface SemanticValidator<T> {
      * @throws net.openan.a2at.sdk.core.exception.ResourceNotFoundException if the semantic validation prompt resources
      *     are missing
      */
-    ValidationResult validate(String prompt, Map<String, Object> schema, T reference);
+    @NonNull ValidationResult validate(
+            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull T reference);
 }

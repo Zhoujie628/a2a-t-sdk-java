@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
@@ -38,9 +39,9 @@ import org.junit.jupiter.api.Test;
  */
 class FeasibilityNegotiationScenarioTest {
 
-    private static final String FEASIBILITY_PROPOSE_URI = StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri FEASIBILITY_PROPOSE_URI = StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE;
 
-    private static final String FEASIBILITY_ACCEPT_URI = StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri();
+    private static final TemplateUri FEASIBILITY_ACCEPT_URI = StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT;
 
     @Test
     void feasibilityNegotiationRunsFromSemanticRejectionToATerminalAcceptance() throws IOException {

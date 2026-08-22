@@ -17,6 +17,7 @@ import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -47,8 +48,9 @@ class TaskPromptNegotiationCoexistenceTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI =
-            StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri INFORMATION_PROPOSE_TEMPLATE = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE;
+
+    private static final String INFORMATION_PROPOSE_URI = INFORMATION_PROPOSE_TEMPLATE.uri();
 
     private static final String TASK_T_MESSAGE = "## 任务类型(Task Type)\n"
             + "无线能效优化\n\n"
@@ -75,7 +77,7 @@ class TaskPromptNegotiationCoexistenceTest {
                 () -> server.validateAndFillingProposeData(
                         TASK_T_MESSAGE,
                         Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
-                        INFORMATION_PROPOSE_URI));
+                        INFORMATION_PROPOSE_TEMPLATE));
 
         assertEquals("negotiation_invalid_input", negotiationFailure.getCode());
         assertTrue(negotiationFailure.getMessage().contains("checkTaskPrompt"));
@@ -85,7 +87,7 @@ class TaskPromptNegotiationCoexistenceTest {
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
                         new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
-                INFORMATION_PROPOSE_URI);
+                INFORMATION_PROPOSE_TEMPLATE);
         assertEquals(INFORMATION_PROPOSE_URI, negotiationMessage.templateUri());
         assertTrue(negotiationMessage.promptText().contains("- id: " + UUID));
     }
@@ -105,7 +107,7 @@ class TaskPromptNegotiationCoexistenceTest {
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 2, 5),
                         new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
-                INFORMATION_PROPOSE_URI);
+                INFORMATION_PROPOSE_TEMPLATE);
         assertTrue(negotiationMessage.promptText().contains("- round: 2"));
 
         Map<String, Object> startedAgain = server.startNegotiation(NegotiationType.TARGET, "请澄清目标。", Map.of());

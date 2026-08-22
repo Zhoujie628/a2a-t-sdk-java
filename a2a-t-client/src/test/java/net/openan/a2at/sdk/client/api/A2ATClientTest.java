@@ -18,6 +18,7 @@ import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrc
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
@@ -257,13 +258,11 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
     void fromTextEntryPointsReturnMetadataContent() throws IOException {
         Path envFile = writeMinimalClientEnvWithoutRequiredSlots(TEST_MOCK_PROVIDER);
         A2ATClient client = new A2ATClient(envFile);
+        TemplateUri unconstrained = TemplateUri.of("Task-T", "v1", "network-layer", "unconstrained");
 
-        MetadataContent taskResult =
-                client.generateTaskPromptFromText("Please analyze Site A.", "Task-T/network-layer/unconstrained/v1");
-        MetadataContent authResult =
-                client.generateAuthPromptFromText("Authorize access.", "Task-T/network-layer/unconstrained/v1");
-        MetadataContent notificationResult =
-                client.generateNotificationPromptFromText("Report finished.", "Task-T/network-layer/unconstrained/v1");
+        MetadataContent taskResult = client.generateTaskPromptFromText("Please analyze Site A.", unconstrained);
+        MetadataContent authResult = client.generateAuthPromptFromText("Authorize access.", unconstrained);
+        MetadataContent notificationResult = client.generateNotificationPromptFromText("Report finished.", unconstrained);
 
         assertNotNull(taskResult);
         assertEquals("Task-T/network-layer/unconstrained/v1", taskResult.templateUri());
@@ -289,11 +288,11 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
         Map<String, Object> schema = Map.of("type", "object");
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING.uri());
+                client.generateTaskPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING);
         MetadataContent authResult =
-                client.generateAuthPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING.uri());
+                client.generateAuthPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING);
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING.uri());
+                client.generateNotificationPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING);
 
         assertNotNull(taskResult);
         assertEquals(StandardTemplates.ENERGY_SAVING.uri(), taskResult.templateUri());
@@ -315,13 +314,11 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
     void fromTextReturnsCorrectExtensionUriPerContentType() throws IOException {
         Path envFile = writeMinimalClientEnvWithoutRequiredSlots(TEST_MOCK_PROVIDER);
         A2ATClient client = new A2ATClient(envFile);
+        TemplateUri unconstrained = TemplateUri.of("Task-T", "v1", "network-layer", "unconstrained");
 
-        MetadataContent taskResult =
-                client.generateTaskPromptFromText("Please analyze Site A.", "Task-T/network-layer/unconstrained/v1");
-        MetadataContent authResult =
-                client.generateAuthPromptFromText("Authorize access.", "Task-T/network-layer/unconstrained/v1");
-        MetadataContent notificationResult =
-                client.generateNotificationPromptFromText("Report finished.", "Task-T/network-layer/unconstrained/v1");
+        MetadataContent taskResult = client.generateTaskPromptFromText("Please analyze Site A.", unconstrained);
+        MetadataContent authResult = client.generateAuthPromptFromText("Authorize access.", unconstrained);
+        MetadataContent notificationResult = client.generateNotificationPromptFromText("Report finished.", unconstrained);
 
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskResult.extensionUri());
         assertEquals(ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI, authResult.extensionUri());
@@ -336,11 +333,11 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
         Map<String, Object> schema = Map.of("type", "object");
 
         MetadataContent taskResult =
-                client.generateTaskPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING.uri());
+                client.generateTaskPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING);
         MetadataContent authResult =
-                client.generateAuthPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING.uri());
+                client.generateAuthPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING);
         MetadataContent notificationResult =
-                client.generateNotificationPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING.uri());
+                client.generateNotificationPromptFromDataWithSchema(data, schema, StandardTemplates.ENERGY_SAVING);
 
         assertEquals(ExtensionUriConstants.TASK_T_EXTENSION_URI, taskResult.extensionUri());
         assertEquals(ExtensionUriConstants.AUTHORIZATION_T_EXTENSION_URI, authResult.extensionUri());
@@ -348,43 +345,40 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
     }
 
     @Test
-    void fromTextThrowsOnInvalidTemplateUri() throws IOException {
+    void fromTextThrowsOnNullTemplateUri() throws IOException {
         Path envFile = writeMinimalLocalClientEnv();
         A2ATClient client = new A2ATClient(envFile);
 
-        IllegalArgumentException taskEx = assertThrows(
-                IllegalArgumentException.class,
-                () -> client.generateTaskPromptFromText("Please analyze Site A.", "../etc/passwd"));
-        assertFalse(A2ATError.class.isInstance(taskEx), "invalid template URI must stay outside the A2ATError tree");
-        IllegalArgumentException authEx = assertThrows(
-                IllegalArgumentException.class,
-                () -> client.generateAuthPromptFromText("Authorize access.", "../etc/passwd"));
-        assertFalse(A2ATError.class.isInstance(authEx), "invalid template URI must stay outside the A2ATError tree");
-        IllegalArgumentException notifEx = assertThrows(
-                IllegalArgumentException.class,
-                () -> client.generateNotificationPromptFromText("Report finished.", "../etc/passwd"));
-        assertFalse(A2ATError.class.isInstance(notifEx), "invalid template URI must stay outside the A2ATError tree");
+        NullPointerException taskEx =
+                assertThrows(NullPointerException.class, () -> client.generateTaskPromptFromText("Please analyze Site A.", null));
+        assertFalse(A2ATError.class.isInstance(taskEx), "null template URI must stay outside the A2ATError tree");
+        NullPointerException authEx =
+                assertThrows(NullPointerException.class, () -> client.generateAuthPromptFromText("Authorize access.", null));
+        assertFalse(A2ATError.class.isInstance(authEx), "null template URI must stay outside the A2ATError tree");
+        NullPointerException notifEx =
+                assertThrows(NullPointerException.class, () -> client.generateNotificationPromptFromText("Report finished.", null));
+        assertFalse(A2ATError.class.isInstance(notifEx), "null template URI must stay outside the A2ATError tree");
     }
 
     @Test
-    void fromDataWithSchemaThrowsOnInvalidTemplateUri() throws IOException {
+    void fromDataWithSchemaThrowsOnNullTemplateUri() throws IOException {
         Path envFile = writeMinimalLocalClientEnv();
         A2ATClient client = new A2ATClient(envFile);
         Map<String, Object> data = Map.of("site", "Site A");
         Map<String, Object> schema = Map.of("type", "object");
 
-        IllegalArgumentException taskEx = assertThrows(
-                IllegalArgumentException.class,
-                () -> client.generateTaskPromptFromDataWithSchema(data, schema, "../etc/passwd"));
-        assertFalse(A2ATError.class.isInstance(taskEx), "invalid template URI must stay outside the A2ATError tree");
-        IllegalArgumentException authEx = assertThrows(
-                IllegalArgumentException.class,
-                () -> client.generateAuthPromptFromDataWithSchema(data, schema, "../etc/passwd"));
-        assertFalse(A2ATError.class.isInstance(authEx), "invalid template URI must stay outside the A2ATError tree");
-        IllegalArgumentException notifEx = assertThrows(
-                IllegalArgumentException.class,
-                () -> client.generateNotificationPromptFromDataWithSchema(data, schema, "../etc/passwd"));
-        assertFalse(A2ATError.class.isInstance(notifEx), "invalid template URI must stay outside the A2ATError tree");
+        NullPointerException taskEx = assertThrows(
+                NullPointerException.class,
+                () -> client.generateTaskPromptFromDataWithSchema(data, schema, null));
+        assertFalse(A2ATError.class.isInstance(taskEx), "null template URI must stay outside the A2ATError tree");
+        NullPointerException authEx = assertThrows(
+                NullPointerException.class,
+                () -> client.generateAuthPromptFromDataWithSchema(data, schema, null));
+        assertFalse(A2ATError.class.isInstance(authEx), "null template URI must stay outside the A2ATError tree");
+        NullPointerException notifEx = assertThrows(
+                NullPointerException.class,
+                () -> client.generateNotificationPromptFromDataWithSchema(data, schema, null));
+        assertFalse(A2ATError.class.isInstance(notifEx), "null template URI must stay outside the A2ATError tree");
     }
 
     private static Path writeMinimalClientEnvWithoutRequiredSlots(String provider) throws IOException {

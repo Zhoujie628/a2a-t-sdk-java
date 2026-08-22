@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.llm.LLMClient;
@@ -36,7 +37,7 @@ class NegotiationExceptionTreeRootCatchTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE;
 
     @Test
     void exhaustedGenerationLlmFailureIsCatchableThroughTheCommonRoot() {
@@ -136,7 +137,7 @@ class NegotiationExceptionTreeRootCatchTest {
                     new NegotiationProposeData(
                             new NegotiationContext(UUID, 1, 5),
                             new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
-                    "malformed-template-uri");
+                    StandardTemplates.ENERGY_SAVING);
         } catch (A2ATError caughtByRoot) {
             fail("content programming errors must stay outside the A2ATError tree but were caught: "
                     + caughtByRoot.getMessage());
@@ -145,7 +146,7 @@ class NegotiationExceptionTreeRootCatchTest {
                     A2ATError.class.isInstance(expected),
                     "content programming errors must stay outside the A2ATError tree");
             assertTrue(
-                    expected.getMessage().contains("Template URI is malformed"),
+                    expected.getMessage().contains("Template URI does not address"),
                     "the failure must point at the template URI but was: " + expected.getMessage());
         }
     }

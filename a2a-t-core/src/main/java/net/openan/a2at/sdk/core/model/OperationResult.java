@@ -2,6 +2,8 @@ package net.openan.a2at.sdk.core.model;
 
 import java.util.Objects;
 import net.openan.a2at.sdk.core.exception.A2ATError;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Minimal structured result wrapper used by higher-level orchestration flows.
@@ -9,7 +11,7 @@ import net.openan.a2at.sdk.core.exception.A2ATError;
  * @param <T> result value type
  * @since 2026-06
  */
-public record OperationResult<T>(T value, A2ATError error) {
+public record OperationResult<T>(@Nullable T value, @Nullable A2ATError error) {
 
     /**
      * Creates a successful operation result.
@@ -18,7 +20,7 @@ public record OperationResult<T>(T value, A2ATError error) {
      * @param <T> value type
      * @return successful result wrapper
      */
-    public static <T> OperationResult<T> success(T value) {
+    public static <T> OperationResult<T> success(@NonNull T value) {
         return new OperationResult<>(value, null);
     }
 
@@ -29,7 +31,7 @@ public record OperationResult<T>(T value, A2ATError error) {
      * @param <T> value type
      * @return failed result wrapper
      */
-    public static <T> OperationResult<T> failure(A2ATError error) {
+    public static <T> OperationResult<T> failure(@NonNull A2ATError error) {
         return new OperationResult<>(null, Objects.requireNonNull(error, "error"));
     }
 

@@ -8,6 +8,8 @@ import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ValidationPipeline;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default content validator that orchestrates the full validation pipeline with a no-op rule checker and an LLM-backed
@@ -42,11 +44,11 @@ public final class DefaultContentValidator implements ContentValidator {
      * @param promptResourceAccess prompt resource access for loading validation prompts
      */
     public DefaultContentValidator(
-            String extensionName,
-            String language,
+            @NonNull String extensionName,
+            @NonNull String language,
             int maxAttempts,
-            LLMClient llmClient,
-            PromptResourceAccess promptResourceAccess) {
+            @Nullable LLMClient llmClient,
+            @NonNull PromptResourceAccess promptResourceAccess) {
         this.extensionName = extensionName;
         this.language = language;
         this.maxAttempts = maxAttempts;
@@ -54,36 +56,36 @@ public final class DefaultContentValidator implements ContentValidator {
         this.promptResourceAccess = promptResourceAccess;
     }
 
+    /**
+     * Validates one content prompt and extracts its filled parameters.
+     *
+     * @param prompt content prompt text
+     * @param schema caller-provided parameter JSON schema
+     * @param templateUri URI of the template the content is validated against, such as
+     *     {@code Task-T/network-layer/energy-saving/v1}
+     * @return filled parameter data carrying the merged parameters
+     * @throws NullPointerException if the prompt, schema or template URI is null
+     * @throws IllegalArgumentException if the prompt is blank, the template URI addresses another extension than the
+     *     one this validator is configured for, or the template URI version is unsupported
+     * @throws net.openan.a2at.sdk.core.validation.ContentValidationException if the validation fails at any stage
+     */
     @Override
-    public FilledParamData validate(String prompt, Map<String, Object> schema, String templateUri) {
+    public FilledParamData validate(
+            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
-        if (templateUri.isBlank()) {
-            throw new IllegalArgumentException("Template URI must not be blank.");
-        }
 
-        String[] parts = templateUri.split("/");
-        if (parts.length < 3) {
+        if (!extensionName.equals(templateUri.extensionName())) {
             throw new IllegalArgumentException(
-                    "Template URI format must be {extensionName}/{pathSegments}/{templateVersion}, got: "
-                            + templateUri);
+                    "Template URI extension '" + templateUri.extensionName()
+                            + "' does not match expected extension '" + extensionName + "'.");
         }
 
-        String prefix = parts[0];
-        String templateVersion = parts[parts.length - 1];
-
-        if (!extensionName.equals(prefix)) {
+        if (!TemplateUri.DEFAULT_TEMPLATE_VERSION.equals(templateUri.templateVersion())) {
             throw new IllegalArgumentException(
-                    "Template URI prefix '" + prefix + "' does not match expected extension prefix '" + extensionName
-                            + "'.");
+                    "Unsupported template URI version: " + templateUri.templateVersion());
         }
 
-        if (!TemplateUri.DEFAULT_TEMPLATE_VERSION.equals(templateVersion)) {
-            throw new IllegalArgumentException("Unsupported template URI version: " + templateVersion);
-        }
-
-        TemplateUri reference = TemplateUri.of(
-                prefix, templateVersion, java.util.Arrays.copyOfRange(parts, 1, parts.length - 1));
-        return pipeline().validate(prompt, schema, reference);
+        return pipeline().validate(prompt, schema, templateUri);
     }
 
     private ValidationPipeline pipeline() {

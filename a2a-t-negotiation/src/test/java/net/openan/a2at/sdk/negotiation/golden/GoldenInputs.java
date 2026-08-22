@@ -1,6 +1,8 @@
 package net.openan.a2at.sdk.negotiation.golden;
 
 import java.util.List;
+import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
@@ -233,12 +235,25 @@ public final class GoldenInputs {
         }
 
         /**
+         * Returns the built-in template URI addressed by this fixture as a typed value.
+         *
+         * @return template URI such as {@code Negotiation-T/information-negotiation/propose/v1}
+         */
+        public TemplateUri template() {
+            return TemplateUri.of(
+                    StandardTemplates.NEGOTIATION_EXTENSION_NAME,
+                    TemplateUri.DEFAULT_TEMPLATE_VERSION,
+                    typeSegment,
+                    phase.uriSegment());
+        }
+
+        /**
          * Returns the built-in template URI addressed by this fixture.
          *
          * @return template URI such as {@code Negotiation-T/information-negotiation/propose/v1}
          */
         public String templateUri() {
-            return "Negotiation-T/" + typeSegment + "/" + phase.uriSegment() + "/v1";
+            return template().uri();
         }
 
         /**
@@ -285,11 +300,11 @@ public final class GoldenInputs {
         public MetadataContent generate(NegotiationGenerationOrchestrator orchestrator) {
             return switch (phase) {
                 case PROPOSE -> orchestrator.generateProposeFromData(
-                        new NegotiationProposeData(context(), (NegotiationProposeContent) content()), templateUri());
+                        new NegotiationProposeData(context(), (NegotiationProposeContent) content()), template());
                 case ACCEPT -> orchestrator.generateAcceptFromData(
-                        new NegotiationEndingData(context(), (NegotiationEndingContent) content()), templateUri());
+                        new NegotiationEndingData(context(), (NegotiationEndingContent) content()), template());
                 case REJECT -> orchestrator.generateRejectFromData(
-                        new NegotiationEndingData(context(), (NegotiationEndingContent) content()), templateUri());
+                        new NegotiationEndingData(context(), (NegotiationEndingContent) content()), template());
             };
         }
     }

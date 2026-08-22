@@ -21,6 +21,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -37,7 +38,9 @@ class A2ATClientNegotiationApiTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri INFORMATION_PROPOSE = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE;
+
+    private static final String INFORMATION_PROPOSE_URI = INFORMATION_PROPOSE.uri();
 
     @Test
     void generatesInformationProposeFromDataWithBuiltinChineseTemplates() throws IOException {
@@ -47,7 +50,7 @@ class A2ATClientNegotiationApiTest {
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
                         new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
-                INFORMATION_PROPOSE_URI);
+                INFORMATION_PROPOSE);
 
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertFalse(result.promptText().isBlank());
@@ -67,7 +70,7 @@ class A2ATClientNegotiationApiTest {
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
                         new InfoProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
-                INFORMATION_PROPOSE_URI);
+                INFORMATION_PROPOSE);
 
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertFalse(result.promptText().isBlank());
@@ -87,12 +90,14 @@ class A2ATClientNegotiationApiTest {
     void queriesSingleNegotiationTemplateWithoutThrowing() throws IOException {
         A2ATClient client = new A2ATClient(writeEnv("zh-CN"));
 
-        assertTrue(client.getNegotiationPrompt(INFORMATION_PROPOSE_URI).isPresent());
-        assertTrue(client.getNegotiationPrompt(StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri())
+        assertTrue(client.getNegotiationPrompt(INFORMATION_PROPOSE).isPresent());
+        assertTrue(client
+                .getNegotiationPrompt(StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT)
                 .isPresent());
-        assertFalse(client.getNegotiationPrompt("not-a-template-uri").isPresent());
-        PromptTemplate template =
-                client.getNegotiationPrompt(INFORMATION_PROPOSE_URI).orElseThrow();
+        assertFalse(client
+                .getNegotiationPrompt(TemplateUri.of("Negotiation-T", "v9", "information-negotiation", "propose"))
+                .isPresent());
+        PromptTemplate template = client.getNegotiationPrompt(INFORMATION_PROPOSE).orElseThrow();
         assertEquals(INFORMATION_PROPOSE_URI, template.uri());
         assertFalse(template.content().isBlank());
     }

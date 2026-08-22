@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
@@ -42,9 +43,9 @@ class NegotiationErrorCodeUsageMatrixTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE;
 
-    private static final String INFORMATION_ENDING_URI = StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri();
+    private static final TemplateUri INFORMATION_ENDING_URI = StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT;
 
     private static final String VALID_CONTEXT_PROMPT = "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5";
 
@@ -177,7 +178,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .language("zh-CN")
                                 .llmClient(llm)
                                 .build()
-                                .generateProposeFromData(proposeData(), "malformed-template-uri"),
+                                .generateProposeFromData(proposeData(), StandardTemplates.ENERGY_SAVING),
                         IllegalArgumentException.class,
                         null),
                 row(
@@ -254,7 +255,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                     "row " + name + " must stay outside A2ATError because it carries no code");
             assertNullCode(expectedCode, name);
             assertTrue(
-                    argumentFailure.getMessage().contains("Template URI is malformed"),
+                    argumentFailure.getMessage().contains("Template URI does not address"),
                     "row " + name + " must name the offending argument in its message but was: "
                             + argumentFailure.getMessage());
             return;

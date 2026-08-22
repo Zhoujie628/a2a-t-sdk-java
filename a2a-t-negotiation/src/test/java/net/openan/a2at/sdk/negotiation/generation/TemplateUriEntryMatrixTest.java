@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.llm.LLMClient;
@@ -33,22 +34,24 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * Verifies the template-URI entry matrix of the from-data generation.
  *
  * <p>The six built-in URIs address their templates and render outputs identical to the golden fixtures; a well-formed
- * URI that resolves to no template fails with the code {@code template_not_found} before any LLM call; a malformed URI
- * (wrong segment count, prefix, version, suffix, separator or enumeration value, including the underscore misspelling
- * of the type segment) fails as a programming error pointing at {@code templateUri}; and a template placed under a
- * local resource root overrides the built-in template addressed by the same URI.
+ * URI that resolves to no template fails with the code {@code template_not_found} before any LLM call; a typed URI
+ * that does not address a negotiation template of the expected phase (wrong extension name, version, type segment,
+ * phase segment or separator, including the underscore misspelling of the type segment) fails as a programming error
+ * pointing at {@code templateUri}, while structural malformation is impossible by construction of
+ * {@link TemplateUri}; and a template placed under a local resource root overrides the built-in template addressed
+ * by the same URI.
  */
 class TemplateUriEntryMatrixTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE;
 
     private static final String BUILTIN_INFORMATION_PROPOSE_TEMPLATE =
             "templates/Negotiation-T/information-negotiation/propose/v1/zh-CN/template.md";
@@ -107,26 +110,14 @@ class TemplateUriEntryMatrixTest {
     }
 
     /**
-     * Entry (c): every malformed URI — wrong segment count, prefix, version, type suffix, separator (underscore
-     * misspelling), unknown type and invalid phase segment — fails as a programming error with an
-     * {@link IllegalArgumentException} pointing at the template URI, without any LLM call.
+     * Entry (c): every typed URI that does not address a negotiation template of the expected phase — wrong extension
+     * name, version, type segment, phase segment and separator (underscore misspelling), plus unknown types and
+     * unknown phase segments — fails as a programming error with an {@link IllegalArgumentException} pointing at the
+     * template URI, without any LLM call. Structurally malformed URIs cannot exist as {@link TemplateUri} values.
      */
-    @ParameterizedTest(name = "malformed URI [{0}] is rejected as a templateUri programming error")
-    @ValueSource(
-            strings = {
-                "foo",
-                "foo/bar",
-                "information-negotiation/propose",
-                "Negotiation-T/information-negotiation/propose/v1/extra",
-                "Task-T/information-negotiation/propose/v1",
-                "Negotiation-T/information-negotiation/propose/v2",
-                "Negotiation-T/information/propose/v1",
-                "Negotiation-T/information_negotiation/propose/v1",
-                "Negotiation-T/unknown-negotiation/propose/v1",
-                "Negotiation-T/information-negotiation/propose-x/v1",
-                "Negotiation-T/information-negotiation/accept/v1"
-            })
-    void malformedUriIsRejectedAsATemplateUriProgrammingError(String templateUri) {
+    @ParameterizedTest(name = "non-addressing URI [{0}] is rejected as a templateUri programming error")
+    @MethodSource("nonAddressingTemplateUris")
+    void nonAddressingUriIsRejectedAsATemplateUriProgrammingError(TemplateUri templateUri) {
         CountingClient llm = new CountingClient();
         NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
                 .language("zh-CN")
@@ -138,9 +129,21 @@ class TemplateUriEntryMatrixTest {
                 () -> orchestrator.generateProposeFromData(informationProposeData(), templateUri));
 
         assertTrue(
-                failure.getMessage().contains("Template URI is malformed or contradicts the expected phase PROPOSE"),
+                failure.getMessage().contains(
+                        "Template URI does not address a negotiation template of the expected phase PROPOSE"),
                 "the failure must point at the template URI but was: " + failure.getMessage());
         assertEquals(0, llm.calls);
+    }
+
+    static List<TemplateUri> nonAddressingTemplateUris() {
+        return List.of(
+                TemplateUri.of("Task-T", "v1", "information-negotiation", "propose"),
+                TemplateUri.of("Negotiation-T", "v2", "information-negotiation", "propose"),
+                TemplateUri.of("Negotiation-T", "v1", "information", "propose"),
+                TemplateUri.of("Negotiation-T", "v1", "information_negotiation", "propose"),
+                TemplateUri.of("Negotiation-T", "v1", "unknown-negotiation", "propose"),
+                TemplateUri.of("Negotiation-T", "v1", "information-negotiation", "propose-x"),
+                TemplateUri.of("Negotiation-T", "v1", "information-negotiation", "accept"));
     }
 
     /**

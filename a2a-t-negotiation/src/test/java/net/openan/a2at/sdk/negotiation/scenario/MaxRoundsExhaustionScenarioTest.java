@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
@@ -29,7 +30,7 @@ class MaxRoundsExhaustionScenarioTest {
 
     private static final String SESSION_ID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String TARGET_ACCEPT_URI = StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri();
+    private static final TemplateUri TARGET_ACCEPT_URI = StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT;
 
     @Test
     void exhaustedRoundBudgetEndsWithARejectMessageThePeerStillAccepts() {
@@ -77,7 +78,7 @@ class MaxRoundsExhaustionScenarioTest {
         assertEquals(1, peerLlm.callCount(), "the rule gate must fail before any semantic LLM call");
 
         assertTrue(
-                agent.getNegotiationPrompt("Negotiation-T/target-negotiation/abort/v1")
+                agent.getNegotiationPrompt(TemplateUri.of("Negotiation-T", "v1", "target-negotiation", "abort"))
                         .isEmpty(),
                 "no template of an abort phase exists anywhere");
     }

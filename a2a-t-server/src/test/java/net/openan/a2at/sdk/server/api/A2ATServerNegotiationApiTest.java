@@ -16,6 +16,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.server.A2ATServer;
 import org.junit.jupiter.api.Test;
 
@@ -23,8 +24,9 @@ class A2ATServerNegotiationApiTest {
 
     private static final String UUID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String INFORMATION_PROPOSE_URI =
-            StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
+    private static final TemplateUri INFORMATION_PROPOSE = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE;
+
+    private static final String INFORMATION_PROPOSE_URI = INFORMATION_PROPOSE.uri();
 
     @Test
     void generatesInformationProposeFromDataWithBuiltinChineseTemplates() throws IOException {
@@ -34,7 +36,7 @@ class A2ATServerNegotiationApiTest {
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
                         new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
-                INFORMATION_PROPOSE_URI);
+                INFORMATION_PROPOSE);
 
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertFalse(result.promptText().isBlank());
@@ -54,7 +56,7 @@ class A2ATServerNegotiationApiTest {
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
                         new InfoProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
-                INFORMATION_PROPOSE_URI);
+                INFORMATION_PROPOSE);
 
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertFalse(result.promptText().isBlank());
@@ -74,13 +76,18 @@ class A2ATServerNegotiationApiTest {
     void queriesSingleNegotiationTemplateWithoutThrowing() throws IOException {
         A2ATServer server = new A2ATServer(writeEnv("zh-CN"));
 
-        assertTrue(server.getNegotiationPrompt(INFORMATION_PROPOSE_URI).isPresent());
+        assertTrue(server.getNegotiationPrompt(INFORMATION_PROPOSE).isPresent());
         assertTrue(server
-                .getNegotiationPrompt(StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri())
+                .getNegotiationPrompt(StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT)
                 .isPresent());
-        assertFalse(server.getNegotiationPrompt("not-a-template-uri").isPresent());
-        PromptTemplate template =
-                server.getNegotiationPrompt(INFORMATION_PROPOSE_URI).orElseThrow();
+        assertFalse(server
+                .getNegotiationPrompt(TemplateUri.of(
+                        StandardTemplates.NEGOTIATION_EXTENSION_NAME,
+                        TemplateUri.DEFAULT_TEMPLATE_VERSION,
+                        "unknown-negotiation",
+                        "propose"))
+                .isPresent());
+        PromptTemplate template = server.getNegotiationPrompt(INFORMATION_PROPOSE).orElseThrow();
         assertEquals(INFORMATION_PROPOSE_URI, template.uri());
         assertFalse(template.content().isBlank());
     }
