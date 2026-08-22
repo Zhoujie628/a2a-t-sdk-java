@@ -23,13 +23,13 @@ import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
 import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
@@ -273,11 +273,13 @@ public final class NegotiationEvalApp {
             missingItems.add(new NegotiationItem(slot, missingHint(phrasing, properties, slot)));
         }
         String proposePrompt;
+        NegotiationContext proposeContext = new NegotiationContext(
+                UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
         try {
             A2ATServer server = new A2ATServer(envPath);
             MetadataContent propose = server.generateNegotiationProposePromptFromData(
                     new NegotiationProposeData(
-                            new NegotiationContext(UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS),
+                            proposeContext,
                             new InformationProposeContent(missingItems, phrasing.get("propose_relationship"))),
                     DemoTemplates.NEGOTIATION_PROPOSE);
             proposePrompt = propose.promptText();
@@ -301,7 +303,7 @@ public final class NegotiationEvalApp {
             long nanos = System.nanoTime();
             A2ATServer server = new A2ATServer(envPath);
             FilledParamData proposeParams = server.validateProposePromptAndDataFilling(
-                    proposePrompt, negotiationSchema(actualMissing), DemoTemplates.NEGOTIATION_PROPOSE);
+                    proposePrompt, proposeContext, negotiationSchema(actualMissing), DemoTemplates.NEGOTIATION_PROPOSE);
             proposeValid = true;
             Map<String, Object> step = stepOf(
                     "4. outbound propose validation",
@@ -352,11 +354,13 @@ public final class NegotiationEvalApp {
                     expectNegotiation, expectMissing, expectFillCompletes);
         }
         String acceptPrompt;
+        NegotiationContext acceptContext = new NegotiationContext(
+                UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
         try {
             A2ATClient client = new A2ATClient(envPath);
             MetadataContent accept = client.generateNegotiationAcceptPromptFromData(
                     new NegotiationEndingData(
-                            new NegotiationContext(UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS),
+                            acceptContext,
                             new InformationEndingContent(NegotiationConclusion.ACCEPT, filledItems(fills))),
                     DemoTemplates.NEGOTIATION_ACCEPT);
             acceptPrompt = accept.promptText();
@@ -384,7 +388,7 @@ public final class NegotiationEvalApp {
             long nanos = System.nanoTime();
             A2ATServer server = new A2ATServer(envPath);
             FilledParamData acceptParams = server.validateAcceptPromptAndDataFilling(
-                    acceptPrompt, negotiationSchema(actualMissing), DemoTemplates.NEGOTIATION_ACCEPT);
+                    acceptPrompt, acceptContext, negotiationSchema(actualMissing), DemoTemplates.NEGOTIATION_ACCEPT);
             acceptValid = true;
             extractedAcceptParams = acceptParams.data() == null ? Map.of() : new LinkedHashMap<>(acceptParams.data());
             fillValueMatch = fillValuesMatch(extractedAcceptParams, fills);
