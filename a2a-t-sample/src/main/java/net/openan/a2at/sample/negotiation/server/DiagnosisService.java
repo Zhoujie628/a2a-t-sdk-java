@@ -9,7 +9,7 @@ import net.openan.a2at.sdk.core.model.FilledParamData;
  *
  * <p>The text layout comes from the {@code diagnosis} templates of the scenario configuration ({@code result_line},
  * {@code detail_line} with a {@code {params}} placeholder, {@code advice_line}); the parameter values themselves are
- * taken from what {@code validateAndFillingTaskData} extracted, so the result adapts to any Task-T input. In a real
+ * taken from what {@code validateTaskPromptAndDataFilling} extracted, so the result adapts to any Task-T input. In a real
  * deployment this service would call the EMS/NMS north-bound API instead of rendering text.
  *
  * @since 2026-08
@@ -24,7 +24,7 @@ public final class DiagnosisService {
     /**
      * Builds a diagnosis result from the extracted Task-T parameters and the scenario templates.
      *
-     * @param params validated parameters from {@code validateAndFillingTaskData}
+     * @param params validated parameters from {@code validateTaskPromptAndDataFilling}
      * @return diagnosis result text
      */
     public static String diagnose(FilledParamData params) {

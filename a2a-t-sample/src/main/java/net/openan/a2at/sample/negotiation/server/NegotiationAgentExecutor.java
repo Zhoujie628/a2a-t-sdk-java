@@ -27,7 +27,7 @@ import org.a2aproject.sdk.spec.Message;
  * Server-side agent executor that drives the 4-message negotiation flow for the SPN private-line-complaint diagnosis.
  *
  * <p>Receives one A2A request, extracts the Task-T prompt from {@code Message.metadata}, validates it through the SDK
- * ({@link A2ATServer#validateAndFillingTaskData}) to discover which parameters are missing, and reacts:
+ * ({@link A2ATServer#validateTaskPromptAndDataFilling}) to discover which parameters are missing, and reacts:
  *
  * <ul>
  *   <li>message 1 (params missing): dynamically builds the missing-items list from the validation result and generates
@@ -79,7 +79,7 @@ public final class NegotiationAgentExecutor implements AgentExecutor {
             FilledParamData params;
             List<NegotiationItem> missingItems;
             try {
-                params = server.validateAndFillingTaskData(
+                params = server.validateTaskPromptAndDataFilling(
                         taskPrompt, ScenarioData.taskSchema(), DemoConstants.TASK_TEMPLATE);
                 emit("[server] extracted params: " + params.data());
                 missingItems = findMissingItems(params);

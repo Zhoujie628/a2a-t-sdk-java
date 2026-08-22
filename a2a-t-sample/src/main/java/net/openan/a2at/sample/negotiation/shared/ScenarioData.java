@@ -28,7 +28,7 @@ public final class ScenarioData {
 
     private ScenarioData() {}
 
-    /** Slot schema describing the Task-T parameters (passed to validateAndFillingTaskData). */
+    /** Slot schema describing the Task-T parameters (passed to validateTaskPromptAndDataFilling). */
     @SuppressWarnings("unchecked")
     public static Map<String, Object> taskSchema() {
         return (Map<String, Object>) scenarioMap().get("task_schema");
