@@ -111,13 +111,13 @@ public final class LlmBackedPromptSemanticValidator implements ServerPromptSeman
 
     private void validateResponse(String payload) {
         Map<String, Object> response = parseResponse(payload);
-        Object passedValue = response.get("passed");
-        Object errorsValue = response.get("errors");
-        if (Boolean.TRUE.equals(passedValue) && errorsValue instanceof List<?>) {
+        boolean passed = Boolean.TRUE.equals(response.get("passed"));
+        boolean hasErrors = response.get("errors") instanceof List<?> errors && !errors.isEmpty();
+        if (passed && !hasErrors) {
             return;
         }
 
-        Optional<String> message = extractFirstMessage(errorsValue);
+        Optional<String> message = extractFirstMessage(response.get("errors"));
         throw new PromptComplianceCheckException(
                 A2ATErrorCodes.SLOT_VALIDATION_ERROR,
                 message.filter(text -> !text.isBlank()).orElse("Slot semantic validation failed."),
