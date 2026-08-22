@@ -76,7 +76,7 @@ class CustomRootPromptsIgnoredTest {
         MetadataContent message = orchestrator.generateProposeFromText(
                 "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
 
-        FilledParamData filled = orchestrator.validateAndFillingProposeData(
+        FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                 message.promptText(),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                 INFORMATION_PROPOSE_URI);

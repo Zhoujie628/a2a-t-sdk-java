@@ -51,7 +51,7 @@ This SDK is primarily aimed at two types of users:
 - Client API: Provides a task prompt generation result stream, along with negotiation entry points such as `start_negotiation`, `receive_negotiation`, and `continue_negotiation`.
 - Server validation API: Targets A2A-T protocol messages that conform to the SDK format, performing metadata parsing, slot extraction.
 - Negotiation types: Includes four built-in negotiation types: `information`.
-- Negotiation-T content layer: Template-driven negotiation message generation (`fromData` deterministic, `fromText` with one LLM extraction step), compliance checking with parameter extraction (`validateAndFilling*Data`), and negotiation template queries. See the [Developer Guide §1.10](docs/en/developer_guide.md#110-negotiation-t-content-layer).
+- Negotiation-T content layer: Template-driven negotiation message generation (`fromData` deterministic, `fromText` with one LLM extraction step), compliance checking with parameter extraction (`validatePromptAndDataFilling*Data`), and negotiation template queries. See the [Developer Guide §1.10](docs/en/developer_guide.md#110-negotiation-t-content-layer).
 - Resource organization: Built-in prompt resources are located in `a2a-t-resources/src/main/resources/prompt_resources`, containing `prompts`, `scenarios`, `slots`, and `templates`.
 - Built-in example scenario: Currently, the package provides scenarios such as`subscribe_incident`.
 

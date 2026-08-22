@@ -63,7 +63,7 @@ class FeasibilityNegotiationScenarioTest {
 
         NegotiationParamExtractionException rejection = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> responder.validateAndFillingProposeData(
+                () -> responder.validateProposePromptAndDataFilling(
                         evaluationRequest.promptText(), parameterSchema(), FEASIBILITY_PROPOSE_URI));
         assertEquals(A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED, rejection.getCode());
         assertEquals(1, responderLlm.callCount(), "a semantic rejection must not be retried");
@@ -101,7 +101,7 @@ class FeasibilityNegotiationScenarioTest {
                 acceptance.promptText().contains("## 可行性评估结果确认\n同意将速率保障目标由5Mbps下调至2Mbps，本次协商确认结束"),
                 "the summary must fill the exception slot of the feasibility result confirmation section");
 
-        FilledParamData terminalParameters = requester.validateAndFillingAcceptData(
+        FilledParamData terminalParameters = requester.validateAcceptPromptAndDataFilling(
                 acceptance.promptText(), parameterSchema(), FEASIBILITY_ACCEPT_URI);
         assertEquals(1, requesterLlm.callCount());
         assertEquals(GoldenInputs.SESSION_ID, terminalParameters.data().get("id"));

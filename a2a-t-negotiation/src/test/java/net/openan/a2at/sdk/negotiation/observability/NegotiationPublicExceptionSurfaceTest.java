@@ -73,7 +73,7 @@ class NegotiationPublicExceptionSurfaceTest {
         List<String> messages = List.of(
                 failureMessageOf(() -> orchestrator.generateProposeFromText(
                         "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI)),
-                failureMessageOf(() -> orchestrator.validateAndFillingProposeData(
+                failureMessageOf(() -> orchestrator.validateProposePromptAndDataFilling(
                         "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI)),
@@ -105,7 +105,7 @@ class NegotiationPublicExceptionSurfaceTest {
 
         NegotiationParamExtractionException extractionFailure = catchFailure(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(
+                () -> orchestrator.validateProposePromptAndDataFilling(
                         "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI));

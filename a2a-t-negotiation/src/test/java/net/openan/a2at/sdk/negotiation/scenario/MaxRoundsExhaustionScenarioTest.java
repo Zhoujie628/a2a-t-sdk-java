@@ -51,7 +51,7 @@ class MaxRoundsExhaustionScenarioTest {
         assertTrue(terminal.promptText().contains("达到协商轮次上限，本次协商确认结束。"));
         assertTrue(terminal.promptText().contains("- round: 5"));
 
-        FilledParamData terminalParameters = peer.validateAndFillingAbortData(
+        FilledParamData terminalParameters = peer.validateAbortPromptAndDataFilling(
                 terminal.promptText(), parameterSchema(), StandardTemplates.NEGOTIATION_ABORT);
         assertEquals(1, peerLlm.callCount());
         assertEquals(SESSION_ID, terminalParameters.data().get("id"));
@@ -63,7 +63,7 @@ class MaxRoundsExhaustionScenarioTest {
                 StandardTemplates.NEGOTIATION_ABORT);
         NegotiationParamExtractionException ruleFailure = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> peer.validateAndFillingAbortData(
+                () -> peer.validateAbortPromptAndDataFilling(
                         beyondBudgetMessage.promptText(), parameterSchema(), StandardTemplates.NEGOTIATION_ABORT));
         assertEquals(A2ATErrorCodes.NEGOTIATION_RULE_VIOLATION, ruleFailure.getCode());
         assertTrue(

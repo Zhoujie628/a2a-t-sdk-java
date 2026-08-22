@@ -267,9 +267,9 @@ public final class NegotiationContentService {
      *     {@code negotiation_llm_infrastructure_error} or {@code template_not_found} when the validation pipeline
      *     fails
      */
-    public FilledParamData validateAndFillingProposeData(
+    public FilledParamData validateProposePromptAndDataFilling(
             String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
-        return orchestrator.validateAndFillingProposeData(prompt, schema, templateUri);
+        return orchestrator.validateProposePromptAndDataFilling(prompt, schema, templateUri);
     }
 
     /**
@@ -286,9 +286,9 @@ public final class NegotiationContentService {
      *     {@code negotiation_llm_infrastructure_error} or {@code template_not_found} when the validation pipeline
      *     fails
      */
-    public FilledParamData validateAndFillingAcceptData(
+    public FilledParamData validateAcceptPromptAndDataFilling(
             String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
-        return orchestrator.validateAndFillingAcceptData(prompt, schema, templateUri);
+        return orchestrator.validateAcceptPromptAndDataFilling(prompt, schema, templateUri);
     }
 
     /**
@@ -305,9 +305,9 @@ public final class NegotiationContentService {
      *     {@code negotiation_llm_infrastructure_error} or {@code template_not_found} when the validation pipeline
      *     fails
      */
-    public FilledParamData validateAndFillingRejectData(
+    public FilledParamData validateRejectPromptAndDataFilling(
             String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
-        return orchestrator.validateAndFillingRejectData(prompt, schema, templateUri);
+        return orchestrator.validateRejectPromptAndDataFilling(prompt, schema, templateUri);
     }
 
     /**
@@ -321,8 +321,8 @@ public final class NegotiationContentService {
      * @throws IllegalArgumentException if the template URI does not address the common abort template
      * @throws NegotiationParamExtractionException when the validation pipeline fails
      */
-    public FilledParamData validateAndFillingAbortData(
+    public FilledParamData validateAbortPromptAndDataFilling(
             String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
-        return orchestrator.validateAndFillingAbortData(prompt, schema, templateUri);
+        return orchestrator.validateAbortPromptAndDataFilling(prompt, schema, templateUri);
     }
 }

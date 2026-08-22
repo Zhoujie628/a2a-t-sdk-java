@@ -38,10 +38,10 @@ class NegotiationV3ApiSurfaceTest {
             Map.entry("generateNegotiationAbortPromptFromText", 3),
             Map.entry("getNegotiationPrompts", 0),
             Map.entry("getNegotiationPrompt", 1),
-            Map.entry("validateAndFillingProposeData", 3),
-            Map.entry("validateAndFillingAcceptData", 3),
-            Map.entry("validateAndFillingRejectData", 3),
-            Map.entry("validateAndFillingAbortData", 3));
+            Map.entry("validateProposePromptAndDataFilling", 3),
+            Map.entry("validateAcceptPromptAndDataFilling", 3),
+            Map.entry("validateRejectPromptAndDataFilling", 3),
+            Map.entry("validateAbortPromptAndDataFilling", 3));
 
     private static final List<String> REMOVED_V2_METHOD_NAME_FRAGMENTS =
             List.of("FromNl", "FromJsonData", "validateAndExtractParams");
@@ -75,10 +75,10 @@ class NegotiationV3ApiSurfaceTest {
         List<Method> negotiationMethods = Arrays.stream(allMethods)
                 .filter(method -> method.getName().startsWith("generateNegotiation")
                         || method.getName().startsWith("getNegotiation")
-                        || "validateAndFillingProposeData".equals(method.getName())
-                        || "validateAndFillingAcceptData".equals(method.getName())
-                        || "validateAndFillingRejectData".equals(method.getName())
-                        || "validateAndFillingAbortData".equals(method.getName()))
+                        || "validateProposePromptAndDataFilling".equals(method.getName())
+                        || "validateAcceptPromptAndDataFilling".equals(method.getName())
+                        || "validateRejectPromptAndDataFilling".equals(method.getName())
+                        || "validateAbortPromptAndDataFilling".equals(method.getName()))
                 .toList();
         Set<String> names = negotiationMethods.stream().map(Method::getName).collect(Collectors.toSet());
         assertEquals(

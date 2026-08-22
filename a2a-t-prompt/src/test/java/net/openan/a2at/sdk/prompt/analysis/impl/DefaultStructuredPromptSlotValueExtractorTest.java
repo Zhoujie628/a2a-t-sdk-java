@@ -115,15 +115,19 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 "Return slots as JSON.");
 
         Map<String, Object> dataSchema = Map.of(
-                "site", "The target site name",
-                "severity", "The severity level");
+                "type", "object",
+                "properties", Map.of(
+                        "site", Map.of("type", "string", "description", "The target site name"),
+                        "severity", Map.of("type", "string", "description", "The severity level")),
+                "required", List.of("site"));
 
         extractor.extractSlots("Analyze Site A.", "energy-saving", "en-US", dataSchema);
 
         String userMessage = llmClient.lastUserContent();
         assertTrue(userMessage.contains("[data_schema]"));
-        assertTrue(userMessage.contains("- site: The target site name"));
-        assertTrue(userMessage.contains("- severity: The severity level"));
+        assertTrue(userMessage.contains("\"type\":\"object\""));
+        assertTrue(userMessage.contains("\"properties\""));
+        assertTrue(userMessage.contains("\"The target site name\""));
     }
 
     @Test

@@ -126,7 +126,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .language("zh-CN")
                                 .llmClient(llm)
                                 .build()
-                                .validateAndFillingProposeData(
+                                .validateProposePromptAndDataFilling(
                                         "plain text without any negotiation section", SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_INVALID_INPUT),
@@ -138,7 +138,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .language("zh-CN")
                                 .llmClient(llm)
                                 .build()
-                                .validateAndFillingProposeData(
+                                .validateProposePromptAndDataFilling(
                                         "## 协商上下文\n- id: " + UUID + "\n- round: 9\n- maxRounds: 5",
                                         SCHEMA,
                                         INFORMATION_PROPOSE_URI),
@@ -155,7 +155,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .maxAttempts(3)
                                 .build()
-                                .validateAndFillingProposeData(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED),
                 row(
@@ -167,7 +167,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .maxAttempts(2)
                                 .build()
-                                .validateAndFillingProposeData(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR),
                 row(
@@ -202,7 +202,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .maxAttempts(2)
                                 .build()
-                                .validateAndFillingProposeData(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR),
                 row(
@@ -214,7 +214,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .semanticValidator(throwingSemanticValidator())
                                 .build()
-                                .validateAndFillingProposeData(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.TEMPLATE_NOT_FOUND));
     }

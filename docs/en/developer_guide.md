@@ -417,7 +417,7 @@ This section describes the Negotiation-T content layer: a template-driven API se
 The content layer covers three capabilities:
 
 1. **Message generation** — renders a structured negotiation message from typed data (`generateNegotiation*PromptFromData`, deterministic, no LLM) or from free text (`generateNegotiation*PromptFromText`, one LLM content-extraction step followed by deterministic rendering).
-2. **Compliance checking and parameter extraction** — `validateAndFilling*Data` checks that a received message is a well-formed negotiation message and extracts its parameters per a caller-provided JSON schema.
+2. **Compliance checking and parameter extraction** — `validatePromptAndDataFilling*Data` checks that a received message is a well-formed negotiation message and extracts its parameters per a caller-provided JSON schema.
 3. **Template queries** — `getPrompts` / `getPrompt` list and load the templates available for the configured language across **all** A2A-T extensions (Task-T, Notification-T, Authorization-T, Negotiation-T); `getNegotiationPrompts` / `getNegotiationPrompt` restrict the same queries to the negotiation templates.
 
 The content layer is stateless. It deliberately does not own a session state machine: session identity, round tracking beyond what the message itself carries, and role binding stay with the caller. The pre-existing `startNegotiation` / `receiveNegotiation` / `continueNegotiation` API (see 1.6.3) is unchanged and remains the stateful entry point; the content layer can be combined with it or used standalone.
@@ -453,10 +453,10 @@ The template is loaded before the LLM call; a missing template fails fast withou
 **Compliance checking and parameter extraction:**
 
 ```java
-FilledParamData validateAndFillingProposeData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
-FilledParamData validateAndFillingAcceptData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
-FilledParamData validateAndFillingRejectData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
-FilledParamData validateAndFillingAbortData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateProposePromptAndDataFilling(String prompt, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateAcceptPromptAndDataFilling(String prompt, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateRejectPromptAndDataFilling(String prompt, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateAbortPromptAndDataFilling(String prompt, Map<String, Object> schema, TemplateUri templateUri)
 ```
 
 The pipeline runs in a fixed order:
@@ -534,7 +534,7 @@ All SDK processing failures share one root, while programming errors stay outsid
   - `NegotiationProcessingException` — a negotiation processing failure.
     - `NegotiationGenerationException` — raised by generation calls.
   - `A2ATParamExtractionError` — a parameter-extraction failure with structured per-slot errors; `getCode()` is inherited from the root, `getErrors()` returns the slot details.
-    - `NegotiationParamExtractionException` — raised by `validateAndFilling*Data` calls.
+    - `NegotiationParamExtractionException` — raised by `validatePromptAndDataFilling*Data` calls.
   - `LLMError` — the LLM integration failure subtree, folded into the `A2ATError` tree.
     - `LLMConfigError` — invalid LLM configuration or provider registration.
     - `LLMRuntimeError` — an LLM infrastructure failure at call time.
@@ -612,7 +612,7 @@ Map<String, Object> schema = Map.of(
         "required", List.of("subscription_condition.incident_level"));
 
 try {
-    FilledParamData params = server.validateAndFillingProposeData(
+    FilledParamData params = server.validateProposePromptAndDataFilling(
             propose.promptText(), schema, StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE);
     // params.data() holds the extracted parameters plus the context parameters.
 } catch (A2ATParamExtractionError failure) {
@@ -630,7 +630,7 @@ MetadataContent accept = server.generateNegotiationAcceptPromptFromData(
         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT);
 
 // The client validates the accept message the same way, with the accept-reject template:
-// client.validateAndFillingAcceptData(accept.promptText(), schema,
+// client.validateAcceptPromptAndDataFilling(accept.promptText(), schema,
 //         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT);
 ```
 
