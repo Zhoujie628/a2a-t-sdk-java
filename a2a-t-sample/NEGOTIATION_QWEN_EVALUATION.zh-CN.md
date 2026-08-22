@@ -24,16 +24,30 @@
 mvn -pl a2a-t-sample -am -DskipTests package
 ```
 
-再运行。参数依次为 env 文件、汇总报告输出路径、可选的过程日志输出路径；不传第三个参数时，会在报告同目录生成同名的 `-process.jsonl` 文件：
+再运行。参数依次为 env 文件、汇总报告输出路径、可选的过程日志输出路径、可选的逗号分隔用例编号；不传第三个参数时，会在报告同目录生成同名的 `-process.jsonl` 文件：
 
 ```powershell
 java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `
   a2a-t-sample/src/main/resources/sample/private-line-complaint-negotiation/qwen.env `
   a2a-t-sample/target/negotiation-qwen-report.json `
-  a2a-t-sample/target/negotiation-qwen-process.jsonl
+ a2a-t-sample/target/negotiation-qwen-process.jsonl
 ```
 
-汇总报告会输出总数、通过数和 `automatic_consistency_rate`，并逐条保存 `input`、`prompt`、`expected`、`actual`、耗时及错误信息。过程日志采用 JSONL，每一行对应一次 SDK 调用；其中包含 `run_id`、用例编号、阶段（`generate` 或 `validate_and_fill`）、请求入参、模型/SDK 返回值、耗时，以及异常类、异常消息、cause 链和截断后的调用栈。
+## SDK 问题最小复现
+
+用于提交 SDK 问题前，先执行以下 6 条用例。它们覆盖 Propose 基线及两个失败模式、Accept 的字段缺失问题，以及 Reject 的基线和语义校验失败问题。用例内容和 golden data 仍以 `cases.json` 为唯一来源。
+
+```powershell
+java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `
+  a2a-t-sample/src/main/resources/sample/private-line-complaint-negotiation/qwen.env `
+  a2a-t-sample/target/negotiation-qwen-repro-report.json `
+  a2a-t-sample/target/negotiation-qwen-repro-process.jsonl `
+  P01,P14,P16,A28,R01,R21
+```
+
+每次运行会在报告中写入 `git_revision` 和 `case_ids`，便于把结果与 SDK 代码版本和用例集合对应起来。过程日志是严格 JSONL：每行都是一条可独立解析的 JSON 事件。失败事件会额外记录 SDK `code` 和 `slot_errors`；其中 `negotiation_semantic_rejected` 能直接区分语义校验拒绝，`slot_errors` 可定位字段级规则问题。
+
+汇总报告会输出总数、通过数和 `automatic_consistency_rate`，并逐条保存 `input`、`prompt`、`expected`、`actual`、耗时及错误信息。过程日志采用 JSONL，每一行对应一次 SDK 调用；其中包含 `run_id`、用例编号、阶段（`generate` 或 `validate_and_fill`）、请求入参、模型/SDK 返回值、耗时，以及异常类、异常消息、SDK 错误码、字段错误、cause 链和截断后的调用栈。
 
 定位时先按 `run_id` 和 `case_id` 将同一用例的两行关联：`generate` 已失败时，重点检查 Sample 传入的自然语言、上下文和模板 URI，以及 SDK 的生成接口异常；生成成功但 `validate_and_fill` 失败时，直接核对生成 Prompt、业务 Schema 和 SDK 校验异常。这样无需重跑模型即可判断问题发生在流程的哪个边界。过程日志不记录 API Key。
 

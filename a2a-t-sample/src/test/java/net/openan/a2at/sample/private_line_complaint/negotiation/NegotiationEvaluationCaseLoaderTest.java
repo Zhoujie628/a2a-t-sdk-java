@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
+import java.util.List;
 import net.openan.a2at.sample.private_line_complaint.negotiation.evaluation.NegotiationEvaluationCase;
 import net.openan.a2at.sample.private_line_complaint.negotiation.evaluation.NegotiationEvaluationCaseLoader;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,13 @@ class NegotiationEvaluationCaseLoaderTest {
         assertEquals(33, cases.stream().filter(testCase -> testCase.phase().equals("accept")).count());
         assertEquals(33, cases.stream().filter(testCase -> testCase.phase().equals("reject")).count());
         assertTrue(cases.stream().allMatch(NegotiationEvaluationCaseLoaderTest::isComplete));
+    }
+
+    @Test
+    void loadsFocusedReproductionCasesFromTheCanonicalCorpus() {
+        var cases = NegotiationEvaluationCaseLoader.loadSelected(List.of("R21", "P01", "A28"));
+
+        assertEquals(List.of("R21", "P01", "A28"), cases.stream().map(NegotiationEvaluationCase::id).toList());
     }
 
     private static boolean isComplete(NegotiationEvaluationCase testCase) {

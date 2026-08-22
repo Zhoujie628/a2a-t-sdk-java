@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +17,8 @@ import net.openan.a2at.sample.private_line_complaint.negotiation.shared.Informat
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationSampleEnvironment;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationSampleFlow;
 import net.openan.a2at.sdk.client.A2ATClient;
+import net.openan.a2at.sdk.core.exception.A2ATError;
+import net.openan.a2at.sdk.core.exception.A2ATParamExtractionError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -38,6 +41,9 @@ public final class NegotiationQwenEvaluationMain {
         Path envPath = args.length > 0 ? Path.of(args[0]) : NegotiationSampleEnvironment.defaultEnvPath("client");
         Path reportPath = args.length > 1 ? Path.of(args[1]) : Path.of("a2a-t-sample", "target", "negotiation-qwen-report.json");
         Path processLogPath = args.length > 2 ? Path.of(args[2]) : defaultProcessLogPath(reportPath);
+        List<NegotiationEvaluationCase> testCases = args.length > 3
+                ? NegotiationEvaluationCaseLoader.loadSelected(parseCaseIds(args[3]))
+                : NegotiationEvaluationCaseLoader.load();
         Map<String, String> environment = NegotiationSampleEnvironment.read(envPath);
         requireQwenConfiguration(environment);
 
@@ -47,7 +53,7 @@ public final class NegotiationQwenEvaluationMain {
         String runId = UUID.randomUUID().toString();
         try (NegotiationEvaluationProcessLogger processLogger = new NegotiationEvaluationProcessLogger(OBJECT_MAPPER, processLogPath)) {
             processLogger.write(runStartedEvent(runId, environment, envPath));
-            for (NegotiationEvaluationCase testCase : NegotiationEvaluationCaseLoader.load()) {
+            for (NegotiationEvaluationCase testCase : testCases) {
                 results.add(runCase(client, server, testCase, runId, processLogger));
             }
         }
@@ -58,6 +64,8 @@ public final class NegotiationQwenEvaluationMain {
         report.put("run_id", runId);
         report.put("model", environment.get("A2AT_LLM_MODEL"));
         report.put("base_url", environment.get("A2AT_LLM_BASE_URL"));
+        report.put("git_revision", gitRevision());
+        report.put("case_ids", testCases.stream().map(NegotiationEvaluationCase::id).toList());
         report.put("total", results.size());
         report.put("passed", passed);
         report.put("automatic_consistency_rate", (double) passed / results.size());
@@ -196,6 +204,12 @@ public final class NegotiationQwenEvaluationMain {
         Map<String, Object> error = new LinkedHashMap<>();
         error.put("class", exception.getClass().getName());
         error.put("message", exception.getMessage());
+        if (exception instanceof A2ATError a2atError) {
+            error.put("code", a2atError.getCode());
+        }
+        if (exception instanceof A2ATParamExtractionError extractionError) {
+            error.put("slot_errors", extractionError.getErrors());
+        }
         error.put("cause_chain", causeChain(exception));
         error.put("stack_trace", Arrays.stream(exception.getStackTrace()).limit(20).map(StackTraceElement::toString).toList());
         return error;
@@ -209,6 +223,39 @@ public final class NegotiationQwenEvaluationMain {
             current = current.getCause();
         }
         return causes;
+    }
+
+    private static List<String> parseCaseIds(String argument) {
+        List<String> caseIds = Arrays.stream(argument.split(","))
+                .map(String::trim)
+                .filter(caseId -> !caseId.isEmpty())
+                .toList();
+        if (caseIds.isEmpty()) {
+            throw new IllegalArgumentException("The fourth argument must contain at least one comma-separated case ID");
+        }
+        return caseIds;
+    }
+
+    private static String gitRevision() {
+        String configuredRevision = System.getProperty("a2at.sample.gitRevision");
+        if (configuredRevision != null && !configuredRevision.isBlank()) {
+            return configuredRevision;
+        }
+        try {
+            Process process = new ProcessBuilder("git", "rev-parse", "HEAD")
+                    .redirectErrorStream(true)
+                    .start();
+            String revision;
+            try (var input = process.getInputStream()) {
+                revision = new String(input.readAllBytes(), StandardCharsets.UTF_8).trim();
+            }
+            return process.waitFor() == 0 && !revision.isBlank() ? revision : "unknown";
+        } catch (IOException exception) {
+            return "unknown";
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            return "unknown";
+        }
     }
 
     private static Path defaultProcessLogPath(Path reportPath) {

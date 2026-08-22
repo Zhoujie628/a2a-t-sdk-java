@@ -1,6 +1,7 @@
 package net.openan.a2at.sample.private_line_complaint.negotiation.evaluation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -22,7 +23,7 @@ final class NegotiationEvaluationProcessLogger implements AutoCloseable {
         if (parent != null) {
             Files.createDirectories(parent);
         }
-        this.objectMapper = objectMapper;
+        this.objectMapper = objectMapper.copy().disable(SerializationFeature.INDENT_OUTPUT);
         this.writer = Files.newBufferedWriter(
                 path,
                 StandardCharsets.UTF_8,
