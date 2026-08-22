@@ -45,15 +45,15 @@ sequenceDiagram
 
     C->>C: generateNegotiationProposePromptFromText
     C->>S: A2A Message metadata 携带 Propose
-    S->>S: validateAndFillingProposeData
+    S->>S: validateProposePromptAndDataFilling
     alt Accept 分支
         S->>S: generateNegotiationAcceptPromptFromText
         S-->>C: A2A Artifact metadata 携带 Accept
-        C->>C: validateAndFillingAcceptData
+        C->>C: validateAcceptPromptAndDataFilling
     else Reject 分支
         S->>S: generateNegotiationRejectPromptFromText
         S-->>C: A2A Artifact metadata 携带 Reject
-        C->>C: validateAndFillingRejectData
+        C->>C: validateRejectPromptAndDataFilling
     end
 ```
 
@@ -64,11 +64,11 @@ sequenceDiagram
 | 阶段 | 调用方 | API | Template URI | 结果 |
 | --- | --- | --- | --- | --- |
 | 生成请求 | Client | `generateNegotiationProposePromptFromText` | `Negotiation-T/information-negotiation/propose/v1` | `MetadataContent` |
-| 校验请求 | Server | `validateAndFillingProposeData` | 同上 | `FilledParamData` |
+| 校验请求 | Server | `validateProposePromptAndDataFilling` | 同上 | `FilledParamData` |
 | 生成接受 | Server | `generateNegotiationAcceptPromptFromText` | `Negotiation-T/information-negotiation/accept-reject/v1` | `MetadataContent` |
-| 校验接受 | Client | `validateAndFillingAcceptData` | 同上 | `FilledParamData` |
+| 校验接受 | Client | `validateAcceptPromptAndDataFilling` | 同上 | `FilledParamData` |
 | 生成拒绝 | Server | `generateNegotiationRejectPromptFromText` | `Negotiation-T/information-negotiation/accept-reject/v1` | `MetadataContent` |
-| 校验拒绝 | Client | `validateAndFillingRejectData` | 同上 | `FilledParamData` |
+| 校验拒绝 | Client | `validateRejectPromptAndDataFilling` | 同上 | `FilledParamData` |
 
 关键类型：
 
@@ -209,7 +209,7 @@ Sample 内部 Schema 工厂通过 `LinkedHashMap` 构建并返回不可变 Map�
 
 1. 校验 `A2A-Extensions` 包含 Negotiation-T 规范 URI。
 2. 从 `Message.metadata` 取 `templateUri` 和 Propose Prompt。
-3. 调用 `validateAndFillingProposeData`。
+3. 调用 `validateProposePromptAndDataFilling`。
 4. 从返回值重建 `NegotiationContext`。
 5. 根据 `A2AT_SAMPLE_NEGOTIATION_DECISION` 选择 Accept 或 Reject，默认 Accept。
 6. 调用对应 from-text 生成 API。
@@ -424,10 +424,11 @@ java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `
 
 验收时读取 `negotiation-qwen-report.json` 和 `negotiation-qwen-process.jsonl`：
 
-- 汇总报告包含每条用例的 `expected`、`actual`、最终 `passed` 及耗时。
+- 每条用例独立提供 `completedPrompt`；生成接口输出用于评估生成质量，不能直接作为校验接口入参。
+- 汇总报告包含每条用例的 `generated_prompt`、`completed_prompt`、`expected`、`actual`、最终 `passed` 及耗时。
 - 过程日志按 `run_id`、`case_id` 关联两个阶段：`generate` 与 `validate_and_fill`。
-- `generate` 失败时，优先检查日志中的 `request.text`、`context`、`template_uri` 和异常；`validate_and_fill` 失败时，核对 `request.prompt`、`request.schema` 和异常链。
-- 两阶段均成功但汇总结果失败时，比较 `expected`、`actual` 和生成 Prompt，记录为模型输出差异或断言口径问题，不应笼统归因于 SDK。
+- `generate` 失败时，优先检查日志中的 `request.text`、`context`、`template_uri` 和异常；`validate_and_fill` 失败时，核对 Case 补齐报文、`request.schema` 和异常链。
+- 两阶段均成功但汇总结果失败时，比较 `expected` 与 `actual`；生成 Prompt 的语义质量单独人工检查。
 
 过程日志不记录 API Key。完成后在验证文档中记录模型、执行时间、报告路径、通过率以及人工抽检结论。详细字段说明见 `NEGOTIATION_QWEN_EVALUATION.zh-CN.md`。
 

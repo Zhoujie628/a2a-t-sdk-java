@@ -40,7 +40,7 @@ public final class NegotiationAgentExecutor implements AgentExecutor {
             Message message = requestContext.getMessage();
             String proposePrompt = NegotiationMetadataReader.readPrompt(
                     message == null ? null : message.metadata(), NegotiationSampleFlow.PROPOSE_TEMPLATE_URI);
-            FilledParamData proposeData = server.validateAndFillingProposeData(
+            FilledParamData proposeData = server.validateProposePromptAndDataFilling(
                     proposePrompt, InformationNegotiationSchemas.propose(), NegotiationSampleFlow.PROPOSE_TEMPLATE_URI);
             NegotiationContext context = NegotiationSampleFlow.contextFrom(proposeData.data());
             MetadataContent ending = decision == NegotiationDecision.ACCEPT

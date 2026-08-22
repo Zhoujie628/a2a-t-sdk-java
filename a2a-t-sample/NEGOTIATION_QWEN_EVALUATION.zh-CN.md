@@ -1,8 +1,8 @@
 # Negotiation-T Qwen3-32B 批量验证
 
-此入口验证传输专线投诉诊断场景的 3 个自然语言生成接口：Propose、Accept、Reject。用例集固定为 100 条，由人工标注期望业务字段；每条用例还会调用对应的校验/提参接口，检查生成 Prompt 能否被 SDK 解析为期望字段并保留协商上下文。
+此入口验证传输专线投诉诊断场景的 3 个自然语言生成接口：Propose、Accept、Reject。用例集固定为 100 条，由人工提供自然语言输入、补齐后的标准 Prompt 和期望业务字段；每条用例随后使用补齐 Prompt 调用对应的校验/提参接口。
 
-自动结果衡量的是“生成 Prompt → 校验提参”的一致性，不能直接等同于 LLM 语义准确率。报告会保存原始输入、生成 Prompt、提取结果和错误信息。应人工复核全部失败用例，并在每个阶段从通过用例中至少抽查 10 条。
+生成接口与校验接口在用例中相互独立：生成 Prompt 用于人工判断生成质量，校验接口的输入是 `cases.json` 中预置的 `completedPrompt`，不能把生成 Prompt 直接送入校验接口。自动通过率只表示生成调用成功，且补齐 Prompt 能被校验并提取为期望字段，不能直接等同于生成语义准确率。应人工复核生成 Prompt，并复核全部校验失败用例。
 
 ## 用例集
 
@@ -12,7 +12,7 @@
 - Accept 33 条；
 - Reject 33 条。
 
-覆盖完整表述、短句、同义改写、口语化表达、中英文混合、噪声信息、字段顺序变化、换行和业务上下文等类型。每条用例的 `expected` 是人工 golden data；修改业务 Schema 或场景语义时，需要同步复核该文件。
+覆盖完整表述、短句、同义改写、口语化表达、中英文混合、噪声信息、字段顺序变化、换行和业务上下文等类型。每条用例的 `completedPrompt` 是人工构造的补齐报文模板，`{{id}}`、`{{round}}`、`{{maxRounds}}` 会在运行时替换为本次协商上下文；`expected` 是人工 golden data。修改业务 Schema、报文格式或场景语义时，需要同步复核这两个字段。
 
 ## 在目标网络执行
 
@@ -35,7 +35,7 @@ java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `
 
 ## SDK 问题最小复现
 
-用于提交 SDK 问题前，先执行以下 6 条用例。它们覆盖 Propose 基线及两个失败模式、Accept 的字段缺失问题，以及 Reject 的基线和语义校验失败问题。用例内容和 golden data 仍以 `cases.json` 为唯一来源。
+完整执行前可先运行以下 6 条用例，确认三类生成接口和三类补齐报文校验接口均能调用。用例内容、补齐 Prompt 和 golden data 均以 `cases.json` 为唯一来源。
 
 ```powershell
 java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `
@@ -47,9 +47,9 @@ java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `
 
 每次运行会在报告中写入 `git_revision` 和 `case_ids`，便于把结果与 SDK 代码版本和用例集合对应起来。过程日志是严格 JSONL：每行都是一条可独立解析的 JSON 事件。失败事件会额外记录 SDK `code` 和 `slot_errors`；其中 `negotiation_semantic_rejected` 能直接区分语义校验拒绝，`slot_errors` 可定位字段级规则问题。
 
-汇总报告会输出总数、通过数和 `automatic_consistency_rate`，并逐条保存 `input`、`prompt`、`expected`、`actual`、耗时及错误信息。过程日志采用 JSONL，每一行对应一次 SDK 调用；其中包含 `run_id`、用例编号、阶段（`generate` 或 `validate_and_fill`）、请求入参、模型/SDK 返回值、耗时，以及异常类、异常消息、SDK 错误码、字段错误、cause 链和截断后的调用栈。
+汇总报告会分别输出 `generation_succeeded`、`validation_succeeded`、通过数和 `automatic_consistency_rate`，并逐条保存 `input`、`generated_prompt`、`completed_prompt`、`expected`、`actual`、阶段状态、耗时及结构化错误信息。即使校验抛出异常，报告仍保留生成 Prompt 和补齐 Prompt，并明确记录 `actual: null`。过程日志采用 JSONL，每一行对应一次 SDK 调用；其中包含 `run_id`、用例编号、阶段（`generate` 或 `validate_and_fill`）、请求入参、模型/SDK 返回值、耗时，以及异常类、异常消息、SDK 错误码、字段错误、cause 链和截断后的调用栈。
 
-定位时先按 `run_id` 和 `case_id` 将同一用例的两行关联：`generate` 已失败时，重点检查 Sample 传入的自然语言、上下文和模板 URI，以及 SDK 的生成接口异常；生成成功但 `validate_and_fill` 失败时，直接核对生成 Prompt、业务 Schema 和 SDK 校验异常。这样无需重跑模型即可判断问题发生在流程的哪个边界。过程日志不记录 API Key。
+定位时先按 `run_id` 和 `case_id` 将同一用例的两行关联：`generate` 已失败时，重点检查 Sample 传入的自然语言、上下文和模板 URI；生成成功后，人工比较 `generated_prompt` 与场景要求；`validate_and_fill` 失败时，核对 `completed_prompt`、业务 Schema 和 SDK 校验异常。过程日志不记录 API Key。
 
 执行过程会产生约 200 次模型调用（每个用例一次生成、一次校验/提参）；以 Qwen 响应时延为准设置 `A2AT_LLM_TIMEOUT_SECONDS`。
 

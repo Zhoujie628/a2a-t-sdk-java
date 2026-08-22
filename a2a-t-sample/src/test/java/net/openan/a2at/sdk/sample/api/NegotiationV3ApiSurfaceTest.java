@@ -77,9 +77,9 @@ class NegotiationV3ApiSurfaceTest {
                 "generateNegotiationProposePromptFromText",
                 "generateNegotiationAcceptPromptFromText",
                 "generateNegotiationRejectPromptFromText",
-                "validateAndFillingProposeData",
-                "validateAndFillingAcceptData",
-                "validateAndFillingRejectData");
+                "validateProposePromptAndDataFilling",
+                "validateAcceptPromptAndDataFilling",
+                "validateRejectPromptAndDataFilling");
         for (Class<?> facade : List.of(A2ATClient.class, A2ATServer.class)) {
             Arrays.stream(facade.getMethods())
                     .filter(method -> targetMethods.contains(method.getName()))

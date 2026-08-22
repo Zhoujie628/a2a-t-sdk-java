@@ -29,10 +29,29 @@ class NegotiationEvaluationCaseLoaderTest {
         assertEquals(List.of("R21", "P01", "A28"), cases.stream().map(NegotiationEvaluationCase::id).toList());
     }
 
+    @Test
+    void rendersCompletedPromptsWithTheRuntimeNegotiationContext() {
+        var cases = NegotiationEvaluationCaseLoader.load();
+
+        for (NegotiationEvaluationCase testCase : cases) {
+            String prompt = testCase.renderCompletedPrompt("case-context", 2, 4);
+            assertTrue(prompt.contains("- id: case-context"), testCase.id());
+            assertTrue(prompt.contains("- round: 2"), testCase.id());
+            assertTrue(prompt.contains("- maxRounds: 4"), testCase.id());
+            assertTrue(!prompt.contains("{{"), testCase.id());
+            assertTrue(prompt.contains(testCase.phase().equals("propose")
+                    ? "## 信息协商\n"
+                    : "## 信息协商结果\n"), testCase.id());
+        }
+    }
+
     private static boolean isComplete(NegotiationEvaluationCase testCase) {
         return !testCase.id().isBlank()
                 && !testCase.category().isBlank()
                 && !testCase.text().isBlank()
+                && testCase.completedPrompt() != null
+                && !testCase.completedPrompt().isBlank()
+                && testCase.completedPrompt().contains("{{id}}")
                 && testCase.expected() != null
                 && !testCase.expected().isEmpty()
                 && expectedKeys(testCase.phase()).equals(testCase.expected().keySet());

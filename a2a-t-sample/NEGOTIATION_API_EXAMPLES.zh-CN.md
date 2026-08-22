@@ -149,7 +149,7 @@ Map<String, Object> proposeSchema = Map.of(
                         "description", "请求的投诉分类及允许的专线投诉类型")),
         "required", List.of("access_port_name", "complaint_category"));
 
-FilledParamData proposeData = server.validateAndFillingProposeData(
+FilledParamData proposeData = server.validateProposePromptAndDataFilling(
         receivedProposePrompt,
         proposeSchema,
         proposeTemplateUri);
@@ -219,7 +219,7 @@ metadata 的结构为：
 接口：
 
 ```java
-FilledParamData validateAndFillingProposeData(
+FilledParamData validateProposePromptAndDataFilling(
         String prompt,
         Map<String, Object> schema,
         TemplateUri templateUri)
@@ -232,7 +232,7 @@ String receivedProposePrompt = NegotiationMetadataReader.readPrompt(
         messageMetadata,
         proposeTemplateUri);
 
-FilledParamData proposeData = server.validateAndFillingProposeData(
+FilledParamData proposeData = server.validateProposePromptAndDataFilling(
         receivedProposePrompt,
         proposeSchema,
         proposeTemplateUri);
@@ -298,7 +298,7 @@ Negotiation-T/information-negotiation/accept-reject/v1
 接口：
 
 ```java
-FilledParamData validateAndFillingAcceptData(
+FilledParamData validateAcceptPromptAndDataFilling(
         String prompt,
         Map<String, Object> schema,
         TemplateUri templateUri)
@@ -311,7 +311,7 @@ String receivedAcceptPrompt = NegotiationMetadataReader.readPrompt(
         artifactMetadata,
         endingTemplateUri);
 
-FilledParamData acceptData = client.validateAndFillingAcceptData(
+FilledParamData acceptData = client.validateAcceptPromptAndDataFilling(
         receivedAcceptPrompt,
         acceptSchema,
         endingTemplateUri);
@@ -362,7 +362,7 @@ Map<String, String> artifactMetadata = reject.buildMetadataContent();
 接口：
 
 ```java
-FilledParamData validateAndFillingRejectData(
+FilledParamData validateRejectPromptAndDataFilling(
         String prompt,
         Map<String, Object> schema,
         TemplateUri templateUri)
@@ -375,7 +375,7 @@ String receivedRejectPrompt = NegotiationMetadataReader.readPrompt(
         artifactMetadata,
         endingTemplateUri);
 
-FilledParamData rejectData = client.validateAndFillingRejectData(
+FilledParamData rejectData = client.validateRejectPromptAndDataFilling(
         receivedRejectPrompt,
         rejectSchema,
         endingTemplateUri);
@@ -403,7 +403,7 @@ MetadataContent propose = client.generateNegotiationProposePromptFromText(
         proposeText, context, proposeTemplateUri);
 String proposePrompt = NegotiationMetadataReader.readPrompt(
         propose.buildMetadataContent(), proposeTemplateUri);
-FilledParamData proposeData = server.validateAndFillingProposeData(
+FilledParamData proposeData = server.validateProposePromptAndDataFilling(
         proposePrompt, proposeSchema, proposeTemplateUri);
 
 NegotiationContext responseContext = new NegotiationContext(
@@ -415,7 +415,7 @@ MetadataContent accept = server.generateNegotiationAcceptPromptFromText(
         acceptText, responseContext, endingTemplateUri);
 String acceptPrompt = NegotiationMetadataReader.readPrompt(
         accept.buildMetadataContent(), endingTemplateUri);
-FilledParamData acceptData = client.validateAndFillingAcceptData(
+FilledParamData acceptData = client.validateAcceptPromptAndDataFilling(
         acceptPrompt, acceptSchema, endingTemplateUri);
 ```
 
@@ -426,7 +426,7 @@ MetadataContent reject = server.generateNegotiationRejectPromptFromText(
         rejectText, responseContext, endingTemplateUri);
 String rejectPrompt = NegotiationMetadataReader.readPrompt(
         reject.buildMetadataContent(), endingTemplateUri);
-FilledParamData rejectData = client.validateAndFillingRejectData(
+FilledParamData rejectData = client.validateRejectPromptAndDataFilling(
         rejectPrompt, rejectSchema, endingTemplateUri);
 ```
 

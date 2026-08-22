@@ -68,9 +68,9 @@ public final class NegotiationClientMain {
                                 ? NegotiationDecision.REJECT
                                 : NegotiationDecision.ACCEPT;
                         Map<String, Object> result = decision == NegotiationDecision.ACCEPT
-                                ? client.validateAndFillingAcceptData(
+                                ? client.validateAcceptPromptAndDataFilling(
                                         prompt, InformationNegotiationSchemas.accept(), NegotiationSampleFlow.ENDING_TEMPLATE_URI).data()
-                                : client.validateAndFillingRejectData(
+                                : client.validateRejectPromptAndDataFilling(
                                         prompt, InformationNegotiationSchemas.reject(), NegotiationSampleFlow.ENDING_TEMPLATE_URI).data();
                         System.out.println("[negotiation-client] result=" + result);
                     }

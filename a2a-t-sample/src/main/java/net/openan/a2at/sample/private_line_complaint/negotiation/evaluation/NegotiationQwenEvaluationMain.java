@@ -27,8 +27,8 @@ import net.openan.a2at.sdk.server.A2ATServer;
 /**
  * Runs the 100 manually labelled cases against a configured real LLM and writes a JSON report.
  *
- * <p>The automatic result measures generated-prompt to schema-extraction consistency. The report preserves each
- * prompt so a reviewer can perform the required semantic spot check without rerunning the model.
+ * <p>Each case independently verifies prompt generation and validates a manually completed prompt. The generated
+ * prompt, completed prompt, and extracted data are all preserved for review.
  */
 public final class NegotiationQwenEvaluationMain {
 
@@ -59,6 +59,12 @@ public final class NegotiationQwenEvaluationMain {
         }
 
         long passed = results.stream().filter(result -> Boolean.TRUE.equals(result.get("passed"))).count();
+        long generationSucceeded = results.stream()
+                .filter(result -> Boolean.TRUE.equals(result.get("generation_succeeded")))
+                .count();
+        long validationSucceeded = results.stream()
+                .filter(result -> Boolean.TRUE.equals(result.get("validation_succeeded")))
+                .count();
         Map<String, Object> report = new LinkedHashMap<>();
         report.put("generated_at", Instant.now().toString());
         report.put("run_id", runId);
@@ -67,6 +73,8 @@ public final class NegotiationQwenEvaluationMain {
         report.put("git_revision", gitRevision());
         report.put("case_ids", testCases.stream().map(NegotiationEvaluationCase::id).toList());
         report.put("total", results.size());
+        report.put("generation_succeeded", generationSucceeded);
+        report.put("validation_succeeded", validationSucceeded);
         report.put("passed", passed);
         report.put("automatic_consistency_rate", (double) passed / results.size());
         report.put("note", "Automatic consistency is not semantic accuracy; manually review the preserved prompts, especially failures and a representative sample of passes.");
@@ -93,18 +101,28 @@ public final class NegotiationQwenEvaluationMain {
         result.put("input", testCase.text());
         result.put("expected", testCase.expected());
         NegotiationContext context = new NegotiationContext(UUID.randomUUID().toString(), 1, 3);
+        String completedPrompt = testCase.renderCompletedPrompt(context.id(), context.round(), context.maxRounds());
+        result.put("completed_prompt", completedPrompt);
+        result.put("actual", null);
+        result.put("generation_succeeded", false);
+        result.put("validation_succeeded", false);
+        result.put("expected_matched", false);
         try {
             MetadataContent content = generateWithLog(client, testCase, context, runId, processLogger);
-            FilledParamData filled = validateWithLog(server, testCase, content.promptText(), runId, processLogger);
-            Map<String, Object> actual = filled.data();
-            result.put("prompt", content.promptText());
+            result.put("generation_succeeded", true);
+            result.put("generated_prompt", content.promptText());
             result.put("template_uri", content.templateUri());
             result.put("extension_uri", content.extensionUri());
+            FilledParamData filled = validateWithLog(server, testCase, completedPrompt, runId, processLogger);
+            Map<String, Object> actual = filled.data();
+            boolean expectedMatched = expectedValuesMatch(testCase.expected(), actual) && contextMatches(context, actual);
             result.put("actual", actual);
-            result.put("passed", expectedValuesMatch(testCase.expected(), actual) && contextMatches(context, actual));
+            result.put("validation_succeeded", true);
+            result.put("expected_matched", expectedMatched);
+            result.put("passed", expectedMatched);
         } catch (RuntimeException exception) {
             result.put("passed", false);
-            result.put("error", exception.getClass().getSimpleName() + ": " + exception.getMessage());
+            result.put("error", errorDetails(exception));
         }
         result.put("elapsed_ms", (System.nanoTime() - startedAt) / 1_000_000);
         return result;
@@ -295,11 +313,11 @@ public final class NegotiationQwenEvaluationMain {
 
     private static FilledParamData validate(A2ATServer server, NegotiationEvaluationCase testCase, String prompt) {
         return switch (testCase.phase()) {
-            case "propose" -> server.validateAndFillingProposeData(
+            case "propose" -> server.validateProposePromptAndDataFilling(
                     prompt, InformationNegotiationSchemas.propose(), NegotiationSampleFlow.PROPOSE_TEMPLATE_URI);
-            case "accept" -> server.validateAndFillingAcceptData(
+            case "accept" -> server.validateAcceptPromptAndDataFilling(
                     prompt, InformationNegotiationSchemas.accept(), NegotiationSampleFlow.ENDING_TEMPLATE_URI);
-            case "reject" -> server.validateAndFillingRejectData(
+            case "reject" -> server.validateRejectPromptAndDataFilling(
                     prompt, InformationNegotiationSchemas.reject(), NegotiationSampleFlow.ENDING_TEMPLATE_URI);
             default -> throw new IllegalArgumentException("Unsupported evaluation phase: " + testCase.phase());
         };

@@ -30,7 +30,7 @@ public final class NegotiationSampleFlow {
                 client.generateNegotiationProposePromptFromText(scenario.proposeText(), requestContext, PROPOSE_TEMPLATE_URI);
         String proposePrompt = NegotiationMetadataReader.readPrompt(propose.buildMetadataContent(), PROPOSE_TEMPLATE_URI);
         FilledParamData proposeData =
-                server.validateAndFillingProposeData(proposePrompt, InformationNegotiationSchemas.propose(), PROPOSE_TEMPLATE_URI);
+                server.validateProposePromptAndDataFilling(proposePrompt, InformationNegotiationSchemas.propose(), PROPOSE_TEMPLATE_URI);
 
         NegotiationContext responseContext = contextFrom(proposeData.data());
         MetadataContent ending = decision == NegotiationDecision.ACCEPT
@@ -38,9 +38,9 @@ public final class NegotiationSampleFlow {
                 : server.generateNegotiationRejectPromptFromText(scenario.rejectText(), responseContext, ENDING_TEMPLATE_URI);
         String endingPrompt = NegotiationMetadataReader.readPrompt(ending.buildMetadataContent(), ENDING_TEMPLATE_URI);
         FilledParamData endingData = decision == NegotiationDecision.ACCEPT
-                ? client.validateAndFillingAcceptData(
+                ? client.validateAcceptPromptAndDataFilling(
                         endingPrompt, InformationNegotiationSchemas.accept(), ENDING_TEMPLATE_URI)
-                : client.validateAndFillingRejectData(
+                : client.validateRejectPromptAndDataFilling(
                         endingPrompt, InformationNegotiationSchemas.reject(), ENDING_TEMPLATE_URI);
         return new NegotiationFlowResult(requestContext, propose, proposeData, ending, endingData, decision);
     }
