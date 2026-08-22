@@ -95,7 +95,7 @@ class CustomRootTemplateOverrideTest {
 
         List<PromptTemplate> templates = orchestratorWithCustomRoot().getNegotiationPrompts();
 
-        assertEquals(6, templates.size());
+        assertEquals(7, templates.size());
         PromptTemplate overridden = templates.stream()
                 .filter(t -> t.templateUri().uri().equals(GoldenCase.INFORMATION_PROPOSE.templateUri()))
                 .findFirst()

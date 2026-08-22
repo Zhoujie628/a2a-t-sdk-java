@@ -90,7 +90,8 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
      * Loads every loadable negotiation template of the loader's language.
      *
      * <p>The fixed iteration order is the negotiation type order information, target, feasibility crossed with the
-     * phase order propose, accept-reject. Templates that exist nowhere are skipped.
+     * phase order propose, accept-reject, followed by the type-independent common abort template. Templates that exist
+     * nowhere are skipped.
      *
      * @return templates of the loader's language that could be loaded, in a fixed order
      */
@@ -105,6 +106,11 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
                     // A template that exists nowhere for this language is simply not listed.
                 }
             }
+        }
+        try {
+            templates.add(load(new NegotiationReference(null, NegotiationPhase.ABORT, language)));
+        } catch (ResourceNotFoundException exception) {
+            // A template that exists nowhere for this language is simply not listed.
         }
         return List.copyOf(templates);
     }

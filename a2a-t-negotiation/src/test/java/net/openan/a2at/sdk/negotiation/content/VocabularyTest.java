@@ -24,6 +24,7 @@ class VocabularyTest {
 
     private static final Set<String> CANONICAL_KEYS = Set.of(
             "section.context",
+            "section.termination_reason",
             "section.info_items",
             "section.info_static",
             "section.info_conclusion",
@@ -40,6 +41,7 @@ class VocabularyTest {
             "section.feasibility_conclusion",
             "section.feasibility_confirm",
             "slot.context",
+            "slot.termination_reason",
             "slot.info_items",
             "slot.info_conclusion",
             "slot.info_result_content",
@@ -66,8 +68,19 @@ class VocabularyTest {
         assertEquals(CANONICAL_KEYS, enUs.canonicalKeys());
         assertEquals(Set.copyOf(Vocabulary.CANONICAL_KEYS), zhCn.canonicalKeys());
         assertEquals(new TreeSet<>(zhCn.canonicalKeys()), new TreeSet<>(enUs.canonicalKeys()));
-        assertEquals(33, zhCn.canonicalKeys().size());
-        assertEquals(33, Vocabulary.CANONICAL_KEYS.size());
+        assertEquals(35, zhCn.canonicalKeys().size());
+        assertEquals(35, Vocabulary.CANONICAL_KEYS.size());
+    }
+
+    @Test
+    void terminationReasonSlotMatchesTheCommonAbortTemplatePlaceholder() {
+        Vocabulary zhCn = Vocabulary.forLanguage("zh-CN");
+        Vocabulary enUs = Vocabulary.forLanguage("en-US");
+
+        assertEquals("协商终止原因", zhCn.get("slot.termination_reason"));
+        assertEquals("negotiation_termination_reason", enUs.get("slot.termination_reason"));
+        assertEquals("协商终止原因", zhCn.get("section.termination_reason"));
+        assertEquals("Negotiation Termination Reason", enUs.get("section.termination_reason"));
     }
 
     @Test

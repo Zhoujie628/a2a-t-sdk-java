@@ -24,7 +24,8 @@ class DefaultNegotiationTemplateLoaderTest {
             StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(),
             StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri(),
             StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
-            StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri());
+            StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri(),
+            StandardTemplates.NEGOTIATION_ABORT.uri());
 
     @TempDir
     Path customRootDir;
@@ -39,9 +40,53 @@ class DefaultNegotiationTemplateLoaderTest {
 
         assertEquals(EXPECTED_LOAD_ALL_URIS, urisOf(zhCnTemplates));
         assertEquals(EXPECTED_LOAD_ALL_URIS, urisOf(enUsTemplates));
-        assertEquals(6, zhCnTemplates.size());
-        assertEquals(6, enUsTemplates.size());
-        assertEquals(12, zhCnTemplates.size() + enUsTemplates.size());
+        assertEquals(7, zhCnTemplates.size());
+        assertEquals(7, enUsTemplates.size());
+        assertEquals(14, zhCnTemplates.size() + enUsTemplates.size());
+    }
+
+    @Test
+    void loadReturnsTheCommonAbortTemplateForTheAbortPhase() {
+        DefaultNegotiationTemplateLoader enUsLoader = new DefaultNegotiationTemplateLoader("en-US", null);
+        DefaultNegotiationTemplateLoader zhCnLoader = new DefaultNegotiationTemplateLoader("zh-CN", null);
+
+        PromptTemplate englishTemplate =
+                enUsLoader.load(new NegotiationReference(null, NegotiationPhase.ABORT, "en-US"));
+        PromptTemplate chineseTemplate =
+                zhCnLoader.load(new NegotiationReference(null, NegotiationPhase.ABORT, "zh-CN"));
+
+        assertEquals(StandardTemplates.NEGOTIATION_ABORT, englishTemplate.templateUri());
+        assertTrue(englishTemplate.content().startsWith("## Negotiation Context"));
+        assertTrue(englishTemplate.content().contains("## Negotiation Termination Reason"));
+        assertTrue(englishTemplate.content().contains("{{negotiation_termination_reason}}"));
+        assertEquals(StandardTemplates.NEGOTIATION_ABORT, chineseTemplate.templateUri());
+        assertTrue(chineseTemplate.content().contains("## 协商终止原因"));
+        assertTrue(chineseTemplate.content().contains("{{协商终止原因}}"));
+    }
+
+    @Test
+    void customRootOverridesTheCommonAbortTemplate() throws IOException {
+        Path customTemplatePath = customRootDir
+                .resolve("templates")
+                .resolve("Negotiation-T")
+                .resolve("common")
+                .resolve("abort")
+                .resolve("v1")
+                .resolve("zh-CN")
+                .resolve("template.md");
+        writeTemplate(customTemplatePath, "<!-- custom abort -->\n\n## 协商上下文\n自定义终止模板\n");
+        DefaultNegotiationTemplateLoader loader =
+                new DefaultNegotiationTemplateLoader("zh-CN", customRootDir.toString());
+
+        PromptTemplate overridden = loader.load(new NegotiationReference(null, NegotiationPhase.ABORT, "zh-CN"));
+        assertTrue(overridden.content().contains("自定义终止模板"));
+        assertEquals("custom abort", overridden.description());
+
+        List<PromptTemplate> templates = loader.loadAll();
+        assertEquals(EXPECTED_LOAD_ALL_URIS, urisOf(templates));
+        PromptTemplate listedAbort = templates.get(templates.size() - 1);
+        assertEquals(StandardTemplates.NEGOTIATION_ABORT, listedAbort.templateUri());
+        assertTrue(listedAbort.content().contains("自定义终止模板"));
     }
 
     @Test
