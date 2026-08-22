@@ -4,9 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Optional;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import org.junit.jupiter.api.Test;
@@ -149,7 +150,7 @@ class NegotiationReferenceTest {
                         StandardTemplates.ENERGY_SAVING, NegotiationPhase.PROPOSE, "zh-CN")
                 .isEmpty());
         assertTrue(NegotiationReference.fromTemplateUri(
-                        TemplateUri.of("negotiation-t", "v1", "information-negotiation", "propose"),
+                        TemplateUri.of("negotiation-t", "information-negotiation", "propose"),
                         NegotiationPhase.PROPOSE,
                         "zh-CN")
                 .isEmpty());
@@ -158,12 +159,12 @@ class NegotiationReferenceTest {
     @Test
     void fromTemplateUriRejectsWrongPathSegmentCount() {
         assertTrue(NegotiationReference.fromTemplateUri(
-                        TemplateUri.of("Negotiation-T", "v1", "information-negotiation"),
+                        TemplateUri.of("Negotiation-T", "information-negotiation"),
                         NegotiationPhase.PROPOSE,
                         "zh-CN")
                 .isEmpty());
         assertTrue(NegotiationReference.fromTemplateUri(
-                        TemplateUri.of("Negotiation-T", "v1", "information-negotiation", "propose", "extra"),
+                        TemplateUri.of("Negotiation-T", "information-negotiation", "propose", "extra"),
                         NegotiationPhase.PROPOSE,
                         "zh-CN")
                 .isEmpty());
@@ -172,27 +173,27 @@ class NegotiationReferenceTest {
     @Test
     void fromTemplateUriRejectsWrongVersionTypeAndPhaseSegments() {
         assertTrue(NegotiationReference.fromTemplateUri(
-                        TemplateUri.of("Negotiation-T", "v2", "information-negotiation", "propose"),
+                        TemplateUri.of("Negotiation-T", List.of("information-negotiation", "propose"), "v2"),
                         NegotiationPhase.PROPOSE,
                         "zh-CN")
                 .isEmpty());
         assertTrue(NegotiationReference.fromTemplateUri(
-                        TemplateUri.of("Negotiation-T", "v1", "information", "propose"),
+                        TemplateUri.of("Negotiation-T", "information", "propose"),
                         NegotiationPhase.PROPOSE,
                         "zh-CN")
                 .isEmpty());
         assertTrue(NegotiationReference.fromTemplateUri(
-                        TemplateUri.of("Negotiation-T", "v1", "information_negotiation", "propose"),
+                        TemplateUri.of("Negotiation-T", "information_negotiation", "propose"),
                         NegotiationPhase.PROPOSE,
                         "zh-CN")
                 .isEmpty());
         assertTrue(NegotiationReference.fromTemplateUri(
-                        TemplateUri.of("Negotiation-T", "v1", "unknown-negotiation", "propose"),
+                        TemplateUri.of("Negotiation-T", "unknown-negotiation", "propose"),
                         NegotiationPhase.PROPOSE,
                         "zh-CN")
                 .isEmpty());
         assertTrue(NegotiationReference.fromTemplateUri(
-                        TemplateUri.of("Negotiation-T", "v1", "information-negotiation", "propose-x"),
+                        TemplateUri.of("Negotiation-T", "information-negotiation", "propose-x"),
                         NegotiationPhase.PROPOSE,
                         "zh-CN")
                 .isEmpty());
@@ -217,11 +218,11 @@ class NegotiationReferenceTest {
     }
 
     private static TemplateUri proposeTemplate(NegotiationType type) {
-        return TemplateUri.of("Negotiation-T", "v1", type.typeSegment(), "propose");
+        return TemplateUri.of("Negotiation-T", type.typeSegment(), "propose");
     }
 
     private static TemplateUri acceptRejectTemplate(NegotiationType type) {
-        return TemplateUri.of("Negotiation-T", "v1", type.typeSegment(), "accept-reject");
+        return TemplateUri.of("Negotiation-T", type.typeSegment(), "accept-reject");
     }
 
     private static String proposeUri(NegotiationType type) {

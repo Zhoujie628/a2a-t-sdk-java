@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Objects;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingContent;
@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 2026-06
  */
-public final class NegotiationGeneratorRegistry {
+final class NegotiationGeneratorRegistry {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NegotiationGeneratorRegistry.class);
 
@@ -109,13 +109,13 @@ public final class NegotiationGeneratorRegistry {
             NegotiationType type, boolean proposePhase) {
         if (proposePhase) {
             return switch (type) {
-                case INFORMATION -> InfoProposeContent.class;
+                case INFORMATION -> InformationProposeContent.class;
                 case TARGET -> TargetProposeContent.class;
                 case FEASIBILITY -> FeasibilityProposeContent.class;
             };
         }
         return switch (type) {
-            case INFORMATION -> InfoEndingContent.class;
+            case INFORMATION -> InformationEndingContent.class;
             case TARGET -> TargetEndingContent.class;
             case FEASIBILITY -> FeasibilityEndingContent.class;
         };

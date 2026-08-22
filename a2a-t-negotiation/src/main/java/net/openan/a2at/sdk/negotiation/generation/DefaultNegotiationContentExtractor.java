@@ -11,8 +11,8 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 2026-06
  */
-public final class DefaultNegotiationContentExtractor implements NegotiationContentExtractor {
+final class DefaultNegotiationContentExtractor implements NegotiationContentExtractor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultNegotiationContentExtractor.class);
 
@@ -163,7 +163,7 @@ public final class DefaultNegotiationContentExtractor implements NegotiationCont
 
     private static NegotiationContent mapProposeContent(Map<String, Object> payload, NegotiationType type) {
         return switch (type) {
-            case INFORMATION -> new InfoProposeContent(
+            case INFORMATION -> new InformationProposeContent(
                     requiredItems(payload, "items"), optionalString(payload, "relationship"));
             case TARGET -> new TargetProposeContent(
                     requiredString(payload, "target_negotiation_description"),
@@ -198,7 +198,7 @@ public final class DefaultNegotiationContentExtractor implements NegotiationCont
         NegotiationConclusion conclusion = requiredConclusion(payload);
         requireConclusionMatchesPhase(conclusion, phase);
         return switch (type) {
-            case INFORMATION -> new InfoEndingContent(conclusion, requiredItems(payload, "items"));
+            case INFORMATION -> new InformationEndingContent(conclusion, requiredItems(payload, "items"));
             case TARGET -> mapTargetEndingContent(payload, conclusion);
             case FEASIBILITY -> new FeasibilityEndingContent(
                     conclusion, requiredString(payload, "feasibility_summary"));

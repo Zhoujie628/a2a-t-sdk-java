@@ -6,8 +6,8 @@ import java.util.Optional;
 import java.util.Set;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceDirectories;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.resources.ClasspathPromptResourceLoader;
 import net.openan.a2at.sdk.resources.PromptResourceKey;
 
@@ -62,12 +62,9 @@ public final class ClasspathPromptTemplateLoader implements PromptTemplateTextLo
      */
     private static List<TemplateUri> bareCodeCandidates(String templateType, String scenarioCode) {
         return List.of(
-                TemplateUri.of(
-                        templateType,
-                        TemplateUri.DEFAULT_TEMPLATE_VERSION,
-                        StandardTemplates.NETWORK_LAYER_SEGMENT,
+                TemplateUri.of(templateType, StandardTemplates.NETWORK_LAYER_SEGMENT,
                         scenarioCode),
-                TemplateUri.of(templateType, TemplateUri.DEFAULT_TEMPLATE_VERSION, scenarioCode));
+                TemplateUri.of(templateType, scenarioCode));
     }
 
     private static List<String> discoverTemplateTypes() {

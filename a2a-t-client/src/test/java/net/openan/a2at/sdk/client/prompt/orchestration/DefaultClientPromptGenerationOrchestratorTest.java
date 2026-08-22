@@ -9,24 +9,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.extractor.ClientSlotValueExtractor;
 import net.openan.a2at.sdk.client.prompt.loader.ClientSlotSchemaLoader;
 import net.openan.a2at.sdk.client.prompt.loader.ClientTemplateLoader;
 import net.openan.a2at.sdk.client.prompt.recognition.ClientScenarioRecognizer;
 import net.openan.a2at.sdk.core.exception.A2ATError;
-import net.openan.a2at.sdk.core.exception.FailedParameter;
 import net.openan.a2at.sdk.core.exception.PromptGenerationException;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotDefinition;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
-import net.openan.a2at.sdk.prompt.taskrendering.api.TaskPromptRenderer;
+import net.openan.a2at.sdk.prompt.taskrendering.TaskPromptRenderer;
 import org.junit.jupiter.api.Test;
 
 class DefaultClientPromptGenerationOrchestratorTest {
@@ -35,7 +35,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
             (scenarioCode, language) -> new PromptSlotSchema(scenarioCode, List.of());
 
     private static final TemplateUri AUTH_DATABASE_READ =
-            TemplateUri.of("Authorization-T", "v1", "database_read");
+            TemplateUri.of("Authorization-T", "database_read");
 
     @Test
     void generateTaskPromptLoadsTemplateAndRendersExtractedSlotsWhenScenarioIsMatched() {
@@ -592,10 +592,10 @@ ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlot
         PromptGenerationException ex = assertThrows(PromptGenerationException.class,
                 () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
         assertEquals("slot_validation_error", ex.getCode());
-        List<FailedParameter> failed = ex.failedParameters();
+        List<SlotValidationError> failed = ex.failedParameters();
         assertFalse(failed.isEmpty());
-        assertEquals("site", failed.get(0).parameterName());
-        assertEquals("missing_required", failed.get(0).reason());
+        assertEquals("site", failed.get(0).slotName());
+        assertEquals("missing_required", failed.get(0).code());
     }
 
     @Test
@@ -616,7 +616,7 @@ ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlot
                 () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
         assertEquals("slot_validation_error", ex.getCode());
         assertEquals(1, ex.failedParameters().size());
-        assertEquals("target", ex.failedParameters().get(0).parameterName());
+        assertEquals("target", ex.failedParameters().get(0).slotName());
     }
 
     @Test

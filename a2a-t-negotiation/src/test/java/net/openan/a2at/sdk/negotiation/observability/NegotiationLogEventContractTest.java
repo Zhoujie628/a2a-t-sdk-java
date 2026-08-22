@@ -14,13 +14,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
@@ -166,7 +166,7 @@ class NegotiationLogEventContractTest {
         MetadataContent generated = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
-                        new InfoProposeContent(List.of(new NegotiationItem(promptMarker, "value")), null)),
+                        new InformationProposeContent(List.of(new NegotiationItem(promptMarker, "value")), null)),
                 INFORMATION_PROPOSE_URI);
         assertTrue(generated.promptText().contains(promptMarker));
         orchestrator.generateProposeFromText(
@@ -241,7 +241,7 @@ class NegotiationLogEventContractTest {
         MetadataContent result = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
-                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                        new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_URI);
         assertTrue(result.promptText().contains("协商上下文"));
     }
@@ -296,7 +296,7 @@ class NegotiationLogEventContractTest {
         MetadataContent message = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
-                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                        new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_URI);
         FilledParamData filled = orchestrator.validateAndFillingProposeData(
                 message.promptText(), Map.of("type", "object"), INFORMATION_PROPOSE_URI);

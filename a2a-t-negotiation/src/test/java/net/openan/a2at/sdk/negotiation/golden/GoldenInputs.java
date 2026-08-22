@@ -1,12 +1,12 @@
 package net.openan.a2at.sdk.negotiation.golden;
 
 import java.util.List;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
@@ -82,7 +82,7 @@ public final class GoldenInputs {
 
             @Override
             public NegotiationContent content() {
-                return new InfoProposeContent(
+                return new InformationProposeContent(
                         List.of(
                                 new NegotiationItem("energy-saving area information", "e.g. Songshan Lake"),
                                 new NegotiationItem("energy-saving rate guarantee target", "e.g. 20Mbps"),
@@ -147,7 +147,7 @@ public final class GoldenInputs {
         INFORMATION_ACCEPT(NegotiationPhase.ACCEPT, "information-negotiation", "information_accept") {
             @Override
             public NegotiationContent content() {
-                return new InfoEndingContent(
+                return new InformationEndingContent(
                         NegotiationConclusion.ACCEPT,
                         List.of(
                                 new NegotiationItem("energy-saving area information", "Songshan Lake"),
@@ -182,7 +182,7 @@ public final class GoldenInputs {
         INFORMATION_REJECT(NegotiationPhase.REJECT, "information-negotiation", "information_reject") {
             @Override
             public NegotiationContent content() {
-                return new InfoEndingContent(
+                return new InformationEndingContent(
                         NegotiationConclusion.REJECT,
                         List.of(new NegotiationItem(
                                 "energy-saving area information",
@@ -240,10 +240,7 @@ public final class GoldenInputs {
          * @return template URI such as {@code Negotiation-T/information-negotiation/propose/v1}
          */
         public TemplateUri template() {
-            return TemplateUri.of(
-                    StandardTemplates.NEGOTIATION_EXTENSION_NAME,
-                    TemplateUri.DEFAULT_TEMPLATE_VERSION,
-                    typeSegment,
+            return TemplateUri.of(StandardTemplates.NEGOTIATION_EXTENSION_NAME, typeSegment,
                     phase.uriSegment());
         }
 

@@ -1,6 +1,8 @@
-package net.openan.a2at.sdk.prompt.taskrendering.api;
+package net.openan.a2at.sdk.prompt.taskrendering;
 
 import java.util.Map;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Renders a sectioned prompt template by filling slot values under one blank-slot policy.
@@ -29,8 +31,10 @@ public interface SectionedTemplateRenderer {
      * Renders one sectioned template text with the given slot values.
      *
      * @param templateText full template text whose sections are filled according to the implementation's policy
-     * @param slots slot values keyed by slot name; how null or blank values are handled depends on the policy
+     * @param slots slot values keyed by slot name; how null values or a null map are handled depends on the policy
      * @return rendered prompt text
+     * @throws NullPointerException if the template text is null; an adapter that sits behind an internal
+     *     error-wrapping boundary may instead raise its internal failure type
      */
-    String render(String templateText, Map<String, String> slots);
+    @NonNull String render(@NonNull String templateText, @Nullable Map<String, String> slots);
 }

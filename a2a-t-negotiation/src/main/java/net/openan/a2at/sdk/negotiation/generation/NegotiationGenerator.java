@@ -14,7 +14,7 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
  *
  * @since 2026-06
  */
-public interface NegotiationGenerator {
+interface NegotiationGenerator {
 
     /**
      * Generates the negotiation message text for one content object.

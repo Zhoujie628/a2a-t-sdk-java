@@ -19,11 +19,11 @@ import net.openan.a2at.sdk.llm.LLMClientFactory;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -156,7 +156,7 @@ class NegotiationFacadeOutputSymmetryTest {
                         StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE,
                         new NegotiationProposeData(
                                 new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5),
-                                new InfoProposeContent(
+                                new InformationProposeContent(
                                         List.of(
                                                 new NegotiationItem(
                                                         "energy-saving area information", "e.g. Songshan Lake"),
@@ -188,7 +188,7 @@ class NegotiationFacadeOutputSymmetryTest {
                         "information_accept",
                         NegotiationPhase.ACCEPT,
                         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT,
-                        new InfoEndingContent(
+                        new InformationEndingContent(
                                 NegotiationConclusion.ACCEPT,
                                 List.of(new NegotiationItem("area information", "Songshan Lake")))),
                 endingCase(
@@ -205,7 +205,7 @@ class NegotiationFacadeOutputSymmetryTest {
                         "information_reject",
                         NegotiationPhase.REJECT,
                         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT,
-                        new InfoEndingContent(
+                        new InformationEndingContent(
                                 NegotiationConclusion.REJECT,
                                 List.of(new NegotiationItem("area information", "not available")))),
                 endingCase(

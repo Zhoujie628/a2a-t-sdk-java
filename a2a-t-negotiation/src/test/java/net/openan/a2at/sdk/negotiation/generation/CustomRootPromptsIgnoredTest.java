@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.language;
+package net.openan.a2at.sdk.negotiation.generation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,16 +9,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
-import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
-import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
-import net.openan.a2at.sdk.negotiation.generation.NegotiationPromptResourceLoader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

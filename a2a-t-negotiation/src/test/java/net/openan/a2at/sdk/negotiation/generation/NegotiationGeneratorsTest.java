@@ -6,11 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -319,7 +319,7 @@ class NegotiationGeneratorsTest {
 
     @Test
     void informationProposeAppendsRelationshipLineAndOmitsItWhenAbsent() {
-        InfoProposeContent withRelationship = new InfoProposeContent(
+        InformationProposeContent withRelationship = new InformationProposeContent(
                 List.of(new NegotiationItem("故障发生时间", "精确到分钟的时间点"), new NegotiationItem("受影响小区标识", "CGI 或小区名称")),
                 "故障发生时间与受影响小区标识需逐小区对应");
 
@@ -333,8 +333,8 @@ class NegotiationGeneratorsTest {
         assertTrue(renderedZh.contains("## 所需信息项\n1. 故障发生时间：精确到分钟的时间点\n2. 受影响小区标识：CGI 或小区名称"));
         assertTrue(renderedZh.endsWith("缺失项之间的关系：故障发生时间与受影响小区标识需逐小区对应"));
 
-        InfoProposeContent withoutRelationship =
-                new InfoProposeContent(List.of(new NegotiationItem("故障发生时间", "精确到分钟的时间点")), null);
+        InformationProposeContent withoutRelationship =
+                new InformationProposeContent(List.of(new NegotiationItem("故障发生时间", "精确到分钟的时间点")), null);
 
         String renderedWithout = new InformationProposeGenerator()
                 .generate(
@@ -348,7 +348,7 @@ class NegotiationGeneratorsTest {
 
     @Test
     void informationProposeRendersEnglishRelationshipLabelWithTrailingSpace() {
-        InfoProposeContent content = new InfoProposeContent(
+        InformationProposeContent content = new InformationProposeContent(
                 List.of(new NegotiationItem("Failure time", "minute precision")),
                 "failure time and cell identity must correspond per cell");
 
@@ -375,7 +375,7 @@ class NegotiationGeneratorsTest {
         String infoRendered = new InformationEndingGenerator()
                 .generate(
                         context(2),
-                        new InfoEndingContent(
+                        new InformationEndingContent(
                                 NegotiationConclusion.ACCEPT,
                                 List.of(new NegotiationItem("故障发生时间", "2026-08-19 10:30"))),
                         template(StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri(), ZH_INFO_ENDING_TEMPLATE),
@@ -412,7 +412,7 @@ class NegotiationGeneratorsTest {
         assertThrows(IllegalArgumentException.class, () -> new InformationEndingGenerator()
                 .generate(
                         context(1),
-                        new InfoEndingContent(NegotiationConclusion.ABORT, List.of()),
+                        new InformationEndingContent(NegotiationConclusion.ABORT, List.of()),
                         template(StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri(), ZH_INFO_ENDING_TEMPLATE),
                         zhVocabulary));
         assertThrows(IllegalArgumentException.class, () -> new TargetEndingGenerator()
@@ -437,7 +437,7 @@ class NegotiationGeneratorsTest {
                 assertThrows(NullPointerException.class, () -> new InformationEndingGenerator()
                         .generate(
                                 context(1),
-                                new InfoEndingContent(null, List.of()),
+                                new InformationEndingContent(null, List.of()),
                                 template(
                                         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri(),
                                         ZH_INFO_ENDING_TEMPLATE),
@@ -502,7 +502,7 @@ class NegotiationGeneratorsTest {
                                 template(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(), ZH_INFO_PROPOSE_TEMPLATE),
                                 zhVocabulary));
 
-        assertTrue(exception.getMessage().contains("requires content of type InfoProposeContent"));
+        assertTrue(exception.getMessage().contains("requires content of type InformationProposeContent"));
     }
 
     @Test

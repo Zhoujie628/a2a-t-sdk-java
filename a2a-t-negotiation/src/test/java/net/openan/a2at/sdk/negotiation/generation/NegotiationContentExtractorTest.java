@@ -12,8 +12,8 @@ import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
@@ -39,7 +39,7 @@ class NegotiationContentExtractorTest {
                         "请提供故障发生时间与受影响小区标识。",
                         reference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN"));
 
-        InfoProposeContent proposeContent = assertInstanceOf(InfoProposeContent.class, content);
+        InformationProposeContent proposeContent = assertInstanceOf(InformationProposeContent.class, content);
         assertEquals(
                 List.of(new NegotiationItem("故障发生时间", "精确到分钟的时间点"), new NegotiationItem("受影响小区标识", null)),
                 proposeContent.items());
@@ -103,7 +103,7 @@ class NegotiationContentExtractorTest {
                         "{\"conclusion\":\"Accept\",\"items\":[{\"name\":\"故障发生时间\",\"value\":\"2026-08-19 10:30\"}]}"))
                 .extract("同意提供。", reference(NegotiationType.INFORMATION, NegotiationPhase.ACCEPT, "zh-CN"));
 
-        InfoEndingContent infoEnding = assertInstanceOf(InfoEndingContent.class, infoAccept);
+        InformationEndingContent infoEnding = assertInstanceOf(InformationEndingContent.class, infoAccept);
         assertEquals(NegotiationConclusion.ACCEPT, infoEnding.conclusion());
         assertEquals(List.of(new NegotiationItem("故障发生时间", "2026-08-19 10:30")), infoEnding.items());
 

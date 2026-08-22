@@ -14,10 +14,10 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -86,7 +86,7 @@ class TaskPromptNegotiationCoexistenceTest {
         MetadataContent negotiationMessage = server.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
-                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                        new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_TEMPLATE);
         assertEquals(INFORMATION_PROPOSE_URI, negotiationMessage.templateUri());
         assertTrue(negotiationMessage.promptText().contains("- id: " + UUID));
@@ -106,7 +106,7 @@ class TaskPromptNegotiationCoexistenceTest {
         MetadataContent negotiationMessage = server.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 2, 5),
-                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                        new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_TEMPLATE);
         assertTrue(negotiationMessage.promptText().contains("- round: 2"));
 

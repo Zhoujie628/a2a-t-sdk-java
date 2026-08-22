@@ -11,8 +11,8 @@ import ch.qos.logback.core.read.ListAppender;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,7 +105,7 @@ class NegotiationTemplateQueryBoundaryTest {
         NegotiationGenerationOrchestrator orchestrator = orchestrator("zh-CN");
 
         Optional<PromptTemplate> template = orchestrator.getNegotiationPrompt(
-                TemplateUri.of("Negotiation-T", "v1", "unknown-negotiation", "propose"));
+                TemplateUri.of("Negotiation-T", "unknown-negotiation", "propose"));
 
         assertTrue(template.isEmpty());
         assertTrue(hasWarning("negotiation_template_not_found", "A2AT_LANGUAGE"));

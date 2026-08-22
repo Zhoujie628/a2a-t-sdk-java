@@ -12,8 +12,8 @@ import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentService;
+import net.openan.a2at.sdk.core.model.TemplateUri;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
@@ -75,6 +75,10 @@ public final class A2ATClient {
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      * @throws NullPointerException if the template URI is null
+     * @throws net.openan.a2at.sdk.core.exception.PromptGenerationException with the code
+     *     {@code template_not_found}, {@code prompt_resource_load_error}, {@code slot_schema_not_found},
+     *     {@code llm_invocation_failed}, {@code render_failed} or {@code slot_validation_error} when generating the
+     *     prompt fails
      */
     public MetadataContent generateTaskPromptFromText(@NonNull String text, @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
@@ -90,6 +94,10 @@ public final class A2ATClient {
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      * @throws NullPointerException if the template URI is null
+     * @throws net.openan.a2at.sdk.core.exception.PromptGenerationException with the code
+     *     {@code template_not_found}, {@code prompt_resource_load_error}, {@code slot_schema_not_found},
+     *     {@code llm_invocation_failed}, {@code render_failed} or {@code slot_validation_error} when generating the
+     *     prompt fails
      */
     public MetadataContent generateTaskPromptFromDataWithSchema(
             @NonNull Map<String, Object> data,
@@ -111,6 +119,10 @@ public final class A2ATClient {
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      * @throws NullPointerException if the template URI is null
+     * @throws net.openan.a2at.sdk.core.exception.PromptGenerationException with the code
+     *     {@code template_not_found}, {@code prompt_resource_load_error}, {@code slot_schema_not_found},
+     *     {@code llm_invocation_failed}, {@code render_failed} or {@code slot_validation_error} when generating the
+     *     prompt fails
      */
     public MetadataContent generateAuthPromptFromText(@NonNull String text, @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
@@ -130,6 +142,10 @@ public final class A2ATClient {
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      * @throws NullPointerException if the template URI is null
+     * @throws net.openan.a2at.sdk.core.exception.PromptGenerationException with the code
+     *     {@code template_not_found}, {@code prompt_resource_load_error}, {@code slot_schema_not_found},
+     *     {@code llm_invocation_failed}, {@code render_failed} or {@code slot_validation_error} when generating the
+     *     prompt fails
      */
     public MetadataContent generateAuthPromptFromDataWithSchema(
             @NonNull Map<String, Object> data,
@@ -147,6 +163,10 @@ public final class A2ATClient {
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      * @throws NullPointerException if the template URI is null
+     * @throws net.openan.a2at.sdk.core.exception.PromptGenerationException with the code
+     *     {@code template_not_found}, {@code prompt_resource_load_error}, {@code slot_schema_not_found},
+     *     {@code llm_invocation_failed}, {@code render_failed} or {@code slot_validation_error} when generating the
+     *     prompt fails
      */
     public MetadataContent generateNotificationPromptFromText(@NonNull String text, @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
@@ -162,6 +182,10 @@ public final class A2ATClient {
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
      * @throws NullPointerException if the template URI is null
+     * @throws net.openan.a2at.sdk.core.exception.PromptGenerationException with the code
+     *     {@code template_not_found}, {@code prompt_resource_load_error}, {@code slot_schema_not_found},
+     *     {@code llm_invocation_failed}, {@code render_failed} or {@code slot_validation_error} when generating the
+     *     prompt fails
      */
     public MetadataContent generateNotificationPromptFromDataWithSchema(
             @NonNull Map<String, Object> data,

@@ -17,8 +17,8 @@ import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrchestrator;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
@@ -258,7 +258,7 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
     void fromTextEntryPointsReturnMetadataContent() throws IOException {
         Path envFile = writeMinimalClientEnvWithoutRequiredSlots(TEST_MOCK_PROVIDER);
         A2ATClient client = new A2ATClient(envFile);
-        TemplateUri unconstrained = TemplateUri.of("Task-T", "v1", "network-layer", "unconstrained");
+        TemplateUri unconstrained = TemplateUri.of("Task-T", "network-layer", "unconstrained");
 
         MetadataContent taskResult = client.generateTaskPromptFromText("Please analyze Site A.", unconstrained);
         MetadataContent authResult = client.generateAuthPromptFromText("Authorize access.", unconstrained);
@@ -314,7 +314,7 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
     void fromTextReturnsCorrectExtensionUriPerContentType() throws IOException {
         Path envFile = writeMinimalClientEnvWithoutRequiredSlots(TEST_MOCK_PROVIDER);
         A2ATClient client = new A2ATClient(envFile);
-        TemplateUri unconstrained = TemplateUri.of("Task-T", "v1", "network-layer", "unconstrained");
+        TemplateUri unconstrained = TemplateUri.of("Task-T", "network-layer", "unconstrained");
 
         MetadataContent taskResult = client.generateTaskPromptFromText("Please analyze Site A.", unconstrained);
         MetadataContent authResult = client.generateAuthPromptFromText("Authorize access.", unconstrained);

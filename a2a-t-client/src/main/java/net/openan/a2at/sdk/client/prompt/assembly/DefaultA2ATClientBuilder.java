@@ -19,7 +19,7 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
 import net.openan.a2at.sdk.llm.LLMConfigLoader;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContentService;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
@@ -30,7 +30,7 @@ import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
-import net.openan.a2at.sdk.prompt.taskrendering.api.TaskPromptRenderer;
+import net.openan.a2at.sdk.prompt.taskrendering.TaskPromptRenderer;
 
 /**
  * Default builder that assembles one high-level A2AT client runtime from unified config.

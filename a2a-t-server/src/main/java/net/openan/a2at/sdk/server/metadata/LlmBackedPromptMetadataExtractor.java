@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
+import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.prompt.analysis.exception.ScenarioRecognitionException;
 import net.openan.a2at.sdk.prompt.analysis.impl.PromptSlotValueExtractor;
 import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
@@ -79,13 +80,13 @@ public final class LlmBackedPromptMetadataExtractor implements ServerPromptMetad
                     scenarioRecognizer.recognize(processedPromptText, scenarios, systemPrompt, userPrompt);
             if (!result.matched() || result.scenarioCode() == null || result.scenarioCode().isBlank()) {
                 throw new PromptComplianceCheckException(
-                        "processed_prompt_parse_error",
+                        A2ATErrorCodes.PROCESSED_PROMPT_PARSE_ERROR,
                         result.errorMessage() == null ? "Scenario recognition failed." : result.errorMessage(),
                         "prompt_parse");
             }
             return result;
         } catch (ScenarioRecognitionException error) {
-            throw new PromptComplianceCheckException("processed_prompt_parse_error", error.getMessage(), "prompt_parse");
+            throw new PromptComplianceCheckException(A2ATErrorCodes.PROCESSED_PROMPT_PARSE_ERROR, error.getMessage(), "prompt_parse");
         }
     }
 
@@ -93,7 +94,7 @@ public final class LlmBackedPromptMetadataExtractor implements ServerPromptMetad
         try {
             return templateLoader.loadTemplate(scenarioCode, language);
         } catch (ResourceNotFoundException error) {
-            throw new PromptComplianceCheckException("template_not_found", error.getMessage(), "generation");
+            throw new PromptComplianceCheckException(A2ATErrorCodes.TEMPLATE_NOT_FOUND, error.getMessage(), "generation");
         }
     }
 
@@ -101,7 +102,7 @@ public final class LlmBackedPromptMetadataExtractor implements ServerPromptMetad
             StructuredSlotExtractionResult extractionResult, PromptSlotSchema slotSchema) {
         if (!extractionResult.slotErrors().isEmpty()) {
             throw new PromptComplianceCheckException(
-                    "slot_validation_error",
+                    A2ATErrorCodes.SLOT_VALIDATION_ERROR,
                     extractionResult.slotErrors().stream()
                             .map(StructuredSlotValidationError::message)
                             .filter(message -> message != null && !message.isBlank())
@@ -113,7 +114,7 @@ public final class LlmBackedPromptMetadataExtractor implements ServerPromptMetad
             String value = extractionResult.slots().get(definition.name());
             if (definition.required() && (value == null || value.isBlank())) {
                 throw new PromptComplianceCheckException(
-                        "slot_validation_error",
+                        A2ATErrorCodes.SLOT_VALIDATION_ERROR,
                         "Required slot '" + definition.name() + "' is missing.",
                         "slot_validation");
             }
@@ -124,7 +125,7 @@ public final class LlmBackedPromptMetadataExtractor implements ServerPromptMetad
                     && !definition.allowedValues().isEmpty()
                     && !definition.allowedValues().contains(value.trim())) {
                 throw new PromptComplianceCheckException(
-                        "slot_validation_error",
+                        A2ATErrorCodes.SLOT_VALIDATION_ERROR,
                         "Slot '" + definition.name() + "' violates allowed values.",
                         "slot_validation");
             }
@@ -132,7 +133,7 @@ public final class LlmBackedPromptMetadataExtractor implements ServerPromptMetad
                     && !definition.pattern().isBlank()
                     && !value.trim().matches(definition.pattern())) {
                 throw new PromptComplianceCheckException(
-                        "slot_validation_error",
+                        A2ATErrorCodes.SLOT_VALIDATION_ERROR,
                         "Slot '" + definition.name() + "' violates pattern constraint.",
                         "slot_validation");
             }
@@ -148,19 +149,19 @@ public final class LlmBackedPromptMetadataExtractor implements ServerPromptMetad
             double numericValue = Double.parseDouble(value);
             if (definition.minimum() != null && numericValue < definition.minimum()) {
                 throw new PromptComplianceCheckException(
-                        "slot_validation_error",
+                        A2ATErrorCodes.SLOT_VALIDATION_ERROR,
                         "Slot '" + definition.name() + "' is smaller than minimum.",
                         "slot_validation");
             }
             if (definition.maximum() != null && numericValue > definition.maximum()) {
                 throw new PromptComplianceCheckException(
-                        "slot_validation_error",
+                        A2ATErrorCodes.SLOT_VALIDATION_ERROR,
                         "Slot '" + definition.name() + "' is larger than maximum.",
                         "slot_validation");
             }
         } catch (NumberFormatException error) {
             throw new PromptComplianceCheckException(
-                    "slot_validation_error",
+                    A2ATErrorCodes.SLOT_VALIDATION_ERROR,
                     "Slot '" + definition.name() + "' is not numeric.",
                     "slot_validation");
         }

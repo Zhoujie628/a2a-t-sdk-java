@@ -17,7 +17,7 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
  *
  * @since 2026-06
  */
-public final class TargetProposeGenerator extends AbstractNegotiationGenerator {
+final class TargetProposeGenerator extends AbstractNegotiationGenerator {
 
     /**
      * Generates a target negotiation propose message.

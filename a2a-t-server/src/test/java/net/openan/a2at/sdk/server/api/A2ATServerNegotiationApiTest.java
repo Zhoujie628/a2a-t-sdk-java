@@ -9,14 +9,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.server.A2ATServer;
 import org.junit.jupiter.api.Test;
 
@@ -35,7 +35,7 @@ class A2ATServerNegotiationApiTest {
         MetadataContent result = server.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
-                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                        new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE);
 
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
@@ -55,7 +55,7 @@ class A2ATServerNegotiationApiTest {
         MetadataContent result = server.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
-                        new InfoProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
+                        new InformationProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
                 INFORMATION_PROPOSE);
 
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
@@ -81,10 +81,7 @@ class A2ATServerNegotiationApiTest {
                 .getNegotiationPrompt(StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT)
                 .isPresent());
         assertFalse(server
-                .getNegotiationPrompt(TemplateUri.of(
-                        StandardTemplates.NEGOTIATION_EXTENSION_NAME,
-                        TemplateUri.DEFAULT_TEMPLATE_VERSION,
-                        "unknown-negotiation",
+                .getNegotiationPrompt(TemplateUri.of(StandardTemplates.NEGOTIATION_EXTENSION_NAME, "unknown-negotiation",
                         "propose"))
                 .isPresent());
         PromptTemplate template = server.getNegotiationPrompt(INFORMATION_PROPOSE).orElseThrow();

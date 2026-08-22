@@ -208,7 +208,6 @@ public final class NegotiationGenerationOrchestratorBuilder {
                         "Semantic validation requires an LLM client but none is configured.");
             };
         }
-        NegotiationJsonSchemaBuilder schemaBuilder = new NegotiationJsonSchemaBuilder();
-        return new DefaultNegotiationSemanticValidator(llmClient, schemaBuilder::buildSemanticValidationSchema);
+        return new DefaultNegotiationSemanticValidator(llmClient);
     }
 }

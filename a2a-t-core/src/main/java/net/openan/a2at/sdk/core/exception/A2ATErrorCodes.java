@@ -52,4 +52,22 @@ public final class A2ATErrorCodes {
 
     /** A referenced prompt resource could not be resolved. */
     public static final String VALIDATION_PROMPT_RESOURCE_NOT_FOUND = "validation_prompt_resource_not_found";
+
+    /** A prompt resource could not be loaded from its configured source. */
+    public static final String PROMPT_RESOURCE_LOAD_ERROR = "prompt_resource_load_error";
+
+    /** The slot schema describing the expected slots could not be resolved. */
+    public static final String SLOT_SCHEMA_NOT_FOUND = "slot_schema_not_found";
+
+    /** An LLM invocation failed at the infrastructure level. */
+    public static final String LLM_INVOCATION_FAILED = "llm_invocation_failed";
+
+    /** Rendering a template with its slot values failed. */
+    public static final String RENDER_FAILED = "render_failed";
+
+    /** The slot values extracted or provided for a template failed validation. */
+    public static final String SLOT_VALIDATION_ERROR = "slot_validation_error";
+
+    /** A processed prompt could not be parsed into its structured parts. */
+    public static final String PROCESSED_PROMPT_PARSE_ERROR = "processed_prompt_parse_error";
 }

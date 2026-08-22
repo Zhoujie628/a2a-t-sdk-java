@@ -17,7 +17,7 @@ import net.openan.a2at.sdk.core.resources.PathSegments;
  *
  * @since 2026-06
  */
-public class NegotiationPromptResourceLoader {
+class NegotiationPromptResourceLoader {
 
     private static final String CLASSPATH_ROOT = "prompt_resources/prompts/";
 

@@ -23,14 +23,14 @@ import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -104,7 +104,7 @@ class A2ATClientNegotiationEnvConfigTest {
         MetadataContent result = client.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
-                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                        new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE);
 
         assertTrue(result.promptText().contains("协商上下文"), "the zh-CN language must select the Chinese templates");
@@ -136,7 +136,7 @@ class A2ATClientNegotiationEnvConfigTest {
         MetadataContent result = client.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
-                        new InfoProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
+                        new InformationProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
                 INFORMATION_PROPOSE);
 
         assertTrue(result.promptText().contains("Negotiation Context"), "the default language must be en-US");
