@@ -1,7 +1,7 @@
 package net.openan.a2at.sdk.negotiation.generation;
 
 import java.util.Objects;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 
 /**
  * Assembles the negotiation context into the single slot value used by context sections.

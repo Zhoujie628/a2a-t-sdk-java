@@ -228,7 +228,7 @@ public final class A2ATServer {
      */
     public MetadataContent generateNegotiationProposePromptFromText(
             @NonNull String text,
-            net.openan.a2at.sdk.negotiation.content.NegotiationContext context,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
             @NonNull TemplateUri templateUri) {
         requireTemplateUri(templateUri);
         return negotiationContentService.generateProposeFromText(text, context, templateUri);
@@ -257,7 +257,7 @@ public final class A2ATServer {
      */
     public MetadataContent generateNegotiationAcceptPromptFromText(
             @NonNull String text,
-            net.openan.a2at.sdk.negotiation.content.NegotiationContext context,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
             @NonNull TemplateUri templateUri) {
         requireTemplateUri(templateUri);
         return negotiationContentService.generateAcceptFromText(text, context, templateUri);
@@ -286,7 +286,7 @@ public final class A2ATServer {
      */
     public MetadataContent generateNegotiationRejectPromptFromText(
             @NonNull String text,
-            net.openan.a2at.sdk.negotiation.content.NegotiationContext context,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
             @NonNull TemplateUri templateUri) {
         requireTemplateUri(templateUri);
         return negotiationContentService.generateRejectFromText(text, context, templateUri);
@@ -312,7 +312,7 @@ public final class A2ATServer {
      */
     public MetadataContent generateNegotiationAbortPromptFromText(
             @NonNull String text,
-            net.openan.a2at.sdk.negotiation.content.NegotiationContext context,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
             @NonNull TemplateUri templateUri) {
         requireTemplateUri(templateUri);
         return negotiationContentService.generateAbortFromText(text, context, templateUri);

@@ -3,7 +3,7 @@ package net.openan.a2at.sdk.negotiation.generation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import org.junit.jupiter.api.Test;
 
 class NegotiationContextRendererTest {

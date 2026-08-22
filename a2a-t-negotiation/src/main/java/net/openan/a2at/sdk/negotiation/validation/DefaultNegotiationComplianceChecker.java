@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

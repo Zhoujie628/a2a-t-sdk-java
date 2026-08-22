@@ -9,7 +9,7 @@ import net.openan.a2at.sample.private_line_complaint.negotiation.shared.Negotiat
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationScenario;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.server.A2ATServer;
 import org.a2aproject.sdk.server.agentexecution.AgentExecutor;
 import org.a2aproject.sdk.server.agentexecution.RequestContext;

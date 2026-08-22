@@ -2,7 +2,7 @@ package net.openan.a2at.sdk.negotiation.validation;
 
 import java.util.List;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 
 /**
  * Outcome of the rule-level compliance check of a rendered negotiation message.

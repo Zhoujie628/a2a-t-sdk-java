@@ -17,7 +17,7 @@ import net.openan.a2at.sample.subscribe_incident.client.flow.SampleStreamTermina
 import net.openan.a2at.sample.subscribe_incident.client.runtime.DefaultSampleClientRuntime;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import org.a2aproject.sdk.client.ClientEvent;
 import org.a2aproject.sdk.client.transport.spi.interceptors.ClientCallContext;
 import org.a2aproject.sdk.spec.Message;
