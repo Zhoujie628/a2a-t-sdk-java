@@ -18,7 +18,7 @@ import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
  * the four required keys or has the wrong shape is a validation infrastructure failure signalled through the internal
  * {@link NegotiationValidationException}.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public interface NegotiationSemanticValidator extends SemanticValidator<NegotiationReference> {
 

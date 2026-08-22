@@ -12,7 +12,7 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
  * delegate the final rendering step. The registry is the only supported dispatch path; it guarantees the exact runtime
  * type of the content before a generator is invoked.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 interface NegotiationGenerator {
 

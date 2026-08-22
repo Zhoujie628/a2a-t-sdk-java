@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * non-retryable {@code negotiation_slot_missing}, and content that contradicts the addressed phase or action maps to
  * {@code negotiation_invalid_input}.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 final class DefaultNegotiationContentExtractor implements NegotiationContentExtractor {
 

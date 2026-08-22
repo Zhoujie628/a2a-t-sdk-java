@@ -6,7 +6,7 @@ package net.openan.a2at.sdk.negotiation.content;
  * <p>Only {@code ACCEPT} and {@code REJECT} are renderable conclusions; {@code ABORT} exists in the model but no
  * bundled template carries it, so generation methods reject it as a programming error.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public enum NegotiationConclusion {
 

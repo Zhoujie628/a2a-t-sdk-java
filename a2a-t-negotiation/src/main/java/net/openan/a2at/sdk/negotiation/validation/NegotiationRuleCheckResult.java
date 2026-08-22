@@ -19,7 +19,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
  *     message or when every rule passes
  * @param context parsed negotiation context; {@code null} unless the text is a negotiation message whose context is
  *     fully valid
- * @since 2026-06
+ * @since 2026-08
  */
 public record NegotiationRuleCheckResult(
         boolean passed, boolean isNegotiation, List<SlotValidationError> errors, NegotiationContext context) {

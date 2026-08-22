@@ -11,7 +11,7 @@ import java.util.List;
  *     {@link NegotiationAction#REQUEST_FEASIBILITY_EVALUATION})
  * @param infeasibilityDetailsAndProposal infeasibility details and an alternative proposal; null or empty omits the
  *     section (only for {@link NegotiationAction#PROPOSE_ALTERNATIVE_ON_FAILURE})
- * @since 2026-06
+ * @since 2026-08
  */
 public record FeasibilityProposeContent(
         String feasibilityNegotiationDescription,

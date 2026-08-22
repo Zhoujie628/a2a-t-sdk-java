@@ -6,7 +6,7 @@ package net.openan.a2at.sdk.negotiation.content;
  * <p>The action is not rendered into the message; it selects which conditional sections of the feasibility propose
  * template are emitted.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public enum NegotiationAction {
 

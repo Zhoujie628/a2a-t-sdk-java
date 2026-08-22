@@ -7,6 +7,6 @@ package net.openan.a2at.sdk.negotiation.content;
  * {@link NegotiationEndingContent} for terminal messages. Generators and content extractors accept this common
  * supertype and dispatch on the exact runtime type.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public sealed interface NegotiationContent permits NegotiationProposeContent, NegotiationEndingContent {}

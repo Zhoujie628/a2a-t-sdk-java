@@ -3,7 +3,7 @@ package net.openan.a2at.sdk.negotiation.content;
 /**
  * Marker for the typed content of a terminal (accept or reject) negotiation message.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public sealed interface NegotiationEndingContent extends NegotiationContent
         permits InformationEndingContent, TargetEndingContent, FeasibilityEndingContent {

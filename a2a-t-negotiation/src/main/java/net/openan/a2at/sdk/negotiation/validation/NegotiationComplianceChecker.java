@@ -12,7 +12,7 @@ import net.openan.a2at.sdk.negotiation.content.Vocabulary;
  * ending-section presence and conditional-section exclusivity are deliberately not checked here; they belong to the
  * semantic validation step.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public interface NegotiationComplianceChecker {
 

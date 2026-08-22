@@ -9,7 +9,7 @@ package net.openan.a2at.sdk.negotiation.content;
  * @param id unique identifier of the negotiation session, expected to be a UUID
  * @param round current negotiation round, 1-based
  * @param maxRounds maximum number of rounds before the negotiation must end
- * @since 2026-06
+ * @since 2026-08
  */
 public record NegotiationContext(String id, int round, int maxRounds) {
 

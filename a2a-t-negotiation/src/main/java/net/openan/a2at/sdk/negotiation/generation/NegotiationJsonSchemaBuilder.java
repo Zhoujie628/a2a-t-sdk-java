@@ -15,7 +15,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationType;
  * (negotiation type, phase) pair with accept and reject sharing the terminal schema. The semantic validation schema
  * merges a caller-provided parameter schema into the fixed four-key output contract of the semantic validation step.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 final class NegotiationJsonSchemaBuilder {
 

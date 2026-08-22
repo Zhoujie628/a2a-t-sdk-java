@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
  * and the content type must match the negotiation type. Subtype matching is deliberately not supported; new content
  * types must be registered explicitly.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 final class NegotiationGeneratorRegistry {
 

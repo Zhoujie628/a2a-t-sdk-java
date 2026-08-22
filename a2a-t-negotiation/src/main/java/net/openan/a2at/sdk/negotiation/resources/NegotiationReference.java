@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
  * @param type negotiation type addressed by the reference
  * @param phase API-level phase addressed by the reference; accept and reject share the same template
  * @param language locale identifier such as {@code zh-CN} or {@code en-US}
- * @since 2026-06
+ * @since 2026-08
  */
 public record NegotiationReference(NegotiationType type, NegotiationPhase phase, String language) {
 

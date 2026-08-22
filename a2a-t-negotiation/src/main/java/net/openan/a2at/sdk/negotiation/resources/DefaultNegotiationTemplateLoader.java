@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * {@code templates/} tree. Only templates are taken from the local root; LLM prompt resources always come from the
  * classpath.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public final class DefaultNegotiationTemplateLoader implements NegotiationTemplateLoader {
 

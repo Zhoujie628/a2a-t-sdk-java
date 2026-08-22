@@ -17,7 +17,7 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
  * to evaluate, while proposing an alternative after an infeasible outcome renders the infeasibility details and
  * proposal. Exactly one of the two sections is always present.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 final class FeasibilityProposeGenerator extends AbstractNegotiationGenerator {
 

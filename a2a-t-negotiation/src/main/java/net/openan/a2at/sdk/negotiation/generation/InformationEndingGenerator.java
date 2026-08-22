@@ -13,7 +13,7 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
  *
  * <p>The message carries the terminal conclusion literal and the information items delivered with it.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 final class InformationEndingGenerator extends AbstractNegotiationGenerator {
 
