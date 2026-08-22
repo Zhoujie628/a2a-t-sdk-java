@@ -58,6 +58,7 @@ public final class Vocabulary {
     /** The language-neutral canonical key set every vocabulary file must define exactly, in a fixed order. */
     public static final List<String> CANONICAL_KEYS = List.of(
             "section.context",
+            "section.termination_reason",
             "section.info_items",
             "section.info_static",
             "section.info_conclusion",
@@ -74,6 +75,7 @@ public final class Vocabulary {
             "section.feasibility_conclusion",
             "section.feasibility_confirm",
             "slot.context",
+            "slot.termination_reason",
             "slot.info_items",
             "slot.info_conclusion",
             "slot.info_result_content",

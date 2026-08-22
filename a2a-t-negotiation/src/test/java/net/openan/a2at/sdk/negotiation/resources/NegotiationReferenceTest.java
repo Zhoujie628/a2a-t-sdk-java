@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.negotiation.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -113,6 +114,90 @@ class NegotiationReferenceTest {
                 StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(), NegotiationPhase.ACCEPT, "zh-CN");
 
         assertTrue(parsed.isEmpty());
+    }
+
+    @Test
+    void uriComposesCommonAbortUriForAbortPhase() {
+        NegotiationReference abort = new NegotiationReference(null, NegotiationPhase.ABORT, "en-US");
+        assertEquals(StandardTemplates.NEGOTIATION_ABORT.uri(), abort.uri());
+        assertEquals(StandardTemplates.NEGOTIATION_ABORT, abort.templateUri());
+        assertNull(abort.type());
+        assertEquals("common", abort.typeSegment());
+    }
+
+    @Test
+    void constructorBindsAbortPhaseToNullTypeOnly() {
+        IllegalArgumentException typedAbort = assertThrows(
+                IllegalArgumentException.class,
+                () -> new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.ABORT, "zh-CN"));
+        IllegalArgumentException untypedPropose = assertThrows(
+                IllegalArgumentException.class,
+                () -> new NegotiationReference(null, NegotiationPhase.PROPOSE, "zh-CN"));
+        assertTrue(typedAbort.getMessage().contains("ABORT"));
+        assertTrue(untypedPropose.getMessage().contains("null"));
+    }
+
+    @Test
+    void tryParseAcceptsCommonAbortUri() {
+        NegotiationReference abort = requirePresent(
+                NegotiationReference.tryParse(StandardTemplates.NEGOTIATION_ABORT.uri(), NegotiationPhase.ABORT, "zh-CN"));
+        assertNull(abort.type());
+        assertEquals(NegotiationPhase.ABORT, abort.phase());
+        assertEquals(StandardTemplates.NEGOTIATION_ABORT.uri(), abort.uri());
+        assertEquals("zh-CN", abort.language());
+    }
+
+    @Test
+    void tryParseRejectsCommonSegmentWithTypedPhases() {
+        assertTrue(NegotiationReference.tryParse("Negotiation-T/common/propose/v1", NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
+        assertTrue(NegotiationReference.tryParse(
+                        "Negotiation-T/common/accept-reject/v1", NegotiationPhase.ACCEPT, "zh-CN")
+                .isEmpty());
+    }
+
+    @Test
+    void tryParseRejectsAbortSegmentOnTypedReference() {
+        assertTrue(NegotiationReference.tryParse(
+                        "Negotiation-T/information-negotiation/abort/v1", NegotiationPhase.ABORT, "zh-CN")
+                .isEmpty());
+    }
+
+    @Test
+    void tryParseRejectsCommonAbortUriAgainstTypedPhases() {
+        assertTrue(NegotiationReference.tryParse(StandardTemplates.NEGOTIATION_ABORT.uri(), NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
+        assertTrue(NegotiationReference.tryParse(StandardTemplates.NEGOTIATION_ABORT.uri(), NegotiationPhase.ACCEPT, "zh-CN")
+                .isEmpty());
+    }
+
+    @Test
+    void fromTemplateUriAcceptsCommonAbortUri() {
+        NegotiationReference abort = requirePresent(
+                NegotiationReference.fromTemplateUri(StandardTemplates.NEGOTIATION_ABORT, NegotiationPhase.ABORT, "zh-CN"));
+        assertNull(abort.type());
+        assertEquals(NegotiationPhase.ABORT, abort.phase());
+        assertEquals(StandardTemplates.NEGOTIATION_ABORT.uri(), abort.uri());
+
+        assertEquals(
+                StandardTemplates.NEGOTIATION_ABORT.uri(),
+                new NegotiationReference(null, NegotiationPhase.ABORT, "en-US").uri(),
+                "fromTemplateUri must be the exact inverse of the composition for the common abort template");
+    }
+
+    @Test
+    void fromTemplateUriRejectsCommonWithTypedPhasesAndTypedAbort() {
+        assertTrue(NegotiationReference.fromTemplateUri(
+                        TemplateUri.of("Negotiation-T", "common", "propose"), NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
+        assertTrue(NegotiationReference.fromTemplateUri(
+                        TemplateUri.of("Negotiation-T", "common", "abort"), NegotiationPhase.PROPOSE, "zh-CN")
+                .isEmpty());
+        assertTrue(NegotiationReference.fromTemplateUri(
+                        TemplateUri.of("Negotiation-T", "information-negotiation", "abort"),
+                        NegotiationPhase.ABORT,
+                        "zh-CN")
+                .isEmpty());
     }
 
     @Test

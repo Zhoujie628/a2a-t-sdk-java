@@ -1,5 +1,6 @@
 {
   "section.context": "协商上下文",
+  "section.termination_reason": "协商终止原因",
   "section.info_items": "所需信息项",
   "section.info_static": "信息协商",
   "section.info_conclusion": "信息协商结果",
@@ -16,6 +17,7 @@
   "section.feasibility_conclusion": "可行性协商结果",
   "section.feasibility_confirm": "可行性评估结果确认",
   "slot.context": "协商上下文",
+  "slot.termination_reason": "协商终止原因",
   "slot.info_items": "所需信息项",
   "slot.info_conclusion": "信息协商结果",
   "slot.info_result_content": "信息协商结果内容",

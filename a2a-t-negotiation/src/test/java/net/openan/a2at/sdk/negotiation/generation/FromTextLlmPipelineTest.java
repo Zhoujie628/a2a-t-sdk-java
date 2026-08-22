@@ -557,6 +557,7 @@ class FromTextLlmPipelineTest {
             case PROPOSE -> orchestrator.generateProposeFromText(text, goldenCase.context(), goldenCase.template());
             case ACCEPT -> orchestrator.generateAcceptFromText(text, goldenCase.context(), goldenCase.template());
             case REJECT -> orchestrator.generateRejectFromText(text, goldenCase.context(), goldenCase.template());
+            case ABORT -> throw new IllegalArgumentException("The typed golden cases carry no abort phase.");
         };
     }
 
@@ -565,6 +566,7 @@ class FromTextLlmPipelineTest {
             case PROPOSE -> "propose";
             case ACCEPT -> "accept";
             case REJECT -> "reject";
+            case ABORT -> "abort";
         };
     }
 

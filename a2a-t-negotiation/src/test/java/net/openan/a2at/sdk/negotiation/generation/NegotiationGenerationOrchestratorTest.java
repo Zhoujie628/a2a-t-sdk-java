@@ -122,9 +122,9 @@ class NegotiationGenerationOrchestratorTest {
     }
 
     @Test
-    void listsAllSixTemplatesPerLanguage() {
-        assertEquals(6, zhOrchestrator().getNegotiationPrompts().size());
-        assertEquals(6, orchestrator("en-US").getNegotiationPrompts().size());
+    void listsAllSevenTemplatesPerLanguage() {
+        assertEquals(7, zhOrchestrator().getNegotiationPrompts().size());
+        assertEquals(7, orchestrator("en-US").getNegotiationPrompts().size());
     }
 
     @Test

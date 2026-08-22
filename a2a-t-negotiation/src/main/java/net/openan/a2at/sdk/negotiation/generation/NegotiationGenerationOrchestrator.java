@@ -14,6 +14,7 @@ import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
@@ -156,6 +157,27 @@ public final class NegotiationGenerationOrchestrator {
     }
 
     /**
+     * Generates an abort negotiation message from typed data.
+     *
+     * <p>This variant is deterministic and never calls an LLM. Abort messages are type-independent: the addressed
+     * template must be the common abort template and the content carries only the termination reason.
+     *
+     * @param data typed abort input carrying the negotiation context and the termination reason
+     * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @throws NullPointerException if the data, its context or the template URI is null
+     * @throws IllegalArgumentException if the template URI does not address the common abort template or the
+     *     termination reason is blank
+     * @throws NegotiationGenerationException with the code {@code template_not_found} when no template exists for the
+     *     URI in any resource root, or the code {@code negotiation_slot_missing} when rendering the template fails
+     */
+    public MetadataContent generateAbortFromData(
+            @NonNull NegotiationAbortData data, @NonNull TemplateUri templateUri) {
+        Objects.requireNonNull(data, "Negotiation abort data must not be null.");
+        return generateFromData(data.context(), data.content(), templateUri, NegotiationPhase.ABORT);
+    }
+
+    /**
      * Generates a propose-phase negotiation message from free text.
      *
      * <p>This variant runs one LLM content-extraction step constrained by the template URI and then renders
@@ -229,6 +251,31 @@ public final class NegotiationGenerationOrchestrator {
     public MetadataContent generateRejectFromText(
             String text, @NonNull NegotiationContext context, @NonNull TemplateUri templateUri) {
         return generateFromText(text, context, templateUri, NegotiationPhase.REJECT);
+    }
+
+    /**
+     * Generates an abort negotiation message from free text.
+     *
+     * <p>This variant runs one LLM content-extraction step constrained by the common abort template and then renders
+     * deterministically like the from-data variant. The template is loaded before the LLM call and the extraction step
+     * is retried up to the configured attempt limit on the retryable failure codes
+     * {@code negotiation_content_extract_failed} and {@code negotiation_llm_infrastructure_error}.
+     *
+     * @param text free-text input stating the termination reason
+     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @throws NullPointerException if the context or the template URI is null
+     * @throws IllegalArgumentException if the template URI does not address the common abort template
+     * @throws NegotiationGenerationException with the code {@code template_not_found} when no template or prompt
+     *     resource exists for the URI and language, {@code negotiation_content_extract_failed} or
+     *     {@code negotiation_llm_infrastructure_error} when the extraction step fails after exhausting its retries,
+     *     {@code negotiation_slot_missing} when the extracted content misses the termination reason, or
+     *     {@code negotiation_invalid_input} when the text is blank
+     */
+    public MetadataContent generateAbortFromText(
+            String text, @NonNull NegotiationContext context, @NonNull TemplateUri templateUri) {
+        return generateFromText(text, context, templateUri, NegotiationPhase.ABORT);
     }
 
     /**
@@ -359,6 +406,30 @@ public final class NegotiationGenerationOrchestrator {
         return validateAndFilling(prompt, schema, templateUri, NegotiationPhase.REJECT);
     }
 
+    /**
+     * Validates an abort negotiation message and extracts its parameters.
+     *
+     * <p>The pipeline is the one of {@link #validateAndFillingProposeData(String, Map, TemplateUri)} with the expected
+     * phase fixed to abort: the template URI must address the common abort template and the message must satisfy the
+     * abort-phase semantic constraints.
+     *
+     * @param prompt rendered negotiation message text to validate
+     * @param schema caller-provided parameter JSON schema describing the parameters to extract
+     * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
+     * @return filled parameter data carrying the context parameters and the extracted parameters
+     * @throws NullPointerException if the schema or the template URI is null
+     * @throws IllegalArgumentException if the template URI does not address the common abort template
+     * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input} when the prompt is
+     *     not a negotiation message, {@code negotiation_rule_violation} when the negotiation context violates a rule,
+     *     {@code negotiation_semantic_rejected} when the semantic validation rejects the message,
+     *     {@code negotiation_llm_infrastructure_error} when the semantic step fails after exhausting its retries, or
+     *     {@code template_not_found} when the semantic validation prompt resources are missing
+     */
+    public FilledParamData validateAndFillingAbortData(
+            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
+        return validateAndFilling(prompt, schema, templateUri, NegotiationPhase.ABORT);
+    }
+
     private MetadataContent generateFromData(
             NegotiationContext context, NegotiationContent content, TemplateUri templateUri, NegotiationPhase phase) {
         requireContext(context);
@@ -471,8 +542,10 @@ public final class NegotiationGenerationOrchestrator {
     private Optional<NegotiationReference> parseQueryReference(TemplateUri templateUri) {
         // The URI layer cannot distinguish accept from reject because both phases share the accept-reject template
         // segment. The query therefore addresses the shared template through the ACCEPT phase; the parsed phase is an
-        // addressing artifact only and must never be read as the phase of any message.
-        for (NegotiationPhase phase : List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT)) {
+        // addressing artifact only and must never be read as the phase of any message. The abort phase addresses the
+        // type-independent common abort template.
+        for (NegotiationPhase phase :
+                List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT, NegotiationPhase.ABORT)) {
             Optional<NegotiationReference> reference = NegotiationReference.fromTemplateUri(templateUri, phase, language);
             if (reference.isPresent()) {
                 return reference;

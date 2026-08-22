@@ -38,7 +38,8 @@ class NegotiationTemplateQueryBoundaryTest {
             StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(),
             StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri(),
             StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
-            StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri());
+            StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri(),
+            StandardTemplates.NEGOTIATION_ABORT.uri());
 
     private ListAppender<ILoggingEvent> logAppender;
 
@@ -63,14 +64,14 @@ class NegotiationTemplateQueryBoundaryTest {
         return Stream.of(Arguments.of("zh-CN"), Arguments.of("en-US"));
     }
 
-    @ParameterizedTest(name = "list query returns six templates in the fixed order [{0}]")
+    @ParameterizedTest(name = "list query returns seven templates in the fixed order [{0}]")
     @MethodSource("languages")
-    void listQueryReturnsSixTemplatesInTheFixedOrder(String language) {
+    void listQueryReturnsSevenTemplatesInTheFixedOrder(String language) {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(language);
 
         List<PromptTemplate> templates = orchestrator.getNegotiationPrompts();
 
-        assertEquals(6, templates.size());
+        assertEquals(7, templates.size());
         assertEquals(
                 EXPECTED_URI_ORDER, templates.stream().map(template -> template.templateUri().uri()).toList());
         for (PromptTemplate template : templates) {
@@ -78,8 +79,8 @@ class NegotiationTemplateQueryBoundaryTest {
             assertFalse(
                     typeSegment.contains("_"), "type segments must use hyphens: " + template.templateUri().uri());
             assertTrue(
-                    typeSegment.endsWith("-negotiation"),
-                    "type segment must carry the suffix: " + template.templateUri().uri());
+                    typeSegment.endsWith("-negotiation") || typeSegment.equals("common"),
+                    "type segment must carry the suffix or be the common segment: " + template.templateUri().uri());
             assertFalse(template.content().isBlank());
         }
     }

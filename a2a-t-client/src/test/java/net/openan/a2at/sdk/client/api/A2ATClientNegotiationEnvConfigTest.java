@@ -141,7 +141,7 @@ class A2ATClientNegotiationEnvConfigTest {
 
         assertTrue(result.promptText().contains("Negotiation Context"), "the default language must be en-US");
         assertTrue(result.promptText().contains("Required Information Items"));
-        assertEquals(6, client.getNegotiationPrompts().size(), "the built-in resources must be used by default");
+        assertEquals(7, client.getNegotiationPrompts().size(), "the built-in resources must be used by default");
         assertTrue(client.getNegotiationPrompt(INFORMATION_PROPOSE).isPresent());
 
         assertThrows(

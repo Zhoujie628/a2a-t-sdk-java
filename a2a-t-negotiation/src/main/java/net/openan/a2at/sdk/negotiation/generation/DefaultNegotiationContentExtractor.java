@@ -9,6 +9,7 @@ import net.openan.a2at.sdk.core.json.JacksonJsonValueParser;
 import net.openan.a2at.sdk.core.json.JsonValueParser;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
@@ -23,6 +24,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +49,8 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
     private static final String CATEGORY_TARGET = "target_negotiation";
 
     private static final String CATEGORY_FEASIBILITY = "feasibility_negotiation";
+
+    private static final String CATEGORY_ABORT = "abort_negotiation";
 
     private final LLMClient llmClient;
 
@@ -154,7 +158,10 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
     }
 
     private static NegotiationContent mapContent(
-            Map<String, Object> payload, NegotiationType type, NegotiationPhase phase) {
+            Map<String, Object> payload, @Nullable NegotiationType type, NegotiationPhase phase) {
+        if (phase == NegotiationPhase.ABORT) {
+            return new NegotiationAbortContent(requiredString(payload, "termination_reason"));
+        }
         if (phase == NegotiationPhase.PROPOSE) {
             return mapProposeContent(payload, type);
         }
@@ -324,10 +331,14 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
             case PROPOSE -> "propose";
             case ACCEPT -> "accept";
             case REJECT -> "reject";
+            case ABORT -> "abort";
         };
     }
 
-    private static String promptCategory(NegotiationType type) {
+    private static String promptCategory(@Nullable NegotiationType type) {
+        if (type == null) {
+            return CATEGORY_ABORT;
+        }
         return switch (type) {
             case INFORMATION -> CATEGORY_INFORMATION;
             case TARGET -> CATEGORY_TARGET;

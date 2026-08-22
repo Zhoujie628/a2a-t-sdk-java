@@ -167,7 +167,7 @@ class NegotiationGeneratorRegistryTest {
         NegotiationContent content = new InformationProposeContent(List.of(), null);
 
         assertEquals(
-                "Negotiation type must not be null.",
+                "Negotiation type must not be null for the PROPOSE phase.",
                 assertThrows(
                                 NullPointerException.class,
                                 () -> registry.resolve(null, NegotiationPhase.PROPOSE, content))

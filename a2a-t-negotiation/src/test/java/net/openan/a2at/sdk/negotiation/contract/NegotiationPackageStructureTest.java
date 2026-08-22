@@ -27,6 +27,8 @@ class NegotiationPackageStructureTest {
                         "FeasibilityProposeContent.java",
                         "InformationEndingContent.java",
                         "InformationProposeContent.java",
+                        "NegotiationAbortContent.java",
+                        "NegotiationAbortData.java",
                         "NegotiationAction.java",
                         "NegotiationConclusion.java",
                         "NegotiationContent.java",
@@ -65,6 +67,7 @@ class NegotiationPackageStructureTest {
     void generationPackageExposesExactlyThePinnedTypes() throws IOException {
         assertEquals(
                 List.of(
+                        "AbortGenerator.java",
                         "AbstractNegotiationGenerator.java",
                         "DefaultNegotiationContentExtractor.java",
                         "FeasibilityEndingGenerator.java",

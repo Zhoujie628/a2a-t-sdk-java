@@ -63,7 +63,7 @@ class NegotiationLanguageSwitchTest {
 
         List<PromptTemplate> templates = orchestrator.getNegotiationPrompts();
 
-        assertEquals(6, templates.size());
+        assertEquals(7, templates.size());
         for (PromptTemplate template : templates) {
             assertTrue(
                     template.content().contains(contextTitle),

@@ -302,6 +302,7 @@ public final class GoldenInputs {
                         new NegotiationEndingData(context(), (NegotiationEndingContent) content()), template());
                 case REJECT -> orchestrator.generateRejectFromData(
                         new NegotiationEndingData(context(), (NegotiationEndingContent) content()), template());
+                case ABORT -> throw new IllegalArgumentException("The typed golden fixtures carry no abort phase.");
             };
         }
     }

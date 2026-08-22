@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.negotiation.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
@@ -16,10 +17,13 @@ import org.junit.jupiter.api.Test;
  */
 class StandardTemplatesNegotiationConsistencyTest {
 
+    private static final List<NegotiationPhase> TYPED_PHASES =
+            List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT, NegotiationPhase.REJECT);
+
     @Test
     void negotiationConstantsMatchReferenceComposition() {
         for (NegotiationType type : NegotiationType.values()) {
-            for (NegotiationPhase phase : NegotiationPhase.values()) {
+            for (NegotiationPhase phase : TYPED_PHASES) {
                 NegotiationReference reference = new NegotiationReference(type, phase, "en-US");
                 TemplateUri expected = findConstant(reference.uri());
                 assertEquals(
@@ -28,6 +32,12 @@ class StandardTemplatesNegotiationConsistencyTest {
                         "StandardTemplates has no constant matching the composed URI of " + type + "/" + phase);
             }
         }
+        NegotiationReference abort = new NegotiationReference(null, NegotiationPhase.ABORT, "en-US");
+        TemplateUri abortConstant = findConstant(abort.uri());
+        assertEquals(
+                abort.uri(),
+                abortConstant.uri(),
+                "StandardTemplates has no constant matching the composed URI of the common abort template");
     }
 
     @Test
@@ -35,13 +45,50 @@ class StandardTemplatesNegotiationConsistencyTest {
         List<String> composed =
                 StandardTemplates.NEGOTIATION.stream().map(TemplateUri::uri).sorted().toList();
         List<String> expected = new java.util.ArrayList<>();
+        // Accept and reject share the accept-reject template, so the group carries one URI per type for them.
         for (NegotiationType type : NegotiationType.values()) {
             for (NegotiationPhase phase : List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT)) {
                 expected.add(new NegotiationReference(type, phase, "en-US").uri());
             }
         }
-        expected.add(StandardTemplates.NEGOTIATION_ABORT.uri());
+        expected.add(new NegotiationReference(null, NegotiationPhase.ABORT, "en-US").uri());
         assertEquals(expected.stream().sorted().toList(), composed);
+    }
+
+    @Test
+    void everyNegotiationGroupUriIsLoadableByTheNegotiationLayer() {
+        DefaultNegotiationTemplateLoader zhCnLoader = new DefaultNegotiationTemplateLoader("zh-CN", null);
+        DefaultNegotiationTemplateLoader enUsLoader = new DefaultNegotiationTemplateLoader("en-US", null);
+        List<String> loadableUris =
+                zhCnLoader.loadAll().stream().map(template -> template.templateUri().uri()).toList();
+
+        for (TemplateUri templateUri : StandardTemplates.NEGOTIATION) {
+            assertTrue(
+                    loadableUris.contains(templateUri.uri()),
+                    "StandardTemplates advertises " + templateUri.uri()
+                            + " but the negotiation layer cannot load it");
+            assertTrue(zhCnLoader.load(zhCnReference(templateUri)).content().length() > 0, templateUri.uri());
+            assertTrue(enUsLoader.load(enUsReference(templateUri)).content().length() > 0, templateUri.uri());
+        }
+    }
+
+    private static NegotiationReference zhCnReference(TemplateUri templateUri) {
+        return referenceOf(templateUri, "zh-CN");
+    }
+
+    private static NegotiationReference enUsReference(TemplateUri templateUri) {
+        return referenceOf(templateUri, "en-US");
+    }
+
+    private static NegotiationReference referenceOf(TemplateUri templateUri, String language) {
+        for (NegotiationPhase phase : NegotiationPhase.values()) {
+            java.util.Optional<NegotiationReference> reference =
+                    NegotiationReference.fromTemplateUri(templateUri, phase, language);
+            if (reference.isPresent()) {
+                return reference.get();
+            }
+        }
+        throw new AssertionError("No phase parses the advertised negotiation URI " + templateUri.uri());
     }
 
     private static TemplateUri findConstant(String uri) {
