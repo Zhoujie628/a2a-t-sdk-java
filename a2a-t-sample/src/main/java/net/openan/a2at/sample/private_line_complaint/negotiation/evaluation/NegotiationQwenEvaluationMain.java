@@ -25,7 +25,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.server.A2ATServer;
 
 /**
- * Runs the 100 manually labelled cases against a configured real LLM and writes a JSON report.
+ * Runs a selected manually labelled case set against a configured real LLM and writes a JSON report.
  *
  * <p>Each case independently verifies prompt generation and validates a manually completed prompt. The generated
  * prompt, completed prompt, and extracted data are all preserved for review.
@@ -41,9 +41,8 @@ public final class NegotiationQwenEvaluationMain {
         Path envPath = args.length > 0 ? Path.of(args[0]) : NegotiationSampleEnvironment.defaultEnvPath("client");
         Path reportPath = args.length > 1 ? Path.of(args[1]) : Path.of("a2a-t-sample", "target", "negotiation-qwen-report.json");
         Path processLogPath = args.length > 2 ? Path.of(args[2]) : defaultProcessLogPath(reportPath);
-        List<NegotiationEvaluationCase> testCases = args.length > 3
-                ? NegotiationEvaluationCaseLoader.loadSelected(parseCaseIds(args[3]))
-                : NegotiationEvaluationCaseLoader.load();
+        String caseSet = args.length > 3 ? args[3].trim() : "full";
+        List<NegotiationEvaluationCase> testCases = loadCases(caseSet);
         Map<String, String> environment = NegotiationSampleEnvironment.read(envPath);
         requireQwenConfiguration(environment);
 
@@ -71,6 +70,7 @@ public final class NegotiationQwenEvaluationMain {
         report.put("model", environment.get("A2AT_LLM_MODEL"));
         report.put("base_url", environment.get("A2AT_LLM_BASE_URL"));
         report.put("git_revision", gitRevision());
+        report.put("case_set", caseSet);
         report.put("case_ids", testCases.stream().map(NegotiationEvaluationCase::id).toList());
         report.put("total", results.size());
         report.put("generation_succeeded", generationSucceeded);
@@ -252,6 +252,14 @@ public final class NegotiationQwenEvaluationMain {
             throw new IllegalArgumentException("The fourth argument must contain at least one comma-separated case ID");
         }
         return caseIds;
+    }
+
+    private static List<NegotiationEvaluationCase> loadCases(String selector) {
+        return switch (selector.toLowerCase(java.util.Locale.ROOT)) {
+            case "", "full" -> NegotiationEvaluationCaseLoader.load();
+            case "smoke" -> NegotiationEvaluationCaseLoader.loadSmoke();
+            default -> NegotiationEvaluationCaseLoader.loadSelected(parseCaseIds(selector));
+        };
     }
 
     private static String gitRevision() {

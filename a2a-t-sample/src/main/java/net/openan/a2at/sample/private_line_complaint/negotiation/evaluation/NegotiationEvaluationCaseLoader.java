@@ -12,6 +12,15 @@ import java.util.Set;
 public final class NegotiationEvaluationCaseLoader {
 
     public static final String RESOURCE_PATH = "sample/private-line-complaint-negotiation/evaluation/cases.json";
+    /**
+     * A representative 20-case set for routine smoke validation. It includes every generation and
+     * validation/filling phase, and spans common, short, contextual, mixed-language, noisy, and
+     * business-oriented expressions.
+     */
+    public static final List<String> SMOKE_CASE_IDS = List.of(
+            "P01", "P05", "P11", "P14", "P16", "P21", "P27",
+            "A01", "A05", "A11", "A16", "A21", "A28", "A33",
+            "R01", "R05", "R11", "R16", "R21", "R27");
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -57,5 +66,10 @@ public final class NegotiationEvaluationCaseLoader {
             throw new IllegalArgumentException("Unknown negotiation evaluation case IDs: " + unknown);
         }
         return caseIds.stream().map(casesById::get).toList();
+    }
+
+    /** Loads the checked-in 20-case smoke set. */
+    public static List<NegotiationEvaluationCase> loadSmoke() {
+        return loadSelected(SMOKE_CASE_IDS);
     }
 }

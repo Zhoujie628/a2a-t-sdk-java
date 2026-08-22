@@ -51,7 +51,7 @@ java @a2a-t-sample/target/server.javaargs.txt
 
 - [六个接口的逐项调用示例](NEGOTIATION_API_EXAMPLES.zh-CN.md)
 - [Sample 开发与设计说明](NEGOTIATION_SAMPLE_DEVELOPMENT.zh-CN.md)
-- [Qwen3-32B 的 100 用例批量验证](NEGOTIATION_QWEN_EVALUATION.zh-CN.md)
+- [Qwen3-32B 的 20/100 用例批量验证](NEGOTIATION_QWEN_EVALUATION.zh-CN.md)
 
 调用方 schema 根据专线投诉场景分别定义：Propose 和 Accept 提取 `access_port_name`、`complaint_category`，Reject 提取 `rejection_reason`。`items`、`relationship`、`conclusion` 等协商模板结构由 SDK 内部处理。
 
@@ -106,7 +106,7 @@ java @a2a-t-sample/target/negotiation-server.javaargs.txt a2a-t-sample/src/main/
 java @a2a-t-sample/target/negotiation-client.javaargs.txt a2a-t-sample/src/main/resources/sample/private-line-complaint-negotiation/qwen.env
 ```
 
-需要批量验证三组自然语言生成接口及对应校验/提参接口时，运行以下命令。它会执行 100 条用例、生成汇总报告和逐调用 JSONL 过程日志；日志可用于区分生成、校验或 Sample 入参问题：
+需要批量验证三组自然语言生成接口及对应校验/提参接口时，运行以下命令。默认执行 100 条用例、生成汇总报告和逐调用 JSONL 过程日志；日志可用于区分生成、校验或 Sample 入参问题。将最后一个参数设为 `smoke` 可执行 20 条精简集，或传入 `P01,A28,R21` 这类编号组合执行指定用例：
 
 ```powershell
 java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `

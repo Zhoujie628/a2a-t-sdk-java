@@ -459,7 +459,7 @@ java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt `
 8. 增加两个 Main 入口、env 模板和 Maven java argfile。
 9. 分别运行 Accept、Reject 的本地 Mock E2E。
 10. 更新 `a2a-t-sample/README.zh-CN.md`，写明入口、分支选择、Mock 和 Qwen 配置方法。
-11. 在目标网络执行 100 用例 Qwen 批量验证，检查汇总报告和 JSONL 过程日志；本机无法访问目标网络时，将此步骤记录为待目标网络执行。
+11. 在目标网络先执行 20 用例 `smoke` 集，再执行 100 用例 `full` 集的 Qwen 批量验证，检查汇总报告和 JSONL 过程日志；本机无法访问目标网络时，将此步骤记录为待目标网络执行。
 12. 运行全部验收命令，检查工作区只包含本任务相关改动。
 
 如后续需要提交 PR，提交必须使用 `git commit -s`，并在推送前检查 PR 范围内每个提交均带有正确的 `Signed-off-by`。

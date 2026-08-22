@@ -30,6 +30,18 @@ class NegotiationEvaluationCaseLoaderTest {
     }
 
     @Test
+    void loadsTwentyRepresentativeSmokeCasesFromTheCanonicalCorpus() {
+        var cases = NegotiationEvaluationCaseLoader.loadSmoke();
+
+        assertEquals(20, cases.size());
+        assertEquals(NegotiationEvaluationCaseLoader.SMOKE_CASE_IDS,
+                cases.stream().map(NegotiationEvaluationCase::id).toList());
+        assertEquals(7, cases.stream().filter(testCase -> testCase.phase().equals("propose")).count());
+        assertEquals(7, cases.stream().filter(testCase -> testCase.phase().equals("accept")).count());
+        assertEquals(6, cases.stream().filter(testCase -> testCase.phase().equals("reject")).count());
+    }
+
+    @Test
     void rendersCompletedPromptsWithTheRuntimeNegotiationContext() {
         var cases = NegotiationEvaluationCaseLoader.load();
 
