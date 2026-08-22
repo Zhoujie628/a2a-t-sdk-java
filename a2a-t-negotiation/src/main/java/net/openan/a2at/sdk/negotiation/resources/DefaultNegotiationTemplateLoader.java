@@ -80,7 +80,8 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
     public PromptTemplate load(NegotiationReference reference) {
         String relativePath = templateRelativePath(reference);
         String content = readTemplate(relativePath);
-        PromptTemplate template = new PromptTemplate(reference.uri(), TemplateDescriptions.extract(content), content);
+        PromptTemplate template =
+                new PromptTemplate(reference.templateUri(), TemplateDescriptions.extract(content), content);
         LOGGER.atDebug().log("negotiation_template_loaded uri={} language={}", reference.uri(), reference.language());
         return template;
     }

@@ -85,7 +85,7 @@ class A2ATServerNegotiationApiTest {
                         "propose"))
                 .isPresent());
         PromptTemplate template = server.getNegotiationPrompt(INFORMATION_PROPOSE).orElseThrow();
-        assertEquals(INFORMATION_PROPOSE_URI, template.uri());
+        assertEquals(INFORMATION_PROPOSE, template.templateUri());
         assertFalse(template.content().isBlank());
     }
 

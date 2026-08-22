@@ -97,7 +97,7 @@ class CustomRootTemplateOverrideTest {
 
         assertEquals(6, templates.size());
         PromptTemplate overridden = templates.stream()
-                .filter(t -> t.uri().equals(GoldenCase.INFORMATION_PROPOSE.templateUri()))
+                .filter(t -> t.templateUri().uri().equals(GoldenCase.INFORMATION_PROPOSE.templateUri()))
                 .findFirst()
                 .orElseThrow();
         assertTrue(overridden.content().contains(MARKER_LINE));

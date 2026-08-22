@@ -1,5 +1,6 @@
 package net.openan.a2at.sdk.negotiation.generation;
 
+import java.nio.file.Path;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.negotiation.resources.DefaultNegotiationTemplateLoader;
@@ -19,7 +20,8 @@ import org.slf4j.Logger;
  * <p>The language is required. The LLM client is optional: without one, the from-data generation still works, while
  * the LLM steps of the from-text generation and the validation pipeline fail with the
  * {@code negotiation_llm_infrastructure_error} code. Every collaborator has a default implementation wired from the
- * language and the optional local template root, and each of them can be overridden for testing or customization.
+ * language and the optional local resource root (templates and negotiation vocabulary), and each of them can be
+ * overridden for testing or customization.
  *
  * @since 2026-06
  */
@@ -68,9 +70,10 @@ public final class NegotiationGenerationOrchestratorBuilder {
     }
 
     /**
-     * Configures the optional local prompt resource root containing the {@code templates/} tree.
+     * Configures the optional local prompt resource root containing the {@code templates/} and
+     * {@code negotiation-vocabulary/} trees.
      *
-     * @param localRootDir local prompt resource root; null or blank disables local template overrides
+     * @param localRootDir local prompt resource root; null or blank disables local template and vocabulary overrides
      * @return current builder
      */
     public NegotiationGenerationOrchestratorBuilder localRootDir(String localRootDir) {
@@ -170,7 +173,8 @@ public final class NegotiationGenerationOrchestratorBuilder {
             throw new IllegalStateException(
                     "Negotiation LLM max attempts must be at least 1 but was " + maxAttempts + ".");
         }
-        Vocabulary vocabulary = Vocabulary.forLanguage(language);
+        Path localVocabularyRoot = localRootDir == null || localRootDir.isBlank() ? null : Path.of(localRootDir);
+        Vocabulary vocabulary = Vocabulary.forLanguage(language, localVocabularyRoot);
         NegotiationTemplateLoader effectiveTemplateLoader =
                 templateLoader != null ? templateLoader : new DefaultNegotiationTemplateLoader(language, localRootDir);
         NegotiationContentExtractor effectiveContentExtractor =

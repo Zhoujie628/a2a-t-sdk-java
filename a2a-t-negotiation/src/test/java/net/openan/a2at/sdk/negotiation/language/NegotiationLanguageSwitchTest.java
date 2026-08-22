@@ -66,10 +66,11 @@ class NegotiationLanguageSwitchTest {
         assertEquals(6, templates.size());
         for (PromptTemplate template : templates) {
             assertTrue(
-                    template.content().contains(contextTitle), template.uri() + " must be a " + language + " template");
+                    template.content().contains(contextTitle),
+                    template.templateUri().uri() + " must be a " + language + " template");
             assertTrue(
                     !template.content().contains(otherLanguageTitle),
-                    template.uri() + " must not leak the other language");
+                    template.templateUri().uri() + " must not leak the other language");
         }
 
         PromptTemplate queriedTemplate =
@@ -86,15 +87,15 @@ class NegotiationLanguageSwitchTest {
                 .getNegotiationPrompt(INFORMATION_PROPOSE_URI)
                 .orElseThrow();
 
-        assertEquals(INFORMATION_PROPOSE_URI.uri(), zhCnTemplate.uri());
-        assertEquals(INFORMATION_PROPOSE_URI.uri(), enUsTemplate.uri());
+        assertEquals(INFORMATION_PROPOSE_URI, zhCnTemplate.templateUri());
+        assertEquals(INFORMATION_PROPOSE_URI, enUsTemplate.templateUri());
         assertNotEquals(zhCnTemplate.content(), enUsTemplate.content());
         assertEquals(
                 orchestrator(GoldenInputs.ZH_CN).getNegotiationPrompts().stream()
-                        .map(PromptTemplate::uri)
+                        .map(PromptTemplate::templateUri)
                         .toList(),
                 orchestrator(GoldenInputs.EN_US).getNegotiationPrompts().stream()
-                        .map(PromptTemplate::uri)
+                        .map(PromptTemplate::templateUri)
                         .toList());
     }
 

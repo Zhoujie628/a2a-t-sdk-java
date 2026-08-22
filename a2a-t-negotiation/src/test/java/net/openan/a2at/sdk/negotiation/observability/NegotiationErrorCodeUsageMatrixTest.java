@@ -329,7 +329,7 @@ class NegotiationErrorCodeUsageMatrixTest {
         return new NegotiationTemplateLoader() {
             @Override
             public PromptTemplate load(NegotiationReference reference) {
-                return new PromptTemplate(reference.uri(), "broken template", null);
+                return new PromptTemplate(reference.templateUri(), "broken template", null);
             }
 
             @Override

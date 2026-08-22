@@ -1,10 +1,25 @@
 package net.openan.a2at.sdk.negotiation.content;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
+import net.openan.a2at.sdk.core.resources.PathSegments;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Language-specific text constants for negotiation templates.
@@ -14,17 +29,69 @@ import java.util.Set;
  * are language-neutral; every supported language exposes exactly the same key set, while the values match the bundled
  * template bytes of that language verbatim.
  *
+ * <p>The values are file-driven: each language resolves {@code negotiation-vocabulary/{language}/vocabulary.json}
+ * from a dual-root fallback — a file under the optional local resource root wins, otherwise the built-in classpath
+ * resource is used. Both origins are validated against the pinned {@link #CANONICAL_KEYS} set, and a vocabulary that
+ * exists nowhere, cannot be read, is malformed (including duplicate JSON keys or blank values) or drifts from the
+ * canonical key set fails fast instead of silently degrading.
+ *
+ * <p>Caching mirrors the template-override regime: the built-in classpath vocabulary is resolved once per JVM and
+ * context classloader (jar bytes are immutable), while a local resource root is re-resolved on every call so that
+ * overriding, editing or removing a local vocabulary file takes effect immediately.
+ *
  * @since 2026-06
  */
 public final class Vocabulary {
 
-    private static final String ZH_CN = "zh-CN";
+    private static final String VOCABULARY_DIRECTORY = "negotiation-vocabulary";
 
-    private static final String EN_US = "en-US";
+    private static final String VOCABULARY_FILE_NAME = "vocabulary.json";
 
-    private static final Vocabulary ZH_CN_VOCABULARY = new Vocabulary(ZH_CN, buildZhCnEntries());
+    private static final String CLASSPATH_ROOT = "prompt_resources/" + VOCABULARY_DIRECTORY + "/";
 
-    private static final Vocabulary EN_US_VOCABULARY = new Vocabulary(EN_US, buildEnUsEntries());
+    private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
+            .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+            .build();
+
+    private static final ConcurrentHashMap<CacheKey, Vocabulary> CACHE = new ConcurrentHashMap<>();
+
+    /** The language-neutral canonical key set every vocabulary file must define exactly, in a fixed order. */
+    public static final List<String> CANONICAL_KEYS = List.of(
+            "section.context",
+            "section.info_items",
+            "section.info_static",
+            "section.info_conclusion",
+            "section.info_result_content",
+            "section.target",
+            "section.target_intent",
+            "section.target_alignment",
+            "section.target_clarification",
+            "section.target_conclusion",
+            "section.target_result_content",
+            "section.feasibility",
+            "section.feasibility_evaluate",
+            "section.feasibility_infeasible",
+            "section.feasibility_conclusion",
+            "section.feasibility_confirm",
+            "slot.context",
+            "slot.info_items",
+            "slot.info_conclusion",
+            "slot.info_result_content",
+            "slot.target",
+            "slot.target_intent",
+            "slot.target_alignment",
+            "slot.target_clarification",
+            "slot.target_conclusion",
+            "slot.target_result_content",
+            "slot.feasibility",
+            "slot.feasibility_evaluate",
+            "slot.feasibility_infeasible",
+            "slot.feasibility_conclusion",
+            "slot.feasibility_confirm",
+            "label.relationship",
+            "punct.list_colon");
+
+    private static final Set<String> CANONICAL_KEY_SET = Set.copyOf(CANONICAL_KEYS);
 
     private final String language;
 
@@ -36,22 +103,47 @@ public final class Vocabulary {
     }
 
     /**
-     * Returns the vocabulary for one language.
+     * Returns the vocabulary for one language, resolved from the built-in classpath resources.
      *
      * @param language locale identifier such as {@code zh-CN} or {@code en-US}
      * @return vocabulary holding the text constants of that language
      * @throws IllegalArgumentException if the language has no bundled vocabulary
      */
     public static Vocabulary forLanguage(String language) {
-        if (ZH_CN.equals(language)) {
-            return ZH_CN_VOCABULARY;
+        return forLanguage(language, null);
+    }
+
+    /**
+     * Returns the vocabulary for one language, resolved with the dual-root fallback.
+     *
+     * <p>A vocabulary file that exists under {@code {localRootDir}/negotiation-vocabulary/{language}/vocabulary.json}
+     * wins; otherwise the built-in classpath resource {@code prompt_resources/negotiation-vocabulary/{language}/
+     * vocabulary.json} is used. A null or otherwise absent local root simply means the classpath is consulted. Both
+     * origins must define exactly the canonical key set.
+     *
+     * <p>Caching mirrors the template-override regime: the classpath vocabulary is resolved once per JVM and context
+     * classloader (jar bytes are immutable), while a non-null local root is re-resolved on every call so overriding,
+     * editing or removing the local file takes effect immediately.
+     *
+     * @param language locale identifier such as {@code zh-CN} or {@code en-US}
+     * @param localRootDir local prompt resource root containing the {@code negotiation-vocabulary/} tree; null
+     *     disables local vocabulary overrides
+     * @return vocabulary holding the text constants of that language
+     * @throws IllegalArgumentException if the language has no vocabulary in any root, or the resolved file is
+     *     unreadable, malformed or does not define exactly the canonical key set
+     */
+    public static Vocabulary forLanguage(String language, @Nullable Path localRootDir) {
+        if (!PathSegments.isSimpleSegment(language)) {
+            throw new IllegalArgumentException(
+                    "Negotiation vocabulary language must be a non-blank simple path segment but was " + language
+                            + ".");
         }
-        if (EN_US.equals(language)) {
-            return EN_US_VOCABULARY;
+        Path normalizedRoot = normalizeRoot(localRootDir);
+        if (normalizedRoot != null) {
+            return load(language, normalizedRoot);
         }
-        throw new IllegalArgumentException(
-                "Unsupported negotiation vocabulary language " + language + "; supported languages are zh-CN and"
-                        + " en-US, configure A2AT_LANGUAGE accordingly.");
+        CacheKey cacheKey = new CacheKey(language, Thread.currentThread().getContextClassLoader());
+        return CACHE.computeIfAbsent(cacheKey, key -> load(key.language, null));
     }
 
     /**
@@ -88,94 +180,102 @@ public final class Vocabulary {
         return language;
     }
 
-    private static Map<String, String> buildZhCnEntries() {
-        return buildEntries(List.of(
-                entry("section.context", "协商上下文"),
-                entry("section.info_items", "所需信息项"),
-                entry("section.info_static", "信息协商"),
-                entry("section.info_conclusion", "信息协商结果"),
-                entry("section.info_result_content", "信息协商结果内容"),
-                entry("section.target", "目标协商"),
-                entry("section.target_intent", "意图理解陈述"),
-                entry("section.target_alignment", "理解对齐与疑问澄清"),
-                entry("section.target_clarification", "待澄清内容"),
-                entry("section.target_conclusion", "目标协商结果"),
-                entry("section.target_result_content", "目标协商结果内容"),
-                entry("section.feasibility", "可行性协商"),
-                entry("section.feasibility_evaluate", "待评估内容说明"),
-                entry("section.feasibility_infeasible", "评估不可行时的详情和提案"),
-                entry("section.feasibility_conclusion", "可行性协商结果"),
-                entry("section.feasibility_confirm", "可行性评估结果确认"),
-                entry("slot.context", "协商上下文"),
-                entry("slot.info_items", "所需信息项"),
-                entry("slot.info_conclusion", "信息协商结果"),
-                entry("slot.info_result_content", "信息协商结果内容"),
-                entry("slot.target", "目标协商概述"),
-                entry("slot.target_intent", "意图理解陈述"),
-                entry("slot.target_alignment", "理解对齐与疑问澄清"),
-                entry("slot.target_clarification", "待澄清内容"),
-                entry("slot.target_conclusion", "目标协商结果"),
-                entry("slot.target_result_content", "目标协商结果内容"),
-                entry("slot.feasibility", "可行性协商概述"),
-                entry("slot.feasibility_evaluate", "待评估内容说明"),
-                entry("slot.feasibility_infeasible", "评估不可行时的详情和提案"),
-                entry("slot.feasibility_conclusion", "可行性协商结果"),
-                entry("slot.feasibility_confirm", "评估结果确认"),
-                entry("label.relationship", "缺失项之间的关系："),
-                entry("punct.list_colon", "：")));
+    private static @Nullable Path normalizeRoot(@Nullable Path localRootDir) {
+        return localRootDir == null ? null : localRootDir.toAbsolutePath().normalize();
     }
 
-    private static Map<String, String> buildEnUsEntries() {
-        // section.* values are the markdown ## section titles verbatim from the bundled templates; slot.* values are
-        // the {{...}} placeholder names. For en-US the upstream templates use snake_case placeholders that differ from
-        // the English section titles, so slot.* and section.* are distinct keys. For zh-CN the placeholders are the
-        // same CJK strings as the section titles (except the three summary/confirm slots), so most slot.* values repeat
-        // the section.* values by design.
-        return buildEntries(List.of(
-                entry("section.context", "Negotiation Context"),
-                entry("section.info_items", "Required Information Items"),
-                entry("section.info_static", "Information Negotiation"),
-                entry("section.info_conclusion", "Information Negotiation Result"),
-                entry("section.info_result_content", "Information Negotiation Result Content"),
-                entry("section.target", "Target Negotiation"),
-                entry("section.target_intent", "Intent Understanding Statement"),
-                entry("section.target_alignment", "Understanding Alignment and Clarification"),
-                entry("section.target_clarification", "Content to Clarify"),
-                entry("section.target_conclusion", "Target Negotiation Result"),
-                entry("section.target_result_content", "Target Negotiation Result Content"),
-                entry("section.feasibility", "Feasibility Negotiation"),
-                entry("section.feasibility_evaluate", "Under Evaluation Description"),
-                entry("section.feasibility_infeasible", "Infeasible Evaluation Details and Proposal"),
-                entry("section.feasibility_conclusion", "Feasibility Negotiation Result"),
-                entry("section.feasibility_confirm", "Feasibility Assessment Result Confirmation"),
-                entry("slot.context", "negotiation_context"),
-                entry("slot.info_items", "required_information_items"),
-                entry("slot.info_conclusion", "information_negotiation_result"),
-                entry("slot.info_result_content", "information_negotiation_result_content"),
-                entry("slot.target", "target_negotiation_summary"),
-                entry("slot.target_intent", "intent_understanding_statement"),
-                entry("slot.target_alignment", "understanding_alignment_and_clarification"),
-                entry("slot.target_clarification", "content_to_clarify"),
-                entry("slot.target_conclusion", "target_negotiation_result"),
-                entry("slot.target_result_content", "target_negotiation_result_content"),
-                entry("slot.feasibility", "feasibility_negotiation_summary"),
-                entry("slot.feasibility_evaluate", "under_evaluation_description"),
-                entry("slot.feasibility_infeasible", "infeasible_evaluation_details_and_proposal"),
-                entry("slot.feasibility_conclusion", "feasibility_negotiation_result"),
-                entry("slot.feasibility_confirm", "evaluation_result_confirmation"),
-                entry("label.relationship", "Relationship between missing items: "),
-                entry("punct.list_colon", ": ")));
-    }
-
-    private static Map<String, String> buildEntries(List<String[]> flatEntries) {
-        Map<String, String> built = new LinkedHashMap<>();
-        for (String[] flatEntry : flatEntries) {
-            built.put(flatEntry[0], flatEntry[1]);
+    private static Vocabulary load(String language, @Nullable Path localRootDir) {
+        if (localRootDir != null) {
+            Path localFile = localRootDir
+                    .resolve(VOCABULARY_DIRECTORY)
+                    .resolve(language)
+                    .resolve(VOCABULARY_FILE_NAME);
+            if (Files.exists(localFile)) {
+                return parse(language, readLocalFile(localFile), localFile.toString());
+            }
         }
-        return Collections.unmodifiableMap(built);
+        String classpathPath = CLASSPATH_ROOT + language + "/" + VOCABULARY_FILE_NAME;
+        InputStream stream = ClasspathResourceStreams.open(classpathPath);
+        if (stream == null) {
+            throw new IllegalArgumentException(
+                    "Negotiation vocabulary does not exist for the configured language " + language
+                            + "; supported languages are zh-CN and en-US, configure A2AT_LANGUAGE accordingly or"
+                            + " provide " + classpathPath + " under the local resource root.");
+        }
+        try (stream) {
+            return parse(language, new String(stream.readAllBytes(), StandardCharsets.UTF_8), classpathPath);
+        } catch (IOException exception) {
+            throw new IllegalArgumentException(
+                    "Failed to read the negotiation vocabulary " + classpathPath + " for language " + language
+                            + "; supported languages are zh-CN and en-US, configure A2AT_LANGUAGE accordingly.",
+                    exception);
+        }
     }
 
-    private static String[] entry(String key, String value) {
-        return new String[] {key, value};
+    private static String readLocalFile(Path localFile) {
+        try {
+            return Files.readString(localFile, StandardCharsets.UTF_8);
+        } catch (IOException exception) {
+            throw new IllegalArgumentException(
+                    "Failed to read the negotiation vocabulary " + localFile + "; supported languages are zh-CN and"
+                            + " en-US, configure A2AT_LANGUAGE accordingly.",
+                    exception);
+        }
     }
+
+    private static Vocabulary parse(String language, String payload, String origin) {
+        JsonNode root;
+        try {
+            root = OBJECT_MAPPER.readTree(payload);
+        } catch (JsonProcessingException exception) {
+            String detail = exception.getMessage() != null && exception.getMessage().contains("Duplicate field")
+                    ? "it contains duplicate keys"
+                    : "it is not valid JSON";
+            throw malformed(language, origin, detail, exception);
+        }
+        if (root == null || !root.isObject()) {
+            throw malformed(language, origin, "it is not a flat JSON object of string values", null);
+        }
+        Map<String, String> entries = new LinkedHashMap<>();
+        root.fields().forEachRemaining(field -> {
+            JsonNode value = field.getValue();
+            if (!value.isTextual()) {
+                throw malformed(language, origin, "the value of key '" + field.getKey() + "' is not a string", null);
+            }
+            String text = value.textValue();
+            if (text.isBlank()) {
+                throw malformed(language, origin, "the value of key '" + field.getKey() + "' is blank", null);
+            }
+            entries.put(field.getKey(), text);
+        });
+        validateCanonicalKeys(language, entries, origin);
+        return new Vocabulary(language, Collections.unmodifiableMap(entries));
+    }
+
+    private static void validateCanonicalKeys(String language, Map<String, String> entries, String origin) {
+        Set<String> missing = new LinkedHashSet<>(CANONICAL_KEYS);
+        missing.removeAll(entries.keySet());
+        Set<String> unexpected = new LinkedHashSet<>(entries.keySet());
+        unexpected.removeAll(CANONICAL_KEY_SET);
+        if (missing.isEmpty() && unexpected.isEmpty()) {
+            return;
+        }
+        throw new IllegalArgumentException(
+                "Negotiation vocabulary " + origin + " for language " + language
+                        + " must define exactly the canonical vocabulary keys; missing keys: " + missing
+                        + ", unexpected keys: " + unexpected + ".");
+    }
+
+    private static IllegalArgumentException malformed(
+            String language, String origin, String detail, @Nullable Throwable cause) {
+        IllegalArgumentException exception = new IllegalArgumentException(
+                "Negotiation vocabulary " + origin + " for language " + language + " is malformed: " + detail
+                        + "; supported languages are zh-CN and en-US, configure A2AT_LANGUAGE accordingly.");
+        if (cause != null) {
+            exception.initCause(cause);
+        }
+        return exception;
+    }
+
+    private record CacheKey(String language, @Nullable ClassLoader contextClassLoader) {}
 }

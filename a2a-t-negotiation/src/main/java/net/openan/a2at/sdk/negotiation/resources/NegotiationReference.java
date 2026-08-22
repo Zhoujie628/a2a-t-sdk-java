@@ -65,6 +65,19 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
     }
 
     /**
+     * Returns the typed template URI of the referenced template.
+     *
+     * <p>The exact inverse of {@link #fromTemplateUri(TemplateUri, NegotiationPhase, String)}: the URI is composed from
+     * the same extension-name constant and default version segment the parser accepts, so
+     * {@code fromTemplateUri(reference.templateUri(), reference.phase(), ...)} always addresses the same template.
+     *
+     * @return typed template URI such as {@code Negotiation-T/information-negotiation/propose/v1}
+     */
+    public @NonNull TemplateUri templateUri() {
+        return TemplateUri.of(URI_PREFIX, List.of(typeSegment(), phase.uriSegment()), URI_VERSION_SEGMENT);
+    }
+
+    /**
      * Tries to parse a template URI into a reference, checking it against the expected phase.
      *
      * <p>The URI layer cannot distinguish accept from reject because both share the {@code accept-reject} segment; the
