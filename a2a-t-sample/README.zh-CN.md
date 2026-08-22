@@ -140,3 +140,8 @@ java @a2a-t-sample/target/client.javaargs.txt
 ```bash
 java @a2a-t-sample/target/negotiation.javaargs.txt /path/to/.env
 ```
+
+ Task-T 样例（无需启动服务端，单进程，需指定含 LLM key 的 .env）
+
+```bash
+java @a2a-t-sample/target/taskt.javaargs.txt /path/to/.env

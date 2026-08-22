@@ -49,5 +49,35 @@
 > 1. 用例一（text）的时间期望取日期前缀（如 `2026-05-11`）——口语文本不含 ISO 字面量，日期是稳定事实；
 >   用例二（data）的时间期望取完整 ISO-8601 时间戳。
 > 2. 期望值均按**服务端 key** 记分（`accessPort`/`bizScenario`/`faultTime`/`eventSerialNo`/`faultDetail`），
->   与 `validateAndFillingTaskData` 实际输出一致。
+>   与 `validateTaskPromptAndDataFilling` 实际输出一致。
 > 3. 详情期望为各样本的关键事实关键词，命中规则较宽松（等价或互相包含）；如需严谨评测可收紧期望值并扩充样本。
+
+## 用例三：缺少关键槽位拒绝用例（期望 rejected）
+
+正向样本评测的是提取准确率；本组用例验证语义校验的**兜底能力**——输入内容故意缺失一个或多个关键槽位
+（端口 / 分类 / 时间 / 流水号）或携带非法取值，服务端应抛出 `validation_semantic_rejected`。与用例一/二对应，
+本组同时覆盖**文本变体**（`generateTaskPromptFromText`）与**数据变体**（`generateTaskPromptFromDataWithSchema`）。
+被拦截样本数占样本总数的比例即**拦截率**（服务端语义拒绝 + 客户端生成阶段拦截均计为拦截）；意外通过时打印
+实际提取参数以便排查。本组用例独立于正向样本计分，不进入字段准确率统计。
+
+### 文本变体（generateTaskPromptFromText）
+
+| # | 样例名 | 缺失槽位 | 保留内容 |
+|---|---|---|---|
+| TC-13 | text-missing-access-port | 接入端口 | 分类、时间、详情、流水号 |
+| TC-14 | text-missing-scenario | 投诉分类 | 端口、时间、流水号 |
+| TC-15 | text-minimal-no-key-fields | 全部关键槽位 | 仅一句"专线业务好像出问题了" |
+| TC-16 | text-missing-time | 问题发生时间 | 端口、分类、流水号 |
+| TC-17 | text-missing-serial | OSS 流水号 | 端口、分类、时间、详情 |
+| TC-18 | text-missing-scenario-and-serial | 投诉分类 + 流水号 | 端口、时间、详情 |
+
+### 数据变体（generateTaskPromptFromDataWithSchema，字段为客户端 key）
+
+| # | 样例名 | 缺失 / 非法内容 | 保留内容 |
+|---|---|---|---|
+| TC-19 | data-missing-port | 缺 `portName`（→ 服务端缺必填 `accessPort`） | 分类、时间、流水号、详情 |
+| TC-20 | data-missing-scenario | 缺 `complaintScenario`（→ 服务端缺必填 `bizScenario`） | 端口、时间、流水号、详情 |
+| TC-21 | data-invalid-scenario-value | `complaintScenario` 取值"专线掉线"（不在允许枚举） | 端口、时间、流水号、详情 |
+| TC-22 | data-missing-time | 缺 `faultStartTime` | 端口、分类、流水号、详情 |
+| TC-23 | data-missing-serial | 缺 `ticketNo` | 端口、分类、时间、详情 |
+| TC-24 | data-missing-port-and-scenario | 缺 `portName` + `complaintScenario` | 时间、流水号、详情 |

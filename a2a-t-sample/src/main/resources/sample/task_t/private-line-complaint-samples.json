@@ -286,5 +286,97 @@
         "faultDetail": "时延"
       }
     }
+  ],
+  "rejectionSamples": [
+    {
+      "name": "text-missing-access-port",
+      "kind": "text",
+      "text": "帮我创建专线投诉诊断任务，客户报的是专线质差，从2026年5月11号早上8点半开始，深圳访问广州的核心系统非常慢，时延从12ms飙到320ms，柜面和手机银行老是报连接超时，OSS流水号是event-id-20260511-09013。"
+    },
+    {
+      "name": "text-missing-scenario",
+      "kind": "text",
+      "text": "创建专线业务投诉诊断，P781-前海-PTN7900-5-TPA1EG24-09(cvlan=100) 这条链路，从2026年5月16号中午12点10分开始，深圳到上海专线访问质量明显下降，核心系统访问变慢，麻烦帮忙处理一下，流水号fault-id-1-017-20260516-11234。"
+    },
+    {
+      "name": "text-minimal-no-key-fields",
+      "kind": "text",
+      "text": "专线业务好像出问题了，麻烦尽快帮忙处理一下。"
+    },
+    {
+      "name": "text-missing-time",
+      "kind": "text",
+      "text": "看下 P781-惠州江北-PTN7900-7-TPA1EG24-21 这条专线，时延跳得厉害，丢包最高到15%，视频会议一直卡，分类是专线质差，流水号event-id-20260522-00812。"
+    },
+    {
+      "name": "text-missing-serial",
+      "kind": "text",
+      "text": "创建专线投诉诊断，P781-南沙-PTN7900-9-TPA1EG24-31 这条专线早上9点40分起彻底不通，上海到北京核心系统全部访问不了，客户报的是专线中断。"
+    },
+    {
+      "name": "text-missing-scenario-and-serial",
+      "kind": "text",
+      "text": "帮忙看下 P781-珠江新城-PTN7900-23-TPA1EG24-17 这条专线，5月11号早上8点半开始访问广州核心系统非常慢，时延从12ms飙到320ms，柜面银行老是超时，帮我诊断一下。"
+    },
+    {
+      "name": "data-missing-port",
+      "kind": "data",
+      "data": {
+        "complaintScenario": "专线质差",
+        "faultStartTime": "2026-05-11T08:21:46Z",
+        "ticketNo": "event-id-20260511-09013",
+        "faultDetailText": "深圳访问广州核心交易系统响应非常慢，时延从12ms飙升至320ms，柜面和手机银行交易接口频繁报连接超时。"
+      }
+    },
+    {
+      "name": "data-missing-scenario",
+      "kind": "data",
+      "data": {
+        "portName": "P781-福田中心-PTN7900-2-TPA1EG24-03",
+        "faultStartTime": "2026-05-16T12:10:00Z",
+        "ticketNo": "fault-id-1-017-20260516-11234",
+        "faultDetailText": "深圳前海机房至上海数据中心专线访问质量明显下降，核心系统访问变慢，业务流量下降。"
+      }
+    },
+    {
+      "name": "data-invalid-scenario-value",
+      "kind": "data",
+      "data": {
+        "portName": "P781-惠州江北-PTN7900-7-TPA1EG24-21",
+        "complaintScenario": "专线掉线",
+        "faultStartTime": "2026-05-22T14:05:00Z",
+        "ticketNo": "event-id-20260522-00812",
+        "faultDetailText": "专线时延抖动明显，平均丢包率约5%、峰值达15%，视频会议频繁卡顿。"
+      }
+    },
+    {
+      "name": "data-missing-time",
+      "kind": "data",
+      "data": {
+        "portName": "P781-南沙-PTN7900-9-TPA1EG24-31",
+        "complaintScenario": "专线中断",
+        "ticketNo": "event-id-20260603-02341",
+        "faultDetailText": "专线业务彻底中断，上海到北京核心系统全部无法访问。"
+      }
+    },
+    {
+      "name": "data-missing-serial",
+      "kind": "data",
+      "data": {
+        "portName": "P781-天河体育西-PTN7900-4-TPA1EG24-11",
+        "complaintScenario": "专线质差",
+        "faultStartTime": "2026-06-08T15:20:00Z",
+        "faultDetailText": "专线时延忽高忽低，峰值接近500ms，视频会议直接开不了。"
+      }
+    },
+    {
+      "name": "data-missing-port-and-scenario",
+      "kind": "data",
+      "data": {
+        "faultStartTime": "2026-06-12T20:10:00Z",
+        "ticketNo": "fault-id-9-023-20260612-04578",
+        "faultDetailText": "专线业务完全中断，柜面交易全部失败。"
+      }
+    }
   ]
 }
