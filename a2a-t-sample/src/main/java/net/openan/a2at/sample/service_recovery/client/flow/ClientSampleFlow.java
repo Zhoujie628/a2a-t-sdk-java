@@ -244,11 +244,11 @@ public final class ClientSampleFlow {
                 content.promptText() != null && !content.promptText().isBlank(),
                 "promptText blank"));
         checks.add(expectation(
-                label + ": prompt carries the report format",
+                label + ": prompt carries the recovery plan execution status",
                 content.promptText() != null
-                        && content.promptText().contains(ServiceRecoverySampleInputs.SLOT_NOTIFICATION_DATA_FORMAT),
+                        && content.promptText().contains(ServiceRecoverySampleInputs.SLOT_RECOVERY_PLAN_EXECUTION_STATUS),
                 "promptText does not carry the required "
-                        + ServiceRecoverySampleInputs.SLOT_NOTIFICATION_DATA_FORMAT + " slot"));
+                        + ServiceRecoverySampleInputs.SLOT_RECOVERY_PLAN_EXECUTION_STATUS + " slot"));
     }
 
     private static VerificationCheck expectation(String name, boolean passed, String failureDetail) {

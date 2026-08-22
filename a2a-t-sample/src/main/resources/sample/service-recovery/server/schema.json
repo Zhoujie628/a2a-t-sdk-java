@@ -11,14 +11,67 @@
       ],
       "x-a2at-value-constraint": "订阅条件为子网名称。订阅可以不带条件，此时该参数为空。"
     },
-    "notificationDataFormat": {
+    "recoveryPlanExecutionStatus": {
       "type": "string",
-      "description": "上报通知数据格式。描述所需上报内容的如下信息：1. 信息项名称（必选）；2. 取值范围（可选）；3. 样例（可选）。",
-      "examples": [
-        "业务抢通方案执行状态，取值范围：未启动、已结束；举例：已结束（必选）；投诉诊断任务流水号；举例：9de168c0-6179-4778-8b72-4279582c0a3f（必选）；OSS侧事件流水号；举例：event-id-202606250128（必选）；接入端口名称；举例：P781-珠江新城-PTN7900-23-TPA1EG24-17（必选）；是否已授权OMC自动抢通，取值范围：是、否；举例：是（必选）；业务抢通方案名称；举例：隧道调优（必选）；业务抢通方案详情（必选）；业务抢通方案执行结束时间；样例：2026-05-11T08:21:46Z（可选）；业务抢通方案执行结果，取值范围：成功、失败；举例：成功（可选）；业务抢通方案执行失败原因；业务抢通方案执行结果为“失败”时，需要填写此信息；举例：调优后隧道链路C已被占用，无法执行隧道调优（可选）"
-      ],
-      "x-a2at-value-constraint": "上报的数据类型为业务抢通事件。业务抢通事件数据包含以下字段：1. 业务抢通方案执行状态，取值范围：未启动、已结束（必选）；2. 投诉诊断任务流水号（必选）；3. OSS侧事件流水号（必选）；4. 接入端口名称（必选）；5. 是否已授权OMC自动抢通，取值范围：是、否（必选）；6. 业务抢通方案名称（必选）；7. 业务抢通方案详情（必选）；8. 业务抢通方案执行结束时间（可选）；9. 业务抢通方案执行结果，取值范围：成功、失败（可选）；10. 业务抢通方案执行失败原因，业务抢通方案执行结果为“失败”时，需要填写此信息（可选）。"
+      "description": "业务抢通方案执行状态（必选）。取值范围：未启动、已结束。",
+      "enum": ["未启动", "已结束"],
+      "examples": ["已结束"]
+    },
+    "complaintDiagnosisTaskId": {
+      "type": "string",
+      "description": "投诉诊断任务流水号（必选）。",
+      "examples": ["9de168c0-6179-4778-8b72-4279582c0a3f"]
+    },
+    "ossEventId": {
+      "type": "string",
+      "description": "OSS侧事件流水号（必选）。",
+      "examples": ["event-id-202606250128"]
+    },
+    "accessPortName": {
+      "type": "string",
+      "description": "接入端口名称（必选）。",
+      "examples": ["P781-珠江新城-PTN7900-23-TPA1EG24-17"]
+    },
+    "omcAutoRecoveryAuthorized": {
+      "type": "string",
+      "description": "是否已授权OMC自动抢通（必选）。取值范围：是、否。",
+      "enum": ["是", "否"],
+      "examples": ["是"]
+    },
+    "recoveryPlanName": {
+      "type": "string",
+      "description": "业务抢通方案名称（必选）。",
+      "examples": ["隧道调优"]
+    },
+    "recoveryPlanDetail": {
+      "type": "string",
+      "description": "业务抢通方案详情（必选）。",
+      "examples": ["将流量带宽，时延越限和丢包越限受影响的隧道列表，调优到新的路径列表中。"]
+    },
+    "recoveryPlanEndTime": {
+      "type": "string",
+      "description": "业务抢通方案执行结束时间（可选）。",
+      "examples": ["2026-05-11T08:21:46Z"]
+    },
+    "recoveryPlanExecutionResult": {
+      "type": "string",
+      "description": "业务抢通方案执行结果（可选）。取值范围：成功、失败。",
+      "enum": ["成功", "失败"],
+      "examples": ["成功"]
+    },
+    "recoveryPlanFailureReason": {
+      "type": "string",
+      "description": "业务抢通方案执行失败原因（可选）。业务抢通方案执行结果为“失败”时，需要填写此信息。",
+      "examples": ["调优后隧道链路C已被占用，无法执行隧道调优"]
     }
   },
-  "required": ["notificationDataFormat"]
+  "required": [
+    "recoveryPlanExecutionStatus",
+    "complaintDiagnosisTaskId",
+    "ossEventId",
+    "accessPortName",
+    "omcAutoRecoveryAuthorized",
+    "recoveryPlanName",
+    "recoveryPlanDetail"
+  ]
 }

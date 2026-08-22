@@ -55,14 +55,14 @@ public final class ServiceRecoverySampleInputs {
     /** Slot name of the optional subscription condition slot. */
     public static final String SLOT_SUBSCRIBE_CONDITION = slotName("subscriptionCondition");
 
-    /** Slot name of the required notification data format slot. */
-    public static final String SLOT_NOTIFICATION_DATA_FORMAT = slotName("notificationDataFormat");
+    /** Slot name of the required recovery plan execution status field. */
+    public static final String SLOT_RECOVERY_PLAN_EXECUTION_STATUS = slotName("recoveryPlanExecutionStatus");
 
     /** Server-side parameter name of the subscription condition (English business identifier). */
     public static final String PARAM_SUBSCRIPTION_CONDITION = "subscriptionCondition";
 
-    /** Server-side parameter name of the notification data format (English business identifier). */
-    public static final String PARAM_NOTIFICATION_DATA_FORMAT = "notificationDataFormat";
+    /** Server-side parameter name of the recovery plan execution status (English business identifier). */
+    public static final String PARAM_RECOVERY_PLAN_EXECUTION_STATUS = "recoveryPlanExecutionStatus";
 
     /** AgentCard query name of the sample server. */
     public static final String AGENT_NAME = "SPN Service Recovery Agent";
@@ -108,7 +108,7 @@ public final class ServiceRecoverySampleInputs {
      * {@code sample/service-recovery/client/input-with-data.json}.
      *
      * <p>The keys follow the English business-style parameter names of the server-side validation
-     * schema ({@code subscriptionCondition}/{@code notificationDataFormat}), demonstrating that the
+     * schema ({@code subscriptionCondition}/{@code recoveryPlanExecutionStatus}), demonstrating that the
      * schema-guided generation path maps caller-provided structured data onto the template slots.
      *
      * @return structured notification input as a string-to-object map
