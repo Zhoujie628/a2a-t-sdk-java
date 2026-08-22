@@ -61,9 +61,13 @@ negotiation/
 │   └── NegotiationSampleSupport.java # 3×3 API 样例公共辅助
 ├── fromdata/
 │   └── FromDataNegotiationSample.java  # 信息/目标/可行性 × 提议/接受/拒绝，共 9 个生成用例
-└── fromtext/
-    └── FromTextNegotiationSample.java  # 同上 9 个用例，自然语言输入
+├── fromtext/
+│   └── FromTextNegotiationSample.java  # 同上 9 个用例，自然语言输入
+└── eval/
+    └── NegotiationEvalApp.java        # 协商接口闭环评测：逐用例驱动接口并输出可回放 JSON 报告
 ```
+
+评测用例与场景配置同目录外置：`src/main/resources/sample/negotiation/eval/eval-suite.json`。
 
 ### 服务端处理流程
 
@@ -88,6 +92,12 @@ negotiation/
 - `mvn clean install -DskipTests` 全量构建（需联网）；
 - 含有效 `A2AT_LLM_API_KEY` 的 `.env` 文件（模板：`sample/negotiation/negotiation.env`）。
 
+### 命令形态说明
+
+所有入口使用 Java 的 @-argfile 语法（JDK 9+）：`java @<file>` 把文件内容展开为启动参数。构建时（`mvn package`）Maven antrun 插件在 `target/` 下为每个入口生成一个 `*.javaargs.txt`，文件内容是两行——`-cp` 加上完整的依赖 jar 路径链，以及主类的全限定名。这样运行命令无需手写数百字符的 classpath。每个入口对应一个文件：`negotiation.javaargs.txt`（端到端 demo）、`fromdata.javaargs.txt` / `fromtext.javaargs.txt`（3×3 生成用例）、`eval.javaargs.txt`（协商接口评测）。Windows 控制台建议加 `-Dfile.encoding=UTF-8` 前缀，避免中文日志显示为乱码（不影响输出文件本身的编码）。
+
+### 端到端 demo
+
 ```bash
 # 端到端 demo（默认：fromData 通道 + 流式优先）
 java @a2a-t-sample/target/negotiation.javaargs.txt /path/to/.env
@@ -105,6 +115,23 @@ java @a2a-t-sample/target/fromtext.javaargs.txt /path/to/.env
 
 组合 `--fromText` 与 `--no-stream` 可覆盖全部四种通道 × 端点组合。
 
+### 协商接口评测
+
+评测入口不走 HTTP，直接驱动协商 prompt 接口闭环（Task-T 生成 → 服务端校验 → propose 生成 → 出站校验 → 客户端补充 + accept → 入站校验 → 二次校验），逐用例输出可回放的 JSON 证据链：
+
+```bash
+# 全量 10 条用例，报告写到 ./eval-report.json
+java @a2a-t-sample/target/eval.javaargs.txt /path/to/.env
+
+# 只跑指定用例（可重复出现，用于单条回放/调试）
+java @a2a-t-sample/target/eval.javaargs.txt --case PLC-04 /path/to/.env
+
+# 指定报告输出路径
+java @a2a-t-sample/target/eval.javaargs.txt --out my-report.json /path/to/.env
+```
+
+用例定义在 `src/main/resources/sample/negotiation/eval/eval-suite.json`，新增用例不需要改代码。报告按用例增量写盘，中断后已完成的用例仍在报告里。
+
 ## 六、LLM 依赖说明
 
 `A2AT_LLM_API_KEY` 在所有运行模式下必填。fromData 通道仅省去协商报文渲染这一步的 LLM 调用；Task-T 槽位抽取与服务端语义校验始终依赖 LLM。缺失 key 时启动即失败并给出指引。
@@ -118,6 +145,7 @@ java @a2a-t-sample/target/fromtext.javaargs.txt /path/to/.env
 | 报文生成通道 | fromData（结构化）/ fromText（自然语言） |
 | 传输端点 | message:stream / message:send |
 | 参数缺失形态 | 单参数缺失、多参数缺失、值模糊、字段错位（见 scenario.json，可扩展） |
+| 正确性评测 | 10 条用例（eval.javaargs.txt）：触发判定、缺失槽集合、propose 出站校验、补充值抽取一致、闭环完成，含负例 |
 
 ## 八、已知限制
 
