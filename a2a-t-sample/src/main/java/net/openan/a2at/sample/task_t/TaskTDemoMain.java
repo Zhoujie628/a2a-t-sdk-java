@@ -39,7 +39,7 @@ import net.openan.a2at.sdk.server.A2ATServer;
  * field accuracy and sample pass rate, while case three reports a rejection interception rate over the negative
  * samples.
  *
- * <p>Run with {@code java ... TaskTDemoMain [env-file-path]}. The env file resolves as follows: an explicit first
+ * <p>Run with {@code java ... TaskTDemoMain [env-file-path] [case]}. The env file resolves as follows: an explicit first
  * argument wins; otherwise a {@code client.env} in the working directory (repo root) that carries the required LLM
  * keys; otherwise the bundled sample template {@code a2a-t-sample/src/main/resources/sample/task_t/client.env}.
  * A working-directory {@code client.env} is only honored when it defines non-blank {@code A2AT_LLM_PROVIDER},
@@ -47,6 +47,9 @@ import net.openan.a2at.sdk.server.A2ATServer;
  * checkouts would otherwise shadow the Task-T sample); otherwise the bundled template is used. The env must configure
  * a reachable OpenAI-compatible LLM ({@code A2AT_LLM_API_KEY}, {@code A2AT_LLM_BASE_URL}, {@code A2AT_LLM_MODEL},
  * {@code A2AT_LLM_PROVIDER=openai}) — the server-side semantic validation performs one LLM call per sample.
+ *
+ * <p>The second optional argument selects which case to run: {@code text} (case one), {@code data} (case two),
+ * {@code rejection} (case three) or {@code all} (default); when a single case is selected only its summary is printed.
  */
 public final class TaskTDemoMain {
 
@@ -58,37 +61,79 @@ public final class TaskTDemoMain {
     private static final List<String> REQUIRED_LLM_KEYS =
             List.of("A2AT_LLM_PROVIDER", "A2AT_LLM_MODEL", "A2AT_LLM_API_KEY");
 
+    private static final String CASE_TEXT = "text";
+
+    private static final String CASE_DATA = "data";
+
+    private static final String CASE_REJECTION = "rejection";
+
+    private static final String CASE_ALL = "all";
+
     private TaskTDemoMain() {
     }
 
     /**
-     * Runs both client-API cases against the built-in private-line complaint diagnosis samples.
+     * Runs one or all client-API cases against the built-in private-line complaint diagnosis samples.
      *
-     * @param args optional first argument is the {@code .env} file path
+     * @param args first optional argument is the {@code .env} file path; second optional argument selects the case
+     *     ({@code text}, {@code data}, {@code rejection} or {@code all})
      */
     public static void main(String[] args) {
         Path envPath = resolveEnvPath(args);
+        String caseSelection = resolveCaseSelection(args);
         println("Task-T 准确率验证样例，env: " + envPath.toAbsolutePath() + (Files.exists(envPath) ? "" : "  (不存在，请先配置)"));
         println("模板: " + StandardTemplates.PRIVATE_LINE_COMPLAINT.uri());
+        println("用例: " + caseLabel(caseSelection));
         println();
 
         A2ATClient client = new A2ATClient(envPath);
         A2ATServer server = new A2ATServer(envPath);
 
-        List<TaskTAccuracyEvaluator.SampleScore> textScores = runTextCase(client, server);
-        println();
-        System.out.println("══════════════════════════════════════════════════════");
-        List<TaskTAccuracyEvaluator.SampleScore> dataScores = runDataWithSchemaCase(client, server);
+        if (CASE_TEXT.equals(caseSelection) || CASE_ALL.equals(caseSelection)) {
+            List<TaskTAccuracyEvaluator.SampleScore> textScores = runTextCase(client, server);
+            println();
+            System.out.println("══════════════════════════════════════════════════════");
+            printSummary(TaskTAccuracyEvaluator.summarize("generateTaskPromptFromText", textScores));
+            println();
+        }
+        if (CASE_DATA.equals(caseSelection) || CASE_ALL.equals(caseSelection)) {
+            List<TaskTAccuracyEvaluator.SampleScore> dataScores = runDataWithSchemaCase(client, server);
+            println();
+            System.out.println("══════════════════════════════════════════════════════");
+            printSummary(TaskTAccuracyEvaluator.summarize("generateTaskPromptFromDataWithSchema", dataScores));
+            println();
+        }
+        if (CASE_REJECTION.equals(caseSelection) || CASE_ALL.equals(caseSelection)) {
+            RejectionSummary rejectionSummary = runRejectionCase(client, server);
+            println();
+            System.out.println("══════════════════════════════════════════════════════");
+            printRejectionSummary(rejectionSummary);
+            println();
+        }
+    }
 
-        println();
-        System.out.println("══════════════════════════════════════════════════════");
-        RejectionSummary rejectionSummary = runRejectionCase(client, server);
+    private static String resolveCaseSelection(String[] args) {
+        if (args.length > 1) {
+            String selection = args[1].toLowerCase(Locale.ROOT);
+            if (CASE_TEXT.equals(selection)
+                    || CASE_DATA.equals(selection)
+                    || CASE_REJECTION.equals(selection)
+                    || CASE_ALL.equals(selection)) {
+                return selection;
+            }
+            System.err.println("未知用例参数: " + args[1] + "，可选值: text | data | rejection | all，将运行全部用例");
+            return CASE_ALL;
+        }
+        return CASE_ALL;
+    }
 
-        println();
-        System.out.println("══════════════════════════════════════════════════════");
-        printSummary(TaskTAccuracyEvaluator.summarize("generateTaskPromptFromText", textScores));
-        printSummary(TaskTAccuracyEvaluator.summarize("generateTaskPromptFromDataWithSchema", dataScores));
-        printRejectionSummary(rejectionSummary);
+    private static String caseLabel(String caseSelection) {
+        return switch (caseSelection) {
+            case CASE_TEXT -> "用例一：generateTaskPromptFromText";
+            case CASE_DATA -> "用例二：generateTaskPromptFromDataWithSchema";
+            case CASE_REJECTION -> "用例三：缺少关键槽位拒绝用例";
+            default -> "全部（用例一 + 用例二 + 用例三）";
+        };
     }
 
     private static List<TaskTAccuracyEvaluator.SampleScore> runTextCase(A2ATClient client, A2ATServer server) {
