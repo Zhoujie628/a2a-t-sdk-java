@@ -17,9 +17,8 @@ class DefaultStructuredPromptSlotValueExtractorTest {
 
     @Test
     void extractSlotsParsesFormattedStructuredJsonPayload() {
-        RecordingClient llmClient =
-                new RecordingClient(
-                        """
+        RecordingClient llmClient = new RecordingClient(
+                """
                 {
                   "slots": {
                     "site": "Site A",
@@ -35,10 +34,11 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
                         List.of(
-                                new PromptSlotDefinition("site", true, "string", null, null, null, null, null),
+                                new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null),
                                 new PromptSlotDefinition(
-                                        "additional_notes", false, "string", null, null, null, null, null),
-                                new PromptSlotDefinition("limit", false, "integer", null, 1.0d, 10.0d, null, null),
+                                        "additional_notes", false, "string", null, null, null, null, null, null),
+                                new PromptSlotDefinition(
+                                        "limit", false, "integer", null, 1.0d, 10.0d, null, null, null),
                                 new PromptSlotDefinition(
                                         "severity",
                                         false,
@@ -47,6 +47,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                                         null,
                                         null,
                                         List.of("low", "medium", "high"),
+                                        null,
                                         null))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
@@ -66,9 +67,8 @@ class DefaultStructuredPromptSlotValueExtractorTest {
 
     @Test
     void extractSlotsPreservesSlotTextContainingClosingBrace() {
-        RecordingClient llmClient =
-                new RecordingClient(
-                        """
+        RecordingClient llmClient = new RecordingClient(
+                """
                 {
                   "slots": {
                     "site": "Site A",
@@ -82,9 +82,9 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
                         List.of(
-                                new PromptSlotDefinition("site", true, "string", null, null, null, null, null),
+                                new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null),
                                 new PromptSlotDefinition(
-                                        "additional_notes", false, "string", null, null, null, null, null))),
+                                        "additional_notes", false, "string", null, null, null, null, null, null))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
@@ -97,9 +97,8 @@ class DefaultStructuredPromptSlotValueExtractorTest {
 
     @Test
     void should_injectDataSchemaSection_When_schemaIsProvided() {
-        RecordingClient llmClient =
-                new RecordingClient(
-                        """
+        RecordingClient llmClient = new RecordingClient(
+                """
                 {
                   "slots": {
                     "site": "Site A"
@@ -111,27 +110,30 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 llmClient,
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
-                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null))),
+                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
         Map<String, Object> dataSchema = Map.of(
-                "site", "The target site name",
-                "severity", "The severity level");
+                "type", "object",
+                "properties", Map.of(
+                        "site", Map.of("type", "string", "description", "The target site name"),
+                        "severity", Map.of("type", "string", "description", "The severity level")),
+                "required", List.of("site"));
 
         extractor.extractSlots("Analyze Site A.", "energy-saving", "en-US", dataSchema);
 
         String userMessage = llmClient.lastUserContent();
         assertTrue(userMessage.contains("[data_schema]"));
-        assertTrue(userMessage.contains("- site: The target site name"));
-        assertTrue(userMessage.contains("- severity: The severity level"));
+        assertTrue(userMessage.contains("\"type\":\"object\""));
+        assertTrue(userMessage.contains("\"properties\""));
+        assertTrue(userMessage.contains("\"The target site name\""));
     }
 
     @Test
     void should_notIncludeDataSchemaSection_When_schemaIsNull() {
-        RecordingClient llmClient =
-                new RecordingClient(
-                        """
+        RecordingClient llmClient = new RecordingClient(
+                """
                 {
                   "slots": {
                     "site": "Site A"
@@ -143,7 +145,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 llmClient,
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
-                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null))),
+                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
@@ -155,9 +157,8 @@ class DefaultStructuredPromptSlotValueExtractorTest {
 
     @Test
     void should_notIncludeDataSchemaSection_When_schemaIsEmpty() {
-        RecordingClient llmClient =
-                new RecordingClient(
-                        """
+        RecordingClient llmClient = new RecordingClient(
+                """
                 {
                   "slots": {
                     "site": "Site A"
@@ -169,7 +170,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 llmClient,
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
-                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null))),
+                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
@@ -180,10 +181,9 @@ class DefaultStructuredPromptSlotValueExtractorTest {
     }
 
     @Test
-    void defaultExtractSlotsWithSchemaDelegatesToThreeArg() {
-        RecordingClient llmClient =
-                new RecordingClient(
-                        """
+    void buildMessagesIncludesFullSlotDescriptions() {
+        RecordingClient llmClient = new RecordingClient(
+                """
                 {
                   "slots": {
                     "site": "Site A"
@@ -195,15 +195,60 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 llmClient,
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
-                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null))),
+                        List.of(new PromptSlotDefinition(
+                                "site",
+                                true,
+                                "string",
+                                null,
+                                null,
+                                null,
+                                List.of("Site A", "Site B"),
+                                "The target site name",
+                                "The site must be a physical location"))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
-        PromptSlotValueExtractor lambdaExtractor = (input, code, lang) ->
-                extractor.extractSlots(input, code, lang);
+        extractor.extractSlots("Analyze Site A.", "energy-saving", "en-US");
 
-        StructuredSlotExtractionResult result = lambdaExtractor.extractSlots(
-                "Analyze Site A.", "energy-saving", "en-US", Map.of("site", "desc"));
+        String userMessage = llmClient.lastUserContent();
+        assertTrue(userMessage.contains("[slots]"));
+        assertTrue(userMessage.contains("\"name\""));
+        assertTrue(userMessage.contains("\"site\""));
+        assertTrue(userMessage.contains("\"required\""));
+        assertTrue(userMessage.contains("\"type\""));
+        assertTrue(userMessage.contains("\"string\""));
+        assertTrue(userMessage.contains("\"description\""));
+        assertTrue(userMessage.contains("\"The target site name\""));
+        assertTrue(userMessage.contains("\"enum\""));
+        assertTrue(userMessage.contains("\"Site A\""));
+        assertTrue(userMessage.contains("\"x-a2at-value-constraint\""));
+        assertTrue(userMessage.contains("\"The site must be a physical location\""));
+        assertTrue(userMessage.contains("["));
+    }
+
+    @Test
+    void defaultExtractSlotsWithSchemaDelegatesToThreeArg() {
+        RecordingClient llmClient = new RecordingClient(
+                """
+                {
+                  "slots": {
+                    "site": "Site A"
+                  },
+                  "slot_errors": []
+                }
+                """);
+        DefaultStructuredPromptSlotValueExtractor extractor = new DefaultStructuredPromptSlotValueExtractor(
+                llmClient,
+                (scenarioCode, language) -> new PromptSlotSchema(
+                        scenarioCode,
+                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null))),
+                "Extract slots from the input.",
+                "Return slots as JSON.");
+
+        PromptSlotValueExtractor lambdaExtractor = (input, code, lang) -> extractor.extractSlots(input, code, lang);
+
+        StructuredSlotExtractionResult result =
+                lambdaExtractor.extractSlots("Analyze Site A.", "energy-saving", "en-US", Map.of("site", "desc"));
 
         String userMessage = llmClient.lastUserContent();
         assertFalse(userMessage.contains("[data_schema]"));

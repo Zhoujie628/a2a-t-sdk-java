@@ -7,17 +7,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
-import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.A2ATError;
+import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.json.JacksonJsonValueParser;
 import net.openan.a2at.sdk.core.json.JsonValueParser;
 import net.openan.a2at.sdk.core.model.PromptMessage;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
 import net.openan.a2at.sdk.core.validation.SemanticValidator;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ValidationResult;
 import net.openan.a2at.sdk.llm.LLMClient;
+import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
 import org.jspecify.annotations.NonNull;
@@ -31,7 +32,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 2026-08
  */
-public final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
+final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSemanticValidator.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -44,12 +45,14 @@ public final class DefaultSemanticValidator implements SemanticValidator<Templat
     /**
      * Creates a semantic validator backed by the given LLM client and prompt resources for the specified language.
      *
-     * @param llmClient LLM client for structured calls; may be {@code null} and set later
+     * @param llmClient LLM client for structured calls; may be {@code null}, in which case {@link #validate}
+     *     fails with {@code ContentValidationException} carrying
+     *     {@code VALIDATION_LLM_INFRASTRUCTURE_ERROR}; there is no late injection point
      * @param language language code for prompt resource loading
      * @param promptResourceAccess prompt resource access for loading validation prompts
      * @throws net.openan.a2at.sdk.core.exception.ResourceNotFoundException if prompt resources are missing
      */
-    public DefaultSemanticValidator(
+    DefaultSemanticValidator(
             @Nullable LLMClient llmClient,
             @NonNull String language,
             @NonNull PromptResourceAccess promptResourceAccess) {
@@ -73,7 +76,15 @@ public final class DefaultSemanticValidator implements SemanticValidator<Templat
         List<Map<String, String>> messages = toStructuredMessages(
                 List.of(new PromptMessage("system", systemPrompt), new PromptMessage("user", userPrompt)));
 
-        LLMResponse response = llmClient.structured(messages, outputSchema, null, null);
+        LLMResponse response;
+        try {
+            response = llmClient.structured(messages, outputSchema, null, null);
+        } catch (LLMError error) {
+            throw new ContentValidationException(
+                    A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR,
+                    "Semantic validation LLM invocation failed: " + error.getMessage(),
+                    error);
+        }
         Map<String, Object> parsed;
         try {
             parsed = jsonValueParser.parseObject(response.content());
@@ -166,7 +177,11 @@ public final class DefaultSemanticValidator implements SemanticValidator<Templat
             return Map.of();
         }
         Map<String, Object> normalized = new LinkedHashMap<>();
-        params.forEach((key, value) -> normalized.put(String.valueOf(key), value));
+        params.forEach((key, value) -> {
+            if (value != null) {
+                normalized.put(String.valueOf(key), value);
+            }
+        });
         return Map.copyOf(normalized);
     }
 

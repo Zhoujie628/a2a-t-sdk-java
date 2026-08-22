@@ -1,13 +1,14 @@
 package net.openan.a2at.sdk.prompt.analysis.impl;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.PromptMessage;
 import net.openan.a2at.sdk.llm.LLMClient;
@@ -25,6 +26,10 @@ import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
 public final class DefaultStructuredPromptSlotValueExtractor implements PromptSlotValueExtractor {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    private static final ObjectWriter SLOT_SERIALIZER = new ObjectMapper()
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .writerWithDefaultPrettyPrinter();
 
     private final LLMClient llmClient;
 
@@ -67,11 +72,17 @@ public final class DefaultStructuredPromptSlotValueExtractor implements PromptSl
     }
 
     private List<PromptMessage> buildMessages(
-            Object userInput, String scenarioCode, String language, PromptSlotSchema slotSchema,
+            Object userInput,
+            String scenarioCode,
+            String language,
+            PromptSlotSchema slotSchema,
             Map<String, Object> dataSchema) {
-        String slotLines = slotSchema.slotDefinitions().stream()
-                .map(slot -> "- name: " + slot.name() + "\n  required: " + slot.required())
-                .collect(Collectors.joining("\n"));
+        String slotLines;
+        try {
+            slotLines = SLOT_SERIALIZER.writeValueAsString(slotSchema.slotDefinitions());
+        } catch (JsonProcessingException error) {
+            throw new A2ATError("Failed to serialize slot definitions.", error);
+        }
         String content = userPrompt
                 + "\n\n[scenario_code]\n"
                 + scenarioCode
@@ -83,8 +94,10 @@ public final class DefaultStructuredPromptSlotValueExtractor implements PromptSl
                 + slotLines;
         if (dataSchema != null && !dataSchema.isEmpty()) {
             content += "\n\n[data_schema]\n";
-            for (Map.Entry<String, Object> entry : dataSchema.entrySet()) {
-                content += "- " + entry.getKey() + ": " + String.valueOf(entry.getValue()) + "\n";
+            try {
+                content += OBJECT_MAPPER.writeValueAsString(dataSchema);
+            } catch (JsonProcessingException e) {
+                throw new A2ATError("Failed to serialize data schema to JSON.", e);
             }
         }
         return List.of(new PromptMessage("system", systemPrompt), new PromptMessage("user", content));

@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
@@ -64,7 +64,7 @@ class TargetNegotiationScenarioTest {
         assertTrue(firstProposal.promptText().contains("## 待澄清内容"));
         assertTrue(firstProposal.promptText().contains("- round: 1"));
 
-        FilledParamData firstRoundParameters = responder.validateAndFillingProposeData(
+        FilledParamData firstRoundParameters = responder.validateProposePromptAndDataFilling(
                 firstProposal.promptText(), nestedParameterSchema(), TARGET_PROPOSE_URI);
         assertEquals(1, responderLlm.callCount());
         Object timeRateTargets = firstRoundParameters.data().get("timeRateTargets");
@@ -84,7 +84,7 @@ class TargetNegotiationScenarioTest {
         assertTrue(rejection.promptText().contains("节能区域信息因站点清单不可用而无法完整澄清"));
         assertTrue(rejection.promptText().contains("- round: 1"));
 
-        requester.validateAndFillingRejectData(rejection.promptText(), parameterSchema(), TARGET_ACCEPT_URI);
+        requester.validateRejectPromptAndDataFilling(rejection.promptText(), parameterSchema(), TARGET_ACCEPT_URI);
         assertEquals(1, requesterLlm.callCount());
 
         NegotiationContext secondRound = firstRound.nextRound();
@@ -120,7 +120,7 @@ class TargetNegotiationScenarioTest {
         assertTrue(acceptance.promptText().contains("- round: 2"));
 
         FilledParamData terminalParameters =
-                requester.validateAndFillingAcceptData(acceptance.promptText(), parameterSchema(), TARGET_ACCEPT_URI);
+                requester.validateAcceptPromptAndDataFilling(acceptance.promptText(), parameterSchema(), TARGET_ACCEPT_URI);
         assertEquals(2, requesterLlm.callCount());
         assertEquals(SESSION_ID, terminalParameters.data().get("id"));
         assertEquals(2, terminalParameters.data().get("round"));

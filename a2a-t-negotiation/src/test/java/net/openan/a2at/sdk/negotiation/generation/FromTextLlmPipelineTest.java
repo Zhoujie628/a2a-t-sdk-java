@@ -20,15 +20,15 @@ import java.util.Map;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.model.LlmConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -506,7 +506,7 @@ class FromTextLlmPipelineTest {
                 llm.lastMessages.get(1).get("content").contains("propose"),
                 "the user prompt must carry the phase token");
 
-        FilledParamData filled = orchestrator.validateAndFillingProposeData(
+        FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                 message.promptText(),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                 goldenCase.template());
@@ -557,6 +557,7 @@ class FromTextLlmPipelineTest {
             case PROPOSE -> orchestrator.generateProposeFromText(text, goldenCase.context(), goldenCase.template());
             case ACCEPT -> orchestrator.generateAcceptFromText(text, goldenCase.context(), goldenCase.template());
             case REJECT -> orchestrator.generateRejectFromText(text, goldenCase.context(), goldenCase.template());
+            case ABORT -> throw new IllegalArgumentException("The typed golden cases carry no abort phase.");
         };
     }
 
@@ -565,6 +566,7 @@ class FromTextLlmPipelineTest {
             case PROPOSE -> "propose";
             case ACCEPT -> "accept";
             case REJECT -> "reject";
+            case ABORT -> "abort";
         };
     }
 
@@ -628,7 +630,7 @@ class FromTextLlmPipelineTest {
      */
     private static String extractionJson(NegotiationContent content, NegotiationPhase phase) {
         if (phase == NegotiationPhase.PROPOSE) {
-            if (content instanceof InfoProposeContent info) {
+            if (content instanceof InformationProposeContent info) {
                 return "{\"items\":" + itemsJson(info.items()) + ",\"relationship\":"
                         + stringOrNull(info.relationship()) + "}";
             }
@@ -654,7 +656,7 @@ class FromTextLlmPipelineTest {
                     + itemsJson(feasibility.infeasibilityDetailsAndProposal())
                     + "}";
         }
-        if (content instanceof InfoEndingContent info) {
+        if (content instanceof InformationEndingContent info) {
             return "{\"conclusion\":" + quote(info.conclusion().literal()) + ",\"items\":" + itemsJson(info.items())
                     + "}";
         }

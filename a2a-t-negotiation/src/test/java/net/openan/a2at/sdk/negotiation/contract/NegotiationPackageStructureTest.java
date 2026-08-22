@@ -25,12 +25,13 @@ class NegotiationPackageStructureTest {
                 List.of(
                         "FeasibilityEndingContent.java",
                         "FeasibilityProposeContent.java",
-                        "InfoEndingContent.java",
-                        "InfoProposeContent.java",
+                        "InformationEndingContent.java",
+                        "InformationProposeContent.java",
+                        "NegotiationAbortContent.java",
+                        "NegotiationAbortData.java",
                         "NegotiationAction.java",
                         "NegotiationConclusion.java",
                         "NegotiationContent.java",
-                        "NegotiationContentService.java",
                         "NegotiationContext.java",
                         "NegotiationEndingContent.java",
                         "NegotiationEndingData.java",
@@ -66,6 +67,7 @@ class NegotiationPackageStructureTest {
     void generationPackageExposesExactlyThePinnedTypes() throws IOException {
         assertEquals(
                 List.of(
+                        "AbortGenerator.java",
                         "AbstractNegotiationGenerator.java",
                         "DefaultNegotiationContentExtractor.java",
                         "FeasibilityEndingGenerator.java",
@@ -73,6 +75,7 @@ class NegotiationPackageStructureTest {
                         "InformationEndingGenerator.java",
                         "InformationProposeGenerator.java",
                         "NegotiationContentExtractor.java",
+                        "NegotiationContentService.java",
                         "NegotiationContextRenderer.java",
                         "NegotiationGenerationOrchestrator.java",
                         "NegotiationGenerationOrchestratorBuilder.java",
@@ -98,13 +101,11 @@ class NegotiationPackageStructureTest {
                         "DefaultNegotiationComplianceChecker.java",
                         "DefaultNegotiationSemanticValidator.java",
                         "NegotiationComplianceChecker.java",
-                        "NegotiationParamSchemas.java",
                         "NegotiationRuleCheckResult.java",
                         "NegotiationRuleCheckerAdapter.java",
                         "NegotiationSemanticValidator.java",
                         "NegotiationValidationException.java",
                         "ParamExtractor.java",
-                        "SemanticSchemaBuilder.java",
                         "SemanticValidationResult.java",
                         "package-info.java"),
                 topLevelJavaFiles(negotiationRoot().resolve("validation")));

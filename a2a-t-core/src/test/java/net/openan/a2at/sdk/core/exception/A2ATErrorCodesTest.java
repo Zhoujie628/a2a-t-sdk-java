@@ -23,16 +23,16 @@ import org.junit.jupiter.api.Test;
 class A2ATErrorCodesTest {
 
     /**
-     * Verifies that {@link A2ATErrorCodes} declares exactly the fourteen expected error code constants with the expected
+     * Verifies that {@link A2ATErrorCodes} declares exactly the twenty expected error code constants with the expected
      * values.
      *
      * <p>Scenario: Reflection inspects all declared static final String fields of the registry. Expected result: The
-     * field set contains exactly the fourteen known constants and no others.
+     * field set contains exactly the twenty known constants and no others.
      *
      * @throws IllegalAccessException if a declared field cannot be read
      */
     @Test
-    void should_declareExactlyFourteenConstants_When_reflectingOverDeclaredFields() throws IllegalAccessException {
+    void should_declareExactlyTwentyConstants_When_reflectingOverDeclaredFields() throws IllegalAccessException {
         Map<String, String> constants = new TreeMap<>();
         for (Field field : A2ATErrorCodes.class.getDeclaredFields()) {
             if (field.getType() == String.class
@@ -58,7 +58,13 @@ class A2ATErrorCodesTest {
                         Map.entry("VALIDATION_RULE_VIOLATION", "validation_rule_violation"),
                         Map.entry("VALIDATION_SEMANTIC_REJECTED", "validation_semantic_rejected"),
                         Map.entry("VALIDATION_LLM_INFRASTRUCTURE_ERROR", "validation_llm_infrastructure_error"),
-                        Map.entry("VALIDATION_PROMPT_RESOURCE_NOT_FOUND", "validation_prompt_resource_not_found")),
+                        Map.entry("VALIDATION_PROMPT_RESOURCE_NOT_FOUND", "validation_prompt_resource_not_found"),
+                        Map.entry("PROMPT_RESOURCE_LOAD_ERROR", "prompt_resource_load_error"),
+                        Map.entry("SLOT_SCHEMA_NOT_FOUND", "slot_schema_not_found"),
+                        Map.entry("LLM_INVOCATION_FAILED", "llm_invocation_failed"),
+                        Map.entry("RENDER_FAILED", "render_failed"),
+                        Map.entry("SLOT_VALIDATION_ERROR", "slot_validation_error"),
+                        Map.entry("PROCESSED_PROMPT_PARSE_ERROR", "processed_prompt_parse_error")),
                 constants);
     }
 }

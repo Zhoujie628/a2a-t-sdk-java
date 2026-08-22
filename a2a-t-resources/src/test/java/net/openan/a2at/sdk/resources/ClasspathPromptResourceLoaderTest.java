@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import org.junit.jupiter.api.Test;
 
 class ClasspathPromptResourceLoaderTest {
@@ -32,7 +32,7 @@ class ClasspathPromptResourceLoaderTest {
     @Test
     void raisesTypedErrorWhenResourceIsMissing() {
         PromptResourceKey key = PromptResourceKey.template(
-                TemplateUri.of("Task-T", "v1", "network-layer", "missing_scenario"), "en-US", "template.md");
+                TemplateUri.of("Task-T", "network-layer", "missing_scenario"), "en-US", "template.md");
 
         ResourceNotFoundException error = assertThrows(ResourceNotFoundException.class, () -> loader.loadText(key));
 
@@ -53,7 +53,7 @@ class ClasspathPromptResourceLoaderTest {
     void loadsPackagedSubscribeIncidentSlotSchemaWithSemanticHint() {
         PromptResourceKey key =
                 PromptResourceKey.slotSchema(
-                        TemplateUri.of("Notification-T", "v1", "network-layer", "subscribe-incident"),
+                        TemplateUri.of("Notification-T", "network-layer", "subscribe-incident"),
                         "zh-CN",
                         "slot.json");
 

@@ -5,8 +5,8 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import net.openan.a2at.sdk.core.resources.PathSegments;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import org.jspecify.annotations.NonNull;
@@ -18,12 +18,16 @@ import org.jspecify.annotations.Nullable;
  * <p>The reference composes the template URI from the type and phase segments, so the URI spelling has a single source.
  * The language is query context rather than part of the resource identity and is therefore not part of the URI.
  *
- * @param type negotiation type addressed by the reference
+ * <p>Typed references address the templates of one negotiation type; the abort phase is type-independent and is
+ * addressed by the single common abort template with a {@code null} type.
+ *
+ * @param type negotiation type addressed by the reference; null only for the abort phase, whose common template is
+ *     type-independent
  * @param phase API-level phase addressed by the reference; accept and reject share the same template
  * @param language locale identifier such as {@code zh-CN} or {@code en-US}
- * @since 2026-06
+ * @since 2026-08
  */
-public record NegotiationReference(NegotiationType type, NegotiationPhase phase, String language) {
+public record NegotiationReference(@Nullable NegotiationType type, NegotiationPhase phase, String language) {
 
     private static final String URI_PREFIX = StandardTemplates.NEGOTIATION_EXTENSION_NAME;
 
@@ -31,15 +35,27 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
 
     private static final String TYPE_SEGMENT_SUFFIX = "-negotiation";
 
+    private static final String COMMON_TYPE_SEGMENT = "common";
+
     /**
      * Validates the reference fields.
      *
-     * @throws NullPointerException if the type or phase is null
-     * @throws IllegalArgumentException if the language is not a simple path segment
+     * @throws NullPointerException if the phase is null
+     * @throws IllegalArgumentException if the type is null on a typed phase, non-null on the abort phase, or the
+     *     language is not a simple path segment
      */
     public NegotiationReference {
-        Objects.requireNonNull(type, "Negotiation reference type must not be null.");
         Objects.requireNonNull(phase, "Negotiation reference phase must not be null.");
+        if (phase == NegotiationPhase.ABORT && type != null) {
+            throw new IllegalArgumentException(
+                    "Negotiation reference of the ABORT phase is type-independent; the type must be null but was "
+                            + type + ".");
+        }
+        if (phase != NegotiationPhase.ABORT && type == null) {
+            throw new IllegalArgumentException(
+                    "Negotiation reference type must not be null for the " + phase + " phase; only the ABORT phase is"
+                            + " type-independent.");
+        }
         if (!PathSegments.isSimpleSegment(language)) {
             throw new IllegalArgumentException(
                     "Negotiation reference language must be a non-blank simple path segment but was " + language + ".");
@@ -49,10 +65,10 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
     /**
      * Returns the hyphenated URI segment of the referenced negotiation type.
      *
-     * @return URI segment such as {@code information-negotiation}
+     * @return URI segment such as {@code information-negotiation}; {@code common} for the type-independent abort phase
      */
     public String typeSegment() {
-        return type.typeSegment();
+        return type == null ? COMMON_TYPE_SEGMENT : type.typeSegment();
     }
 
     /**
@@ -65,12 +81,26 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
     }
 
     /**
+     * Returns the typed template URI of the referenced template.
+     *
+     * <p>The exact inverse of {@link #fromTemplateUri(TemplateUri, NegotiationPhase, String)}: the URI is composed from
+     * the same extension-name constant and default version segment the parser accepts, so
+     * {@code fromTemplateUri(reference.templateUri(), reference.phase(), ...)} always addresses the same template.
+     *
+     * @return typed template URI such as {@code Negotiation-T/information-negotiation/propose/v1}
+     */
+    public @NonNull TemplateUri templateUri() {
+        return TemplateUri.of(URI_PREFIX, List.of(typeSegment(), phase.uriSegment()), URI_VERSION_SEGMENT);
+    }
+
+    /**
      * Tries to parse a template URI into a reference, checking it against the expected phase.
      *
      * <p>The URI layer cannot distinguish accept from reject because both share the {@code accept-reject} segment; the
      * expected phase disambiguates the parsed result, which therefore always carries the expected phase.
      *
-     * @param templateUri template URI to parse, such as {@code Negotiation-T/target-negotiation/accept-reject/v1}
+     * @param templateUri template URI to parse, such as {@code Negotiation-T/target-negotiation/accept-reject/v1} or
+     *     {@code Negotiation-T/common/abort/v1}
      * @param expectedPhase API-level phase the caller is operating on; the parsed reference carries this phase
      * @param language locale identifier for the parsed reference
      * @return reference addressed by the URI carrying the expected phase, or an empty result when the URI is null,
@@ -81,27 +111,7 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
     public static Optional<NegotiationReference> tryParse(
             @Nullable String templateUri, @NonNull NegotiationPhase expectedPhase, String language) {
         Objects.requireNonNull(expectedPhase, "Expected negotiation phase must not be null.");
-        if (templateUri == null || templateUri.isBlank()) {
-            return Optional.empty();
-        }
-        String[] segments = templateUri.strip().split("/");
-        if (segments.length != 4) {
-            return Optional.empty();
-        }
-        if (!URI_PREFIX.equals(segments[0])) {
-            return Optional.empty();
-        }
-        NegotiationType parsedType = parseTypeSegment(segments[1]);
-        if (parsedType == null) {
-            return Optional.empty();
-        }
-        if (!phaseSegmentMatches(segments[2], expectedPhase)) {
-            return Optional.empty();
-        }
-        if (!URI_VERSION_SEGMENT.equals(segments[3])) {
-            return Optional.empty();
-        }
-        return Optional.of(new NegotiationReference(parsedType, expectedPhase, language));
+        return TemplateUri.parse(templateUri).flatMap(uri -> fromTemplateUri(uri, expectedPhase, language));
     }
 
     /**
@@ -112,7 +122,11 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
      * string. The URI layer cannot distinguish accept from reject because both share the {@code accept-reject}
      * segment; the expected phase disambiguates the result, which therefore always carries the expected phase.
      *
-     * @param templateUri typed template URI such as {@code Negotiation-T/target-negotiation/accept-reject/v1}
+     * <p>The abort phase is addressed by the common abort template: a {@code common}/{@code abort} segment pair yields
+     * a reference with a null type, and every other segment shape is rejected for that phase.
+     *
+     * @param templateUri typed template URI such as {@code Negotiation-T/target-negotiation/accept-reject/v1} or
+     *     {@code Negotiation-T/common/abort/v1}
      * @param expectedPhase API-level phase the caller is operating on; the derived reference carries this phase
      * @param language locale identifier for the derived reference
      * @return reference addressed by the URI carrying the expected phase, or an empty result when the URI does not
@@ -131,9 +145,16 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
         if (segments.size() != 2) {
             return Optional.empty();
         }
-        NegotiationType parsedType = parseTypeSegment(segments.get(0));
-        if (parsedType == null) {
-            return Optional.empty();
+        NegotiationType parsedType = null;
+        if (COMMON_TYPE_SEGMENT.equals(segments.get(0))) {
+            if (expectedPhase != NegotiationPhase.ABORT) {
+                return Optional.empty();
+            }
+        } else {
+            parsedType = parseTypeSegment(segments.get(0));
+            if (expectedPhase == NegotiationPhase.ABORT || parsedType == null) {
+                return Optional.empty();
+            }
         }
         if (!phaseSegmentMatches(segments.get(1), expectedPhase)) {
             return Optional.empty();
@@ -158,7 +179,8 @@ public record NegotiationReference(NegotiationType type, NegotiationPhase phase,
     }
 
     private static boolean phaseSegmentMatches(String phaseSegment, NegotiationPhase expectedPhase) {
-        if (!"propose".equals(phaseSegment) && !"accept-reject".equals(phaseSegment)) {
+        if (!"propose".equals(phaseSegment) && !"accept-reject".equals(phaseSegment)
+                && !"abort".equals(phaseSegment)) {
             return false;
         }
         return phaseSegment.equals(expectedPhase.uriSegment());

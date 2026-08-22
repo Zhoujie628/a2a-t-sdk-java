@@ -14,7 +14,7 @@ import net.openan.a2at.sdk.client.prompt.recognition.ClientScenarioRecognizer;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
-import net.openan.a2at.sdk.prompt.taskrendering.api.TaskPromptRenderer;
+import net.openan.a2at.sdk.prompt.taskrendering.TaskPromptRenderer;
 import net.openan.a2at.sdk.resources.ClasspathPromptResourceLoader;
 
 /**

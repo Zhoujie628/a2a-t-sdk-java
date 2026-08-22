@@ -11,7 +11,7 @@ import org.jspecify.annotations.NonNull;
  * machine-readable error code is carried by the root {@link A2ATError} and is never null; subclasses pass a more
  * specific code when one is available.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public class A2ATParamExtractionError extends A2ATError {
 

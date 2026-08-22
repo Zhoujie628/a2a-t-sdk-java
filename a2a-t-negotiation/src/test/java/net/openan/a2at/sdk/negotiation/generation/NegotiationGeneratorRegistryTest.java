@@ -8,8 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
@@ -31,7 +31,7 @@ class NegotiationGeneratorRegistryTest {
                 registry.resolve(
                         NegotiationType.INFORMATION,
                         NegotiationPhase.PROPOSE,
-                        new InfoProposeContent(List.of(), null)));
+                        new InformationProposeContent(List.of(), null)));
         assertInstanceOf(
                 TargetProposeGenerator.class,
                 registry.resolve(
@@ -53,13 +53,13 @@ class NegotiationGeneratorRegistryTest {
                 registry.resolve(
                         NegotiationType.INFORMATION,
                         NegotiationPhase.ACCEPT,
-                        new InfoEndingContent(NegotiationConclusion.ACCEPT, List.of())));
+                        new InformationEndingContent(NegotiationConclusion.ACCEPT, List.of())));
         assertInstanceOf(
                 InformationEndingGenerator.class,
                 registry.resolve(
                         NegotiationType.INFORMATION,
                         NegotiationPhase.REJECT,
-                        new InfoEndingContent(NegotiationConclusion.REJECT, List.of())));
+                        new InformationEndingContent(NegotiationConclusion.REJECT, List.of())));
         assertInstanceOf(
                 TargetEndingGenerator.class,
                 registry.resolve(
@@ -91,22 +91,22 @@ class NegotiationGeneratorRegistryTest {
         IllegalArgumentException proposeInEnding = assertThrows(
                 IllegalArgumentException.class,
                 () -> registry.resolve(
-                        NegotiationType.INFORMATION, NegotiationPhase.ACCEPT, new InfoProposeContent(List.of(), null)));
+                        NegotiationType.INFORMATION, NegotiationPhase.ACCEPT, new InformationProposeContent(List.of(), null)));
         assertTrue(proposeInEnding
                 .getMessage()
                 .contains("ACCEPT phase requires ending content but received propose content of type"
-                        + " InfoProposeContent"));
+                        + " InformationProposeContent"));
 
         IllegalArgumentException endingInPropose = assertThrows(
                 IllegalArgumentException.class,
                 () -> registry.resolve(
                         NegotiationType.INFORMATION,
                         NegotiationPhase.PROPOSE,
-                        new InfoEndingContent(NegotiationConclusion.ACCEPT, List.of())));
+                        new InformationEndingContent(NegotiationConclusion.ACCEPT, List.of())));
         assertTrue(endingInPropose
                 .getMessage()
                 .contains("PROPOSE phase requires propose content but received ending content of type"
-                        + " InfoEndingContent"));
+                        + " InformationEndingContent"));
     }
 
     @Test
@@ -120,7 +120,7 @@ class NegotiationGeneratorRegistryTest {
 
         assertTrue(exception
                 .getMessage()
-                .contains("Negotiation type INFORMATION requires content of type InfoProposeContent but received"
+                .contains("Negotiation type INFORMATION requires content of type InformationProposeContent but received"
                         + " TargetProposeContent"));
 
         assertThrows(
@@ -128,7 +128,7 @@ class NegotiationGeneratorRegistryTest {
                 () -> registry.resolve(
                         NegotiationType.TARGET,
                         NegotiationPhase.ACCEPT,
-                        new InfoEndingContent(NegotiationConclusion.ACCEPT, List.of())));
+                        new InformationEndingContent(NegotiationConclusion.ACCEPT, List.of())));
     }
 
     @Test
@@ -138,7 +138,7 @@ class NegotiationGeneratorRegistryTest {
                 () -> registry.resolve(
                         NegotiationType.INFORMATION,
                         NegotiationPhase.ACCEPT,
-                        new InfoEndingContent(NegotiationConclusion.REJECT, List.of())));
+                        new InformationEndingContent(NegotiationConclusion.REJECT, List.of())));
 
         assertTrue(exception
                 .getMessage()
@@ -157,17 +157,17 @@ class NegotiationGeneratorRegistryTest {
         NullPointerException exception = assertThrows(
                 NullPointerException.class,
                 () -> registry.resolve(
-                        NegotiationType.INFORMATION, NegotiationPhase.ACCEPT, new InfoEndingContent(null, List.of())));
+                        NegotiationType.INFORMATION, NegotiationPhase.ACCEPT, new InformationEndingContent(null, List.of())));
 
         assertTrue(exception.getMessage().contains("conclusion must not be null"));
     }
 
     @Test
     void rejectsNullArguments() {
-        NegotiationContent content = new InfoProposeContent(List.of(), null);
+        NegotiationContent content = new InformationProposeContent(List.of(), null);
 
         assertEquals(
-                "Negotiation type must not be null.",
+                "Negotiation type must not be null for the PROPOSE phase.",
                 assertThrows(
                                 NullPointerException.class,
                                 () -> registry.resolve(null, NegotiationPhase.PROPOSE, content))

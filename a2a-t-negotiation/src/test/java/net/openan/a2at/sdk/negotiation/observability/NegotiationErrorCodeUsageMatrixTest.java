@@ -10,15 +10,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
@@ -126,7 +126,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .language("zh-CN")
                                 .llmClient(llm)
                                 .build()
-                                .validateAndFillingProposeData(
+                                .validateProposePromptAndDataFilling(
                                         "plain text without any negotiation section", SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_INVALID_INPUT),
@@ -138,7 +138,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .language("zh-CN")
                                 .llmClient(llm)
                                 .build()
-                                .validateAndFillingProposeData(
+                                .validateProposePromptAndDataFilling(
                                         "## 协商上下文\n- id: " + UUID + "\n- round: 9\n- maxRounds: 5",
                                         SCHEMA,
                                         INFORMATION_PROPOSE_URI),
@@ -155,7 +155,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .maxAttempts(3)
                                 .build()
-                                .validateAndFillingProposeData(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED),
                 row(
@@ -167,7 +167,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .maxAttempts(2)
                                 .build()
-                                .validateAndFillingProposeData(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR),
                 row(
@@ -202,7 +202,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .maxAttempts(2)
                                 .build()
-                                .validateAndFillingProposeData(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR),
                 row(
@@ -214,7 +214,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .llmClient(llm)
                                 .semanticValidator(throwingSemanticValidator())
                                 .build()
-                                .validateAndFillingProposeData(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
+                                .validateProposePromptAndDataFilling(VALID_CONTEXT_PROMPT, SCHEMA, INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
                         A2ATErrorCodes.TEMPLATE_NOT_FOUND));
     }
@@ -303,7 +303,7 @@ class NegotiationErrorCodeUsageMatrixTest {
     private static NegotiationProposeData proposeData() {
         return new NegotiationProposeData(
                 new NegotiationContext(UUID, 1, 5),
-                new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null));
+                new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null));
     }
 
     private static String semanticPayload(String negotiationType) {
@@ -329,7 +329,7 @@ class NegotiationErrorCodeUsageMatrixTest {
         return new NegotiationTemplateLoader() {
             @Override
             public PromptTemplate load(NegotiationReference reference) {
-                return new PromptTemplate(reference.uri(), "broken template", null);
+                return new PromptTemplate(reference.templateUri(), "broken template", null);
             }
 
             @Override

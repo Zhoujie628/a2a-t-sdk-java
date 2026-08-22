@@ -15,9 +15,9 @@ import net.openan.a2at.sdk.core.resources.PathSegments;
  * {@code target_negotiation}, {@code feasibility_negotiation} and {@code negotiation_semantic_validation}, each with a
  * {@code system.md} and a {@code user.md} per language.
  *
- * @since 2026-06
+ * @since 2026-08
  */
-public class NegotiationPromptResourceLoader {
+class NegotiationPromptResourceLoader {
 
     private static final String CLASSPATH_ROOT = "prompt_resources/prompts/";
 

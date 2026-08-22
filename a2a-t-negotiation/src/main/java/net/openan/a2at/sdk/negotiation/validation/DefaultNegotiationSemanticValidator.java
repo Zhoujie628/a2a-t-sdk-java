@@ -11,7 +11,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.UnaryOperator;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
@@ -40,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * declared template and the message sections is part of the semantic tasks performed by the LLM and surfaces through
  * the returned errors.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public final class DefaultNegotiationSemanticValidator implements NegotiationSemanticValidator {
 
@@ -64,19 +66,86 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
 
     private final LLMClient llmClient;
 
-    private final SemanticSchemaBuilder schemaBuilder;
+    private static final List<String> NEGOTIATION_TYPE_ENUM =
+            Arrays.asList("information", "target", "feasibility", null);
+
+    private final UnaryOperator<Map<String, Object>> schemaBuilder;
 
     /**
-     * Creates the default semantic validator.
+     * Creates the default semantic validator merging the caller schema with the built-in semantic validation output
+     * contract.
      *
      * @param llmClient LLM client used for the single structured call
-     * @param schemaBuilder collaborator merging the caller schema into the semantic validation output contract; the
-     *     orchestrator builder wires the generation-package schema builder to this seam
+     * @throws NullPointerException if the LLM client is null
+     */
+    public DefaultNegotiationSemanticValidator(LLMClient llmClient) {
+        this(llmClient, DefaultNegotiationSemanticValidator::buildSemanticValidationSchema);
+    }
+
+    /**
+     * Creates the default semantic validator with a custom schema-merging collaborator.
+     *
+     * @param llmClient LLM client used for the single structured call
+     * @param schemaBuilder collaborator merging the caller schema into the semantic validation output contract
      * @throws NullPointerException if the LLM client or the schema builder is null
      */
-    public DefaultNegotiationSemanticValidator(LLMClient llmClient, SemanticSchemaBuilder schemaBuilder) {
+    DefaultNegotiationSemanticValidator(LLMClient llmClient, UnaryOperator<Map<String, Object>> schemaBuilder) {
         this.llmClient = Objects.requireNonNull(llmClient, "llmClient");
         this.schemaBuilder = Objects.requireNonNull(schemaBuilder, "schemaBuilder");
+    }
+
+    /**
+     * Merges the caller-provided parameter schema into the semantic validation output contract.
+     *
+     * <p>The merged schema requires exactly the four keys {@code semantic_verdict}, {@code negotiation_type},
+     * {@code errors} and {@code params} and allows no additional properties. The caller schema is embedded as the
+     * {@code params} property; a caller schema without a {@code type} keyword is wrapped as an object schema first.
+     *
+     * @param callerSchema parameter schema provided by the caller of the validation API
+     * @return merged JSON Schema of the semantic validation LLM call
+     * @throws NullPointerException if the caller schema is null
+     */
+    static Map<String, Object> buildSemanticValidationSchema(Map<String, Object> callerSchema) {
+        Objects.requireNonNull(callerSchema, "Caller parameter schema must not be null.");
+        Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("type", "object");
+        Map<String, Object> properties = new LinkedHashMap<>();
+        properties.put("semantic_verdict", Map.of("type", "boolean"));
+        Map<String, Object> negotiationType = new LinkedHashMap<>();
+        negotiationType.put("type", List.of("string", "null"));
+        negotiationType.put("enum", NEGOTIATION_TYPE_ENUM);
+        properties.put("negotiation_type", negotiationType);
+        properties.put("errors", errorsSchema());
+        properties.put("params", wrapCallerSchema(callerSchema));
+        schema.put("properties", properties);
+        schema.put("required", List.of("semantic_verdict", "negotiation_type", "errors", "params"));
+        schema.put("additionalProperties", false);
+        return schema;
+    }
+
+    private static Map<String, Object> errorsSchema() {
+        Map<String, Object> errorProperties = new LinkedHashMap<>();
+        errorProperties.put("slot_name", Map.of("type", "string"));
+        errorProperties.put("code", Map.of("type", "string"));
+        errorProperties.put("message", Map.of("type", "string"));
+        Map<String, Object> errorItem = new LinkedHashMap<>();
+        errorItem.put("type", "object");
+        errorItem.put("properties", errorProperties);
+        errorItem.put("required", List.of("slot_name", "code", "message"));
+        Map<String, Object> errors = new LinkedHashMap<>();
+        errors.put("type", "array");
+        errors.put("items", errorItem);
+        return errors;
+    }
+
+    private static Map<String, Object> wrapCallerSchema(Map<String, Object> callerSchema) {
+        if (callerSchema.containsKey("type")) {
+            return callerSchema;
+        }
+        Map<String, Object> wrapped = new LinkedHashMap<>();
+        wrapped.put("type", "object");
+        wrapped.putAll(callerSchema);
+        return wrapped;
     }
 
     /**
@@ -99,7 +168,7 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
         Objects.requireNonNull(prompt, "prompt");
         Objects.requireNonNull(reference, "reference");
         List<Map<String, String>> messages = buildMessages(prompt, callerSchema, reference);
-        Map<String, Object> mergedSchema = schemaBuilder.buildSemanticValidationSchema(callerSchema);
+        Map<String, Object> mergedSchema = schemaBuilder.apply(callerSchema);
         LLMResponse response;
         try {
             response = llmClient.structured(messages, mergedSchema, null, null);
@@ -124,7 +193,7 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
                 .replace("[phase]", reference.phase().name().toLowerCase(Locale.ROOT))
                 .replace("[input]", prompt)
                 .replace("[template_uri]", reference.uri())
-                .replace("[negotiation_type]", reference.type().name().toLowerCase(Locale.ROOT))
+                .replace("[negotiation_type]", declaredTypeName(reference))
                 .replace("[schema]", toJson(callerSchema));
         return List.of(
                 Map.of("role", "system", "content", systemPrompt), Map.of("role", "user", "content", filledUserPrompt));
@@ -193,7 +262,7 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
         Map<String, Object> params = parseParams(rawParams);
         String negotiationType = (String) typeValue;
 
-        if (verdict) {
+        if (verdict && reference.type() != null) {
             if (negotiationType == null) {
                 List<SlotValidationError> rejectionErrors = new ArrayList<>(errors);
                 rejectionErrors.add(typeConsistencyError(
@@ -260,7 +329,7 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
     }
 
     private static String declaredTypeName(NegotiationReference reference) {
-        return reference.type().name().toLowerCase(Locale.ROOT);
+        return reference.type() == null ? "common" : reference.type().name().toLowerCase(Locale.ROOT);
     }
 
     private static String declaredTypeSectionKey(NegotiationType type) {

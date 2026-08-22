@@ -22,7 +22,7 @@ import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 import net.openan.a2at.sdk.core.resources.PathSegments;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 2026-08
  */
-public final class PromptTemplateCatalog {
+final class PromptTemplateCatalog {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PromptTemplateCatalog.class);
 
@@ -112,9 +112,12 @@ public final class PromptTemplateCatalog {
                 continue;
             }
             String content = entry.getValue();
-            templates.add(new PromptTemplate(uri, TemplateDescriptions.extract(content), content));
+            TemplateUri templateUri = TemplateUri.parse(uri)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Catalogable template URI could not be parsed: " + uri + " (path: " + path + ")"));
+            templates.add(new PromptTemplate(templateUri, TemplateDescriptions.extract(content), content));
         }
-        templates.sort(Comparator.comparing(PromptTemplate::uri));
+        templates.sort(Comparator.comparing(template -> template.templateUri().uri()));
         LOGGER.atDebug().log("prompt_templates_listed count={} language={}", templates.size(), language);
         return List.copyOf(templates);
     }
@@ -129,11 +132,11 @@ public final class PromptTemplateCatalog {
      */
     public Optional<PromptTemplate> load(@NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
-        String uri = templateUri.uri();
-        String relativePath = String.join("/", TEMPLATE_DIRECTORY, uri, language, TEMPLATE_FILE_NAME);
+        String relativePath = String.join(
+                "/", TEMPLATE_DIRECTORY, templateUri.uri(), language, TEMPLATE_FILE_NAME);
         try {
             String content = readTemplate(relativePath);
-            return Optional.of(new PromptTemplate(uri, TemplateDescriptions.extract(content), content));
+            return Optional.of(new PromptTemplate(templateUri, TemplateDescriptions.extract(content), content));
         } catch (A2ATError exception) {
             return Optional.empty();
         }

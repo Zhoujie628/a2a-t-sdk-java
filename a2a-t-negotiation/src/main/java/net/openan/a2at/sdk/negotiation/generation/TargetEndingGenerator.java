@@ -15,9 +15,9 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
  * <p>The result content slot carries the confirmed intent for an accept conclusion or the failure reason for a reject
  * conclusion; the other field is ignored.
  *
- * @since 2026-06
+ * @since 2026-08
  */
-public final class TargetEndingGenerator extends AbstractNegotiationGenerator {
+final class TargetEndingGenerator extends AbstractNegotiationGenerator {
 
     /**
      * Generates a target negotiation accept or reject message.

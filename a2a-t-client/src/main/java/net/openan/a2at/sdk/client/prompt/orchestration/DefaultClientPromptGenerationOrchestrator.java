@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.core.model.SlotValidationError;
+import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.client.model.PromptGenerationFailure;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.extractor.ClientSlotValueExtractor;
@@ -13,16 +15,15 @@ import net.openan.a2at.sdk.client.prompt.loader.ClientSlotSchemaLoader;
 import net.openan.a2at.sdk.client.prompt.loader.ClientTemplateLoader;
 import net.openan.a2at.sdk.client.prompt.recognition.ClientScenarioRecognizer;
 import net.openan.a2at.sdk.core.exception.A2ATError;
-import net.openan.a2at.sdk.core.exception.FailedParameter;
 import net.openan.a2at.sdk.core.exception.PromptGenerationException;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotDefinition;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
-import net.openan.a2at.sdk.prompt.taskrendering.api.TaskPromptRenderer;
+import net.openan.a2at.sdk.prompt.taskrendering.TaskPromptRenderer;
 import net.openan.a2at.sdk.prompt.taskrendering.exception.TaskPromptRenderException;
 
 /**
@@ -96,7 +97,7 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
             recognition = scenarioRecognizer.recognize(normalizedInput, scenarios, systemPrompt, userPrompt);
         } catch (ResourceNotFoundException error) {
             return PromptGenerationResult.failure(
-                    new PromptGenerationFailure("prompt_resource_load_error", error.getMessage(), "generation"));
+                    new PromptGenerationFailure(A2ATErrorCodes.PROMPT_RESOURCE_LOAD_ERROR, error.getMessage(), "generation"));
         }
         if (!recognition.matched()
                 || recognition.scenarioCode() == null
@@ -112,7 +113,7 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
             templateText = templateLoader.loadTemplate(recognition.scenarioCode(), language);
         } catch (ResourceNotFoundException error) {
             return PromptGenerationResult.failure(
-                    new PromptGenerationFailure("template_not_found", error.getMessage(), "generation"));
+                    new PromptGenerationFailure(A2ATErrorCodes.TEMPLATE_NOT_FOUND, error.getMessage(), "generation"));
         }
 
         try {
@@ -122,7 +123,7 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
             return PromptGenerationResult.success(renderedPrompt);
         } catch (TaskPromptRenderException error) {
             return PromptGenerationResult.failure(
-                    new PromptGenerationFailure("render_failed", error.getMessage(), "generation"));
+                    new PromptGenerationFailure(A2ATErrorCodes.RENDER_FAILED, error.getMessage(), "generation"));
         }
     }
 
@@ -163,30 +164,31 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
 
     private MetadataContent generateFromTemplateUriWithMetadata(
             String userInput, TemplateUri templateUri, String extensionUri) {
+        Objects.requireNonNull(userInput, "userInput");
         Objects.requireNonNull(templateUri, "templateUri");
         String templateIdentifier = templateUri.uri();
         final String templateText;
         try {
             templateText = templateLoader.loadTemplate(templateIdentifier, language);
         } catch (ResourceNotFoundException e) {
-            throw new PromptGenerationException("template_not_found", e.getMessage(), e);
+            throw new PromptGenerationException(A2ATErrorCodes.TEMPLATE_NOT_FOUND, e.getMessage(), e);
         } catch (A2ATError e) {
-            throw new PromptGenerationException("prompt_resource_load_error", e.getMessage(), e);
+            throw new PromptGenerationException(A2ATErrorCodes.PROMPT_RESOURCE_LOAD_ERROR, e.getMessage(), e);
         }
         final Map<String, String> slots;
         try {
             slots = slotValueExtractor.extractSlots(userInput, templateIdentifier, language, templateText);
         } catch (ResourceNotFoundException e) {
-            throw new PromptGenerationException("slot_schema_not_found", e.getMessage(), e);
+            throw new PromptGenerationException(A2ATErrorCodes.SLOT_SCHEMA_NOT_FOUND, e.getMessage(), e);
         } catch (A2ATError e) {
-            throw new PromptGenerationException("llm_invocation_failed", e.getMessage(), e);
+            throw new PromptGenerationException(A2ATErrorCodes.LLM_INVOCATION_FAILED, e.getMessage(), e);
         }
         validateRequiredSlots(slots, templateIdentifier);
         final String renderedPrompt;
         try {
             renderedPrompt = renderer.render(templateText, slots);
         } catch (TaskPromptRenderException e) {
-            throw new PromptGenerationException("render_failed", e.getMessage(), e);
+            throw new PromptGenerationException(A2ATErrorCodes.RENDER_FAILED, e.getMessage(), e);
         }
         return new MetadataContent(templateIdentifier, renderedPrompt, extensionUri);
     }
@@ -198,29 +200,34 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
             String extensionUri) {
         Objects.requireNonNull(templateUri, "templateUri");
         String templateIdentifier = templateUri.uri();
+        Objects.requireNonNull(schema, "schema");
+        if (schema.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Data schema must not be empty; it describes the meaning of each input field.");
+        }
         final String templateText;
         try {
             templateText = templateLoader.loadTemplate(templateIdentifier, language);
         } catch (ResourceNotFoundException e) {
-            throw new PromptGenerationException("template_not_found", e.getMessage(), e);
+            throw new PromptGenerationException(A2ATErrorCodes.TEMPLATE_NOT_FOUND, e.getMessage(), e);
         } catch (A2ATError e) {
-            throw new PromptGenerationException("prompt_resource_load_error", e.getMessage(), e);
+            throw new PromptGenerationException(A2ATErrorCodes.PROMPT_RESOURCE_LOAD_ERROR, e.getMessage(), e);
         }
         final Map<String, String> slots;
         try {
             slots = slotValueExtractor.extractSlotsWithSchema(
                     data, templateIdentifier, language, templateText, schema);
         } catch (ResourceNotFoundException e) {
-            throw new PromptGenerationException("slot_schema_not_found", e.getMessage(), e);
+            throw new PromptGenerationException(A2ATErrorCodes.SLOT_SCHEMA_NOT_FOUND, e.getMessage(), e);
         } catch (A2ATError e) {
-            throw new PromptGenerationException("llm_invocation_failed", e.getMessage(), e);
+            throw new PromptGenerationException(A2ATErrorCodes.LLM_INVOCATION_FAILED, e.getMessage(), e);
         }
         validateRequiredSlots(slots, templateIdentifier);
         final String renderedPrompt;
         try {
             renderedPrompt = renderer.render(templateText, slots);
         } catch (TaskPromptRenderException e) {
-            throw new PromptGenerationException("render_failed", e.getMessage(), e);
+            throw new PromptGenerationException(A2ATErrorCodes.RENDER_FAILED, e.getMessage(), e);
         }
         return new MetadataContent(templateIdentifier, renderedPrompt, extensionUri);
     }
@@ -230,11 +237,11 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
         try {
             schema = slotSchemaLoader.loadSlotSchema(templateIdentifier, language);
         } catch (A2ATError e) {
-            throw new PromptGenerationException("slot_schema_not_found", e.getMessage(), e);
+            throw new PromptGenerationException(A2ATErrorCodes.SLOT_SCHEMA_NOT_FOUND, e.getMessage(), e);
         }
         if (schema == null) {
             throw new PromptGenerationException(
-                    "slot_schema_not_found", "Slot schema not found for template: " + templateIdentifier);
+                    A2ATErrorCodes.SLOT_SCHEMA_NOT_FOUND, "Slot schema not found for template: " + templateIdentifier);
         }
         List<PromptSlotDefinition> defs = schema.slotDefinitions();
         if (defs == null) {
@@ -243,7 +250,7 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
         if (slots == null) {
             slots = Map.of();
         }
-        List<FailedParameter> failed = new ArrayList<>();
+        List<SlotValidationError> failed = new ArrayList<>();
         for (PromptSlotDefinition def : defs) {
             if (def == null) {
                 continue;
@@ -255,14 +262,14 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
                 }
                 String value = slots.get(name);
                 if (value == null || value.trim().isEmpty()) {
-                    failed.add(new FailedParameter(name, "missing_required"));
+                    failed.add(new SlotValidationError(name, "missing_required", "Required slot is missing or empty"));
                 }
             }
         }
         if (!failed.isEmpty()) {
-            throw new PromptGenerationException("slot_validation_error",
+            throw new PromptGenerationException(A2ATErrorCodes.SLOT_VALIDATION_ERROR,
                     "Required slots are missing or empty: " + failed.stream()
-                            .map(FailedParameter::parameterName).collect(Collectors.joining(", ")),
+                            .map(SlotValidationError::slotName).collect(Collectors.joining(", ")),
                     failed);
         }
     }

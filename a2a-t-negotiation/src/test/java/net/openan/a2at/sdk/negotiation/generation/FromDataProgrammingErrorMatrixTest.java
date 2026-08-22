@@ -8,15 +8,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -218,28 +218,28 @@ class FromDataProgrammingErrorMatrixTest {
                         "template URI with wrong prefix",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                TemplateUri.of("Task-T", "v1", "information-negotiation", "propose")),
+                                TemplateUri.of("Task-T", "information-negotiation", "propose")),
                         IllegalArgumentException.class,
                         "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
                 new MatrixRow(
                         "template URI with wrong version",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                TemplateUri.of("Negotiation-T", "v2", "information-negotiation", "propose")),
+                                TemplateUri.of("Negotiation-T", List.of("information-negotiation", "propose"), "v2")),
                         IllegalArgumentException.class,
                         "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
                 new MatrixRow(
                         "template URI with underscore type segment",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                TemplateUri.of("Negotiation-T", "v1", "information_negotiation", "propose")),
+                                TemplateUri.of("Negotiation-T", "information_negotiation", "propose")),
                         IllegalArgumentException.class,
                         "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
                 new MatrixRow(
                         "template URI with unknown type",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(context, informationProposeContent()),
-                                TemplateUri.of("Negotiation-T", "v1", "unknown-negotiation", "propose")),
+                                TemplateUri.of("Negotiation-T", "unknown-negotiation", "propose")),
                         IllegalArgumentException.class,
                         "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
                 new MatrixRow(
@@ -256,17 +256,17 @@ class FromDataProgrammingErrorMatrixTest {
                                         context, new TargetProposeContent("目标协商概述。", null, null, null)),
                                 INFORMATION_PROPOSE_URI),
                         IllegalArgumentException.class,
-                        "Negotiation type INFORMATION requires content of type InfoProposeContent"));
+                        "Negotiation type INFORMATION requires content of type InformationProposeContent"));
     }
 
-    private static InfoProposeContent informationProposeContent() {
-        return new InfoProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null);
+    private static InformationProposeContent informationProposeContent() {
+        return new InformationProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null);
     }
 
     private static NegotiationEndingData ending(NegotiationConclusion conclusion) {
         return new NegotiationEndingData(
                 new NegotiationContext(UUID, 2, 5),
-                new InfoEndingContent(conclusion, List.of(new NegotiationItem("区域", "松山湖"))));
+                new InformationEndingContent(conclusion, List.of(new NegotiationItem("区域", "松山湖"))));
     }
 
     private static boolean isAsciiText(String message) {

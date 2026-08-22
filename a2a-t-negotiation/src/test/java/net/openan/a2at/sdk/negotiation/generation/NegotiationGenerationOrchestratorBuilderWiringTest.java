@@ -13,13 +13,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
@@ -73,7 +73,7 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
         MetadataContent result = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
                         new NegotiationContext(UUID, 1, 5),
-                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                        new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_URI);
 
         assertFalse(result.promptText().isBlank());
@@ -100,7 +100,7 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
             orchestrator.generateProposeFromData(
                     new NegotiationProposeData(
                             new NegotiationContext(UUID, 1, 5),
-                            new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                            new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                     INFORMATION_PROPOSE_URI);
 
             ILoggingEvent completed = customAppender.list.stream()
@@ -125,7 +125,7 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
                 .complianceChecker(checker)
                 .build();
 
-        orchestrator.validateAndFillingProposeData(
+        orchestrator.validateProposePromptAndDataFilling(
                 "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
                 Map.of("type", "object"),
                 INFORMATION_PROPOSE_URI);
@@ -156,7 +156,7 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
                 .build();
         org.junit.jupiter.api.Assertions.assertThrows(
                 net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException.class,
-                () -> validationOrchestrator.validateAndFillingProposeData(
+                () -> validationOrchestrator.validateProposePromptAndDataFilling(
                         "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI));

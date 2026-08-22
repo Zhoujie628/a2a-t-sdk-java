@@ -24,10 +24,12 @@ class DefaultStructuredClientSlotValueExtractorTest {
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
                         List.of(
-                                new PromptSlotDefinition("site", true, "string", "^Site .+", null, null, null, null),
                                 new PromptSlotDefinition(
-                                        "additional_notes", false, "string", null, null, null, null, null),
-                                new PromptSlotDefinition("limit", false, "integer", null, 1.0d, 10.0d, null, null),
+                                        "site", true, "string", "^Site .+", null, null, null, null, null),
+                                new PromptSlotDefinition(
+                                        "additional_notes", false, "string", null, null, null, null, null, null),
+                                new PromptSlotDefinition(
+                                        "limit", false, "integer", null, 1.0d, 10.0d, null, null, null),
                                 new PromptSlotDefinition(
                                         "severity",
                                         false,
@@ -36,6 +38,7 @@ class DefaultStructuredClientSlotValueExtractorTest {
                                         null,
                                         null,
                                         List.of("low", "medium", "high"),
+                                        null,
                                         null))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
@@ -70,10 +73,12 @@ class DefaultStructuredClientSlotValueExtractorTest {
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
                         List.of(
-                                new PromptSlotDefinition("site", true, "string", "^Site .+", null, null, null, null),
                                 new PromptSlotDefinition(
-                                        "additional_notes", false, "string", null, null, null, null, null),
-                                new PromptSlotDefinition("limit", false, "integer", null, 1.0d, 10.0d, null, null),
+                                        "site", true, "string", "^Site .+", null, null, null, null, null),
+                                new PromptSlotDefinition(
+                                        "additional_notes", false, "string", null, null, null, null, null, null),
+                                new PromptSlotDefinition(
+                                        "limit", false, "integer", null, 1.0d, 10.0d, null, null, null),
                                 new PromptSlotDefinition(
                                         "severity",
                                         false,
@@ -82,11 +87,17 @@ class DefaultStructuredClientSlotValueExtractorTest {
                                         null,
                                         null,
                                         List.of("low", "medium", "high"),
+                                        null,
                                         null))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
-        Map<String, Object> dataSchema = Map.of("site", "site description", "severity", "severity description");
+        Map<String, Object> dataSchema = Map.of(
+                "type", "object",
+                "properties", Map.of(
+                        "site", Map.of("type", "string", "description", "site description"),
+                        "severity", Map.of("type", "string", "description", "severity description")),
+                "required", List.of("site"));
         Map<String, String> slots = extractor.extractSlotsWithSchema(
                 "Analyze Site A with critical severity.",
                 "energy-saving",
@@ -102,23 +113,24 @@ class DefaultStructuredClientSlotValueExtractorTest {
                         "severity", "high"),
                 slots);
         assertTrue(llmClient.lastMessages().get(1).get("content").contains("[data_schema]"));
-        assertTrue(llmClient.lastMessages().get(1).get("content").contains("site: site description"));
+        assertTrue(llmClient.lastMessages().get(1).get("content").contains("\"site\""));
+        assertTrue(llmClient.lastMessages().get(1).get("content").contains("\"site description\""));
     }
 
     @Test
     void extractSlotsWithSchemaWithNullSchemaStillWorks() {
-        RecordingClient llmClient = new RecordingClient(
-                "{\"slots\":{\"site\":\"Site A\"},\"slot_errors\":[]}");
+        RecordingClient llmClient = new RecordingClient("{\"slots\":{\"site\":\"Site A\"},\"slot_errors\":[]}");
         DefaultStructuredClientSlotValueExtractor extractor = new DefaultStructuredClientSlotValueExtractor(
                 llmClient,
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
-                        List.of(new PromptSlotDefinition("site", true, "string", "^Site .+", null, null, null, null))),
+                        List.of(new PromptSlotDefinition(
+                                "site", true, "string", "^Site .+", null, null, null, null, null))),
                 "Extract slots.",
                 "Return slots.");
 
-        Map<String, String> slots = extractor.extractSlotsWithSchema(
-                "Analyze Site A.", "scenario", "en", "Site: {site}", null);
+        Map<String, String> slots =
+                extractor.extractSlotsWithSchema("Analyze Site A.", "scenario", "en", "Site: {site}", null);
 
         assertEquals(Map.of("site", "Site A"), slots);
         assertFalse(llmClient.lastMessages().get(1).get("content").contains("[data_schema]"));

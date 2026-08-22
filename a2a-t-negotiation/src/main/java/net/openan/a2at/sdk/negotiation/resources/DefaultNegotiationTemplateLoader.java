@@ -11,7 +11,7 @@ import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 import net.openan.a2at.sdk.core.resources.PathSegments;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * {@code templates/} tree. Only templates are taken from the local root; LLM prompt resources always come from the
  * classpath.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public final class DefaultNegotiationTemplateLoader implements NegotiationTemplateLoader {
 
@@ -80,7 +80,8 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
     public PromptTemplate load(NegotiationReference reference) {
         String relativePath = templateRelativePath(reference);
         String content = readTemplate(relativePath);
-        PromptTemplate template = new PromptTemplate(reference.uri(), TemplateDescriptions.extract(content), content);
+        PromptTemplate template =
+                new PromptTemplate(reference.templateUri(), TemplateDescriptions.extract(content), content);
         LOGGER.atDebug().log("negotiation_template_loaded uri={} language={}", reference.uri(), reference.language());
         return template;
     }
@@ -89,7 +90,8 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
      * Loads every loadable negotiation template of the loader's language.
      *
      * <p>The fixed iteration order is the negotiation type order information, target, feasibility crossed with the
-     * phase order propose, accept-reject. Templates that exist nowhere are skipped.
+     * phase order propose, accept-reject, followed by the type-independent common abort template. Templates that exist
+     * nowhere are skipped.
      *
      * @return templates of the loader's language that could be loaded, in a fixed order
      */
@@ -104,6 +106,11 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
                     // A template that exists nowhere for this language is simply not listed.
                 }
             }
+        }
+        try {
+            templates.add(load(new NegotiationReference(null, NegotiationPhase.ABORT, language)));
+        } catch (ResourceNotFoundException exception) {
+            // A template that exists nowhere for this language is simply not listed.
         }
         return List.copyOf(templates);
     }

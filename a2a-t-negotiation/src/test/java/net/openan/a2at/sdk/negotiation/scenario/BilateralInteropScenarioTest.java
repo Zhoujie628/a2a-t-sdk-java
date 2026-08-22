@@ -5,11 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -49,7 +49,7 @@ class BilateralInteropScenarioTest {
 
         MetadataContent fromData = initiatingSide.generateProposeFromData(
                 new NegotiationProposeData(
-                        round, new InfoProposeContent(List.of(new NegotiationItem("节能区域信息", "松山湖")), null)),
+                        round, new InformationProposeContent(List.of(new NegotiationItem("节能区域信息", "松山湖")), null)),
                 INFORMATION_PROPOSE_URI);
         MetadataContent fromText =
                 initiatingSide.generateProposeFromText("请提供节能区域信息：松山湖。", round, INFORMATION_PROPOSE_URI);
@@ -60,9 +60,9 @@ class BilateralInteropScenarioTest {
         assertEquals(fromData.templateUri(), fromText.templateUri());
         assertEquals(1, initiatingSideLlm.callCount(), "the from-text generation performs exactly one extraction call");
 
-        FilledParamData respondingSideParameters = respondingSide.validateAndFillingProposeData(
+        FilledParamData respondingSideParameters = respondingSide.validateProposePromptAndDataFilling(
                 fromData.promptText(), parameterSchema(), INFORMATION_PROPOSE_URI);
-        FilledParamData initiatingSideParameters = initiatingSide.validateAndFillingProposeData(
+        FilledParamData initiatingSideParameters = initiatingSide.validateProposePromptAndDataFilling(
                 fromData.promptText(), parameterSchema(), INFORMATION_PROPOSE_URI);
         assertEquals(
                 respondingSideParameters,
@@ -73,7 +73,7 @@ class BilateralInteropScenarioTest {
 
         NegotiationEndingData answer = new NegotiationEndingData(
                 round,
-                new InfoEndingContent(NegotiationConclusion.ACCEPT, List.of(new NegotiationItem("节能区域信息", "松山湖"))));
+                new InformationEndingContent(NegotiationConclusion.ACCEPT, List.of(new NegotiationItem("节能区域信息", "松山湖"))));
         MetadataContent respondingSideAnswer = respondingSide.generateAcceptFromData(answer, INFORMATION_ACCEPT_URI);
         MetadataContent initiatingSideAnswer = initiatingSide.generateAcceptFromData(answer, INFORMATION_ACCEPT_URI);
         assertEquals(
@@ -83,7 +83,7 @@ class BilateralInteropScenarioTest {
         assertEquals(respondingSideAnswer.buildMetadataContent(), initiatingSideAnswer.buildMetadataContent());
         assertTrue(respondingSideAnswer.promptText().contains("## 信息协商结果\nAccept"));
 
-        FilledParamData validatedAnswer = initiatingSide.validateAndFillingAcceptData(
+        FilledParamData validatedAnswer = initiatingSide.validateAcceptPromptAndDataFilling(
                 respondingSideAnswer.promptText(), parameterSchema(), INFORMATION_ACCEPT_URI);
         assertEquals(SESSION_ID, validatedAnswer.data().get("id"));
         assertEquals(1, validatedAnswer.data().get("round"));

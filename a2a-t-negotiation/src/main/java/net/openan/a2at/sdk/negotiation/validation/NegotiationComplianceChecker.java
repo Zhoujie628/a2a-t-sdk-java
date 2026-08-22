@@ -1,7 +1,5 @@
 package net.openan.a2at.sdk.negotiation.validation;
 
-import java.util.Map;
-import net.openan.a2at.sdk.core.validation.RuleChecker;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 
 /**
@@ -14,9 +12,9 @@ import net.openan.a2at.sdk.negotiation.content.Vocabulary;
  * ending-section presence and conditional-section exclusivity are deliberately not checked here; they belong to the
  * semantic validation step.
  *
- * @since 2026-06
+ * @since 2026-08
  */
-public interface NegotiationComplianceChecker extends RuleChecker {
+public interface NegotiationComplianceChecker {
 
     /**
      * Runs the rule-level compliance check of one rendered message.
@@ -30,14 +28,4 @@ public interface NegotiationComplianceChecker extends RuleChecker {
      */
     NegotiationRuleCheckResult check(String prompt, Vocabulary vocabulary);
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>This default implementation is not supported; use {@link #check(String, Vocabulary)} instead. The
-     * {@link NegotiationRuleCheckerAdapter} bridges this interface to the {@link RuleChecker} contract.
-     */
-    @Override
-    default Map<String, Object> check(String prompt) {
-        throw new UnsupportedOperationException("Use check(String, Vocabulary) instead");
-    }
 }

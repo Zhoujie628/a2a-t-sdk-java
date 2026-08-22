@@ -11,12 +11,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
@@ -54,11 +54,11 @@ class NegotiationConcurrentMixedLoadTest {
 
         NegotiationProposeData proposeData = new NegotiationProposeData(
                 new NegotiationContext(UUID, 1, 5),
-                new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null));
+                new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null));
         MetadataContent fromDataBase = orchestrator.generateProposeFromData(proposeData, INFORMATION_PROPOSE_URI);
         MetadataContent fromTextBase = orchestrator.generateProposeFromText(
                 "请提供节能区域信息。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
-        FilledParamData validateBase = orchestrator.validateAndFillingProposeData(
+        FilledParamData validateBase = orchestrator.validateProposePromptAndDataFilling(
                 fromDataBase.promptText(), Map.of("type", "object"), INFORMATION_PROPOSE_URI);
         int baselineExtractionCalls = llm.extractionCalls.get();
         int baselineSemanticCalls = llm.semanticCalls.get();
@@ -85,7 +85,7 @@ class NegotiationConcurrentMixedLoadTest {
             } else {
                 validateThreads++;
                 workers.add(callableOf(() -> {
-                    FilledParamData filled = orchestrator.validateAndFillingProposeData(
+                    FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                             fromDataBase.promptText(), Map.of("type", "object"), INFORMATION_PROPOSE_URI);
                     assertEquals(validateBase.data(), filled.data(), "validation baseline");
                 }));

@@ -11,8 +11,8 @@ import ch.qos.logback.core.read.ListAppender;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +38,8 @@ class NegotiationTemplateQueryBoundaryTest {
             StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(),
             StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri(),
             StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
-            StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri());
+            StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri(),
+            StandardTemplates.NEGOTIATION_ABORT.uri());
 
     private ListAppender<ILoggingEvent> logAppender;
 
@@ -63,20 +64,23 @@ class NegotiationTemplateQueryBoundaryTest {
         return Stream.of(Arguments.of("zh-CN"), Arguments.of("en-US"));
     }
 
-    @ParameterizedTest(name = "list query returns six templates in the fixed order [{0}]")
+    @ParameterizedTest(name = "list query returns seven templates in the fixed order [{0}]")
     @MethodSource("languages")
-    void listQueryReturnsSixTemplatesInTheFixedOrder(String language) {
+    void listQueryReturnsSevenTemplatesInTheFixedOrder(String language) {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(language);
 
         List<PromptTemplate> templates = orchestrator.getNegotiationPrompts();
 
-        assertEquals(6, templates.size());
+        assertEquals(7, templates.size());
         assertEquals(
-                EXPECTED_URI_ORDER, templates.stream().map(PromptTemplate::uri).toList());
+                EXPECTED_URI_ORDER, templates.stream().map(template -> template.templateUri().uri()).toList());
         for (PromptTemplate template : templates) {
-            String typeSegment = template.uri().split("/")[1];
-            assertFalse(typeSegment.contains("_"), "type segments must use hyphens: " + template.uri());
-            assertTrue(typeSegment.endsWith("-negotiation"), "type segment must carry the suffix: " + template.uri());
+            String typeSegment = template.templateUri().pathSegments().get(0);
+            assertFalse(
+                    typeSegment.contains("_"), "type segments must use hyphens: " + template.templateUri().uri());
+            assertTrue(
+                    typeSegment.endsWith("-negotiation") || typeSegment.equals("common"),
+                    "type segment must carry the suffix or be the common segment: " + template.templateUri().uri());
             assertFalse(template.content().isBlank());
         }
     }
@@ -90,9 +94,7 @@ class NegotiationTemplateQueryBoundaryTest {
                 orchestrator.getNegotiationPrompt(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE);
 
         assertTrue(template.isPresent());
-        assertEquals(
-                StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
-                template.orElseThrow().uri());
+        assertEquals(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE, template.orElseThrow().templateUri());
         String contextTitle = "zh-CN".equals(language) ? "## 协商上下文" : "## Negotiation Context";
         assertTrue(template.orElseThrow().content().contains(contextTitle));
         assertTrue(
@@ -105,7 +107,7 @@ class NegotiationTemplateQueryBoundaryTest {
         NegotiationGenerationOrchestrator orchestrator = orchestrator("zh-CN");
 
         Optional<PromptTemplate> template = orchestrator.getNegotiationPrompt(
-                TemplateUri.of("Negotiation-T", "v1", "unknown-negotiation", "propose"));
+                TemplateUri.of("Negotiation-T", "unknown-negotiation", "propose"));
 
         assertTrue(template.isEmpty());
         assertTrue(hasWarning("negotiation_template_not_found", "A2AT_LANGUAGE"));

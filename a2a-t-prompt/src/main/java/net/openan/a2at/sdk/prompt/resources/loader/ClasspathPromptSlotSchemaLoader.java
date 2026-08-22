@@ -7,8 +7,8 @@ import java.util.Set;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceDirectories;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotJsonSchema;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
 import net.openan.a2at.sdk.resources.ClasspathPromptResourceLoader;
@@ -73,12 +73,9 @@ public final class ClasspathPromptSlotSchemaLoader implements PromptSlotSchemaLo
      */
     private static List<TemplateUri> bareCodeCandidates(String slotType, String scenarioCode) {
         return List.of(
-                TemplateUri.of(
-                        slotType,
-                        TemplateUri.DEFAULT_TEMPLATE_VERSION,
-                        StandardTemplates.NETWORK_LAYER_SEGMENT,
+                TemplateUri.of(slotType, StandardTemplates.NETWORK_LAYER_SEGMENT,
                         scenarioCode),
-                TemplateUri.of(slotType, TemplateUri.DEFAULT_TEMPLATE_VERSION, scenarioCode));
+                TemplateUri.of(slotType, scenarioCode));
     }
 
     private static List<String> discoverSlotTypes() {

@@ -6,9 +6,9 @@ package net.openan.a2at.sdk.negotiation.generation;
  * <p>This exception never bubbles out of the public API; the orchestration layer maps it to a typed negotiation failure
  * instead.
  *
- * @since 2026-06
+ * @since 2026-08
  */
-public class NegotiationRenderException extends RuntimeException {
+class NegotiationRenderException extends RuntimeException {
 
     /**
      * Creates a render failure.

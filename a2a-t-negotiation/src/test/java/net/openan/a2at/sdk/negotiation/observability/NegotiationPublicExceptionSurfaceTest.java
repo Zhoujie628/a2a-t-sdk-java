@@ -8,8 +8,8 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.A2ATParamExtractionError;
@@ -73,7 +73,7 @@ class NegotiationPublicExceptionSurfaceTest {
         List<String> messages = List.of(
                 failureMessageOf(() -> orchestrator.generateProposeFromText(
                         "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI)),
-                failureMessageOf(() -> orchestrator.validateAndFillingProposeData(
+                failureMessageOf(() -> orchestrator.validateProposePromptAndDataFilling(
                         "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI)),
@@ -105,7 +105,7 @@ class NegotiationPublicExceptionSurfaceTest {
 
         NegotiationParamExtractionException extractionFailure = catchFailure(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(
+                () -> orchestrator.validateProposePromptAndDataFilling(
                         "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI));

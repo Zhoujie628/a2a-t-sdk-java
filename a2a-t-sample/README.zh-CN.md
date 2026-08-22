@@ -10,12 +10,87 @@
 
 - 客户端：`net.openan.a2at.sample.subscribe_incident.client.ClientSampleMain`
 - 服务端：`net.openan.a2at.sample.subscribe_incident.server.ServerSampleMain`
+- 协商端到端样例（4报文）：`net.openan.a2at.sample.negotiation.NegotiationDemoApp`
+- 结构化数据协商样例（fromData 3x3）：`net.openan.a2at.sample.negotiation.fromdata.FromDataNegotiationSample`
+- 自然语言协商样例（fromText 3x3）：`net.openan.a2at.sample.negotiation.fromtext.FromTextNegotiationSample`
 
 ## 模块内资源
 
 - 客户端环境模板：`sample/subscribe_incident/client/client.env`
 - 服务端环境模板：`sample/subscribe_incident/server/server.env`
 - 客户端场景输入：`sample/subscribe_incident/client/scenario.json`
+- 协商样例环境模板：`sample/negotiation/negotiation.env`
+- 协商样例场景输入（slot schema + 参数缺失/补齐数据）：`sample/negotiation/scenario.json`
+
+## 协商（Negotiation）端到端样例
+
+协商样例是单进程端到端 demo，复用 `subscribe_incident` 的 a2a-java SDK 真实 HTTP+JSON 链路，覆盖 A2A-T 协议定义的"传输专线业务投诉诊断"4 报文信息协商流程：客户端 `A2ATClient` 与服务端 `A2ATServer` 通过 a2a-java `RestTransport`（`message:send`）+ `EmbeddedA2AHttpServer`（`DefaultRequestHandler` + `NegotiationAgentExecutor`）经 HTTP A2A 交互，协商 prompt 放进 A2A `Message.metadata`（Negotiation-T 扩展 URI 作 key），`A2A-Extensions` 头声明扩展。
+
+4 报文流转：
+
+| 报文 | 方向 | 内容 | 任务状态 |
+|---|---|---|---|
+| 1 | client→server | Task-T（参数缺失） | → |
+| 2 | server→client | Negotiation-T 信息协商请求（动态列出缺失参数） | INPUT_REQUIRED |
+| 3 | client→server | Task-T（参数补齐）+ Negotiation-T accept | → |
+| 4 | server→client | 诊断结果（从提取参数动态生成） | COMPLETED |
+
+**运行需要真实 LLM API key**：`fromData` 只让协商报文生成环节变成确定性规则渲染（不调 LLM），Task-T 槽位提取与语义校验仍调用 LLM。缺 key 时启动即报错退出。
+
+详细 API 见 [A2A-T 协商 API 文档](../docs/zh/A2A-T-Negotiation-API-Reference.md)，设计说明见 [Negotiation-Sample-Design.md](docs/Negotiation-Sample-Design.md)。
+
+### 协商样例结构
+
+| 目录 | 作用 |
+|---|---|
+| `negotiation/` | 入口 `NegotiationDemoApp`：启动嵌入式 HTTP server + 跑 client，`--fromText` 切换策略 |
+| `negotiation/client/` | `NegotiationClient`：4 报文编排 + 传输端点选择（按 AgentCard 能力走 message:stream / message:send） |
+| `negotiation/server/` | `NegotiationAgentExecutor`（validateAndFillingTaskData→缺失检测→协商请求→诊断）+ `NegotiationServerRuntime`（HTTP server 装配）+ `DiagnosisService`（从 FilledParamData 动态生成诊断） |
+| `negotiation/shared/` | 策略层（`NegotiationStrategy` + `FromDataStrategy`/`FromTextStrategy`）、A2A metadata 桥接（`NegotiationMessage`）、扩展/模板 URI 常量（`DemoConstants`）、场景数据加载器（`ScenarioData`，数据在 `scenario.json`）、样例公共辅助（`NegotiationSampleSupport`） |
+| `negotiation/fromdata/`、`negotiation/fromtext/` | 9 用例 API 验证样例（见下文两节） |
+
+### 协商样例启动
+
+1. 复制 `a2a-t-sample/src/main/resources/sample/negotiation/negotiation.env`，补充可用的 `A2AT_LLM_API_KEY`
+2. 启动协商样例（单进程，嵌入式 a2a-java HTTP server + client 经真实 HTTP A2A 交互）：
+
+```bash
+java @a2a-t-sample/target/negotiation.javaargs.txt /path/to/.env
+
+# fromText 策略（协商报文由 LLM 生成）
+java @a2a-t-sample/target/negotiation.javaargs.txt --fromText /path/to/.env
+
+# 强制阻塞端点（默认按 AgentCard 能力优先 message:stream）
+java @a2a-t-sample/target/negotiation.javaargs.txt --no-stream /path/to/.env
+```
+
+如果不传参数，`NegotiationDemoApp` 会回退到包内的 `sample/negotiation/negotiation.env`（该模板 key 为空，仅用于占位）。Windows 控制台如遇中文乱码，先执行 `chcp 65001`。
+
+## 结构化数据协商样例（fromData）
+
+验证 `generateNegotiationProposePromptFromData` / `generateNegotiationAcceptPromptFromData` / `generateNegotiationRejectPromptFromData` 三个 API（结构化输入，规则渲染）。覆盖 3 种协商类型 × 3 种阶段 = 9 个用例：
+
+| 类型 | propose | accept | reject |
+|---|---|---|---|
+| 信息协商 | 请求补充接入端口名称/投诉分类 | 交付补充信息 | 站点清单不可用，无法提供 |
+| 目标协商 | 意图理解 + 待澄清 | 确认节能目标 | 区域信息无法澄清 |
+| 可行性协商 | 请求评估节能可行性 | 确认可行 | 供电约束下不可行 |
+
+```bash
+java @a2a-t-sample/target/fromdata.javaargs.txt /path/to/.env
+```
+
+9 个用例的协商报文生成均为确定性规则渲染，不调 LLM；但 SDK 配置仍需有效的 `A2AT_LLM_API_KEY`（`A2ATClient` 构造即校验）。
+
+## 自然语言协商样例（fromText）
+
+验证 `generateNegotiationProposePromptFromText` / `generateNegotiationAcceptPromptFromText` / `generateNegotiationRejectPromptFromText` 三个 API（自然语言输入，LLM 结构化抽取 + 渲染）。同样覆盖 3 种类型 × 3 种阶段 = 9 个用例。与 fromData 的差异：输入是自然语言文本，SDK 用 LLM 抽取为类型化内容后渲染。**需要真实 LLM API key**。
+
+```bash
+java @a2a-t-sample/target/fromtext.javaargs.txt /path/to/.env
+```
+
+复用 `shared/NegotiationSampleSupport` 公共辅助（SessionId、模板 URI 常量、summary），fromData 和 fromText 差异仅在输入构造（record vs 自然语言文本）。
 
 ## 客户端启动
 
@@ -60,68 +135,8 @@ java @a2a-t-sample/target/server.javaargs.txt
 java @a2a-t-sample/target/client.javaargs.txt
 ```
 
-## Task-T 准确率验证样例
-
-`TaskTDemoMain` 是一个不依赖注册中心、不发送真实 A2A 请求的本地闭环样例：客户端 facade 生成结构化
-`Task-T` prompt，服务端 facade 校验并重新提取参数，再与样本的期望值比对，分别统计
-`generateTaskPromptFromText` 与 `generateTaskPromptFromDataWithSchema` 两个客户端 API 的准确率。
-
-入口类：`net.openan.a2at.sample.task_t.TaskTDemoMain`
-
-样例内容：
-
-- 模板：`Task-T/network-layer/private-line-complaint/v1`（`StandardTemplates.PRIVATE_LINE_COMPLAINT`，传输专线业务投诉诊断）
-- 客户端结构化入参：`data` 使用**英文业务字段**（客户端 key），不直接复用模板槽位结构；由客户端将业务字段
-  渲染映射进模板槽位
-- 两端 key 分离（验证 SDK 适配）：客户端 key（`portName`/`complaintScenario`/`faultStartTime`/`ticketNo`/
-  `faultDetailText`）与服务端 key（`accessPort`/`bizScenario`/`faultTime`/`eventSerialNo`/`faultDetail`）语义近似但
-  **字段名不一致** —— 服务端按自己的 key 从渲染后的 prompt 提取参数，评估（ground truth）也按服务端 key 记分；
-  客户端发什么 key、服务端收什么 key 互不假设，闭环检验 a2a-t SDK 的跨 key 适配能力
-- 两端 schema：客户端面向 prompt 生成（字段语义、格式示例、取值范围引导），服务端面向提交校验
-  （标准 JSON Schema，必填约束、取值限定），各自独立维护
-- 样本：共 **12 组**（`private-line-complaint-samples.json` 数据源，可自行替换为自己的场景）——6 组**简短口语化自然
-  语言文本**（字段信息以叙述方式出现而非罗列，验证 SDK 解析自然语言的能力）+ 6 组结构化 data+schema
-  （结构化入参使用英文业务字段，不直接复用模板槽位结构）；完整用例清单见
-  [`task-t-test-cases.md`](task-t-test-cases.md)
-- 闭环：`A2ATClient` 生成 → `A2ATServer#validateAndFillingTaskData` 校验提取 → 与 ground truth 比对
-- 评估：字段级准确率 = 命中期望字段数 / 期望字段总数；样本级通过率 = 全部字段命中的样本数 / 样本总数
-
-命中规则：去掉空白并统一小写后，提取值与期望值完全相同或互相包含即为命中；提取值缺失视为未命中。
-
-### 运行要求
-
-1. 配置 LLM 环境：直接编辑包内模板 `sample/task_t/client.env` 补充可用的 `A2AT_LLM_API_KEY`（配置
-   `A2AT_LLM_PROVIDER=openai`、`A2AT_LLM_BASE_URL`、`A2AT_LLM_MODEL`，每个样本的服务端语义校验各消耗一次
-   LLM 调用）；也可在仓库根目录放置自己的 `client.env`。
-2. 先编译打包：
+协商样例（无需启动服务端，单进程，需指定含 LLM key 的 .env）：
 
 ```bash
-mvn -pl a2a-t-sample -am -DskipTests package
+java @a2a-t-sample/target/negotiation.javaargs.txt /path/to/.env
 ```
-
-### 启动
-
-env 文件解析顺序：命令行第一参数（任意路径，例如 `server.env`）→ 工作目录下的 `client.env`（仓库根，且必须含
-非空的 `A2AT_LLM_PROVIDER`/`A2AT_LLM_MODEL`/`A2AT_LLM_API_KEY`，否则跳过）→ 包内模板
-`sample/task_t/client.env`。不传参数时会自动跳过仓库根遗留的空配置、回退到包内模板。
-
-PowerShell：
-
-```powershell
-$cp = "a2a-t-sample/target/a2a-t-sample-1.0.0.jar;" + (Get-Content a2a-t-sample/target/sample-runtime-classpath.txt)
-java -cp $cp net.openan.a2at.sample.task_t.TaskTDemoMain
-```
-
-Git Bash：
-
-```bash
-java -cp "a2a-t-sample/target/a2a-t-sample-1.0.0.jar:$(cat a2a-t-sample/target/sample-runtime-classpath.txt)" \
-  net.openan.a2at.sample.task_t.TaskTDemoMain
-```
-
-也可显式传入任意 `.env` 路径（例如 `client.env`）。运行结束后会打印每个样本的出入参、字段级命中明细，
-以及两个客户端 API 各自的字段准确率与样本通过率。
-
-> 说明：`a2a-t-sample-1.0.0.jar` 假设模块版本为 `1.0.0`，若仓库版本已更新请以实际 jar 为准。
-> 该样例为演示目的，期望值取各槽位的关键事实，命中规则较宽松（相同或互相包含）；如需严谨评测，
-> 可自行扩充样本并收紧期望值。

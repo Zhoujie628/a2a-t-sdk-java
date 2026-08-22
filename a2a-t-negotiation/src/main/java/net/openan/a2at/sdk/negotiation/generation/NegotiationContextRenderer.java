@@ -8,7 +8,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
  *
  * <p>The context travels in one template slot as a markdown list whose field names are language-neutral.
  */
-public final class NegotiationContextRenderer {
+final class NegotiationContextRenderer {
 
     /**
      * Renders one negotiation context as a markdown list.

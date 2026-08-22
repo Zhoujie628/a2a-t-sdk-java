@@ -12,9 +12,9 @@ import java.util.Objects;
  * supplied for that token name; a supplied null value is replaced with an empty string and bracket tokens without a
  * supplied value are left unchanged.
  *
- * @since 2026-06
+ * @since 2026-08
  */
-public class NegotiationMessageBuilder {
+final class NegotiationMessageBuilder {
 
     /** Token name receiving the negotiation phase of the step, such as {@code propose} or {@code accept}. */
     public static final String TOKEN_PHASE = "phase";

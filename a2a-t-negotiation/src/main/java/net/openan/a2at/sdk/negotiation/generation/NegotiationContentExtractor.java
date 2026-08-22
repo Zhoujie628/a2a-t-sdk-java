@@ -10,7 +10,7 @@ import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
  * <p>Implementations decide how the text is understood; the returned content must already satisfy the generator input
  * rules so the deterministic rendering step can consume it directly.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public interface NegotiationContentExtractor {
 

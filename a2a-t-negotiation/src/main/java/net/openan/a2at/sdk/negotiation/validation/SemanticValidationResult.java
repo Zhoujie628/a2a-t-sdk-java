@@ -18,7 +18,7 @@ import net.openan.a2at.sdk.core.model.SlotValidationError;
  * @param errors structured semantic errors using language-neutral {@code section.*} slot names; empty when the verdict
  *     is true
  * @param params parameters extracted from the message per the caller-provided schema
- * @since 2026-06
+ * @since 2026-08
  */
 public record SemanticValidationResult(
         boolean verdict, String negotiationType, List<SlotValidationError> errors, Map<String, Object> params) {

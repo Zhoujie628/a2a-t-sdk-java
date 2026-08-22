@@ -3,6 +3,7 @@ package net.openan.a2at.sdk.llm.providers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.ReasoningEffort;
 import com.openai.models.ResponseFormatJsonObject;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
@@ -48,8 +49,7 @@ public class OpenAIClient implements LLMClient {
     }
 
     OpenAIClient(
-            LLMClientConfig config,
-            BiFunction<LLMClientConfig, ChatCompletionCreateParams, ChatCompletion> executor) {
+            LLMClientConfig config, BiFunction<LLMClientConfig, ChatCompletionCreateParams, ChatCompletion> executor) {
         if (config.apiKey() == null || config.apiKey().isBlank()) {
             throw new LLMConfigError(config.provider() + " client requires a non-empty api_key");
         }
@@ -64,7 +64,8 @@ public class OpenAIClient implements LLMClient {
             throw new LLMConfigError(config.provider() + " client requires a non-empty base_url");
         }
         try {
-            return parseResponse(executor.apply(config, buildStructuredParams(messages, jsonSchema, temperature, maxTokens)));
+            return parseResponse(
+                    executor.apply(config, buildStructuredParams(messages, jsonSchema, temperature, maxTokens)));
         } catch (LLMConfigError | LLMRuntimeError error) {
             throw error;
         } catch (Exception error) {
@@ -86,6 +87,9 @@ public class OpenAIClient implements LLMClient {
         }
         if (resolvedMaxTokens != null) {
             builder.maxTokens(resolvedMaxTokens);
+        }
+        if (config.reasoningEffort() != null && !config.reasoningEffort().isBlank()) {
+            builder.reasoningEffort(ReasoningEffort.of(config.reasoningEffort()));
         }
         return builder.build();
     }
@@ -125,12 +129,16 @@ public class OpenAIClient implements LLMClient {
     }
 
     private LLMResponse parseResponse(ChatCompletion response) {
-        return new LLMResponse(extractJsonObjectString(response), response.model(), mapUsage(response), mapMetadata(response));
+        return new LLMResponse(
+                extractJsonObjectString(response), response.model(), mapUsage(response), mapMetadata(response));
     }
 
     private String extractJsonObjectString(ChatCompletion response) {
         String rawContent = extractMessageText(response);
         try {
+            if (rawContent == null || rawContent.isBlank()) {
+                throw new LLMRuntimeError(config.provider() + " returned empty content (rate limit or model timeout)");
+            }
             Object parsed = OBJECT_MAPPER.readValue(rawContent, Object.class);
             if (!(parsed instanceof Map<?, ?>)) {
                 throw new LLMRuntimeError(config.provider() + " must return a JSON object string");
@@ -147,8 +155,12 @@ public class OpenAIClient implements LLMClient {
         if (response.choices().isEmpty()) {
             throw new LLMRuntimeError(config.provider() + " response did not include any choices");
         }
-        return response.choices().get(0).message().content().orElseThrow(
-                () -> new LLMRuntimeError(config.provider() + " response did not include message content"));
+        return response.choices()
+                .get(0)
+                .message()
+                .content()
+                .orElseThrow(
+                        () -> new LLMRuntimeError(config.provider() + " response did not include message content"));
     }
 
     private static Map<String, Integer> mapUsage(ChatCompletion response) {
@@ -159,8 +171,11 @@ public class OpenAIClient implements LLMClient {
             usage.put("total_tokens", 0);
             return usage;
         }
-        usage.put("prompt_tokens", Math.toIntExact(response.usage().orElseThrow().promptTokens()));
-        usage.put("completion_tokens", Math.toIntExact(response.usage().orElseThrow().completionTokens()));
+        usage.put(
+                "prompt_tokens", Math.toIntExact(response.usage().orElseThrow().promptTokens()));
+        usage.put(
+                "completion_tokens",
+                Math.toIntExact(response.usage().orElseThrow().completionTokens()));
         usage.put("total_tokens", Math.toIntExact(response.usage().orElseThrow().totalTokens()));
         return usage;
     }
@@ -177,16 +192,15 @@ public class OpenAIClient implements LLMClient {
     }
 
     @SuppressWarnings("deprecation")
-    private com.openai.client.OpenAIClient sdkClient(LLMClientConfig runtimeConfig) {
-        if (sdkClient != null) {
-            return sdkClient;
+    private synchronized com.openai.client.OpenAIClient sdkClient(LLMClientConfig runtimeConfig) {
+        if (sdkClient == null) {
+            OpenAIOkHttpClient.Builder builder =
+                    OpenAIOkHttpClient.builder().apiKey(runtimeConfig.apiKey()).baseUrl(runtimeConfig.baseUrl());
+            if (runtimeConfig.timeoutSeconds() != null && runtimeConfig.timeoutSeconds() > 0.0d) {
+                builder.timeout(Duration.ofMillis(Math.max(1L, Math.round(runtimeConfig.timeoutSeconds() * 1000.0d))));
+            }
+            sdkClient = builder.build();
         }
-        OpenAIOkHttpClient.Builder builder =
-                OpenAIOkHttpClient.builder().apiKey(runtimeConfig.apiKey()).baseUrl(runtimeConfig.baseUrl());
-        if (runtimeConfig.timeoutSeconds() != null && runtimeConfig.timeoutSeconds() > 0.0d) {
-            builder.timeout(Duration.ofMillis(Math.max(1L, Math.round(runtimeConfig.timeoutSeconds() * 1000.0d))));
-        }
-        sdkClient = builder.build();
         return sdkClient;
     }
 }

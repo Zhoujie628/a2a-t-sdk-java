@@ -1,6 +1,5 @@
 package net.openan.a2at.sdk.prompt.resources.model;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
@@ -14,6 +13,7 @@ import java.util.List;
  * @param maximum optional numeric maximum
  * @param allowedValues optional enum values
  * @param description slot description
+ * @param valueConstraint human-readable value constraint description
  * @since 2026-06
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -23,4 +23,5 @@ public record PromptSlotJsonProperty(
         @JsonProperty("minimum") Double minimum,
         @JsonProperty("maximum") Double maximum,
         @JsonProperty("enum") List<String> allowedValues,
-        @JsonAlias({"description", "x-a2at-value-constraint"}) @JsonProperty("description") String description) {}
+        @JsonProperty("description") String description,
+        @JsonProperty("x-a2at-value-constraint") String valueConstraint) {}

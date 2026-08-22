@@ -15,9 +15,9 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
  * understanding section appears only on the first round, the alignment and clarification section only on later rounds,
  * and the clarification request section only when clarification items are present.
  *
- * @since 2026-06
+ * @since 2026-08
  */
-public final class TargetProposeGenerator extends AbstractNegotiationGenerator {
+final class TargetProposeGenerator extends AbstractNegotiationGenerator {
 
     /**
      * Generates a target negotiation propose message.

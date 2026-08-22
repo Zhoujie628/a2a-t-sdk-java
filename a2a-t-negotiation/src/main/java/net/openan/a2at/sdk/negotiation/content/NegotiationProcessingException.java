@@ -3,12 +3,14 @@ package net.openan.a2at.sdk.negotiation.content;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 
 /**
- * Base failure type raised when a negotiation processing step fails at runtime.
+ * Base failure type of the generation branch, raised when a negotiation generation step fails at runtime.
  *
  * <p>Each failure carries a machine-readable error code from {@code A2ATErrorCodes} — inherited from the
- * {@link A2ATError} root — so callers can branch on the failure class without parsing messages.
+ * {@link A2ATError} root — so callers can branch on the failure class without parsing messages. The
+ * parameter-extraction branch ({@code NegotiationParamExtractionException}) is deliberately not a subtype; catch
+ * {@link A2ATError} for full negotiation failure coverage.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public class NegotiationProcessingException extends A2ATError {
 

@@ -9,7 +9,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
  * <p>Each item becomes one line {@code N. name<colon>value}; an item without a value becomes {@code N. name}. The
  * caller supplies the list punctuation from the negotiation vocabulary so the output matches the message language.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public final class NegotiationItemFormatter {
 

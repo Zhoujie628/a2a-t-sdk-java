@@ -8,8 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
@@ -18,8 +18,8 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -62,7 +62,7 @@ class ValidateAndFillingDataPipelineTest {
         String message = informationProposeMessage(orchestrator);
 
         FilledParamData filled =
-                orchestrator.validateAndFillingProposeData(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI);
+                orchestrator.validateProposePromptAndDataFilling(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI);
 
         assertEquals(1, llm.calls);
         assertEquals(SESSION_ID, filled.data().get("id"));
@@ -85,7 +85,7 @@ class ValidateAndFillingDataPipelineTest {
         String message = informationEndingMessage(orchestrator, NegotiationConclusion.ACCEPT);
 
         FilledParamData filled =
-                orchestrator.validateAndFillingAcceptData(message, REGION_SCHEMA, INFORMATION_ACCEPT_REJECT_URI);
+                orchestrator.validateAcceptPromptAndDataFilling(message, REGION_SCHEMA, INFORMATION_ACCEPT_REJECT_URI);
 
         assertEquals(1, llm.calls);
         assertEquals(SESSION_ID, filled.data().get("id"));
@@ -104,7 +104,7 @@ class ValidateAndFillingDataPipelineTest {
         String message = informationEndingMessage(orchestrator, NegotiationConclusion.REJECT);
 
         FilledParamData filled =
-                orchestrator.validateAndFillingRejectData(message, REGION_SCHEMA, INFORMATION_ACCEPT_REJECT_URI);
+                orchestrator.validateRejectPromptAndDataFilling(message, REGION_SCHEMA, INFORMATION_ACCEPT_REJECT_URI);
 
         assertEquals(1, llm.calls);
         assertEquals(SESSION_ID, filled.data().get("id"));
@@ -123,7 +123,7 @@ class ValidateAndFillingDataPipelineTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(
+                () -> orchestrator.validateProposePromptAndDataFilling(
                         violatingMessage, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_RULE_VIOLATION, exception.getCode(), caseName);
@@ -168,7 +168,7 @@ class ValidateAndFillingDataPipelineTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
+                () -> orchestrator.validateProposePromptAndDataFilling(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED, exception.getCode());
         assertEquals(semanticErrors, exception.getErrors());
@@ -185,7 +185,7 @@ class ValidateAndFillingDataPipelineTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(taskTMessage, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
+                () -> orchestrator.validateProposePromptAndDataFilling(taskTMessage, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, exception.getCode(), caseName);
         assertTrue(exception.getMessage().contains("checkTaskPrompt"), caseName);
@@ -231,7 +231,7 @@ class ValidateAndFillingDataPipelineTest {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(llm);
         String message = targetProposeMessage(orchestrator);
 
-        FilledParamData filled = orchestrator.validateAndFillingProposeData(message, callerSchema, TARGET_PROPOSE_URI);
+        FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(message, callerSchema, TARGET_PROPOSE_URI);
 
         assertEquals(1, llm.calls);
         assertEquals(SESSION_ID, filled.data().get("id"));
@@ -260,7 +260,7 @@ class ValidateAndFillingDataPipelineTest {
         String message = informationProposeMessage(orchestrator);
 
         FilledParamData filled =
-                orchestrator.validateAndFillingProposeData(message, schemaWithoutType, INFORMATION_PROPOSE_URI);
+                orchestrator.validateProposePromptAndDataFilling(message, schemaWithoutType, INFORMATION_PROPOSE_URI);
 
         assertEquals(1, llm.calls);
         assertEquals("松山湖", filled.data().get("region"));
@@ -282,7 +282,7 @@ class ValidateAndFillingDataPipelineTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
+                () -> orchestrator.validateProposePromptAndDataFilling(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertEquals(3, llm.calls, "a shape-invalid response is a retryable infrastructure failure");
@@ -300,7 +300,7 @@ class ValidateAndFillingDataPipelineTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
+                () -> orchestrator.validateProposePromptAndDataFilling(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED, exception.getCode());
         assertEquals(1, llm.calls, "a type mismatch is a semantic decision and must not be retried");
@@ -319,7 +319,7 @@ class ValidateAndFillingDataPipelineTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
+                () -> orchestrator.validateProposePromptAndDataFilling(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED, exception.getCode(), caseName);
         assertEquals(List.of(expectedError), exception.getErrors(), caseName);
@@ -371,7 +371,7 @@ class ValidateAndFillingDataPipelineTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
+                () -> orchestrator.validateProposePromptAndDataFilling(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED, exception.getCode());
         assertEquals(1, exception.getErrors().size());
@@ -388,7 +388,7 @@ class ValidateAndFillingDataPipelineTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
+                () -> orchestrator.validateProposePromptAndDataFilling(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED, exception.getCode());
         assertEquals(1, llm.calls, "a null type with a true verdict is a semantic rejection, not a retryable failure");
@@ -410,7 +410,7 @@ class ValidateAndFillingDataPipelineTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
+                () -> orchestrator.validateProposePromptAndDataFilling(message, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertEquals(2, llm.calls);
@@ -434,7 +434,7 @@ class ValidateAndFillingDataPipelineTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(
+                () -> orchestrator.validateProposePromptAndDataFilling(
                         "## 协商上下文\n- id: " + SESSION_ID + "\n- round: 1\n- maxRounds: 5\n\n## 所需信息项\n1. 区域\n",
                         REGION_SCHEMA,
                         INFORMATION_PROPOSE_URI));
@@ -464,7 +464,7 @@ class ValidateAndFillingDataPipelineTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> orchestrator.validateAndFillingProposeData(
+                () -> orchestrator.validateProposePromptAndDataFilling(
                         rejectMessage, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SEMANTIC_REJECTED, exception.getCode());
@@ -483,7 +483,7 @@ class ValidateAndFillingDataPipelineTest {
         MetadataContent content = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
                         new NegotiationContext(SESSION_ID, 2, 5),
-                        new InfoProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
+                        new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_URI);
         return content.promptText();
     }
@@ -492,7 +492,7 @@ class ValidateAndFillingDataPipelineTest {
             NegotiationGenerationOrchestrator orchestrator, NegotiationConclusion conclusion) {
         NegotiationEndingData data = new NegotiationEndingData(
                 new NegotiationContext(SESSION_ID, 2, 5),
-                new InfoEndingContent(conclusion, List.of(new NegotiationItem("节能区域", "松山湖"))));
+                new InformationEndingContent(conclusion, List.of(new NegotiationItem("节能区域", "松山湖"))));
         MetadataContent content = conclusion == NegotiationConclusion.ACCEPT
                 ? orchestrator.generateAcceptFromData(data, INFORMATION_ACCEPT_REJECT_URI)
                 : orchestrator.generateRejectFromData(data, INFORMATION_ACCEPT_REJECT_URI);

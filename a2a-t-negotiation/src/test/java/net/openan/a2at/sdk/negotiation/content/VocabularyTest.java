@@ -1,17 +1,30 @@
 package net.openan.a2at.sdk.negotiation.content;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class VocabularyTest {
 
+    @TempDir
+    Path localRoot;
+
     private static final Set<String> CANONICAL_KEYS = Set.of(
             "section.context",
+            "section.termination_reason",
             "section.info_items",
             "section.info_static",
             "section.info_conclusion",
@@ -28,6 +41,7 @@ class VocabularyTest {
             "section.feasibility_conclusion",
             "section.feasibility_confirm",
             "slot.context",
+            "slot.termination_reason",
             "slot.info_items",
             "slot.info_conclusion",
             "slot.info_result_content",
@@ -52,8 +66,21 @@ class VocabularyTest {
 
         assertEquals(CANONICAL_KEYS, zhCn.canonicalKeys());
         assertEquals(CANONICAL_KEYS, enUs.canonicalKeys());
+        assertEquals(Set.copyOf(Vocabulary.CANONICAL_KEYS), zhCn.canonicalKeys());
         assertEquals(new TreeSet<>(zhCn.canonicalKeys()), new TreeSet<>(enUs.canonicalKeys()));
-        assertEquals(33, zhCn.canonicalKeys().size());
+        assertEquals(35, zhCn.canonicalKeys().size());
+        assertEquals(35, Vocabulary.CANONICAL_KEYS.size());
+    }
+
+    @Test
+    void terminationReasonSlotMatchesTheCommonAbortTemplatePlaceholder() {
+        Vocabulary zhCn = Vocabulary.forLanguage("zh-CN");
+        Vocabulary enUs = Vocabulary.forLanguage("en-US");
+
+        assertEquals("协商终止原因", zhCn.get("slot.termination_reason"));
+        assertEquals("negotiation_termination_reason", enUs.get("slot.termination_reason"));
+        assertEquals("协商终止原因", zhCn.get("section.termination_reason"));
+        assertEquals("Negotiation Termination Reason", enUs.get("section.termination_reason"));
     }
 
     @Test
@@ -127,5 +154,178 @@ class VocabularyTest {
                 assertThrows(IllegalArgumentException.class, () -> vocabulary.get("section.unknown"));
 
         assertTrue(exception.getMessage().contains("section.unknown"));
+    }
+
+    @Test
+    void localVocabularyWinsOverTheClasspathOne() throws IOException {
+        Map<String, String> entries = classpathEntriesOf("zh-CN");
+        entries.put("section.context", "自定义协商上下文");
+        writeLocalVocabulary("zh-CN", entries);
+
+        Vocabulary overridden = Vocabulary.forLanguage("zh-CN", localRoot);
+
+        assertEquals("自定义协商上下文", overridden.get("section.context"));
+        assertEquals(Vocabulary.forLanguage("zh-CN").get("punct.list_colon"), overridden.get("punct.list_colon"));
+        assertEquals(Vocabulary.forLanguage("zh-CN").canonicalKeys(), overridden.canonicalKeys());
+        assertEquals("zh-CN", overridden.language());
+    }
+
+    @Test
+    void localRootWithoutAVocabularyFallsBackToTheClasspath() {
+        Vocabulary fallback = Vocabulary.forLanguage("en-US", localRoot);
+
+        assertEquals(Vocabulary.forLanguage("en-US").get("slot.context"), fallback.get("slot.context"));
+        assertEquals(Vocabulary.forLanguage("en-US").canonicalKeys(), fallback.canonicalKeys());
+    }
+
+    @Test
+    void classpathResolutionAndNullRootShareOneCachedVocabulary() {
+        assertSame(Vocabulary.forLanguage("zh-CN", null), Vocabulary.forLanguage("zh-CN"));
+    }
+
+    @Test
+    void localRootIsReResolvedOnEveryCall() throws IOException {
+        Map<String, String> entries = classpathEntriesOf("zh-CN");
+        entries.put("label.relationship", "本地覆盖标签：");
+        writeLocalVocabulary("zh-CN", entries);
+
+        Vocabulary overridden = Vocabulary.forLanguage("zh-CN", localRoot);
+        assertEquals("本地覆盖标签：", overridden.get("label.relationship"));
+
+        Files.delete(writeLocalVocabularyPath("zh-CN"));
+
+        Vocabulary restored = Vocabulary.forLanguage("zh-CN", localRoot);
+        assertEquals(Vocabulary.forLanguage("zh-CN").get("label.relationship"), restored.get("label.relationship"));
+    }
+
+    @Test
+    void malformedLocalVocabularyFailsFast() throws IOException {
+        writeRawLocalVocabulary("zh-CN", "{ not json");
+
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> Vocabulary.forLanguage("zh-CN", localRoot));
+
+        assertTrue(exception.getMessage().contains("vocabulary.json"));
+        assertTrue(exception.getMessage().contains("zh-CN"));
+    }
+
+    @Test
+    void localVocabularyWithAMissingCanonicalKeyFailsFast() throws IOException {
+        Map<String, String> entries = classpathEntriesOf("zh-CN");
+        entries.remove("punct.list_colon");
+        writeLocalVocabulary("zh-CN", entries);
+
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> Vocabulary.forLanguage("zh-CN", localRoot));
+
+        assertTrue(exception.getMessage().contains("punct.list_colon"));
+        assertTrue(exception.getMessage().contains("vocabulary.json"));
+    }
+
+    @Test
+    void localVocabularyWithAnUnexpectedKeyFailsFast() throws IOException {
+        Map<String, String> entries = classpathEntriesOf("en-US");
+        entries.put("section.unknown", "Unknown Section");
+        writeLocalVocabulary("en-US", entries);
+
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> Vocabulary.forLanguage("en-US", localRoot));
+
+        assertTrue(exception.getMessage().contains("section.unknown"));
+        assertTrue(exception.getMessage().contains("vocabulary.json"));
+    }
+
+    @Test
+    void vocabularyMissingInBothRootsThrowsWithTheLanguageHint() {
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> Vocabulary.forLanguage("fr-FR", localRoot));
+
+        assertTrue(exception.getMessage().contains("fr-FR"));
+        assertTrue(exception.getMessage().contains("A2AT_LANGUAGE"));
+    }
+
+    @Test
+    void languageThatIsNotASimplePathSegmentThrows() {
+        assertThrows(IllegalArgumentException.class, () -> Vocabulary.forLanguage("../escape", localRoot));
+    }
+
+    @Test
+    void duplicateKeysInTheLocalVocabularyFailFast() throws IOException {
+        writeRawLocalVocabulary("zh-CN", "{\"punct.list_colon\": \"：\", \"punct.list_colon\": \"：\"}");
+
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> Vocabulary.forLanguage("zh-CN", localRoot));
+
+        assertTrue(exception.getMessage().contains("duplicate keys"));
+        assertTrue(exception.getMessage().contains("vocabulary.json"));
+    }
+
+    @Test
+    void blankValueInTheLocalVocabularyFailsFast() throws IOException {
+        Map<String, String> entries = classpathEntriesOf("zh-CN");
+        entries.put("punct.list_colon", " ");
+        writeLocalVocabulary("zh-CN", entries);
+
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> Vocabulary.forLanguage("zh-CN", localRoot));
+
+        assertTrue(exception.getMessage().contains("punct.list_colon"));
+        assertTrue(exception.getMessage().contains("blank"));
+        assertTrue(exception.getMessage().contains("vocabulary.json"));
+    }
+
+    @Test
+    void nonObjectLocalVocabularyFailsFast() throws IOException {
+        writeRawLocalVocabulary("en-US", "[]");
+
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> Vocabulary.forLanguage("en-US", localRoot));
+
+        assertTrue(exception.getMessage().contains("not a flat JSON object"));
+    }
+
+    @Test
+    void nonStringValueInTheLocalVocabularyFailsFast() throws IOException {
+        writeRawLocalVocabulary("en-US", "{\"punct.list_colon\": 5}");
+
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> Vocabulary.forLanguage("en-US", localRoot));
+
+        assertTrue(exception.getMessage().contains("punct.list_colon"));
+        assertTrue(exception.getMessage().contains("is not a string"));
+    }
+
+    @Test
+    void unreadableLocalVocabularyFailsFast() throws IOException {
+        Files.createDirectories(writeLocalVocabularyPath("zh-CN"));
+
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> Vocabulary.forLanguage("zh-CN", localRoot));
+
+        assertTrue(exception.getMessage().contains("Failed to read"));
+        assertTrue(exception.getMessage().contains("vocabulary.json"));
+    }
+
+    private static Map<String, String> classpathEntriesOf(String language) {
+        Vocabulary builtin = Vocabulary.forLanguage(language);
+        Map<String, String> entries = new LinkedHashMap<>();
+        for (String key : Vocabulary.CANONICAL_KEYS) {
+            entries.put(key, builtin.get(key));
+        }
+        return entries;
+    }
+
+    private void writeLocalVocabulary(String language, Map<String, String> entries) throws IOException {
+        new ObjectMapper().writeValue(writeLocalVocabularyPath(language).toFile(), entries);
+    }
+
+    private void writeRawLocalVocabulary(String language, String payload) throws IOException {
+        Files.writeString(writeLocalVocabularyPath(language), payload, StandardCharsets.UTF_8);
+    }
+
+    private Path writeLocalVocabularyPath(String language) throws IOException {
+        Path file = localRoot.resolve("negotiation-vocabulary").resolve(language).resolve("vocabulary.json");
+        Files.createDirectories(file.getParent());
+        return file;
     }
 }

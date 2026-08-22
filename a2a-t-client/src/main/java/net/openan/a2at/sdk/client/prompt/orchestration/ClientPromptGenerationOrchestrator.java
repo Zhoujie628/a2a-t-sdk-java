@@ -1,9 +1,9 @@
 package net.openan.a2at.sdk.client.prompt.orchestration;
 
 import java.util.Map;
-import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 
 /**
  * Internal prompt-generation orchestration contract used by the client facade.
@@ -27,17 +27,20 @@ public interface ClientPromptGenerationOrchestrator {
      * @param text natural-language task input
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
+     * @throws NullPointerException if the text or template URI is null
      */
     MetadataContent generateTaskPromptFromText(String text, TemplateUri templateUri);
 
     /**
-     * Generates a task prompt with metadata from structured input and an optional data schema using the template
-     * identified by the template URI, bypassing scenario recognition.
+     * Generates a task prompt with metadata from structured input and a data schema using the template identified by
+     * the template URI, bypassing scenario recognition.
      *
      * @param data structured task input as a string-to-object map
-     * @param schema optional data schema map for schema-guided extraction
+     * @param schema data schema map describing the meaning of each input field; must not be null or empty
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
+     * @throws NullPointerException if the template URI, data or schema is null
+     * @throws IllegalArgumentException if the schema is empty
      */
     MetadataContent generateTaskPromptFromDataWithSchema(
             Map<String, Object> data, Map<String, Object> schema, TemplateUri templateUri);
@@ -49,17 +52,20 @@ public interface ClientPromptGenerationOrchestrator {
      * @param text natural-language authorization input
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
+     * @throws NullPointerException if the text or template URI is null
      */
     MetadataContent generateAuthPromptFromText(String text, TemplateUri templateUri);
 
     /**
-     * Generates an authorization prompt with metadata from structured input and an optional data schema using the
-     * template identified by the template URI, bypassing scenario recognition.
+     * Generates an authorization prompt with metadata from structured input and a data schema using the template
+     * identified by the template URI, bypassing scenario recognition.
      *
      * @param data structured authorization input as a string-to-object map
-     * @param schema optional data schema map for schema-guided extraction
+     * @param schema data schema map describing the meaning of each input field; must not be null or empty
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
+     * @throws NullPointerException if the template URI, data or schema is null
+     * @throws IllegalArgumentException if the schema is empty
      */
     MetadataContent generateAuthPromptFromDataWithSchema(
             Map<String, Object> data, Map<String, Object> schema, TemplateUri templateUri);
@@ -71,17 +77,20 @@ public interface ClientPromptGenerationOrchestrator {
      * @param text natural-language notification input
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
+     * @throws NullPointerException if the text or template URI is null
      */
     MetadataContent generateNotificationPromptFromText(String text, TemplateUri templateUri);
 
     /**
-     * Generates a notification prompt with metadata from structured input and an optional data schema using the
-     * template identified by the template URI, bypassing scenario recognition.
+     * Generates a notification prompt with metadata from structured input and a data schema using the template
+     * identified by the template URI, bypassing scenario recognition.
      *
      * @param data structured notification input as a string-to-object map
-     * @param schema optional data schema map for schema-guided extraction
+     * @param schema data schema map describing the meaning of each input field; must not be null or empty
      * @param templateUri template URI identifying the target template
      * @return metadata content carrying the resolved template URI, rendered prompt text, and extension URI
+     * @throws NullPointerException if the template URI, data or schema is null
+     * @throws IllegalArgumentException if the schema is empty
      */
     MetadataContent generateNotificationPromptFromDataWithSchema(
             Map<String, Object> data, Map<String, Object> schema, TemplateUri templateUri);

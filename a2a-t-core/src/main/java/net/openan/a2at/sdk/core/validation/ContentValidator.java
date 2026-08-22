@@ -3,6 +3,7 @@ package net.openan.a2at.sdk.core.validation;
 import java.util.Map;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import org.jspecify.annotations.NonNull;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 
 /**
  * Entry point for validating content and extracting filled parameters.

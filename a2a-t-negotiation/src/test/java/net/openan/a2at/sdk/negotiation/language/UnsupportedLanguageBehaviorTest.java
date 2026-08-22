@@ -45,7 +45,7 @@ class UnsupportedLanguageBehaviorTest {
         assertEquals(List.of(), frFrLoader.loadAll(), "no template of another language may be listed for fr-FR");
         for (String bundledLanguage : List.of("zh-CN", "en-US")) {
             assertEquals(
-                    6,
+                    7,
                     new DefaultNegotiationTemplateLoader(bundledLanguage, null)
                             .loadAll()
                             .size(),

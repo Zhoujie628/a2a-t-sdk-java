@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 2026-08
  */
-public final class RetryUtil {
+final class RetryUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RetryUtil.class);
 

@@ -6,11 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -165,7 +166,7 @@ class NegotiationGeneratorsTest {
                 .generate(
                         context(1),
                         content,
-                        template(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(), ZH_FEASIBILITY_PROPOSE_TEMPLATE),
+                        template(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE, ZH_FEASIBILITY_PROPOSE_TEMPLATE),
                         zhVocabulary);
 
         assertTrue(rendered.contains("## 可行性协商\n请协助评估该节能目标能否达成。"));
@@ -188,7 +189,7 @@ class NegotiationGeneratorsTest {
                 .generate(
                         context(2),
                         content,
-                        template(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(), ZH_FEASIBILITY_PROPOSE_TEMPLATE),
+                        template(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE, ZH_FEASIBILITY_PROPOSE_TEMPLATE),
                         zhVocabulary);
 
         assertTrue(rendered.contains("## 可行性协商\n当前速率目标不可行，提出下调方案。"));
@@ -208,7 +209,7 @@ class NegotiationGeneratorsTest {
                                 context(1),
                                 nullAction,
                                 template(
-                                        StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
+                                        StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE,
                                         ZH_FEASIBILITY_PROPOSE_TEMPLATE),
                                 zhVocabulary));
         assertTrue(nullActionError.getMessage().contains("action must not be null"));
@@ -222,7 +223,7 @@ class NegotiationGeneratorsTest {
                                 context(1),
                                 emptyEvaluation,
                                 template(
-                                        StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
+                                        StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE,
                                         ZH_FEASIBILITY_PROPOSE_TEMPLATE),
                                 zhVocabulary));
         assertEquals(
@@ -238,7 +239,7 @@ class NegotiationGeneratorsTest {
                                 context(1),
                                 emptyAlternative,
                                 template(
-                                        StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
+                                        StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE,
                                         ZH_FEASIBILITY_PROPOSE_TEMPLATE),
                                 zhVocabulary));
         assertEquals(
@@ -255,7 +256,7 @@ class NegotiationGeneratorsTest {
                                         context(1),
                                         blankDescription,
                                         template(
-                                                StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE.uri(),
+                                                StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE,
                                                 ZH_FEASIBILITY_PROPOSE_TEMPLATE),
                                         zhVocabulary))
                         .getMessage());
@@ -273,7 +274,7 @@ class NegotiationGeneratorsTest {
                 .generate(
                         context(1),
                         content,
-                        template(StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(), ZH_TARGET_PROPOSE_TEMPLATE),
+                        template(StandardTemplates.TARGET_NEGOTIATION_PROPOSE, ZH_TARGET_PROPOSE_TEMPLATE),
                         zhVocabulary);
 
         assertTrue(rendered.contains("## 意图理解陈述\n1. 发起方理解：对方希望在体验无损的前提下降低节能力度"));
@@ -294,7 +295,7 @@ class NegotiationGeneratorsTest {
                 .generate(
                         context(3),
                         content,
-                        template(StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(), ZH_TARGET_PROPOSE_TEMPLATE),
+                        template(StandardTemplates.TARGET_NEGOTIATION_PROPOSE, ZH_TARGET_PROPOSE_TEMPLATE),
                         zhVocabulary);
 
         assertTrue(rendered.contains("## 理解对齐与疑问澄清\n1. 确认结果：节能时间范围确认为08:00~18:00"));
@@ -311,7 +312,7 @@ class NegotiationGeneratorsTest {
                         .generate(
                                 context(1),
                                 content,
-                                template(StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(), ZH_TARGET_PROPOSE_TEMPLATE),
+                                template(StandardTemplates.TARGET_NEGOTIATION_PROPOSE, ZH_TARGET_PROPOSE_TEMPLATE),
                                 zhVocabulary));
 
         assertEquals("Target negotiation description must not be blank.", exception.getMessage());
@@ -319,7 +320,7 @@ class NegotiationGeneratorsTest {
 
     @Test
     void informationProposeAppendsRelationshipLineAndOmitsItWhenAbsent() {
-        InfoProposeContent withRelationship = new InfoProposeContent(
+        InformationProposeContent withRelationship = new InformationProposeContent(
                 List.of(new NegotiationItem("故障发生时间", "精确到分钟的时间点"), new NegotiationItem("受影响小区标识", "CGI 或小区名称")),
                 "故障发生时间与受影响小区标识需逐小区对应");
 
@@ -327,20 +328,20 @@ class NegotiationGeneratorsTest {
                 .generate(
                         context(1),
                         withRelationship,
-                        template(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(), ZH_INFO_PROPOSE_TEMPLATE),
+                        template(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE, ZH_INFO_PROPOSE_TEMPLATE),
                         zhVocabulary);
 
         assertTrue(renderedZh.contains("## 所需信息项\n1. 故障发生时间：精确到分钟的时间点\n2. 受影响小区标识：CGI 或小区名称"));
         assertTrue(renderedZh.endsWith("缺失项之间的关系：故障发生时间与受影响小区标识需逐小区对应"));
 
-        InfoProposeContent withoutRelationship =
-                new InfoProposeContent(List.of(new NegotiationItem("故障发生时间", "精确到分钟的时间点")), null);
+        InformationProposeContent withoutRelationship =
+                new InformationProposeContent(List.of(new NegotiationItem("故障发生时间", "精确到分钟的时间点")), null);
 
         String renderedWithout = new InformationProposeGenerator()
                 .generate(
                         context(1),
                         withoutRelationship,
-                        template(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(), ZH_INFO_PROPOSE_TEMPLATE),
+                        template(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE, ZH_INFO_PROPOSE_TEMPLATE),
                         zhVocabulary);
 
         assertFalse(renderedWithout.contains("缺失项之间的关系"));
@@ -348,12 +349,12 @@ class NegotiationGeneratorsTest {
 
     @Test
     void informationProposeRendersEnglishRelationshipLabelWithTrailingSpace() {
-        InfoProposeContent content = new InfoProposeContent(
+        InformationProposeContent content = new InformationProposeContent(
                 List.of(new NegotiationItem("Failure time", "minute precision")),
                 "failure time and cell identity must correspond per cell");
 
         PromptTemplate enTemplate = template(
-                StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(),
+                StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE,
                 """
                 ## Negotiation Context
                 {{negotiation_context}} (required)
@@ -375,10 +376,10 @@ class NegotiationGeneratorsTest {
         String infoRendered = new InformationEndingGenerator()
                 .generate(
                         context(2),
-                        new InfoEndingContent(
+                        new InformationEndingContent(
                                 NegotiationConclusion.ACCEPT,
                                 List.of(new NegotiationItem("故障发生时间", "2026-08-19 10:30"))),
-                        template(StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri(), ZH_INFO_ENDING_TEMPLATE),
+                        template(StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT, ZH_INFO_ENDING_TEMPLATE),
                         zhVocabulary);
 
         assertTrue(infoRendered.contains("## 信息协商结果\nAccept"));
@@ -388,7 +389,7 @@ class NegotiationGeneratorsTest {
                 .generate(
                         context(2),
                         new TargetEndingContent(NegotiationConclusion.REJECT, null, "双方未就速率保障下限达成一致。"),
-                        template(StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri(), ZH_TARGET_ENDING_TEMPLATE),
+                        template(StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT, ZH_TARGET_ENDING_TEMPLATE),
                         zhVocabulary);
 
         assertTrue(targetRendered.contains("## 目标协商结果\nReject"));
@@ -399,7 +400,7 @@ class NegotiationGeneratorsTest {
                         context(2),
                         new FeasibilityEndingContent(NegotiationConclusion.ACCEPT, "同意将速率保障目标由5Mbps下调至2Mbps。"),
                         template(
-                                StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri(),
+                                StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT,
                                 ZH_FEASIBILITY_ENDING_TEMPLATE),
                         zhVocabulary);
 
@@ -412,21 +413,21 @@ class NegotiationGeneratorsTest {
         assertThrows(IllegalArgumentException.class, () -> new InformationEndingGenerator()
                 .generate(
                         context(1),
-                        new InfoEndingContent(NegotiationConclusion.ABORT, List.of()),
-                        template(StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri(), ZH_INFO_ENDING_TEMPLATE),
+                        new InformationEndingContent(NegotiationConclusion.ABORT, List.of()),
+                        template(StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT, ZH_INFO_ENDING_TEMPLATE),
                         zhVocabulary));
         assertThrows(IllegalArgumentException.class, () -> new TargetEndingGenerator()
                 .generate(
                         context(1),
                         new TargetEndingContent(NegotiationConclusion.ABORT, "意图", null),
-                        template(StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri(), ZH_TARGET_ENDING_TEMPLATE),
+                        template(StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT, ZH_TARGET_ENDING_TEMPLATE),
                         zhVocabulary));
         assertThrows(IllegalArgumentException.class, () -> new FeasibilityEndingGenerator()
                 .generate(
                         context(1),
                         new FeasibilityEndingContent(NegotiationConclusion.ABORT, "结论"),
                         template(
-                                StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri(),
+                                StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT,
                                 ZH_FEASIBILITY_ENDING_TEMPLATE),
                         zhVocabulary));
     }
@@ -437,9 +438,9 @@ class NegotiationGeneratorsTest {
                 assertThrows(NullPointerException.class, () -> new InformationEndingGenerator()
                         .generate(
                                 context(1),
-                                new InfoEndingContent(null, List.of()),
+                                new InformationEndingContent(null, List.of()),
                                 template(
-                                        StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT.uri(),
+                                        StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT,
                                         ZH_INFO_ENDING_TEMPLATE),
                                 zhVocabulary));
 
@@ -454,7 +455,7 @@ class NegotiationGeneratorsTest {
                                 context(1),
                                 new TargetEndingContent(NegotiationConclusion.ACCEPT, null, "失败原因"),
                                 template(
-                                        StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri(), ZH_TARGET_ENDING_TEMPLATE),
+                                        StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT, ZH_TARGET_ENDING_TEMPLATE),
                                 zhVocabulary));
 
         assertEquals(
@@ -467,7 +468,7 @@ class NegotiationGeneratorsTest {
                                 context(1),
                                 new TargetEndingContent(NegotiationConclusion.REJECT, "  ", null),
                                 template(
-                                        StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT.uri(), ZH_TARGET_ENDING_TEMPLATE),
+                                        StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT, ZH_TARGET_ENDING_TEMPLATE),
                                 zhVocabulary));
 
         assertEquals(
@@ -483,7 +484,7 @@ class NegotiationGeneratorsTest {
                                 context(1),
                                 new FeasibilityEndingContent(NegotiationConclusion.ACCEPT, " "),
                                 template(
-                                        StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT.uri(),
+                                        StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT,
                                         ZH_FEASIBILITY_ENDING_TEMPLATE),
                                 zhVocabulary));
 
@@ -499,10 +500,10 @@ class NegotiationGeneratorsTest {
                         .generate(
                                 context(1),
                                 new TargetProposeContent("描述", null, null, null),
-                                template(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri(), ZH_INFO_PROPOSE_TEMPLATE),
+                                template(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE, ZH_INFO_PROPOSE_TEMPLATE),
                                 zhVocabulary));
 
-        assertTrue(exception.getMessage().contains("requires content of type InfoProposeContent"));
+        assertTrue(exception.getMessage().contains("requires content of type InformationProposeContent"));
     }
 
     @Test
@@ -533,7 +534,7 @@ class NegotiationGeneratorsTest {
         return new NegotiationContext(CONTEXT_ID, round, 5);
     }
 
-    private static PromptTemplate template(String uri, String content) {
-        return new PromptTemplate(uri, "", content);
+    private static PromptTemplate template(TemplateUri templateUri, String content) {
+        return new PromptTemplate(templateUri, "", content);
     }
 }

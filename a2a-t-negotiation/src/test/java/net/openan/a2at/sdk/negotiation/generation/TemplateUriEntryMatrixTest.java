@@ -14,13 +14,13 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
@@ -137,13 +137,13 @@ class TemplateUriEntryMatrixTest {
 
     static List<TemplateUri> nonAddressingTemplateUris() {
         return List.of(
-                TemplateUri.of("Task-T", "v1", "information-negotiation", "propose"),
-                TemplateUri.of("Negotiation-T", "v2", "information-negotiation", "propose"),
-                TemplateUri.of("Negotiation-T", "v1", "information", "propose"),
-                TemplateUri.of("Negotiation-T", "v1", "information_negotiation", "propose"),
-                TemplateUri.of("Negotiation-T", "v1", "unknown-negotiation", "propose"),
-                TemplateUri.of("Negotiation-T", "v1", "information-negotiation", "propose-x"),
-                TemplateUri.of("Negotiation-T", "v1", "information-negotiation", "accept"));
+                TemplateUri.of("Task-T", "information-negotiation", "propose"),
+                TemplateUri.of("Negotiation-T", List.of("information-negotiation", "propose"), "v2"),
+                TemplateUri.of("Negotiation-T", "information", "propose"),
+                TemplateUri.of("Negotiation-T", "information_negotiation", "propose"),
+                TemplateUri.of("Negotiation-T", "unknown-negotiation", "propose"),
+                TemplateUri.of("Negotiation-T", "information-negotiation", "propose-x"),
+                TemplateUri.of("Negotiation-T", "information-negotiation", "accept"));
     }
 
     /**
@@ -183,7 +183,7 @@ class TemplateUriEntryMatrixTest {
     private static NegotiationProposeData informationProposeData() {
         return new NegotiationProposeData(
                 new NegotiationContext(UUID, 2, 5),
-                new InfoProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null));
+                new InformationProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null));
     }
 
     private static String readClasspathText(String resourcePath) {

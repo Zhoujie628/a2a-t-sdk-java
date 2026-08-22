@@ -116,6 +116,11 @@ A2AT_LLM_API_KEY={your_api_key}
 A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
 ```
 
+For reasoning models, the optional `A2AT_LLM_REASONING_EFFORT` key tunes the reasoning effort passed to the
+provider: one of `none`, `minimal`, `low`, `medium`, `high`, `xhigh` (case-insensitive). Leave the key unset for
+non-reasoning models — the parameter is then not sent at all. An unsupported value fails at configuration load
+time with an `LLMConfigError` instead of surfacing as a provider error on the first LLM call.
+
 
 ## 1.6 SDK Basic Usage
 
@@ -412,7 +417,7 @@ This section describes the Negotiation-T content layer: a template-driven API se
 The content layer covers three capabilities:
 
 1. **Message generation** — renders a structured negotiation message from typed data (`generateNegotiation*PromptFromData`, deterministic, no LLM) or from free text (`generateNegotiation*PromptFromText`, one LLM content-extraction step followed by deterministic rendering).
-2. **Compliance checking and parameter extraction** — `validateAndFilling*Data` checks that a received message is a well-formed negotiation message and extracts its parameters per a caller-provided JSON schema.
+2. **Compliance checking and parameter extraction** — `validatePromptAndDataFilling*Data` checks that a received message is a well-formed negotiation message and extracts its parameters per a caller-provided JSON schema.
 3. **Template queries** — `getPrompts` / `getPrompt` list and load the templates available for the configured language across **all** A2A-T extensions (Task-T, Notification-T, Authorization-T, Negotiation-T); `getNegotiationPrompts` / `getNegotiationPrompt` restrict the same queries to the negotiation templates.
 
 The content layer is stateless. It deliberately does not own a session state machine: session identity, round tracking beyond what the message itself carries, and role binding stay with the caller. The pre-existing `startNegotiation` / `receiveNegotiation` / `continueNegotiation` API (see 1.6.3) is unchanged and remains the stateful entry point; the content layer can be combined with it or used standalone.
@@ -421,7 +426,7 @@ The content layer is stateless. It deliberately does not own a session state mac
 
 All thirteen methods exist on both `A2ATClient` and `A2ATServer` with identical signatures and semantics.
 
-Every method that identifies a template takes the value type `net.openan.a2at.sdk.core.validation.TemplateUri` instead of a raw string. A `TemplateUri` is always well-formed — its constructor validates the extension name, path segments, and version — so malformed URIs cannot reach these APIs. Build one with `TemplateUri.of("Negotiation-T", "v1", "information-negotiation", "propose")`, or better, use the constants in `StandardTemplates` from the same package (for example `StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE`, whose `uri()` is `Negotiation-T/information-negotiation/propose/v1`). When a URI string arrives from outside the code, `TemplateUri.parse(String)` returns an `Optional<TemplateUri>` and never throws.
+Every method that identifies a template takes the value type `net.openan.a2at.sdk.core.model.TemplateUri` instead of a raw string. A `TemplateUri` is always well-formed — its constructor validates the extension name, path segments, and version — so malformed URIs cannot reach these APIs. Build one with `TemplateUri.of("Negotiation-T", "information-negotiation", "propose")`, or better, use the constants in `StandardTemplates` from the same package (for example `StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE`, whose `uri()` is `Negotiation-T/information-negotiation/propose/v1`). When a URI string arrives from outside the code, `TemplateUri.parse(String)` returns an `Optional<TemplateUri>` and never throws.
 
 **Generation from typed data — deterministic, never calls an LLM:**
 
@@ -429,9 +434,10 @@ Every method that identifies a template takes the value type `net.openan.a2at.sd
 MetadataContent generateNegotiationProposePromptFromData(NegotiationProposeData data, TemplateUri templateUri)
 MetadataContent generateNegotiationAcceptPromptFromData(NegotiationEndingData data, TemplateUri templateUri)
 MetadataContent generateNegotiationRejectPromptFromData(NegotiationEndingData data, TemplateUri templateUri)
+MetadataContent generateNegotiationAbortPromptFromData(NegotiationAbortData data, TemplateUri templateUri)
 ```
 
-The typed content is validated, dispatched to the generator of the negotiation type addressed by the template URI, and rendered from that template. The accept variant requires `content.conclusion() == ACCEPT`, the reject variant `REJECT`; a mismatched conclusion (including `ABORT`) is rejected with `IllegalArgumentException` as a programming error.
+The typed content is validated, dispatched to the generator of the negotiation type addressed by the template URI, and rendered from that template. The accept variant requires `content.conclusion() == ACCEPT`, the reject variant `REJECT`; a mismatched conclusion (including `ABORT`) is rejected with `IllegalArgumentException` as a programming error. The abort variant is type-independent: it renders the single common abort template `StandardTemplates.NEGOTIATION_ABORT` from a `NegotiationAbortData(context, NegotiationAbortContent(terminationReason))` bundle, and the fixed `Abort` conclusion is carried by the template itself.
 
 **Generation from free text — one LLM extraction step with configurable retry:**
 
@@ -439,16 +445,18 @@ The typed content is validated, dispatched to the generator of the negotiation t
 MetadataContent generateNegotiationProposePromptFromText(String text, NegotiationContext context, TemplateUri templateUri)
 MetadataContent generateNegotiationAcceptPromptFromText(String text, NegotiationContext context, TemplateUri templateUri)
 MetadataContent generateNegotiationRejectPromptFromText(String text, NegotiationContext context, TemplateUri templateUri)
+MetadataContent generateNegotiationAbortPromptFromText(String text, NegotiationContext context, TemplateUri templateUri)
 ```
 
-The template is loaded before the LLM call; a missing template fails fast without consuming an LLM request. The LLM step extracts the typed content from the free text constrained by the template URI, then rendering proceeds deterministically like the from-data variant. The `NegotiationContext` is injected into the rendered message without any LLM involvement. The extraction step is retried up to the configured attempt limit on the retryable failure codes (see 1.10.5).
+The template is loaded before the LLM call; a missing template fails fast without consuming an LLM request. The LLM step extracts the typed content from the free text constrained by the template URI, then rendering proceeds deterministically like the from-data variant. The `NegotiationContext` is injected into the rendered message without any LLM involvement. The extraction step is retried up to the configured attempt limit on the retryable failure codes (see 1.10.5). The abort variant extracts the termination reason from the free text against the common abort template.
 
 **Compliance checking and parameter extraction:**
 
 ```java
-FilledParamData validateAndFillingProposeData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
-FilledParamData validateAndFillingAcceptData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
-FilledParamData validateAndFillingRejectData(String prompt, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateProposePromptAndDataFilling(String prompt, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateAcceptPromptAndDataFilling(String prompt, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateRejectPromptAndDataFilling(String prompt, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateAbortPromptAndDataFilling(String prompt, Map<String, Object> schema, TemplateUri templateUri)
 ```
 
 The pipeline runs in a fixed order:
@@ -468,7 +476,7 @@ List<PromptTemplate> getNegotiationPrompts()   // negotiation templates of the c
 Optional<PromptTemplate> getNegotiationPrompt(TemplateUri templateUri)  // one negotiation template by URI; empty on miss
 ```
 
-A missing template yields an empty result with a warning log; because the argument is a validated `TemplateUri`, an unusable URI cannot occur, and a null argument raises `NullPointerException`. `PromptTemplate` is a record `(uri, description, content)`. The generic pair discovers the extension directories from the bundled resource tree itself — a template directory added under `prompt_resources/templates/` (for example a future `Authorization-T/`) is listed automatically without code changes. Local templates under the configured local resource root override built-in templates of the same path. Note that the SDK does not yet bundle Authorization-T template resources; `generateAuthPromptFromText` / `generateAuthPromptFromDataWithSchema` answer `template_not_found` under the classpath source until such templates are added or provided through the local resource root.
+A missing template yields an empty result with a warning log; because the argument is a validated `TemplateUri`, an unusable URI cannot occur, and a null argument raises `NullPointerException`. `PromptTemplate` is a record `(templateUri, description, content)` whose first component is the typed `TemplateUri` value; `content` is null only when a template record is constructed without available content. The generic pair discovers the extension directories from the bundled resource tree itself — a template directory added under `prompt_resources/templates/` (for example a future `Authorization-T/`) is listed automatically without code changes. Local templates under the configured local resource root override built-in templates of the same path. Note that the SDK does not yet bundle Authorization-T template resources; `generateAuthPromptFromText` / `generateAuthPromptFromDataWithSchema` answer `template_not_found` under the classpath source until such templates are added or provided through the local resource root.
 
 ### 1.10.3 Template URIs and Custom Templates
 
@@ -489,7 +497,7 @@ where `{type}` is `information`, `target`, or `feasibility`, `{phase}` is `propo
 | `Negotiation-T/feasibility-negotiation/propose/v1` | Request a feasibility evaluation or propose an alternative |
 | `Negotiation-T/feasibility-negotiation/accept-reject/v1` | Accept or reject a feasibility negotiation |
 
-Negotiation templates are resolved with a **dual-root fallback** that is independent of `A2AT_PROMPT_SOURCE_TYPE`: a template file that exists under the local resource root configured by `A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR` wins, otherwise the built-in classpath template of the same URI is used. The built-in templates therefore always remain available as a safety net. Only templates are taken from the local root; LLM prompt resources always come from the classpath.
+Negotiation templates are resolved with a **dual-root fallback** that is independent of `A2AT_PROMPT_SOURCE_TYPE`: a template file that exists under the local resource root configured by `A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR` wins, otherwise the built-in classpath template of the same URI is used. The built-in templates therefore always remain available as a safety net. Templates and the negotiation vocabulary are taken from the local root; LLM prompt resources always come from the classpath. The negotiation vocabulary follows the same dual-root regime: each language's section titles, slot marker names, appended-line labels and list punctuation live in `prompt_resources/negotiation-vocabulary/{lang}/vocabulary.json`, so a file placed at `{A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR}/negotiation-vocabulary/{lang}/vocabulary.json` overrides the built-in classpath vocabulary. A vocabulary file must define exactly the canonical key set shared by both bundled languages; anything else fails fast.
 
 To override one template (for example the information propose template in Chinese), place a file under the local root following the bundled layout:
 
@@ -504,15 +512,15 @@ All types live in `net.openan.a2at.sdk.negotiation.content`.
 
 **NegotiationContext** — the session context carried by every message: `record NegotiationContext(String id, int round, int maxRounds)`. It is immutable; `nextRound()` returns a context with the round incremented, and `isExhausted()` reports whether the round is strictly greater than `maxRounds`. `NegotiationContext.of(id, round)` applies the default round budget of `DEFAULT_MAX_ROUNDS = 5`.
 
-**Input bundles** — `NegotiationProposeData(context, content)` and `NegotiationEndingData(context, content)` pair the context with the typed content. The content types are sealed hierarchies per negotiation type:
+**Input bundles** — `NegotiationProposeData(context, content)` and `NegotiationEndingData(context, content)` pair the context with the typed content, and `NegotiationAbortData(context, NegotiationAbortContent)` pairs it with the type-independent abort content. The content types are sealed hierarchies per negotiation type:
 
 | Negotiation type | Propose content | Ending content |
 |--|--|--|
-| Information | `InfoProposeContent(List<NegotiationItem> items, String relationship)` | `InfoEndingContent(conclusion, items)` |
+| Information | `InformationProposeContent(List<NegotiationItem> items, String relationship)` | `InformationEndingContent(conclusion, items)` |
 | Target | `TargetProposeContent(description, intentUnderstanding, alignmentAndClarification, requestForClarification)` | `TargetEndingContent(conclusion, confirmedIntent, failureReason)` |
 | Feasibility | `FeasibilityProposeContent(description, action, contentsToEvaluate, infeasibilityDetailsAndProposal)` | `FeasibilityEndingContent(conclusion, feasibilitySummary)` |
 
-`NegotiationItem(name, value)` is one named entry of an item list. `NegotiationConclusion` carries `ACCEPT`, `REJECT`, and `ABORT`; only `Accept` and `Reject` are renderable — generation methods reject `ABORT` with an `IllegalArgumentException` (a programming error outside the `A2ATError` tree). `NegotiationAction` (`REQUEST_FEASIBILITY_EVALUATION`, `PROPOSE_ALTERNATIVE_ON_FAILURE`) selects the conditional sections of the feasibility propose template.
+`NegotiationItem(name, value)` is one named entry of an item list. `NegotiationConclusion` carries `ACCEPT`, `REJECT`, and `ABORT`; only `Accept` and `Reject` are renderable conclusions of the typed negotiation templates — the typed generation methods reject `ABORT` with an `IllegalArgumentException` (a programming error outside the `A2ATError` tree). The `ABORT` outcome is rendered through the type-independent common abort template: `NegotiationAbortContent(terminationReason)` is the only content it carries and `NegotiationAbortData(context, content)` is its input bundle. `NegotiationAction` (`REQUEST_FEASIBILITY_EVALUATION`, `PROPOSE_ALTERNATIVE_ON_FAILURE`) selects the conditional sections of the feasibility propose template.
 
 **MetadataContent** — the generation result: `record MetadataContent(String templateUri, String promptText, String extensionUri)`. `buildMetadataContent()` returns exactly two keys: the TMF extension URI (`https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1`) mapping to the rendered message, and `templateUri` mapping to the template URI. This map is what travels in the A2A message metadata.
 
@@ -526,7 +534,7 @@ All SDK processing failures share one root, while programming errors stay outsid
   - `NegotiationProcessingException` — a negotiation processing failure.
     - `NegotiationGenerationException` — raised by generation calls.
   - `A2ATParamExtractionError` — a parameter-extraction failure with structured per-slot errors; `getCode()` is inherited from the root, `getErrors()` returns the slot details.
-    - `NegotiationParamExtractionException` — raised by `validateAndFilling*Data` calls.
+    - `NegotiationParamExtractionException` — raised by `validatePromptAndDataFilling*Data` calls.
   - `LLMError` — the LLM integration failure subtree, folded into the `A2ATError` tree.
     - `LLMConfigError` — invalid LLM configuration or provider registration.
     - `LLMRuntimeError` — an LLM infrastructure failure at call time.
@@ -553,7 +561,9 @@ Retry semantics: a failing LLM step carrying a retryable code is re-run up to th
 
 ### 1.10.6 Language Configuration
 
-The negotiation templates and the vocabulary used for rendering and section recognition are keyed by `A2AT_LANGUAGE`. Supported values are exactly `zh-CN` and `en-US`; there is no fallback — any other value fails with an `IllegalArgumentException` when the vocabulary is resolved. Set the language explicitly in `client.env` / `server.env`:
+The negotiation templates and the vocabulary used for rendering and section recognition are keyed by `A2AT_LANGUAGE`. Out of the box — built-in classpath resources only — the supported values are exactly `zh-CN` and `en-US`; there is no fallback to another language, any other value without a local vocabulary file fails with an `IllegalArgumentException` when the vocabulary is resolved, and the failure message points at `A2AT_LANGUAGE`. A language for which a valid `vocabulary.json` exists under the local resource root resolves at the vocabulary layer, but generation still fails later with template-not-found unless the full template and prompt resource set for that language is provided as well.
+
+The vocabulary itself is file-driven: each language's constants live in `prompt_resources/negotiation-vocabulary/{lang}/vocabulary.json`, a flat JSON object mapping the 33 canonical keys (section titles, slot marker names, appended-line labels, list punctuation) to that language's text. It follows the same dual-root local-override regime as the templates — a file under `A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR` wins, otherwise the built-in classpath file is used — and resolution is fail-fast with no silent degradation: a vocabulary that exists in neither root, is unreadable, is malformed, or does not define exactly the canonical key set raises an `IllegalArgumentException` naming the language and the file origin. Adding a new language therefore still requires the full resource set — the negotiation templates and the LLM prompt resources — not just a vocabulary file. Set the language explicitly in `client.env` / `server.env`:
 
 ```properties
 A2AT_LANGUAGE=zh-CN
@@ -568,7 +578,7 @@ import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.exception.A2ATParamExtractionError;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.negotiation.content.*;
 import net.openan.a2at.sdk.server.A2ATServer;
 
@@ -576,7 +586,7 @@ import net.openan.a2at.sdk.server.A2ATServer;
 A2ATClient client = new A2ATClient(Path.of("client.env"));
 
 NegotiationContext context = NegotiationContext.of("neg-0001-uuid", 1);
-InfoProposeContent content = new InfoProposeContent(
+InformationProposeContent content = new InformationProposeContent(
         List.of(
                 new NegotiationItem("subscription_condition.incident_level", "critical or warning"),
                 new NegotiationItem("notification_data.format", "DataPart or raw JSON")),
@@ -602,7 +612,7 @@ Map<String, Object> schema = Map.of(
         "required", List.of("subscription_condition.incident_level"));
 
 try {
-    FilledParamData params = server.validateAndFillingProposeData(
+    FilledParamData params = server.validateProposePromptAndDataFilling(
             propose.promptText(), schema, StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE);
     // params.data() holds the extracted parameters plus the context parameters.
 } catch (A2ATParamExtractionError failure) {
@@ -611,7 +621,7 @@ try {
 }
 
 // --- Server side: accept and return the requested information ---
-InfoEndingContent ending = new InfoEndingContent(
+InformationEndingContent ending = new InformationEndingContent(
         NegotiationConclusion.ACCEPT,
         List.of(new NegotiationItem("subscription_condition.incident_level", "critical")));
 
@@ -620,7 +630,7 @@ MetadataContent accept = server.generateNegotiationAcceptPromptFromData(
         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT);
 
 // The client validates the accept message the same way, with the accept-reject template:
-// client.validateAndFillingAcceptData(accept.promptText(), schema,
+// client.validateAcceptPromptAndDataFilling(accept.promptText(), schema,
 //         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT);
 ```
 

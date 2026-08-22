@@ -45,21 +45,23 @@ abstract class AbstractNegotiationGenerator implements NegotiationGenerator {
     }
 
     /**
-     * Validates that a conclusion is renderable, rejecting null and the abort conclusion.
+     * Validates that a conclusion is renderable by a typed ending generator, rejecting null and the abort conclusion.
      *
      * @param conclusion conclusion carried by ending content
      * @return the validated conclusion
      * @throws NullPointerException if the conclusion is null
-     * @throws IllegalArgumentException if the conclusion is abort
+     * @throws IllegalArgumentException if the conclusion is abort; the abort message has no typed conclusion slot and
+     *     is generated through the abort phase against the common abort template instead
      */
     protected static NegotiationConclusion renderableConclusion(NegotiationConclusion conclusion) {
         Objects.requireNonNull(
                 conclusion, "Negotiation conclusion must not be null; accept and reject are the renderable"
-                        + " conclusions.");
+                        + " conclusions of a typed negotiation.");
         if (conclusion == NegotiationConclusion.ABORT) {
             throw new IllegalArgumentException(
-                    "Negotiation conclusion Abort has no template section to render; terminate an exhausted"
-                            + " negotiation with a reject message instead.");
+                    "Typed negotiation templates carry no Abort conclusion slot; generate the abort message of a"
+                            + " terminated negotiation with generateAbortFromData against the common abort template"
+                            + " instead.");
         }
         return conclusion;
     }

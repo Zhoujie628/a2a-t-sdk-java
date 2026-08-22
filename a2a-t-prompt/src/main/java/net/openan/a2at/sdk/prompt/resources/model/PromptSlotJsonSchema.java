@@ -34,7 +34,15 @@ public record PromptSlotJsonSchema(
             PromptSlotJsonProperty property = entry.getValue();
             if (property == null) {
                 slotDefinitions.add(new PromptSlotDefinition(
-                        entry.getKey(), requiredSlots.contains(entry.getKey()), null, null, null, null, null, null));
+                        entry.getKey(),
+                        requiredSlots.contains(entry.getKey()),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null));
                 continue;
             }
             slotDefinitions.add(new PromptSlotDefinition(
@@ -45,7 +53,8 @@ public record PromptSlotJsonSchema(
                     property.minimum(),
                     property.maximum(),
                     property.allowedValues(),
-                    property.description()));
+                    property.description(),
+                    property.valueConstraint()));
         }
         return new PromptSlotSchema(scenarioCode, List.copyOf(slotDefinitions));
     }

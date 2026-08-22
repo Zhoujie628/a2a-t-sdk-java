@@ -9,6 +9,6 @@ package net.openan.a2at.sdk.core.model;
  * @param slotName name of the slot the error refers to
  * @param code machine-readable error code for the error
  * @param message human-readable explanation of the error
- * @since 2026-06
+ * @since 2026-08
  */
 public record SlotValidationError(String slotName, String code, String message) {}

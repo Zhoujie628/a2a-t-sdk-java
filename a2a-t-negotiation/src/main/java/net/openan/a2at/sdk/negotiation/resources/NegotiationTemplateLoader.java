@@ -6,7 +6,7 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
 /**
  * Loads negotiation templates addressed by {@link NegotiationReference} keys.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public interface NegotiationTemplateLoader {
 

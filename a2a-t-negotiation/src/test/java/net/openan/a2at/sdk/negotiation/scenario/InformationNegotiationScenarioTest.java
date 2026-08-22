@@ -6,12 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.InfoEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InfoProposeContent;
+import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
+import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
@@ -47,7 +47,7 @@ class InformationNegotiationScenarioTest {
 
         NegotiationParamExtractionException notNegotiable = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> responder.validateAndFillingProposeData(
+                () -> responder.validateProposePromptAndDataFilling(
                         "A task prompt describing an energy-saving optimization without any negotiation section.",
                         parameterSchema(),
                         INFORMATION_PROPOSE_URI));
@@ -61,7 +61,7 @@ class InformationNegotiationScenarioTest {
         MetadataContent request = requester.generateProposeFromData(
                 new NegotiationProposeData(
                         round,
-                        new InfoProposeContent(
+                        new InformationProposeContent(
                                 List.of(
                                         new NegotiationItem("节能区域信息", "如松山湖"),
                                         new NegotiationItem("节能速率保障目标", "如20Mbps")),
@@ -71,7 +71,7 @@ class InformationNegotiationScenarioTest {
         assertTrue(request.promptText().contains("1. 节能区域信息：如松山湖"));
         assertTrue(request.promptText().contains("- round: 1"));
 
-        FilledParamData requestParameters = responder.validateAndFillingProposeData(
+        FilledParamData requestParameters = responder.validateProposePromptAndDataFilling(
                 request.promptText(), parameterSchema(), INFORMATION_PROPOSE_URI);
         assertEquals(1, responderLlm.callCount());
         assertEquals(SESSION_ID, requestParameters.data().get("id"));
@@ -82,7 +82,7 @@ class InformationNegotiationScenarioTest {
         MetadataContent answer = responder.generateAcceptFromData(
                 new NegotiationEndingData(
                         round,
-                        new InfoEndingContent(
+                        new InformationEndingContent(
                                 NegotiationConclusion.ACCEPT,
                                 List.of(
                                         new NegotiationItem("节能区域信息", "松山湖"),
@@ -94,7 +94,7 @@ class InformationNegotiationScenarioTest {
         assertTrue(answer.promptText().contains("- round: 1"), "the terminal answer shares the round of the request");
 
         FilledParamData answerParameters =
-                requester.validateAndFillingAcceptData(answer.promptText(), parameterSchema(), INFORMATION_ACCEPT_URI);
+                requester.validateAcceptPromptAndDataFilling(answer.promptText(), parameterSchema(), INFORMATION_ACCEPT_URI);
         assertEquals(1, requesterLlm.callCount());
         assertEquals(SESSION_ID, answerParameters.data().get("id"));
         assertEquals(1, answerParameters.data().get("round"));
