@@ -17,7 +17,7 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
 import org.junit.jupiter.api.Test;
 
@@ -54,13 +54,11 @@ class AbortMessageGenerationTest {
 
         assertEquals(ABORT_URI.uri(), result.templateUri());
         String text = result.promptText();
-        assertTrue(text.contains("## 协商上下文"), "the context section must be rendered");
+        assertFalse(text.contains("## 协商上下文"), "the context section must not be rendered");
         assertTrue(text.contains("## 协商结果\nAbort"), "the fixed Abort conclusion must be kept");
         assertTrue(text.contains("## 协商终止原因"), "the termination reason section must be rendered");
         assertTrue(text.contains("达到协商轮次上限，本次协商确认结束。"));
-        assertTrue(text.contains("- id: " + SESSION_ID));
-        assertTrue(text.contains("- round: 5"));
-        assertTrue(text.contains("- maxRounds: 5"));
+        assertEquals(new NegotiationContext(SESSION_ID, 5, 5), result.negotiationContext());
         assertFalse(text.contains("{{"), "no unreplaced placeholder may remain");
         assertEquals(0, llm.calls, "the from-data variant must never call the LLM");
     }
@@ -76,11 +74,11 @@ class AbortMessageGenerationTest {
 
         assertEquals(ABORT_URI.uri(), result.templateUri());
         String text = result.promptText();
-        assertTrue(text.contains("## Negotiation Context"));
+        assertFalse(text.contains("## Negotiation Context"), "the context section must not be rendered");
         assertTrue(text.contains("## Negotiation Result\nAbort"));
         assertTrue(text.contains("## Negotiation Termination Reason"));
         assertTrue(text.contains("Reached the negotiation round limit."));
-        assertTrue(text.contains("- round: 3"));
+        assertEquals(new NegotiationContext(SESSION_ID, 3, 5), result.negotiationContext());
         assertFalse(text.contains("{{"));
         assertEquals(0, llm.calls);
     }
@@ -187,7 +185,8 @@ class AbortMessageGenerationTest {
                 ABORT_URI);
 
         FilledParamData parameters =
-                peer.validateAbortPromptAndDataFilling(abortMessage.promptText(), Map.of("type", "object"), ABORT_URI);
+                peer.validateAbortPromptAndDataFilling(
+                abortMessage.promptText(), new NegotiationContext(SESSION_ID, 5, 5), Map.of("type", "object"), ABORT_URI);
 
         assertEquals(SESSION_ID, parameters.data().get("id"));
         assertEquals(5, parameters.data().get("round"));
@@ -213,7 +212,11 @@ class AbortMessageGenerationTest {
 
         NegotiationParamExtractionException failure = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> peer.validateAbortPromptAndDataFilling(beyondBudget.promptText(), Map.of("type", "object"), ABORT_URI));
+                () -> peer.validateAbortPromptAndDataFilling(
+                        beyondBudget.promptText(),
+                        new NegotiationContext(SESSION_ID, 6, 5),
+                        Map.of("type", "object"),
+                        ABORT_URI));
         assertEquals(A2ATErrorCodes.NEGOTIATION_RULE_VIOLATION, failure.getCode());
         assertTrue(
                 failure.getErrors().stream().anyMatch(error -> "round".equals(error.slotName())),
@@ -230,7 +233,7 @@ class AbortMessageGenerationTest {
 
         IllegalArgumentException failure = assertThrows(
                 IllegalArgumentException.class,
-                () -> orchestrator.validateAbortPromptAndDataFilling("任意文本", Map.of("type", "object"),
+                () -> orchestrator.validateAbortPromptAndDataFilling("任意文本", null, Map.of("type", "object"),
                         StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE));
         assertTrue(failure.getMessage().contains("abort"));
         assertEquals(0, llm.calls);

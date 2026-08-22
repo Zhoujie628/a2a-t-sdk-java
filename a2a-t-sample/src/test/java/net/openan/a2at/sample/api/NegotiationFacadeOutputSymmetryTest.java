@@ -26,7 +26,7 @@ import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
@@ -62,20 +62,23 @@ class NegotiationFacadeOutputSymmetryTest {
             "generateNegotiationProposePromptFromData",
             "generateNegotiationAcceptPromptFromData",
             "generateNegotiationRejectPromptFromData",
+            "generateNegotiationAbortPromptFromData",
             "generateNegotiationProposePromptFromText",
             "generateNegotiationAcceptPromptFromText",
             "generateNegotiationRejectPromptFromText",
+            "generateNegotiationAbortPromptFromText",
             "getNegotiationPrompts",
             "getNegotiationPrompt",
             "validateProposePromptAndDataFilling",
             "validateAcceptPromptAndDataFilling",
-            "validateRejectPromptAndDataFilling");
+            "validateRejectPromptAndDataFilling",
+            "validateAbortPromptAndDataFilling");
 
     @TempDir
     Path tempDir;
 
     @Test
-    void bothFacadesExposeTheSameElevenMethodSignatures() {
+    void bothFacadesExposeTheSameFourteenMethodSignatures() {
         Map<String, String> clientSurface = negotiationApiSurface(A2ATClient.class);
         Map<String, String> serverSurface = negotiationApiSurface(A2ATServer.class);
 

@@ -410,7 +410,7 @@ mvn -pl a2a-t-sample -am -DskipTests package
 
 ## 1.10 Negotiation-T Content Layer
 
-This section describes the Negotiation-T content layer: a template-driven API set for generating negotiation messages, checking their compliance, and extracting parameters from them. Both `A2ATClient` and `A2ATServer` expose the same thirteen methods for this purpose.
+This section describes the Negotiation-T content layer: a template-driven API set for generating negotiation messages, checking their compliance, and extracting parameters from them. Both `A2ATClient` and `A2ATServer` expose the same fourteen methods for this purpose.
 
 ### 1.10.1 Overview and SDK Boundary
 
@@ -424,7 +424,7 @@ The content layer is stateless. It deliberately does not own a session state mac
 
 ### 1.10.2 Facade Methods
 
-All thirteen methods exist on both `A2ATClient` and `A2ATServer` with identical signatures and semantics.
+All fourteen methods exist on both `A2ATClient` and `A2ATServer` with identical signatures and semantics.
 
 Every method that identifies a template takes the value type `net.openan.a2at.sdk.core.model.TemplateUri` instead of a raw string. A `TemplateUri` is always well-formed — its constructor validates the extension name, path segments, and version — so malformed URIs cannot reach these APIs. Build one with `TemplateUri.of("Negotiation-T", "information-negotiation", "propose")`, or better, use the constants in `StandardTemplates` from the same package (for example `StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE`, whose `uri()` is `Negotiation-T/information-negotiation/propose/v1`). When a URI string arrives from outside the code, `TemplateUri.parse(String)` returns an `Optional<TemplateUri>` and never throws.
 
@@ -448,21 +448,21 @@ MetadataContent generateNegotiationRejectPromptFromText(String text, Negotiation
 MetadataContent generateNegotiationAbortPromptFromText(String text, NegotiationContext context, TemplateUri templateUri)
 ```
 
-The template is loaded before the LLM call; a missing template fails fast without consuming an LLM request. The LLM step extracts the typed content from the free text constrained by the template URI, then rendering proceeds deterministically like the from-data variant. The `NegotiationContext` is injected into the rendered message without any LLM involvement. The extraction step is retried up to the configured attempt limit on the retryable failure codes (see 1.10.5). The abort variant extracts the termination reason from the free text against the common abort template.
+The template is loaded before the LLM call; a missing template fails fast without consuming an LLM request. The LLM step extracts the typed content from the free text constrained by the template URI, then rendering proceeds deterministically like the from-data variant. The `NegotiationContext` is carried in the generated metadata without any LLM involvement and is no longer rendered into the message text. The extraction step is retried up to the configured attempt limit on the retryable failure codes (see 1.10.5). The abort variant extracts the termination reason from the free text against the common abort template.
 
 **Compliance checking and parameter extraction:**
 
 ```java
-FilledParamData validateProposePromptAndDataFilling(String prompt, Map<String, Object> schema, TemplateUri templateUri)
-FilledParamData validateAcceptPromptAndDataFilling(String prompt, Map<String, Object> schema, TemplateUri templateUri)
-FilledParamData validateRejectPromptAndDataFilling(String prompt, Map<String, Object> schema, TemplateUri templateUri)
-FilledParamData validateAbortPromptAndDataFilling(String prompt, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateProposePromptAndDataFilling(String prompt, NegotiationContext context, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateAcceptPromptAndDataFilling(String prompt, NegotiationContext context, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateRejectPromptAndDataFilling(String prompt, NegotiationContext context, Map<String, Object> schema, TemplateUri templateUri)
+FilledParamData validateAbortPromptAndDataFilling(String prompt, NegotiationContext context, Map<String, Object> schema, TemplateUri templateUri)
 ```
 
 The pipeline runs in a fixed order:
 
 1. Template URI format check (phase segment must match the method: `propose` vs `accept-reject`).
-2. Deterministic rule gate — recognition of the negotiation context section and its structural rules, before any LLM call.
+2. Deterministic rule gate — structural rules of the caller-supplied `NegotiationContext` (UUID id shape, round within the round budget), before any LLM call. A null context is reported as `negotiation_invalid_input` (not a negotiation message).
 3. One LLM semantic validation call that also extracts the parameters, retried up to the configured attempt limit on the retryable LLM infrastructure failure code.
 4. Merge of the extracted parameters with the rule-level context parameters — **context parameters take precedence** on key conflict.
 
@@ -510,7 +510,7 @@ To override one template (for example the information propose template in Chines
 
 All types live in `net.openan.a2at.sdk.negotiation.content`.
 
-**NegotiationContext** — the session context carried by every message: `record NegotiationContext(String id, int round, int maxRounds)`. It is immutable; `nextRound()` returns a context with the round incremented, and `isExhausted()` reports whether the round is strictly greater than `maxRounds`. `NegotiationContext.of(id, round)` applies the default round budget of `DEFAULT_MAX_ROUNDS = 5`.
+**NegotiationContext** — the session context carried by every negotiation message in the `core.model` package: `record NegotiationContext(String id, int round, int maxRounds)`. It is immutable; `nextRound()` returns a context with the round incremented, and `isExhausted()` reports whether the round is strictly greater than `maxRounds`. `NegotiationContext.of(id, round)` applies the default round budget of `DEFAULT_MAX_ROUNDS = 5`.
 
 **Input bundles** — `NegotiationProposeData(context, content)` and `NegotiationEndingData(context, content)` pair the context with the typed content, and `NegotiationAbortData(context, NegotiationAbortContent)` pairs it with the type-independent abort content. The content types are sealed hierarchies per negotiation type:
 
@@ -522,7 +522,7 @@ All types live in `net.openan.a2at.sdk.negotiation.content`.
 
 `NegotiationItem(name, value)` is one named entry of an item list. `NegotiationConclusion` carries `ACCEPT`, `REJECT`, and `ABORT`; only `Accept` and `Reject` are renderable conclusions of the typed negotiation templates — the typed generation methods reject `ABORT` with an `IllegalArgumentException` (a programming error outside the `A2ATError` tree). The `ABORT` outcome is rendered through the type-independent common abort template: `NegotiationAbortContent(terminationReason)` is the only content it carries and `NegotiationAbortData(context, content)` is its input bundle. `NegotiationAction` (`REQUEST_FEASIBILITY_EVALUATION`, `PROPOSE_ALTERNATIVE_ON_FAILURE`) selects the conditional sections of the feasibility propose template.
 
-**MetadataContent** — the generation result: `record MetadataContent(String templateUri, String promptText, String extensionUri)`. `buildMetadataContent()` returns exactly two keys: the TMF extension URI (`https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1`) mapping to the rendered message, and `templateUri` mapping to the template URI. This map is what travels in the A2A message metadata.
+**MetadataContent** — the generation result: `record MetadataContent(String templateUri, String promptText, String extensionUri, NegotiationContext negotiationContext)`. `buildMetadataContent()` returns `Map<String, Object>`: the TMF extension URI (`https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1`) mapping to the rendered message, and `templateUri` mapping to the template URI; negotiation messages additionally carry `negotiationContext` mapping to the nested `{id, round, maxRounds}` object, while non-negotiation messages omit the key and keep the two-key shape. This map is what travels in the A2A message metadata — the negotiation context travels here, not in the rendered text.
 
 **FilledParamData** — the extraction result: `record FilledParamData(Map<String, Object> data)` holding the context parameters merged with the schema-extracted parameters.
 
@@ -551,7 +551,7 @@ Error codes and their meaning:
 | `negotiation_content_extract_failed` | Structured content could not be extracted from free text | Yes |
 | `negotiation_llm_infrastructure_error` | An LLM infrastructure failure (network, provider error, malformed response) | Yes |
 | `negotiation_semantic_rejected` | Semantic validation rejected the message | No |
-| `negotiation_rule_violation` | The negotiation context section violates a structural rule | No |
+| `negotiation_rule_violation` | The negotiation context violates a structural rule | No |
 | `negotiation_slot_missing` | A required slot is missing when rendering | No |
 | `negotiation_invalid_input` | The input is not valid for the operation (blank free text on the from-text generation calls, not a negotiation message, wrong conclusion) | No |
 | `param_extraction_failed` | Default code for extraction failures without a more specific code | No |
@@ -596,10 +596,11 @@ MetadataContent propose = client.generateNegotiationProposePromptFromData(
         new NegotiationProposeData(context, content),
         StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE);
 
-// This two-key map travels in the A2A message metadata.
-Map<String, String> metadata = propose.buildMetadataContent();
+// This map travels in the A2A message metadata.
+Map<String, Object> metadata = propose.buildMetadataContent();
 // metadata.get("templateUri")  -> "Negotiation-T/information-negotiation/propose/v1"
 // metadata.get(propose.extensionUri()) -> the rendered message text
+// metadata.get("negotiationContext")   -> the nested {id, round, maxRounds} context
 
 // --- Server side: validate the received message and extract parameters ---
 A2ATServer server = new A2ATServer(Path.of("server.env"));
@@ -613,7 +614,7 @@ Map<String, Object> schema = Map.of(
 
 try {
     FilledParamData params = server.validateProposePromptAndDataFilling(
-            propose.promptText(), schema, StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE);
+            propose.promptText(), context, schema, StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE);
     // params.data() holds the extracted parameters plus the context parameters.
 } catch (A2ATParamExtractionError failure) {
     // Branch on failure.getCode(): negotiation_invalid_input, negotiation_rule_violation,
@@ -630,7 +631,7 @@ MetadataContent accept = server.generateNegotiationAcceptPromptFromData(
         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT);
 
 // The client validates the accept message the same way, with the accept-reject template:
-// client.validateAcceptPromptAndDataFilling(accept.promptText(), schema,
+// client.validateAcceptPromptAndDataFilling(accept.promptText(), context, schema,
 //         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT);
 ```
 

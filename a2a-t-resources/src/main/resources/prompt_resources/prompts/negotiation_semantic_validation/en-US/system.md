@@ -35,7 +35,6 @@ Output exactly one JSON object containing exactly the following 4 required keys;
 
 ## slot_name Convention
 The slot_name of semantic and structural semantics errors must use the following language-neutral canonical keys, chosen by the message section at fault:
-- section.context: Negotiation Context
 - section.termination_reason: Negotiation Termination Reason
 - section.info_static: Information Negotiation
 - section.info_items: Required Information Items
@@ -67,7 +66,6 @@ The params in the following examples only illustrate the structure; the actual p
   "negotiation_type": "feasibility",
   "errors": [],
   "params": {
-    "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
     "confirmed_rate_mbps": 2
   }
 }

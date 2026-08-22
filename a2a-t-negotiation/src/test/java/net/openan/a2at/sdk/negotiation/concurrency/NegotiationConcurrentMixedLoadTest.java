@@ -18,7 +18,7 @@ import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
@@ -59,7 +59,10 @@ class NegotiationConcurrentMixedLoadTest {
         MetadataContent fromTextBase = orchestrator.generateProposeFromText(
                 "请提供节能区域信息。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
         FilledParamData validateBase = orchestrator.validateProposePromptAndDataFilling(
-                fromDataBase.promptText(), Map.of("type", "object"), INFORMATION_PROPOSE_URI);
+                fromDataBase.promptText(),
+                new NegotiationContext(UUID, 1, 5),
+                Map.of("type", "object"),
+                INFORMATION_PROPOSE_URI);
         int baselineExtractionCalls = llm.extractionCalls.get();
         int baselineSemanticCalls = llm.semanticCalls.get();
 
@@ -86,7 +89,10 @@ class NegotiationConcurrentMixedLoadTest {
                 validateThreads++;
                 workers.add(callableOf(() -> {
                     FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
-                            fromDataBase.promptText(), Map.of("type", "object"), INFORMATION_PROPOSE_URI);
+                            fromDataBase.promptText(),
+                            new NegotiationContext(UUID, 1, 5),
+                            Map.of("type", "object"),
+                            INFORMATION_PROPOSE_URI);
                     assertEquals(validateBase.data(), filled.data(), "validation baseline");
                 }));
             }

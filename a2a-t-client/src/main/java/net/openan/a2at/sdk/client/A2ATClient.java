@@ -346,7 +346,7 @@ public final class A2ATClient {
      */
     public MetadataContent generateNegotiationProposePromptFromText(
             @NonNull String text,
-            net.openan.a2at.sdk.negotiation.content.NegotiationContext context,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
             @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
         return negotiationContentService.generateProposeFromText(text, context, templateUri);
@@ -375,7 +375,7 @@ public final class A2ATClient {
      */
     public MetadataContent generateNegotiationAcceptPromptFromText(
             @NonNull String text,
-            net.openan.a2at.sdk.negotiation.content.NegotiationContext context,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
             @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
         return negotiationContentService.generateAcceptFromText(text, context, templateUri);
@@ -404,7 +404,7 @@ public final class A2ATClient {
      */
     public MetadataContent generateNegotiationRejectPromptFromText(
             @NonNull String text,
-            net.openan.a2at.sdk.negotiation.content.NegotiationContext context,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
             @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
         return negotiationContentService.generateRejectFromText(text, context, templateUri);
@@ -432,7 +432,7 @@ public final class A2ATClient {
      */
     public MetadataContent generateNegotiationAbortPromptFromText(
             @NonNull String text,
-            net.openan.a2at.sdk.negotiation.content.NegotiationContext context,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
             @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
         return negotiationContentService.generateAbortFromText(text, context, templateUri);
@@ -503,6 +503,8 @@ public final class A2ATClient {
      * retried up to the configured attempt limit on the retryable LLM infrastructure failure code.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code propose}
@@ -517,9 +519,12 @@ public final class A2ATClient {
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateProposePromptAndDataFilling(
-            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
+            @NonNull String prompt,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
-        return negotiationContentService.validateProposePromptAndDataFilling(prompt, schema, templateUri);
+        return negotiationContentService.validateProposePromptAndDataFilling(prompt, context, schema, templateUri);
     }
 
     /**
@@ -530,6 +535,8 @@ public final class A2ATClient {
      * satisfy the accept-phase semantic constraints.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code accept-reject}
@@ -544,9 +551,12 @@ public final class A2ATClient {
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateAcceptPromptAndDataFilling(
-            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
+            @NonNull String prompt,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
-        return negotiationContentService.validateAcceptPromptAndDataFilling(prompt, schema, templateUri);
+        return negotiationContentService.validateAcceptPromptAndDataFilling(prompt, context, schema, templateUri);
     }
 
     /**
@@ -557,6 +567,8 @@ public final class A2ATClient {
      * satisfy the reject-phase semantic constraints.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code accept-reject}
@@ -571,9 +583,12 @@ public final class A2ATClient {
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateRejectPromptAndDataFilling(
-            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
+            @NonNull String prompt,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
-        return negotiationContentService.validateRejectPromptAndDataFilling(prompt, schema, templateUri);
+        return negotiationContentService.validateRejectPromptAndDataFilling(prompt, context, schema, templateUri);
     }
 
     /**
@@ -584,6 +599,8 @@ public final class A2ATClient {
      * abort-phase semantic constraints.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
      * @return filled parameter data carrying the context parameters and the extracted parameters
@@ -598,8 +615,11 @@ public final class A2ATClient {
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateAbortPromptAndDataFilling(
-            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
+            @NonNull String prompt,
+            net.openan.a2at.sdk.core.model.NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(templateUri, "templateUri");
-        return negotiationContentService.validateAbortPromptAndDataFilling(prompt, schema, templateUri);
+        return negotiationContentService.validateAbortPromptAndDataFilling(prompt, context, schema, templateUri);
     }
 }

@@ -10,11 +10,4 @@ public record NegotiationEvaluationCase(
         String text,
         String completedPrompt,
         Map<String, Object> expected) {
-
-    public String renderCompletedPrompt(String contextId, int round, int maxRounds) {
-        return completedPrompt
-                .replace("{{id}}", contextId)
-                .replace("{{round}}", Integer.toString(round))
-                .replace("{{maxRounds}}", Integer.toString(maxRounds));
-    }
 }

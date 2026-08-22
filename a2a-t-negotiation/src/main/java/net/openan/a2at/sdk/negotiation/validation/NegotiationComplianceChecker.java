@@ -1,31 +1,26 @@
 package net.openan.a2at.sdk.negotiation.validation;
 
-import net.openan.a2at.sdk.negotiation.content.Vocabulary;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 
 /**
- * Rule-level compliance checker for rendered negotiation messages.
+ * Rule-level compliance checker for negotiation messages.
  *
- * <p>The checker is deterministic and never calls an LLM. It splits the text into {@code ## } sections, recognises
- * whether the text is a negotiation message by the presence of the negotiation context section, and validates only the
- * strong constraints of that section: the id must be a UUID in 8-4-4-4-12 hexadecimal form, the round and the round
- * budget must be positive integers, and the round must not exceed the budget. Type inference, conclusion values,
- * ending-section presence and conditional-section exclusivity are deliberately not checked here; they belong to the
- * semantic validation step.
+ * <p>The checker is deterministic and never calls an LLM. It validates only the strong constraints of the negotiation
+ * context carried alongside the message: the id must be a UUID in 8-4-4-4-12 hexadecimal form and the round must not
+ * exceed the round budget. The positive-integer shape of the round fields is already guaranteed by the
+ * {@link NegotiationContext} constructor. Type inference, conclusion values, ending-section presence and
+ * conditional-section exclusivity are deliberately not checked here; they belong to the semantic validation step.
  *
  * @since 2026-08
  */
 public interface NegotiationComplianceChecker {
 
     /**
-     * Runs the rule-level compliance check of one rendered message.
+     * Runs the rule-level compliance check of one negotiation context.
      *
-     * @param prompt rendered negotiation message text; a null or empty text is reported as not being a negotiation
-     *     message
-     * @param vocabulary vocabulary supplying the language-specific section titles of the message
-     * @return rule check outcome carrying the pass flag, the negotiation recognition flag, the structured errors and
-     *     the parsed context
-     * @throws NullPointerException if the vocabulary is null
+     * @param context negotiation context carried alongside the message in the A2A-T metadata
+     * @return rule check outcome carrying the pass flag and the structured errors
+     * @throws NullPointerException if the context is null
      */
-    NegotiationRuleCheckResult check(String prompt, Vocabulary vocabulary);
-
+    NegotiationRuleCheckResult check(NegotiationContext context);
 }

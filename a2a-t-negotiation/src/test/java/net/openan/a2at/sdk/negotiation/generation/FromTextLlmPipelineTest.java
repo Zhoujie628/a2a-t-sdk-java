@@ -31,7 +31,7 @@ import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
@@ -119,10 +119,17 @@ class FromTextLlmPipelineTest {
         assertEquals(fromData.promptText(), fromText.promptText());
         assertEquals(readGoldenFixture(goldenCase, ZH_CN), fromText.promptText());
 
-        Map<String, String> metadata = fromText.buildMetadataContent();
-        assertEquals(2, metadata.size());
+        Map<String, Object> metadata = fromText.buildMetadataContent();
+        assertEquals(3, metadata.size());
         assertEquals(fromText.promptText(), metadata.get(fromText.extensionUri()));
         assertEquals(fromText.templateUri(), metadata.get(MetadataContent.TEMPLATE_URI_METADATA_KEY));
+        assertEquals(goldenCase.context(), fromText.negotiationContext());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> nestedContext =
+                (Map<String, Object>) metadata.get(MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY);
+        assertEquals(goldenCase.context().id(), nestedContext.get("id"));
+        assertEquals(goldenCase.context().round(), nestedContext.get("round"));
+        assertEquals(goldenCase.context().maxRounds(), nestedContext.get("maxRounds"));
 
         assertEquals(
                 2, llm.lastMessages.size(), "the extraction step must be a single system-plus-user message exchange");
@@ -508,6 +515,7 @@ class FromTextLlmPipelineTest {
 
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                 message.promptText(),
+                goldenCase.context(),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                 goldenCase.template());
 
@@ -519,8 +527,8 @@ class FromTextLlmPipelineTest {
     }
 
     /**
-     * IT-B-008: the negotiation context of the rendered message comes from the caller-supplied context: the extraction
-     * schema sent to the LLM has no context fields and the output carries exactly the caller's context values.
+     * IT-B-008: the negotiation context of the generated message comes from the caller-supplied context: the
+     * extraction schema sent to the LLM has no context fields and the metadata carries exactly the caller's context.
      */
     @Test
     void contextIsInjectedFromTheCallerWithoutAnyLlmInvolvement() {
@@ -536,10 +544,10 @@ class FromTextLlmPipelineTest {
         assertFalse(schemaProperties.containsKey("id"), "the extraction schema must not ask for the context id");
         assertFalse(schemaProperties.containsKey("round"), "the extraction schema must not ask for the round");
         assertFalse(schemaProperties.containsKey("maxRounds"), "the extraction schema must not ask for the limit");
-        String promptText = result.promptText();
-        assertTrue(promptText.contains("- id: " + GoldenInputs.SESSION_ID));
-        assertTrue(promptText.contains("- round: 4"));
-        assertTrue(promptText.contains("- maxRounds: 7"));
+        assertEquals(context, result.negotiationContext(), "the caller context travels in the metadata");
+        assertFalse(
+                result.promptText().contains("- id: " + GoldenInputs.SESSION_ID),
+                "the context lines must not be rendered into the message");
     }
 
     private static NegotiationGenerationOrchestrator orchestrator(

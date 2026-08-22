@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 
@@ -32,7 +32,6 @@ final class InformationEndingGenerator extends AbstractNegotiationGenerator {
         InformationEndingContent endingContent = contentOf(content, InformationEndingContent.class, "Information ending generator");
         renderableConclusion(endingContent.conclusion());
         Map<String, String> slots = new LinkedHashMap<>();
-        slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(
                 vocabulary.get("slot.info_conclusion"),
                 endingContent.conclusion().literal());

@@ -25,7 +25,7 @@ import net.openan.a2at.sdk.llm.LLMRuntimeError;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
@@ -107,7 +107,7 @@ class A2ATClientNegotiationEnvConfigTest {
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE);
 
-        assertTrue(result.promptText().contains("协商上下文"), "the zh-CN language must select the Chinese templates");
+        assertTrue(result.promptText().contains("所需信息项"), "the zh-CN language must select the Chinese templates");
         assertTrue(
                 result.promptText().contains(CUSTOM_TEMPLATE_MARKER),
                 "the local resource root template must win over the built-in template");
@@ -139,7 +139,7 @@ class A2ATClientNegotiationEnvConfigTest {
                         new InformationProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
                 INFORMATION_PROPOSE);
 
-        assertTrue(result.promptText().contains("Negotiation Context"), "the default language must be en-US");
+        assertTrue(result.promptText().contains("## Information Negotiation"), "the default language must be en-US");
         assertTrue(result.promptText().contains("Required Information Items"));
         assertEquals(7, client.getNegotiationPrompts().size(), "the built-in resources must be used by default");
         assertTrue(client.getNegotiationPrompt(INFORMATION_PROPOSE).isPresent());

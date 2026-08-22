@@ -21,7 +21,7 @@ import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.A2ATParamExtractionError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.server.A2ATServer;
 
 /**
@@ -110,8 +110,8 @@ public final class NegotiationQwenEvaluationMain {
         result.put("expected_propose", testCase.expectedPropose());
         result.put("expected_ending", testCase.expectedEnding());
         NegotiationContext context = new NegotiationContext(UUID.randomUUID().toString(), 1, 3);
-        result.put("client_supplement", testCase.clientSupplement(context.id(), context.round(), context.maxRounds()));
-        result.put("ending_input", testCase.endingGenerationText(context.id(), context.round(), context.maxRounds()));
+        result.put("client_supplement", testCase.clientSupplement());
+        result.put("ending_input", testCase.endingGenerationText());
         result.put("actual_propose", null);
         result.put("actual_ending", null);
         result.put("propose_generation_succeeded", false);
@@ -129,7 +129,7 @@ public final class NegotiationQwenEvaluationMain {
             result.put("propose_generation_succeeded", true);
             result.put("generated_propose_prompt", propose.promptText());
             FilledParamData proposeFilled = validateProposeWithLog(
-                    server, testCase, propose.promptText(), runId, processLogger, apiTrace);
+                    server, testCase, propose.promptText(), context, runId, processLogger, apiTrace);
             result.put("propose_validation_succeeded", true);
             result.put("actual_propose", proposeFilled.data());
             boolean proposeMatched = expectedValuesMatch(testCase.expectedPropose(), proposeFilled.data());
@@ -143,7 +143,7 @@ public final class NegotiationQwenEvaluationMain {
             result.put("ending_generation_succeeded", true);
             result.put("generated_ending_prompt", ending.promptText());
             FilledParamData endingFilled = validateEndingWithLog(
-                    client, testCase, ending.promptText(), runId, processLogger, apiTrace);
+                    client, testCase, ending.promptText(), responseContext, runId, processLogger, apiTrace);
             result.put("ending_validation_succeeded", true);
             result.put("actual_ending", endingFilled.data());
             boolean endingMatched = expectedValuesMatch(testCase.expectedEnding(), endingFilled.data());
@@ -190,6 +190,7 @@ public final class NegotiationQwenEvaluationMain {
             A2ATServer server,
             NegotiationEvaluationFlowCase testCase,
             String prompt,
+            NegotiationContext context,
             String runId,
             NegotiationEvaluationProcessLogger processLogger,
             List<Map<String, Object>> apiTrace) throws IOException {
@@ -197,7 +198,7 @@ public final class NegotiationQwenEvaluationMain {
         Map<String, Object> schema = InformationNegotiationSchemas.propose();
         try {
             FilledParamData filled = server.validateProposePromptAndDataFilling(
-                    prompt, schema, NegotiationSampleFlow.PROPOSE_TEMPLATE_URI);
+                    prompt, context, schema, NegotiationSampleFlow.PROPOSE_TEMPLATE_URI);
             writeStage(processLogger, apiTrace, stageEvent(runId, testCase, "validate_propose_and_fill", "propose", null, Map.of(
                     "prompt", prompt,
                     "schema", schema,
@@ -221,7 +222,7 @@ public final class NegotiationQwenEvaluationMain {
             List<Map<String, Object>> apiTrace) throws IOException {
         long startedAt = System.nanoTime();
         try {
-            String endingInput = testCase.endingGenerationText(context.id(), context.round(), context.maxRounds());
+            String endingInput = testCase.endingGenerationText();
             MetadataContent content = "accept".equals(testCase.decision())
                     ? server.generateNegotiationAcceptPromptFromText(
                             endingInput, context, NegotiationSampleFlow.ENDING_TEMPLATE_URI)
@@ -229,16 +230,16 @@ public final class NegotiationQwenEvaluationMain {
                             endingInput, context, NegotiationSampleFlow.ENDING_TEMPLATE_URI);
             writeStage(processLogger, apiTrace, stageEvent(runId, testCase, "generate_" + testCase.decision(), testCase.decision(), context,
                     Map.of("text", endingInput,
-                            "client_supplement", testCase.clientSupplement(context.id(), context.round(), context.maxRounds()),
+                            "client_supplement", testCase.clientSupplement(),
                             "template_uri", NegotiationSampleFlow.ENDING_TEMPLATE_URI.uri()),
                     Map.of("prompt", content.promptText(), "template_uri", content.templateUri(),
                             "extension_uri", content.extensionUri()), startedAt, null));
             return content;
         } catch (RuntimeException exception) {
-            String endingInput = testCase.endingGenerationText(context.id(), context.round(), context.maxRounds());
+            String endingInput = testCase.endingGenerationText();
             writeStage(processLogger, apiTrace, stageEvent(runId, testCase, "generate_" + testCase.decision(), testCase.decision(), context,
                     Map.of("text", endingInput,
-                            "client_supplement", testCase.clientSupplement(context.id(), context.round(), context.maxRounds()),
+                            "client_supplement", testCase.clientSupplement(),
                             "template_uri", NegotiationSampleFlow.ENDING_TEMPLATE_URI.uri()), null, startedAt, exception));
             throw exception;
         }
@@ -248,6 +249,7 @@ public final class NegotiationQwenEvaluationMain {
             A2ATClient client,
             NegotiationEvaluationFlowCase testCase,
             String prompt,
+            NegotiationContext context,
             String runId,
             NegotiationEvaluationProcessLogger processLogger,
             List<Map<String, Object>> apiTrace) throws IOException {
@@ -257,8 +259,10 @@ public final class NegotiationQwenEvaluationMain {
                 : InformationNegotiationSchemas.reject();
         try {
             FilledParamData filled = "accept".equals(testCase.decision())
-                    ? client.validateAcceptPromptAndDataFilling(prompt, schema, NegotiationSampleFlow.ENDING_TEMPLATE_URI)
-                    : client.validateRejectPromptAndDataFilling(prompt, schema, NegotiationSampleFlow.ENDING_TEMPLATE_URI);
+                    ? client.validateAcceptPromptAndDataFilling(
+                            prompt, context, schema, NegotiationSampleFlow.ENDING_TEMPLATE_URI)
+                    : client.validateRejectPromptAndDataFilling(
+                            prompt, context, schema, NegotiationSampleFlow.ENDING_TEMPLATE_URI);
             writeStage(processLogger, apiTrace, stageEvent(runId, testCase, "validate_" + testCase.decision() + "_and_fill",
                     testCase.decision(), null, Map.of("prompt", prompt, "schema", schema,
                             "template_uri", NegotiationSampleFlow.ENDING_TEMPLATE_URI.uri()),

@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 
@@ -38,7 +38,6 @@ final class FeasibilityEndingGenerator extends AbstractNegotiationGenerator {
                 "content.feasibilitySummary",
                 "Feasibility summary of a terminal feasibility negotiation message");
         Map<String, String> slots = new LinkedHashMap<>();
-        slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(
                 vocabulary.get("slot.feasibility_conclusion"),
                 endingContent.conclusion().literal());

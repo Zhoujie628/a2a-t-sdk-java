@@ -14,7 +14,7 @@ import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -49,6 +49,7 @@ class InformationNegotiationScenarioTest {
                 NegotiationParamExtractionException.class,
                 () -> responder.validateProposePromptAndDataFilling(
                         "A task prompt describing an energy-saving optimization without any negotiation section.",
+                        null,
                         parameterSchema(),
                         INFORMATION_PROPOSE_URI));
         assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, notNegotiable.getCode());
@@ -69,10 +70,10 @@ class InformationNegotiationScenarioTest {
                 INFORMATION_PROPOSE_URI);
         assertTrue(request.promptText().contains("## 所需信息项"));
         assertTrue(request.promptText().contains("1. 节能区域信息：如松山湖"));
-        assertTrue(request.promptText().contains("- round: 1"));
+        assertEquals(1, request.negotiationContext().round());
 
         FilledParamData requestParameters = responder.validateProposePromptAndDataFilling(
-                request.promptText(), parameterSchema(), INFORMATION_PROPOSE_URI);
+                request.promptText(), round, parameterSchema(), INFORMATION_PROPOSE_URI);
         assertEquals(1, responderLlm.callCount());
         assertEquals(SESSION_ID, requestParameters.data().get("id"));
         assertEquals(1, requestParameters.data().get("round"));
@@ -91,10 +92,11 @@ class InformationNegotiationScenarioTest {
         assertTrue(answer.promptText().contains("## 信息协商结果\nAccept"));
         assertTrue(answer.promptText().contains("## 信息协商结果内容"));
         assertTrue(answer.promptText().contains("1. 节能区域信息：松山湖"));
-        assertTrue(answer.promptText().contains("- round: 1"), "the terminal answer shares the round of the request");
+        assertEquals(1, answer.negotiationContext().round(), "the terminal answer shares the round of the request");
 
         FilledParamData answerParameters =
-                requester.validateAcceptPromptAndDataFilling(answer.promptText(), parameterSchema(), INFORMATION_ACCEPT_URI);
+                requester.validateAcceptPromptAndDataFilling(
+                        answer.promptText(), round, parameterSchema(), INFORMATION_ACCEPT_URI);
         assertEquals(1, requesterLlm.callCount());
         assertEquals(SESSION_ID, answerParameters.data().get("id"));
         assertEquals(1, answerParameters.data().get("round"));

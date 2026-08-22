@@ -23,7 +23,6 @@ class VocabularyTest {
     Path localRoot;
 
     private static final Set<String> CANONICAL_KEYS = Set.of(
-            "section.context",
             "section.termination_reason",
             "section.info_items",
             "section.info_static",
@@ -40,7 +39,6 @@ class VocabularyTest {
             "section.feasibility_infeasible",
             "section.feasibility_conclusion",
             "section.feasibility_confirm",
-            "slot.context",
             "slot.termination_reason",
             "slot.info_items",
             "slot.info_conclusion",
@@ -68,8 +66,8 @@ class VocabularyTest {
         assertEquals(CANONICAL_KEYS, enUs.canonicalKeys());
         assertEquals(Set.copyOf(Vocabulary.CANONICAL_KEYS), zhCn.canonicalKeys());
         assertEquals(new TreeSet<>(zhCn.canonicalKeys()), new TreeSet<>(enUs.canonicalKeys()));
-        assertEquals(35, zhCn.canonicalKeys().size());
-        assertEquals(35, Vocabulary.CANONICAL_KEYS.size());
+        assertEquals(33, zhCn.canonicalKeys().size());
+        assertEquals(33, Vocabulary.CANONICAL_KEYS.size());
     }
 
     @Test
@@ -88,9 +86,7 @@ class VocabularyTest {
         Vocabulary zhCn = Vocabulary.forLanguage("zh-CN");
         Vocabulary enUs = Vocabulary.forLanguage("en-US");
 
-        // The context placeholder is snake_case for en-US and the matching CJK section title for zh-CN.
-        assertEquals("协商上下文", zhCn.get("slot.context"));
-        assertEquals("negotiation_context", enUs.get("slot.context"));
+        // The placeholders are snake_case for en-US and the matching CJK section title for zh-CN.
         assertEquals("意图理解陈述", zhCn.get("slot.target_intent"));
         assertEquals("intent_understanding_statement", enUs.get("slot.target_intent"));
     }
@@ -113,8 +109,6 @@ class VocabularyTest {
         Vocabulary zhCn = Vocabulary.forLanguage("zh-CN");
         Vocabulary enUs = Vocabulary.forLanguage("en-US");
 
-        assertEquals("协商上下文", zhCn.get("section.context"));
-        assertEquals("Negotiation Context", enUs.get("section.context"));
         assertEquals("目标协商结果内容", zhCn.get("section.target_result_content"));
         assertEquals("Target Negotiation Result Content", enUs.get("section.target_result_content"));
         assertEquals("可行性评估结果确认", zhCn.get("section.feasibility_confirm"));
@@ -159,12 +153,12 @@ class VocabularyTest {
     @Test
     void localVocabularyWinsOverTheClasspathOne() throws IOException {
         Map<String, String> entries = classpathEntriesOf("zh-CN");
-        entries.put("section.context", "自定义协商上下文");
+        entries.put("section.termination_reason", "自定义终止原因");
         writeLocalVocabulary("zh-CN", entries);
 
         Vocabulary overridden = Vocabulary.forLanguage("zh-CN", localRoot);
 
-        assertEquals("自定义协商上下文", overridden.get("section.context"));
+        assertEquals("自定义终止原因", overridden.get("section.termination_reason"));
         assertEquals(Vocabulary.forLanguage("zh-CN").get("punct.list_colon"), overridden.get("punct.list_colon"));
         assertEquals(Vocabulary.forLanguage("zh-CN").canonicalKeys(), overridden.canonicalKeys());
         assertEquals("zh-CN", overridden.language());
@@ -174,7 +168,7 @@ class VocabularyTest {
     void localRootWithoutAVocabularyFallsBackToTheClasspath() {
         Vocabulary fallback = Vocabulary.forLanguage("en-US", localRoot);
 
-        assertEquals(Vocabulary.forLanguage("en-US").get("slot.context"), fallback.get("slot.context"));
+        assertEquals(Vocabulary.forLanguage("en-US").get("slot.target_intent"), fallback.get("slot.target_intent"));
         assertEquals(Vocabulary.forLanguage("en-US").canonicalKeys(), fallback.canonicalKeys());
     }
 

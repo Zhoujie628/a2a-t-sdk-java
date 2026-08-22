@@ -13,7 +13,7 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -257,6 +257,8 @@ public final class NegotiationContentService {
      * Validates a propose-phase negotiation message and extracts its parameters.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI whose phase segment must be {@code propose}
      * @return filled parameter data carrying the context parameters and the extracted parameters
@@ -268,14 +270,19 @@ public final class NegotiationContentService {
      *     fails
      */
     public FilledParamData validateProposePromptAndDataFilling(
-            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
-        return orchestrator.validateProposePromptAndDataFilling(prompt, schema, templateUri);
+            String prompt,
+            @Nullable NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
+        return orchestrator.validateProposePromptAndDataFilling(prompt, context, schema, templateUri);
     }
 
     /**
      * Validates an accept-phase negotiation message and extracts its parameters.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
@@ -287,14 +294,19 @@ public final class NegotiationContentService {
      *     fails
      */
     public FilledParamData validateAcceptPromptAndDataFilling(
-            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
-        return orchestrator.validateAcceptPromptAndDataFilling(prompt, schema, templateUri);
+            String prompt,
+            @Nullable NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
+        return orchestrator.validateAcceptPromptAndDataFilling(prompt, context, schema, templateUri);
     }
 
     /**
      * Validates a reject-phase negotiation message and extracts its parameters.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI whose phase segment must be {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
@@ -306,14 +318,19 @@ public final class NegotiationContentService {
      *     fails
      */
     public FilledParamData validateRejectPromptAndDataFilling(
-            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
-        return orchestrator.validateRejectPromptAndDataFilling(prompt, schema, templateUri);
+            String prompt,
+            @Nullable NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
+        return orchestrator.validateRejectPromptAndDataFilling(prompt, context, schema, templateUri);
     }
 
     /**
      * Validates an abort negotiation message and extracts its parameters.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
+     *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
      * @return filled parameter data carrying the context parameters and the extracted parameters
@@ -322,7 +339,10 @@ public final class NegotiationContentService {
      * @throws NegotiationParamExtractionException when the validation pipeline fails
      */
     public FilledParamData validateAbortPromptAndDataFilling(
-            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
-        return orchestrator.validateAbortPromptAndDataFilling(prompt, schema, templateUri);
+            String prompt,
+            @Nullable NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
+        return orchestrator.validateAbortPromptAndDataFilling(prompt, context, schema, templateUri);
     }
 }

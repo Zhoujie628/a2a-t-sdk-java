@@ -22,7 +22,7 @@ import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -172,7 +172,7 @@ class NegotiationLogEventContractTest {
         orchestrator.generateProposeFromText(
                 "free text containing " + inputMarker, new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
-                generated.promptText(), Map.of("type", "object"), INFORMATION_PROPOSE_URI);
+                generated.promptText(), new NegotiationContext(UUID, 1, 5), Map.of("type", "object"), INFORMATION_PROPOSE_URI);
         assertTrue(filled.data().containsValue(paramValueMarker));
 
         List<ILoggingEvent> infoAndHigher = appender.list.stream()
@@ -243,7 +243,7 @@ class NegotiationLogEventContractTest {
                         new NegotiationContext(UUID, 1, 5),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_URI);
-        assertTrue(result.promptText().contains("协商上下文"));
+        assertEquals(new NegotiationContext(UUID, 1, 5), result.negotiationContext());
     }
 
     private void driveSuccessfulGenerationFromText() {
@@ -299,7 +299,7 @@ class NegotiationLogEventContractTest {
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_URI);
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
-                message.promptText(), Map.of("type", "object"), INFORMATION_PROPOSE_URI);
+                message.promptText(), new NegotiationContext(UUID, 1, 5), Map.of("type", "object"), INFORMATION_PROPOSE_URI);
         assertEquals(UUID, filled.data().get("id"));
     }
 
@@ -313,7 +313,8 @@ class NegotiationLogEventContractTest {
                 .build();
         try {
             orchestrator.validateProposePromptAndDataFilling(
-                    "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
+                    "## 所需信息项\n1. 区域\n",
+                    new NegotiationContext(UUID, 1, 5),
                     Map.of("type", "object"),
                     INFORMATION_PROPOSE_URI);
         } catch (NegotiationParamExtractionException expected) {
@@ -328,7 +329,8 @@ class NegotiationLogEventContractTest {
                 .build();
         try {
             orchestrator.validateProposePromptAndDataFilling(
-                    "## 协商上下文\n- id: " + UUID + "\n- round: 9\n- maxRounds: 5",
+                    "## 所需信息项\n1. 区域\n",
+                    new NegotiationContext(UUID, 9, 5),
                     Map.of("type", "object"),
                     INFORMATION_PROPOSE_URI);
         } catch (NegotiationParamExtractionException expected) {

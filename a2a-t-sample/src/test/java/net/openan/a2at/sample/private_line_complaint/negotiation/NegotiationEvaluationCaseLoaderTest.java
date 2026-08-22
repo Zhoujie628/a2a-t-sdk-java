@@ -50,8 +50,8 @@ class NegotiationEvaluationCaseLoaderTest {
         assertEquals(50, flows.stream().filter(flow -> flow.decision().equals("reject")).count());
         assertTrue(flows.stream().allMatch(flow -> flow.proposeCase().phase().equals("propose")));
         assertTrue(flows.stream().allMatch(flow -> flow.endingCase().phase().equals(flow.decision())));
-        assertTrue(flows.stream().allMatch(flow -> flow.clientSupplement("context", 1, 3)
-                .contains("## 客户端补充信息")));
+        assertTrue(flows.stream().allMatch(flow -> flow.clientSupplement().contains("## 客户端补充信息")));
+        assertTrue(flows.stream().noneMatch(flow -> flow.clientSupplement().contains("协商上下文")));
     }
 
     @Test
@@ -66,14 +66,12 @@ class NegotiationEvaluationCaseLoaderTest {
     }
 
     @Test
-    void rendersCompletedPromptsWithTheRuntimeNegotiationContext() {
+    void completedPromptsCarryNoNegotiationContextSection() {
         var cases = NegotiationEvaluationCaseLoader.load();
 
         for (NegotiationEvaluationCase testCase : cases) {
-            String prompt = testCase.renderCompletedPrompt("case-context", 2, 4);
-            assertTrue(prompt.contains("- id: case-context"), testCase.id());
-            assertTrue(prompt.contains("- round: 2"), testCase.id());
-            assertTrue(prompt.contains("- maxRounds: 4"), testCase.id());
+            String prompt = testCase.completedPrompt();
+            assertTrue(!prompt.contains("协商上下文"), testCase.id());
             assertTrue(!prompt.contains("{{"), testCase.id());
             assertTrue(prompt.contains(testCase.phase().equals("propose")
                     ? "## 信息协商\n"
@@ -87,7 +85,6 @@ class NegotiationEvaluationCaseLoaderTest {
                 && !testCase.text().isBlank()
                 && testCase.completedPrompt() != null
                 && !testCase.completedPrompt().isBlank()
-                && testCase.completedPrompt().contains("{{id}}")
                 && testCase.expected() != null
                 && !testCase.expected().isEmpty()
                 && expectedKeys(testCase.phase()).equals(testCase.expected().keySet());
