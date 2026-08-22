@@ -1,8 +1,10 @@
 package net.openan.a2at.sdk.negotiation.content;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -30,8 +32,12 @@ import org.jspecify.annotations.Nullable;
  * <p>The values are file-driven: each language resolves {@code negotiation-vocabulary/{language}/vocabulary.json}
  * from a dual-root fallback — a file under the optional local resource root wins, otherwise the built-in classpath
  * resource is used. Both origins are validated against the pinned {@link #CANONICAL_KEYS} set, and a vocabulary that
- * exists nowhere, cannot be read, is malformed or drifts from the canonical key set fails fast instead of silently
- * degrading.
+ * exists nowhere, cannot be read, is malformed (including duplicate JSON keys or blank values) or drifts from the
+ * canonical key set fails fast instead of silently degrading.
+ *
+ * <p>Caching mirrors the template-override regime: the built-in classpath vocabulary is resolved once per JVM and
+ * context classloader (jar bytes are immutable), while a local resource root is re-resolved on every call so that
+ * overriding, editing or removing a local vocabulary file takes effect immediately.
  *
  * @since 2026-06
  */
@@ -43,7 +49,9 @@ public final class Vocabulary {
 
     private static final String CLASSPATH_ROOT = "prompt_resources/" + VOCABULARY_DIRECTORY + "/";
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
+            .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+            .build();
 
     private static final ConcurrentHashMap<CacheKey, Vocabulary> CACHE = new ConcurrentHashMap<>();
 
@@ -113,6 +121,10 @@ public final class Vocabulary {
      * vocabulary.json} is used. A null or otherwise absent local root simply means the classpath is consulted. Both
      * origins must define exactly the canonical key set.
      *
+     * <p>Caching mirrors the template-override regime: the classpath vocabulary is resolved once per JVM and context
+     * classloader (jar bytes are immutable), while a non-null local root is re-resolved on every call so overriding,
+     * editing or removing the local file takes effect immediately.
+     *
      * @param language locale identifier such as {@code zh-CN} or {@code en-US}
      * @param localRootDir local prompt resource root containing the {@code negotiation-vocabulary/} tree; null
      *     disables local vocabulary overrides
@@ -126,8 +138,12 @@ public final class Vocabulary {
                     "Negotiation vocabulary language must be a non-blank simple path segment but was " + language
                             + ".");
         }
-        CacheKey cacheKey = new CacheKey(language, normalizeRoot(localRootDir));
-        return CACHE.computeIfAbsent(cacheKey, key -> load(key.language, key.localRootDir));
+        Path normalizedRoot = normalizeRoot(localRootDir);
+        if (normalizedRoot != null) {
+            return load(language, normalizedRoot);
+        }
+        CacheKey cacheKey = new CacheKey(language, Thread.currentThread().getContextClassLoader());
+        return CACHE.computeIfAbsent(cacheKey, key -> load(key.language, null));
     }
 
     /**
@@ -212,7 +228,10 @@ public final class Vocabulary {
         try {
             root = OBJECT_MAPPER.readTree(payload);
         } catch (JsonProcessingException exception) {
-            throw malformed(language, origin, "it is not valid JSON", exception);
+            String detail = exception.getMessage() != null && exception.getMessage().contains("Duplicate field")
+                    ? "it contains duplicate keys"
+                    : "it is not valid JSON";
+            throw malformed(language, origin, detail, exception);
         }
         if (root == null || !root.isObject()) {
             throw malformed(language, origin, "it is not a flat JSON object of string values", null);
@@ -223,7 +242,11 @@ public final class Vocabulary {
             if (!value.isTextual()) {
                 throw malformed(language, origin, "the value of key '" + field.getKey() + "' is not a string", null);
             }
-            entries.put(field.getKey(), value.textValue());
+            String text = value.textValue();
+            if (text.isBlank()) {
+                throw malformed(language, origin, "the value of key '" + field.getKey() + "' is blank", null);
+            }
+            entries.put(field.getKey(), text);
         });
         validateCanonicalKeys(language, entries, origin);
         return new Vocabulary(language, Collections.unmodifiableMap(entries));
@@ -254,5 +277,5 @@ public final class Vocabulary {
         return exception;
     }
 
-    private record CacheKey(String language, @Nullable Path localRootDir) {}
+    private record CacheKey(String language, @Nullable ClassLoader contextClassLoader) {}
 }

@@ -132,12 +132,22 @@ def lint_pair(template_path: Path, schema_path: Path) -> list[str]:
     return errors
 
 
+def _reject_duplicate_keys(pairs: list[tuple[str, str]]) -> dict[str, str]:
+    seen: set[str] = set()
+    for key, _ in pairs:
+        if key in seen:
+            raise ValueError(f"duplicate key '{key}'")
+        seen.add(key)
+    return dict(pairs)
+
+
 def load_negotiation_vocabularies(resource_root: Path) -> tuple[dict[str, dict[str, str]], list[str]]:
     """Loads negotiation-vocabulary/{lang}/vocabulary.json for both languages from the resource root.
 
     The vocabulary files are the single source of the Negotiation-T section titles and slot marker names; the tables
-    are no longer hardcoded here. Both language files must exist, parse into a flat string-to-string object, expose
-    identical key sets, and carry every section.*/slot.* key the template profiles reference.
+    are no longer hardcoded here. Both language files must exist, parse into a flat string-to-string object without
+    duplicate keys or blank values, expose identical key sets, and carry every section.*/slot.* key the template
+    profiles reference.
     """
     vocabulary_root = resource_root / "negotiation-vocabulary"
     if not vocabulary_root.is_dir():
@@ -152,12 +162,18 @@ def load_negotiation_vocabularies(resource_root: Path) -> tuple[dict[str, dict[s
     for language in NEGOTIATION_LANGUAGES:
         path = vocabulary_root / language / "vocabulary.json"
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            data = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
             errors.append(error(path, 1, "negotiation-vocabulary", f"Cannot load negotiation vocabulary: {exc}"))
             continue
         if not isinstance(data, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in data.items()):
             errors.append(error(path, 1, "negotiation-vocabulary", "Vocabulary must be a flat JSON object mapping keys to strings."))
+            continue
+        blank_keys = sorted(key for key, value in data.items() if not value.strip())
+        if blank_keys:
+            errors.append(
+                error(path, 1, "negotiation-vocabulary-blank-value", f"Blank values are not allowed: {', '.join(blank_keys)}.")
+            )
             continue
         vocabularies[language] = data
     if len(vocabularies) == len(NEGOTIATION_LANGUAGES):
