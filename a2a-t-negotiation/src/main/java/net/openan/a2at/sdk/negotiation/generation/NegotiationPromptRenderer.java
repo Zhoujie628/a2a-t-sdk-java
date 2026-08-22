@@ -20,7 +20,7 @@ import net.openan.a2at.sdk.prompt.taskrendering.SectionedTemplateRenderer;
  * null template text with the internal {@link NegotiationRenderException} instead of a {@code NullPointerException},
  * so the orchestration layer wraps the failure into a typed negotiation generation failure rather than letting it leak.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 class NegotiationPromptRenderer implements SectionedTemplateRenderer {
 

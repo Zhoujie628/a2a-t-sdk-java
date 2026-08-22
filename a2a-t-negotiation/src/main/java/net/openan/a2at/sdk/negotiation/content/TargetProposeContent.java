@@ -11,7 +11,7 @@ import java.util.List;
  * @param alignmentAndClarification alignment statements and clarifications; null or empty omits the section (later
  *     rounds only)
  * @param requestForClarification open clarification requests; null or empty omits the section
- * @since 2026-06
+ * @since 2026-08
  */
 public record TargetProposeContent(
         String targetNegotiationDescription,

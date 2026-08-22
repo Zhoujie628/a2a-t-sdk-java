@@ -7,7 +7,7 @@ import net.openan.a2at.sdk.core.model.SlotValidationError;
 /**
  * Raised when validating a negotiation message and extracting parameters from it fails.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public class NegotiationParamExtractionException extends A2ATParamExtractionError {
 

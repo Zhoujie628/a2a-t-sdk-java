@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * declared template and the message sections is part of the semantic tasks performed by the LLM and surfaces through
  * the returned errors.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public final class DefaultNegotiationSemanticValidator implements NegotiationSemanticValidator {
 

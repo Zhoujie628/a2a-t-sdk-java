@@ -19,7 +19,7 @@ import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
  * {@link RuleChecker} adapter and a {@link SemanticValidator} adapter bridge the negotiation types to the core
  * validation contracts.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public final class ParamExtractor {
 

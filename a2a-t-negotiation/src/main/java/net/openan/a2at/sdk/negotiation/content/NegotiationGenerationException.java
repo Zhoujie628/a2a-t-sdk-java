@@ -3,7 +3,7 @@ package net.openan.a2at.sdk.negotiation.content;
 /**
  * Raised when generating a negotiation message fails at runtime.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public class NegotiationGenerationException extends NegotiationProcessingException {
 

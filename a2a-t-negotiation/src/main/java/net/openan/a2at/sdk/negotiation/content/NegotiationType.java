@@ -6,7 +6,7 @@ package net.openan.a2at.sdk.negotiation.content;
  * <p>The enum also owns the hyphenated URI segment used both in template URIs and in template resource paths, so that
  * URIs and on-disk locations can never drift apart.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public enum NegotiationType {
 

@@ -23,7 +23,7 @@ import org.slf4j.Logger;
  * language and the optional local resource root (templates and negotiation vocabulary), and each of them can be
  * overridden for testing or customization.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public final class NegotiationGenerationOrchestratorBuilder {
 

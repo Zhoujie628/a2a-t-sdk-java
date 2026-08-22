@@ -8,7 +8,7 @@ package net.openan.a2at.sdk.negotiation.validation;
  * the orchestration layer converts it into a parameter-extraction failure carrying the retryable LLM infrastructure
  * error code.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public class NegotiationValidationException extends RuntimeException {
 

@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * <p>Instances are created through {@link NegotiationGenerationOrchestratorBuilder}; the builder wires the default
  * collaborators and allows overriding each of them.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public final class NegotiationGenerationOrchestrator {
 

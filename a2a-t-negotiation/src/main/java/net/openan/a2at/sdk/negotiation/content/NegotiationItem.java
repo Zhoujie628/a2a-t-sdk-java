@@ -5,6 +5,6 @@ package net.openan.a2at.sdk.negotiation.content;
  *
  * @param name item name such as a field path or identifier; never blank in valid content
  * @param value free-form explanation of the item such as meaning, format, example or reason; may be null
- * @since 2026-06
+ * @since 2026-08
  */
 public record NegotiationItem(String name, String value) {}

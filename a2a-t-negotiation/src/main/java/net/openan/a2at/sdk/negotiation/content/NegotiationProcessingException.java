@@ -10,7 +10,7 @@ import net.openan.a2at.sdk.core.exception.A2ATError;
  * parameter-extraction branch ({@code NegotiationParamExtractionException}) is deliberately not a subtype; catch
  * {@link A2ATError} for full negotiation failure coverage.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public class NegotiationProcessingException extends A2ATError {
 

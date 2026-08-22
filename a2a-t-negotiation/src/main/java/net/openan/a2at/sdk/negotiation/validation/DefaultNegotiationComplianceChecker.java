@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * are applied: the checker does not infer the negotiation type, does not validate conclusion values, does not require
  * ending result sections and does not check conditional-section exclusivity.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public final class DefaultNegotiationComplianceChecker implements NegotiationComplianceChecker {
 

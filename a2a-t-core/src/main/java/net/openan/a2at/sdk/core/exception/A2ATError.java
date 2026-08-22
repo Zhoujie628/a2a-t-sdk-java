@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
  * {@code null}. Caller contract violations (null, blank or otherwise malformed arguments) are programming errors raised
  * as {@link NullPointerException} or {@link IllegalArgumentException} and intentionally stay outside this tree.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public class A2ATError extends RuntimeException {
 

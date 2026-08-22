@@ -14,7 +14,7 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
  * <p>The message carries the terminal conclusion literal and the required feasibility summary. The summary slot name
  * differs from its section title, so the vocabulary exception key is used.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 final class FeasibilityEndingGenerator extends AbstractNegotiationGenerator {
 

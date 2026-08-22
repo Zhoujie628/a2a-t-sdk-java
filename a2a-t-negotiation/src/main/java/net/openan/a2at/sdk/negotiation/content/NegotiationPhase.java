@@ -7,7 +7,7 @@ package net.openan.a2at.sdk.negotiation.content;
  * and {@code reject} share the {@code accept-reject} template, differing only in the conclusion value filled into the
  * template slot.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public enum NegotiationPhase {
 

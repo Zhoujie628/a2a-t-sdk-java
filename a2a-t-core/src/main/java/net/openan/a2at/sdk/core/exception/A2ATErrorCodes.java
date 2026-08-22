@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 /**
  * Centralized machine-readable error code constants shared across A2A-T SDK processing failures.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class A2ATErrorCodes {

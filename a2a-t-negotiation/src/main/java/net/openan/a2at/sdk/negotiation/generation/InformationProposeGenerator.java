@@ -14,7 +14,7 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
  * <p>The message carries the requested information items and, when present, a free-form line describing how the missing
  * items relate to each other, appended after the item list.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 final class InformationProposeGenerator extends AbstractNegotiationGenerator {
 

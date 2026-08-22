@@ -39,7 +39,7 @@ import org.jspecify.annotations.Nullable;
  * context classloader (jar bytes are immutable), while a local resource root is re-resolved on every call so that
  * overriding, editing or removing a local vocabulary file takes effect immediately.
  *
- * @since 2026-06
+ * @since 2026-08
  */
 public final class Vocabulary {
 
