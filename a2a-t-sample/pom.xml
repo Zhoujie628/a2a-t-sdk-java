@@ -130,6 +130,18 @@ ${sample.jar.path}${path.separator}${sample.runtime.classpath}
 net.openan.a2at.sample.subscribe_incident.client.ClientSampleMain
 client.env
 </echo>
+                                <echo file="${project.build.directory}/negotiation-server.javaargs.txt">-cp
+${sample.jar.path}${path.separator}${sample.runtime.classpath}
+net.openan.a2at.sample.private_line_complaint.negotiation.server.NegotiationServerMain
+</echo>
+                                <echo file="${project.build.directory}/negotiation-client.javaargs.txt">-cp
+${sample.jar.path}${path.separator}${sample.runtime.classpath}
+net.openan.a2at.sample.private_line_complaint.negotiation.client.NegotiationClientMain
+</echo>
+                                <echo file="${project.build.directory}/negotiation-qwen-evaluation.javaargs.txt">-cp
+${sample.jar.path}${path.separator}${sample.runtime.classpath}
+net.openan.a2at.sample.private_line_complaint.negotiation.evaluation.NegotiationQwenEvaluationMain
+</echo>
                                 <echo file="${project.build.directory}/negotiation.javaargs.txt">-cp
 ${sample.jar.path}${path.separator}${sample.runtime.classpath}
 net.openan.a2at.sample.negotiation.NegotiationDemoApp

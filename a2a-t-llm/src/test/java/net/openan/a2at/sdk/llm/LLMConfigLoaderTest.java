@@ -35,6 +35,7 @@ class LLMConfigLoaderTest {
         assertNull(config.maxTokens());
         assertNull(config.temperature());
         assertNull(config.timeoutSeconds());
+        assertEquals(false, config.disableSystemProxy());
         assertEquals(300, config.sessionMaxTotal());
         assertEquals(100, config.sessionMaxPerProvider());
     }
@@ -50,6 +51,7 @@ class LLMConfigLoaderTest {
                 A2AT_LLM_MAX_TOKENS=2048
                 A2AT_LLM_TEMPERATURE=0.25
                 A2AT_LLM_TIMEOUT_SECONDS=45.5
+                A2AT_LLM_DISABLE_SYSTEM_PROXY=true
                 A2AT_LLM_HISTORY_WINDOW=20
                 A2AT_LLM_SESSION_MAX_TOTAL=500
                 A2AT_LLM_SESSION_MAX_PER_PROVIDER=50
@@ -61,6 +63,7 @@ class LLMConfigLoaderTest {
         assertEquals(2048, config.maxTokens());
         assertEquals(0.25d, config.temperature());
         assertEquals(45.5d, config.timeoutSeconds());
+        assertEquals(true, config.disableSystemProxy());
         assertEquals(20, config.historyWindow());
         assertEquals(500, config.sessionMaxTotal());
         assertEquals(50, config.sessionMaxPerProvider());
@@ -94,6 +97,20 @@ class LLMConfigLoaderTest {
 
         assertTrue(error.getMessage().contains("A2AT_LLM_MAX_TOKENS"));
         assertTrue(error.getMessage().contains("integer"));
+    }
+
+    @Test
+    void rejectsInvalidDisableSystemProxyValue() throws IOException {
+        Path envFile = writeEnv("""
+                A2AT_LLM_PROVIDER=openai
+                A2AT_LLM_MODEL=gpt-4o-mini
+                A2AT_LLM_API_KEY=sk-test
+                A2AT_LLM_DISABLE_SYSTEM_PROXY=maybe
+                """);
+
+        LLMConfigError error = assertThrows(LLMConfigError.class, () -> LLMConfigLoader.load(envFile));
+
+        assertTrue(error.getMessage().contains("A2AT_LLM_DISABLE_SYSTEM_PROXY"));
     }
 
     @Test
