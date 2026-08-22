@@ -18,6 +18,7 @@ import net.openan.a2at.sdk.core.validation.SemanticValidator;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ValidationResult;
 import net.openan.a2at.sdk.llm.LLMClient;
+import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
 import org.jspecify.annotations.NonNull;
@@ -56,8 +57,8 @@ final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
             @NonNull String language,
             @NonNull PromptResourceAccess promptResourceAccess) {
         this.llmClient = llmClient;
-        this.systemPrompt = promptResourceAccess.loadPrompt("content_validation", language, "system");
-        this.userPromptTemplate = promptResourceAccess.loadPrompt("content_validation", language, "user");
+        this.systemPrompt = promptResourceAccess.loadPrompt("content_validation", language, "system.md");
+        this.userPromptTemplate = promptResourceAccess.loadPrompt("content_validation", language, "user.md");
         this.jsonValueParser = new JacksonJsonValueParser();
     }
 
@@ -75,7 +76,15 @@ final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
         List<Map<String, String>> messages = toStructuredMessages(
                 List.of(new PromptMessage("system", systemPrompt), new PromptMessage("user", userPrompt)));
 
-        LLMResponse response = llmClient.structured(messages, outputSchema, null, null);
+        LLMResponse response;
+        try {
+            response = llmClient.structured(messages, outputSchema, null, null);
+        } catch (LLMError error) {
+            throw new ContentValidationException(
+                    A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR,
+                    "Semantic validation LLM invocation failed: " + error.getMessage(),
+                    error);
+        }
         Map<String, Object> parsed;
         try {
             parsed = jsonValueParser.parseObject(response.content());

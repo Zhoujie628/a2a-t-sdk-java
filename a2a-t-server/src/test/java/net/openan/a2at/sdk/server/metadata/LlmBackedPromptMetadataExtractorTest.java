@@ -27,12 +27,13 @@ class LlmBackedPromptMetadataExtractorTest {
 
     @Test
     void extractResolvesScenarioLoadsTemplateAndReturnsExtractedSlots() {
-        LLMClient llmClient =
-                new RecordingClient("{\"matched\":true,\"scenario_code\":\"subscribe-incident\",\"error_message\":null}");
-        PromptTemplateTextLoader templateLoader = (scenarioCode, language) ->
-                "## notification_topic\n{{notification_topic}}\n";
+        LLMClient llmClient = new RecordingClient(
+                "{\"matched\":true,\"scenario_code\":\"subscribe-incident\",\"error_message\":null}");
+        PromptTemplateTextLoader templateLoader =
+                (scenarioCode, language) -> "## notification_topic\n{{notification_topic}}\n";
         PromptSlotSchemaLoader slotSchemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
-                scenarioCode, List.of(new PromptSlotDefinition(SLOT_NAME, true, "string", null, null, null, null, null)));
+                scenarioCode,
+                List.of(new PromptSlotDefinition(SLOT_NAME, true, "string", null, null, null, null, null, null)));
         PromptSlotValueExtractor slotValueExtractor = (userInput, scenarioCode, language) ->
                 new StructuredSlotExtractionResult(Map.of(SLOT_NAME, "Incident"), List.of());
         LlmBackedPromptMetadataExtractor extractor = new LlmBackedPromptMetadataExtractor(
@@ -78,8 +79,8 @@ class LlmBackedPromptMetadataExtractorTest {
 
     @Test
     void extractReturnsSlotValidationErrorWhenStructuredExtractionReportsSlotErrors() {
-        LLMClient llmClient =
-                new RecordingClient("{\"matched\":true,\"scenario_code\":\"subscribe-incident\",\"error_message\":null}");
+        LLMClient llmClient = new RecordingClient(
+                "{\"matched\":true,\"scenario_code\":\"subscribe-incident\",\"error_message\":null}");
         LlmBackedPromptMetadataExtractor extractor = new LlmBackedPromptMetadataExtractor(
                 new ScenarioRecognizer(llmClient),
                 List.of(new ScenarioDefinition(
@@ -90,7 +91,8 @@ class LlmBackedPromptMetadataExtractorTest {
                 (scenarioCode, language) -> "template",
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
-                        List.of(new PromptSlotDefinition(SLOT_NAME, true, "string", null, null, null, null, null))),
+                        List.of(new PromptSlotDefinition(
+                                SLOT_NAME, true, "string", null, null, null, null, null, null))),
                 (userInput, scenarioCode, language) -> new StructuredSlotExtractionResult(
                         Map.of(SLOT_NAME, ""),
                         List.of(new StructuredSlotValidationError(SLOT_NAME, "missing_input", "topic is missing"))));
@@ -104,8 +106,8 @@ class LlmBackedPromptMetadataExtractorTest {
 
     @Test
     void extractPropagatesTemplateLoadErrorsAsGenerationFailures() {
-        LLMClient llmClient =
-                new RecordingClient("{\"matched\":true,\"scenario_code\":\"subscribe-incident\",\"error_message\":null}");
+        LLMClient llmClient = new RecordingClient(
+                "{\"matched\":true,\"scenario_code\":\"subscribe-incident\",\"error_message\":null}");
         LlmBackedPromptMetadataExtractor extractor = new LlmBackedPromptMetadataExtractor(
                 new ScenarioRecognizer(llmClient),
                 List.of(new ScenarioDefinition(

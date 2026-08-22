@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.exception.A2ATError;
+import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import org.junit.jupiter.api.Test;
@@ -130,7 +130,7 @@ class LocalFilePromptLoadersTest {
         assertEquals(
                 List.of("1", "2", "3", "4", "5"),
                 schema.slotDefinitions().get(1).allowedValues());
-        assertEquals("Severity from 1 to 5", schema.slotDefinitions().get(1).description());
+        assertEquals("Severity from 1 to 5", schema.slotDefinitions().get(1).valueConstraint());
         assertEquals("note", schema.slotDefinitions().get(2).name());
     }
 
@@ -141,8 +141,9 @@ class LocalFilePromptLoadersTest {
                         .loadTemplate("incident_triage", "en"));
 
         String expected = (promptRootDir.resolve("templates").toString()
-                + "/*/network-layer/incident_triage/v1/en/template.md"
-                + " (or the layout without the network-layer segment)").replace('\\', '/');
+                        + "/*/network-layer/incident_triage/v1/en/template.md"
+                        + " (or the layout without the network-layer segment)")
+                .replace('\\', '/');
         assertEquals(expected, exception.resourcePath().replace('\\', '/'));
     }
 
@@ -159,9 +160,8 @@ class LocalFilePromptLoadersTest {
                         .resolve("slot.json"),
                 "{ \"required\": [\"severity\"], \"properties\": ");
 
-        A2ATError exception =
-                assertThrows(A2ATError.class, () -> new LocalFilePromptSlotSchemaLoader(promptRootDir)
-                        .loadSlotSchema("incident_triage", "en"));
+        A2ATError exception = assertThrows(A2ATError.class, () -> new LocalFilePromptSlotSchemaLoader(promptRootDir)
+                .loadSlotSchema("incident_triage", "en"));
 
         assertTrue(exception.getMessage().startsWith("Failed to read slot schema resource: "));
     }

@@ -1,5 +1,6 @@
 package net.openan.a2at.sdk.server.validation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +23,8 @@ import net.openan.a2at.sdk.server.model.ProcessedPromptMetadata;
  */
 public final class LlmBackedPromptSemanticValidator implements ServerPromptSemanticValidator {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER =
+            new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     private final LLMClient llmClient;
 
@@ -111,13 +113,13 @@ public final class LlmBackedPromptSemanticValidator implements ServerPromptSeman
 
     private void validateResponse(String payload) {
         Map<String, Object> response = parseResponse(payload);
-        Object passedValue = response.get("passed");
-        Object errorsValue = response.get("errors");
-        if (Boolean.TRUE.equals(passedValue) && errorsValue instanceof List<?>) {
+        boolean passed = Boolean.TRUE.equals(response.get("passed"));
+        boolean hasErrors = response.get("errors") instanceof List<?> errors && !errors.isEmpty();
+        if (passed && !hasErrors) {
             return;
         }
 
-        Optional<String> message = extractFirstMessage(errorsValue);
+        Optional<String> message = extractFirstMessage(response.get("errors"));
         throw new PromptComplianceCheckException(
                 A2ATErrorCodes.SLOT_VALIDATION_ERROR,
                 message.filter(text -> !text.isBlank()).orElse("Slot semantic validation failed."),
@@ -131,7 +133,9 @@ public final class LlmBackedPromptSemanticValidator implements ServerPromptSeman
             return Optional.ofNullable(response).orElseGet(Map::of);
         } catch (JsonProcessingException error) {
             throw new PromptComplianceCheckException(
-                    A2ATErrorCodes.SLOT_VALIDATION_ERROR, "semantic validation returned invalid JSON", "slot_validation");
+                    A2ATErrorCodes.SLOT_VALIDATION_ERROR,
+                            "semantic validation returned invalid JSON",
+                            "slot_validation");
         }
     }
 

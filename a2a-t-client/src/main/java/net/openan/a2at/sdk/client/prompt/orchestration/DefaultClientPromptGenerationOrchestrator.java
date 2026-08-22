@@ -164,6 +164,7 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
 
     private MetadataContent generateFromTemplateUriWithMetadata(
             String userInput, TemplateUri templateUri, String extensionUri) {
+        Objects.requireNonNull(userInput, "userInput");
         Objects.requireNonNull(templateUri, "templateUri");
         String templateIdentifier = templateUri.uri();
         final String templateText;
@@ -199,6 +200,11 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
             String extensionUri) {
         Objects.requireNonNull(templateUri, "templateUri");
         String templateIdentifier = templateUri.uri();
+        Objects.requireNonNull(schema, "schema");
+        if (schema.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Data schema must not be empty; it describes the meaning of each input field.");
+        }
         final String templateText;
         try {
             templateText = templateLoader.loadTemplate(templateIdentifier, language);
