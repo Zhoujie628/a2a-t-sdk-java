@@ -54,8 +54,8 @@ public final class DefaultSemanticValidator implements SemanticValidator<Templat
             @NonNull String language,
             @NonNull PromptResourceAccess promptResourceAccess) {
         this.llmClient = llmClient;
-        this.systemPrompt = promptResourceAccess.loadPrompt("content_validation", language, "system");
-        this.userPromptTemplate = promptResourceAccess.loadPrompt("content_validation", language, "user");
+        this.systemPrompt = promptResourceAccess.loadPrompt("content_validation", language, "system.md");
+        this.userPromptTemplate = promptResourceAccess.loadPrompt("content_validation", language, "user.md");
         this.jsonValueParser = new JacksonJsonValueParser();
     }
 
