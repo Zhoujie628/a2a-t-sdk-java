@@ -16,10 +16,13 @@ import org.junit.jupiter.api.Test;
  */
 class StandardTemplatesNegotiationConsistencyTest {
 
+    private static final List<NegotiationPhase> TYPED_PHASES =
+            List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT, NegotiationPhase.REJECT);
+
     @Test
     void negotiationConstantsMatchReferenceComposition() {
         for (NegotiationType type : NegotiationType.values()) {
-            for (NegotiationPhase phase : NegotiationPhase.values()) {
+            for (NegotiationPhase phase : TYPED_PHASES) {
                 NegotiationReference reference = new NegotiationReference(type, phase, "en-US");
                 TemplateUri expected = findConstant(reference.uri());
                 assertEquals(
@@ -28,6 +31,12 @@ class StandardTemplatesNegotiationConsistencyTest {
                         "StandardTemplates has no constant matching the composed URI of " + type + "/" + phase);
             }
         }
+        NegotiationReference abort = new NegotiationReference(null, NegotiationPhase.ABORT, "en-US");
+        TemplateUri abortConstant = findConstant(abort.uri());
+        assertEquals(
+                abort.uri(),
+                abortConstant.uri(),
+                "StandardTemplates has no constant matching the composed URI of the common abort template");
     }
 
     @Test
@@ -35,12 +44,13 @@ class StandardTemplatesNegotiationConsistencyTest {
         List<String> composed =
                 StandardTemplates.NEGOTIATION.stream().map(TemplateUri::uri).sorted().toList();
         List<String> expected = new java.util.ArrayList<>();
+        // Accept and reject share the accept-reject template, so the group carries one URI per type for them.
         for (NegotiationType type : NegotiationType.values()) {
             for (NegotiationPhase phase : List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT)) {
                 expected.add(new NegotiationReference(type, phase, "en-US").uri());
             }
         }
-        expected.add(StandardTemplates.NEGOTIATION_ABORT.uri());
+        expected.add(new NegotiationReference(null, NegotiationPhase.ABORT, "en-US").uri());
         assertEquals(expected.stream().sorted().toList(), composed);
     }
 

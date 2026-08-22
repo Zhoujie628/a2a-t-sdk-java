@@ -324,6 +324,7 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
             case PROPOSE -> "propose";
             case ACCEPT -> "accept";
             case REJECT -> "reject";
+            case ABORT -> "abort";
         };
     }
 
