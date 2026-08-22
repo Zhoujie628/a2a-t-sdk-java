@@ -47,11 +47,11 @@ class StandardTemplatesTest {
         grouped.addAll(StandardTemplates.NOTIFICATION);
         grouped.addAll(StandardTemplates.AUTHORIZATION);
         grouped.addAll(StandardTemplates.NEGOTIATION);
-        assertEquals(11, grouped.size(), "expected the 11 built-in templates");
+        assertEquals(12, grouped.size(), "expected the 12 built-in templates");
         assertEquals(2, StandardTemplates.TASK.size());
         assertEquals(2, StandardTemplates.NOTIFICATION.size());
         assertEquals(1, StandardTemplates.AUTHORIZATION.size());
-        assertEquals(6, StandardTemplates.NEGOTIATION.size());
+        assertEquals(7, StandardTemplates.NEGOTIATION.size());
     }
 
     /**
