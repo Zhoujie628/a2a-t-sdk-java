@@ -21,6 +21,13 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import net.openan.a2at.sdk.prompt.resources.loader.PromptSlotSchemaLoader;
+import net.openan.a2at.sdk.prompt.resources.loader.PromptTemplateTextLoader;
+import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
+import net.openan.a2at.sdk.resources.ClasspathPromptResourceLoader;
 import org.junit.jupiter.api.Test;
 
 class DefaultSemanticValidatorTest {
@@ -127,6 +134,23 @@ class DefaultSemanticValidatorTest {
         assertEquals(3, flakyClient.invocations());
     }
 
+
+    @Test
+    void validateFiltersNullParamValues() {
+        String llmJson =
+                "{\"semantic_verdict\": true, \"errors\": []," + "\"params\": {\"任务对象\": \"端口A\", \"任务上下文\": null}}";
+        DefaultSemanticValidator validator =
+                new DefaultSemanticValidator(new StubClient(llmJson), "zh-CN", new RecordingResourceAccess());
+
+        ValidationResult result =
+                validator.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
+
+        assertTrue(result.verdict());
+        // Map.copyOf rejects null values; the validator must drop them instead of throwing NPE
+        assertEquals(Map.of("任务对象", "端口A"), result.params());
+        assertFalse(result.params().containsKey("任务上下文"));
+    }
+
     private static final class RecordingClient implements LLMClient {
 
         private final String payload;
@@ -186,6 +210,67 @@ class DefaultSemanticValidatorTest {
 
         int invocations() {
             return counter.get();
+        }
+    }
+
+    /** Stub LLM client returning a fixed content payload. */
+    private static final class StubClient implements LLMClient {
+
+        private final String content;
+
+        private StubClient(String content) {
+            this.content = content;
+        }
+
+        @Override
+        public LLMResponse structured(
+                List<Map<String, String>> messages,
+                Map<String, Object> jsonSchema,
+                Double temperature,
+                Integer maxTokens) {
+            return new LLMResponse(content, "stub-llm", Map.of(), Map.of());
+        }
+    }
+
+    /** Resource access recording loadPrompt calls and returning stub prompt text. */
+    private static final class RecordingResourceAccess implements PromptResourceAccess {
+
+        private final List<String[]> calls = new ArrayList<>();
+
+        @Override
+        public boolean classpath() {
+            return false;
+        }
+
+        @Override
+        public ClasspathPromptResourceLoader classpathResourceLoader() {
+            throw new UnsupportedOperationException("Not used in this test.");
+        }
+
+        @Override
+        public Path localRootDir() {
+            return Path.of(".");
+        }
+
+        @Override
+        public List<ScenarioDefinition> loadScenarios(String language) {
+            return List.of();
+        }
+
+        @Override
+        public PromptTemplateTextLoader templateLoader() {
+            throw new UnsupportedOperationException("Not used in this test.");
+        }
+
+        @Override
+        public PromptSlotSchemaLoader slotSchemaLoader() {
+            throw new UnsupportedOperationException("Not used in this test.");
+        }
+
+        @Override
+        public String loadPrompt(String promptCategory, String language, String fileName) {
+            calls.add(new String[] {promptCategory, language, fileName});
+            return "stub prompt for " + promptCategory + "/" + fileName;
         }
     }
 }
