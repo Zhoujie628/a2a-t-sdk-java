@@ -13,9 +13,10 @@ import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.PromptGenerationException;
 import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.core.model.SlotValidationError;
+import net.openan.a2at.sdk.core.model.StandardTemplates;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
-import net.openan.a2at.sdk.core.validation.StandardTemplates;
-import net.openan.a2at.sdk.core.validation.TemplateUri;
 import net.openan.a2at.sdk.server.A2ATServer;
 
 /**
@@ -27,12 +28,16 @@ import net.openan.a2at.sdk.server.A2ATServer;
  *
  * <ol>
  *   <li>{@code A2ATClient#generateTaskPromptFromText} fed with natural language;</li>
- *   <li>{@code A2ATClient#generateTaskPromptFromDataWithSchema} fed with a slot-value map plus a semantics schema.
+ *   <li>{@code A2ATClient#generateTaskPromptFromDataWithSchema} fed with a slot-value map plus a semantics
+ *       schema;</li>
+ *   <li>{@code generateTaskPromptFromText} fed with key-slot-missing content, expected to be rejected by the
+ *       server-side semantic validation.</li>
  * </ol>
  *
- * <p>Each generated prompt is passed to {@code A2ATServer#validateAndFillingTaskData}; the extracted parameters are
- * compared against the sample ground truth and the results are aggregated into a per-case field accuracy and sample
- * pass rate.
+ * <p>Each generated prompt is passed to {@code A2ATServer#validateTaskPromptAndDataFilling}; for cases one and two the
+ * extracted parameters are compared against the sample ground truth and the results are aggregated into a per-case
+ * field accuracy and sample pass rate, while case three reports a rejection interception rate over the negative
+ * samples.
  *
  * <p>Run with {@code java ... TaskTDemoMain [env-file-path]}. The env file resolves as follows: an explicit first
  * argument wins; otherwise a {@code client.env} in the working directory (repo root) that carries the required LLM
@@ -77,8 +82,13 @@ public final class TaskTDemoMain {
 
         println();
         System.out.println("══════════════════════════════════════════════════════");
+        RejectionSummary rejectionSummary = runRejectionCase(client, server);
+
+        println();
+        System.out.println("══════════════════════════════════════════════════════");
         printSummary(TaskTAccuracyEvaluator.summarize("generateTaskPromptFromText", textScores));
         printSummary(TaskTAccuracyEvaluator.summarize("generateTaskPromptFromDataWithSchema", dataScores));
+        printRejectionSummary(rejectionSummary);
     }
 
     private static List<TaskTAccuracyEvaluator.SampleScore> runTextCase(A2ATClient client, A2ATServer server) {
@@ -134,13 +144,82 @@ public final class TaskTDemoMain {
         return scores;
     }
 
+    /**
+     * Runs the rejection case over {@link TaskTPrivateLineComplaintSamples#rejectionSamples()}: each sample
+     * deliberately omits one or more key slots (or carries an invalid slot value), so the server-side semantic
+     * validation is expected to fail with {@code validation_semantic_rejected}. The sample set mixes a text variant
+     * (fed to {@code generateTaskPromptFromText}) and a data variant (fed to
+     * {@code generateTaskPromptFromDataWithSchema}); a sample is counted as "server-rejected" only when the
+     * validation throws {@link ContentValidationException} — the structured slot errors are printed per sample — while
+     * a failure already at prompt generation counts as a client-side block. The run aggregates an interception rate.
+     */
+    private static RejectionSummary runRejectionCase(A2ATClient client, A2ATServer server) {
+        println("========== 用例三：缺少关键槽位拒绝用例（期望 rejected） ==========");
+        List<TaskTRejectionSample> samples = TaskTPrivateLineComplaintSamples.rejectionSamples();
+        int serverRejected = 0;
+        int clientBlocked = 0;
+        int unexpectedlyPassed = 0;
+        for (int i = 0; i < samples.size(); i++) {
+            TaskTRejectionSample sample = samples.get(i);
+            printSampleHeader("用例三", i, samples.size(), sample.name());
+            try {
+                MetadataContent metadata;
+                if (sample.data() != null) {
+                    println("[输入] 数据(data，客户端 key，缺关键槽位):");
+                    println(pretty(sample.data()));
+                    println("[输入] 语义schema(schema):");
+                    println(pretty(sample.semanticsSchema()));
+                    println();
+                    println("[生成] generateTaskPromptFromDataWithSchema:");
+                    metadata = client.generateTaskPromptFromDataWithSchema(
+                            sample.data(), sample.semanticsSchema(), StandardTemplates.PRIVATE_LINE_COMPLAINT);
+                } else {
+                    println("[输入] 自然语言文本 (缺少关键槽位):");
+                    println(sample.text());
+                    println();
+                    println("[生成] generateTaskPromptFromText:");
+                    metadata = client.generateTaskPromptFromText(sample.text(), StandardTemplates.PRIVATE_LINE_COMPLAINT);
+                }
+                System.out.println("  templateUri : " + metadata.templateUri());
+                println();
+                Map<String, Object> extracted = server
+                        .validateTaskPromptAndDataFilling(
+                                metadata.promptText(), sample.validationSchema(), StandardTemplates.PRIVATE_LINE_COMPLAINT)
+                        .data();
+                unexpectedlyPassed++;
+                println("[意外通过] 应被拒绝却校验通过，提取参数:");
+                println(pretty(extracted));
+            } catch (ContentValidationException exception) {
+                serverRejected++;
+                System.out.println("[正确拒绝] [" + exception.getCode() + "] " + exception.getMessage());
+                printValidationErrors(exception);
+            } catch (PromptGenerationException exception) {
+                clientBlocked++;
+                System.out.println("[生成阶段拦截] 客户端生成即失败，[" + exception.getCode() + "] " + exception.getMessage());
+            }
+            println();
+        }
+        return new RejectionSummary(samples.size(), serverRejected, clientBlocked, unexpectedlyPassed);
+    }
+
+    private static void printValidationErrors(ContentValidationException exception) {
+        List<SlotValidationError> errors = exception.errors();
+        if (errors == null || errors.isEmpty()) {
+            println("  (无结构化错误明细)");
+            return;
+        }
+        for (SlotValidationError error : errors) {
+            println("    slot=" + error.slotName() + " code=" + error.code() + " message=" + error.message());
+        }
+    }
+
     private static TaskTAccuracyEvaluator.SampleScore validateAndScore(
             A2ATServer server, TaskTSample sample, MetadataContent metadata, String caseLabel) {
         try {
             Map<String, Object> extracted =
-                    server.validateAndFillingTaskData(metadata.promptText(), sample.validationSchema(), StandardTemplates.PRIVATE_LINE_COMPLAINT)
+                    server.validateTaskPromptAndDataFilling(metadata.promptText(), sample.validationSchema(), StandardTemplates.PRIVATE_LINE_COMPLAINT)
                             .data();
-            println("[服务端] " + caseLabel + " validateAndFillingTaskData 通过，提取参数:");
+            println("[服务端] " + caseLabel + " validateTaskPromptAndDataFilling 通过，提取参数:");
             println(pretty(extracted));
             List<TaskTAccuracyEvaluator.FieldScore> fields = TaskTAccuracyEvaluator.scoreFields(sample, extracted);
             printFieldScores(fields);
@@ -184,6 +263,22 @@ public final class TaskTDemoMain {
         println("  字段准确率: " + percent(summary.fieldAccuracyPercent())
                 + "  样本通过率: " + percent(summary.samplePassRatePercent()));
     }
+
+    private static void printRejectionSummary(RejectionSummary summary) {
+        System.out.println("──────────── 汇总: 缺少关键槽位拒绝用例 ────────────");
+        println("  样本数: " + summary.total()
+                + "  服务端拒绝: " + summary.serverRejected()
+                + "  生成阶段拦截: " + summary.clientBlocked()
+                + "  意外通过: " + summary.unexpectedlyPassed());
+        println("  拦截率: " + percent(
+                (summary.serverRejected() + summary.clientBlocked()) * 100.0 / summary.total()));
+    }
+
+    /**
+     * Aggregated result of the rejection case over the key-slot-missing negative samples: how many were intercepted
+     * (either server-side semantic rejection or client-side generation failure) vs unexpectedly passed.
+     */
+    private record RejectionSummary(int total, int serverRejected, int clientBlocked, int unexpectedlyPassed) {}
 
     private static String percent(double value) {
         return String.format(Locale.ROOT, "%.2f%%", value);

@@ -23,6 +23,9 @@ import java.util.Map;
  *       capability;</li>
  *   <li>{@link #dataWithSchemaSamples()} feed {@code A2ATClient#generateTaskPromptFromDataWithSchema} with a
  *       structured input whose {@code data} carries <b>English business fields</b> — not the template slot names.</li>
+ *   <li>{@link #rejectionSamples()} feed {@code generateTaskPromptFromText} with content that deliberately omits key
+ *       slots; server-side semantic validation is expected to reject them — scored separately from the accuracy
+ *       samples.</li>
  * </ul>
  *
  * <p>Per design, the client-side keys and the server-side keys intentionally <b>diverge</b>: the client submits its
@@ -41,7 +44,7 @@ import java.util.Map;
  * </table>
  *
  * <p>Expected values ({@link TaskTSample#expectedParams()}) are keyed by the <b>server</b> field names, the keys the
- * accuracy evaluator actually reads out of {@code validateAndFillingTaskData}; they hold canonical key facts that
+ * accuracy evaluator actually reads out of {@code validateTaskPromptAndDataFilling}; they hold canonical key facts that
  * always appear in the input, and a field hits when the extracted value is equal to or contains the expected value
  * after whitespace-and-case normalization.
  */
@@ -81,7 +84,7 @@ public final class TaskTPrivateLineComplaintSamples {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private static final List<TaskTSample> SAMPLES = loadSamples();
+    private static final Loaded LOADED = load();
 
     private TaskTPrivateLineComplaintSamples() {
     }
@@ -92,7 +95,7 @@ public final class TaskTPrivateLineComplaintSamples {
      * @return immutable text sample list
      */
     public static List<TaskTSample> textSamples() {
-        return SAMPLES.stream().filter(sample -> sample.text() != null).toList();
+        return LOADED.samples().stream().filter(sample -> sample.text() != null).toList();
     }
 
     /**
@@ -105,10 +108,26 @@ public final class TaskTPrivateLineComplaintSamples {
      * @return immutable data sample list
      */
     public static List<TaskTSample> dataWithSchemaSamples() {
-        return SAMPLES.stream().filter(sample -> sample.data() != null).toList();
+        return LOADED.samples().stream().filter(sample -> sample.data() != null).toList();
     }
 
-    private static List<TaskTSample> loadSamples() {
+    /**
+     * Rejection samples that deliberately omit one or more key slots.
+     *
+     * <p>Two variants mirror the two client APIs under test: {@code text} samples are colloquial natural-language
+     * complaints missing key facts (access port, complaint scenario, occurrence time, event serial, ...), while
+     * {@code data} samples are structured inputs under the client field names that omit required fields or carry an
+     * invalid slot value (e.g. a complaint category outside the allowed enum). The server-side semantic validation is
+     * expected to reject such content with {@code validation_semantic_rejected}; these samples are scored separately
+     * from the accuracy samples and are never fed into the field-accuracy evaluation.
+     *
+     * @return immutable rejection sample list
+     */
+    public static List<TaskTRejectionSample> rejectionSamples() {
+        return LOADED.rejections();
+    }
+
+    private static Loaded load() {
         try (InputStream in = TaskTPrivateLineComplaintSamples.class.getResourceAsStream("/" + SAMPLE_RESOURCE)) {
             if (in == null) {
                 throw new IllegalStateException("sample resource not found on classpath: " + SAMPLE_RESOURCE);
@@ -129,11 +148,27 @@ public final class TaskTPrivateLineComplaintSamples {
                             name, null, toObjectMap(data), semanticsSchema, expected, validationSchema));
                 }
             }
-            return List.copyOf(samples);
+            List<TaskTRejectionSample> rejections = new ArrayList<>();
+            JsonNode rejectionNodes = root.get("rejectionSamples");
+            if (rejectionNodes != null) {
+                for (JsonNode node : rejectionNodes) {
+                    String name = node.get("name").asText();
+                    JsonNode data = node.get("data");
+                    if (data == null) {
+                        rejections.add(new TaskTRejectionSample(name, node.get("text").asText(), null, null, validationSchema));
+                    } else {
+                        rejections.add(new TaskTRejectionSample(name, null, toObjectMap(data), semanticsSchema, validationSchema));
+                    }
+                }
+            }
+            return new Loaded(List.copyOf(samples), List.copyOf(rejections));
         } catch (IOException error) {
             throw new IllegalStateException("failed to load task-t samples from " + SAMPLE_RESOURCE, error);
         }
     }
+
+    /** Loaded evaluation sample set split into accuracy samples and rejection samples. */
+    private record Loaded(List<TaskTSample> samples, List<TaskTRejectionSample> rejections) {}
 
     private static Map<String, Object> toObjectMap(JsonNode node) {
         return OBJECT_MAPPER.convertValue(node, new TypeReference<LinkedHashMap<String, Object>>() {});
@@ -154,8 +189,8 @@ public final class TaskTPrivateLineComplaintSamples {
  * @param semanticsSchema client-side field-semantics schema, keyed by the client field names; may be {@code null}
  *     when {@code data} is {@code null}
  * @param expectedParams ground truth business values, keyed by the <b>server</b> field names (the keys read out of
- *     {@code validateAndFillingTaskData}); these are the fields actually scored
- * @param validationSchema caller-provided JSON parameter schema passed to {@code validateAndFillingTaskData},
+ *     {@code validateTaskPromptAndDataFilling}); these are the fields actually scored
+ * @param validationSchema caller-provided JSON parameter schema passed to {@code validateTaskPromptAndDataFilling},
  *     keyed by the server field names
  * @since 2026-08
  */
@@ -165,4 +200,31 @@ record TaskTSample(
         Map<String, Object> data,
         Map<String, Object> semanticsSchema,
         Map<String, String> expectedParams,
+        Map<String, Object> validationSchema) {}
+
+/**
+ * One negative sample for the rejection check: content that deliberately omits one or more key slots (or carries an
+ * invalid slot value) and is expected to be rejected by the server-side semantic validation. Two variants exist,
+ * mirroring the two client APIs under test:
+ *
+ * <ul>
+ *   <li>{@code text} variant feeds {@code A2ATClient#generateTaskPromptFromText} with colloquial natural language;</li>
+ *   <li>{@code data} variant feeds {@code A2ATClient#generateTaskPromptFromDataWithSchema} with structured input keyed
+ *       by the client field names plus the client-side semantics schema.</li>
+ * </ul>
+ *
+ * @param name sample identifier shown in the rejection report
+ * @param text natural-language input for the FromText variant; {@code null} when the sample only targets the data case
+ * @param data structured business-field input for the FromDataWithSchema variant, keyed by the <b>client</b> field
+ *     names; {@code null} when the sample only targets the text case
+ * @param semanticsSchema client-side field-semantics schema, keyed by the client field names; may be {@code null}
+ *     when {@code data} is {@code null}
+ * @param validationSchema caller-provided JSON parameter schema passed to {@code validateTaskPromptAndDataFilling}
+ * @since 2026-08
+ */
+record TaskTRejectionSample(
+        String name,
+        String text,
+        Map<String, Object> data,
+        Map<String, Object> semanticsSchema,
         Map<String, Object> validationSchema) {}

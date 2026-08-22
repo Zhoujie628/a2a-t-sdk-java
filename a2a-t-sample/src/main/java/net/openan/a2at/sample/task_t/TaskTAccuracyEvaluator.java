@@ -9,7 +9,7 @@ import java.util.Map;
  * Field-level and sample-level accuracy scoring for the {@code Task-T} demo.
  *
  * <p>Each {@link SampleScore} scores one sample: every expected ground-truth field is compared with the corresponding
- * value extracted by {@code A2ATServer#validateAndFillingTaskData}. {@link Summary} aggregates the scores per client
+ * value extracted by {@code A2ATServer#validateTaskPromptAndDataFilling}. {@link Summary} aggregates the scores per client
  * API both as a field hit rate (matched expected fields over total expected fields) and as a sample pass rate
  * (samples whose expected fields all hit over total samples).
  */
