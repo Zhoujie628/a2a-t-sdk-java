@@ -17,6 +17,7 @@ class LLMClientConfigTest {
                 1024,
                 0.2d,
                 15.5d,
+                true,
                 300,
                 100,
                 "none");
@@ -29,6 +30,7 @@ class LLMClientConfigTest {
         assertEquals(1024, config.maxTokens());
         assertEquals(0.2d, config.temperature());
         assertEquals(15.5d, config.timeoutSeconds());
+        assertEquals(true, config.disableSystemProxy());
         assertEquals(300, config.sessionMaxTotal());
         assertEquals(100, config.sessionMaxPerProvider());
         assertEquals("none", config.reasoningEffort());

@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.server.A2ATServer;
 import org.junit.jupiter.api.Test;
 
@@ -68,6 +69,25 @@ class NegotiationV3ApiSurfaceTest {
                 Arrays.stream(MetadataContent.class.getMethods())
                         .anyMatch(method -> method.getName().equals("buildMetadataContent")),
                 "MetadataContent must expose buildMetadataContent");
+    }
+
+    @Test
+    void sixTargetApisUseStructuredTemplateUri() {
+        Set<String> targetMethods = Set.of(
+                "generateNegotiationProposePromptFromText",
+                "generateNegotiationAcceptPromptFromText",
+                "generateNegotiationRejectPromptFromText",
+                "validateAndFillingProposeData",
+                "validateAndFillingAcceptData",
+                "validateAndFillingRejectData");
+        for (Class<?> facade : List.of(A2ATClient.class, A2ATServer.class)) {
+            Arrays.stream(facade.getMethods())
+                    .filter(method -> targetMethods.contains(method.getName()))
+                    .forEach(method -> assertEquals(
+                            TemplateUri.class,
+                            method.getParameterTypes()[method.getParameterCount() - 1],
+                            "last parameter of " + facade.getSimpleName() + "." + method.getName()));
+        }
     }
 
     private static void assertExactNegotiationSurface(Class<?> facade) {

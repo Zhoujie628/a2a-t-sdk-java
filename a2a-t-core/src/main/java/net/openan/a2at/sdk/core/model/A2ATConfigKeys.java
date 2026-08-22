@@ -54,6 +54,9 @@ public final class A2ATConfigKeys {
         /** Request timeout in seconds. */
         public static final String TIMEOUT_SECONDS = "A2AT_LLM_TIMEOUT_SECONDS";
 
+        /** Disables use of the JVM or operating-system HTTP proxy for the LLM request. */
+        public static final String DISABLE_SYSTEM_PROXY = "A2AT_LLM_DISABLE_SYSTEM_PROXY";
+
         /** Maximum total number of tracked sessions. */
         public static final String SESSION_MAX_TOTAL = "A2AT_LLM_SESSION_MAX_TOTAL";
 
