@@ -6,19 +6,30 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import net.openan.a2at.sample.negotiation.server.NegotiationServerRuntime;
 import net.openan.a2at.sample.negotiation.shared.DemoConstants;
 import net.openan.a2at.sample.negotiation.shared.NegotiationMessage;
 import net.openan.a2at.sample.negotiation.shared.NegotiationStrategy;
 import net.openan.a2at.sample.negotiation.shared.ScenarioData;
+import net.openan.a2at.sample.subscribe_incident.client.flow.SampleStreamTerminalStateDecider;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.runtime.helper.NegotiationPayloadMapper;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationType;
+import org.a2aproject.sdk.client.Client;
+import org.a2aproject.sdk.client.ClientEvent;
+import org.a2aproject.sdk.client.MessageEvent;
+import org.a2aproject.sdk.client.TaskEvent;
+import org.a2aproject.sdk.client.TaskUpdateEvent;
+import org.a2aproject.sdk.client.config.ClientConfig;
 import org.a2aproject.sdk.client.transport.rest.RestTransport;
+import org.a2aproject.sdk.client.transport.rest.RestTransportConfig;
 import org.a2aproject.sdk.client.transport.spi.interceptors.ClientCallContext;
 import org.a2aproject.sdk.spec.AgentCard;
 import org.a2aproject.sdk.spec.EventKind;
@@ -33,20 +44,28 @@ import org.a2aproject.sdk.spec.TextPart;
  * <p>Flow:
  *
  * <ol>
- *   <li>message 1: generate a Task-T prompt with missing params, send via {@code message:send};
+ *   <li>message 1: generate a Task-T prompt with missing params and send it to the agent;
  *   <li>message 2: receive the Negotiation-T request (server detected missing params -> INPUT_REQUIRED);
- *   <li>message 3: generate a Task-T prompt with filled params + a Negotiation-T accept, send;
+ *   <li>message 3: generate a Task-T prompt with filled params + a Negotiation-T accept and send it;
  *   <li>message 4: receive the diagnosis result artifact (server -> COMPLETED).
  * </ol>
+ *
+ * <p>The transport endpoint is selected from the server's declared capability: when the AgentCard advertises
+ * {@code streaming=true} the request travels as {@code message:stream} and the reply is aggregated from the streamed
+ * client events; otherwise a blocking {@code message:send} round trip is used. Both paths produce the same reply
+ * carrier for the flow, so the scenario logic stays endpoint-agnostic.
  *
  * @since 2026-08
  */
 public final class NegotiationClient {
 
+    private static final long STREAM_TIMEOUT_SECONDS = 120;
+
     private final A2ATClient client;
     private final Consumer<String> logSink;
     private final NegotiationStrategy strategy;
-    private RestTransport transport;
+    private final boolean preferStreaming;
+    private Client a2aClient;
 
     /**
      * Creates the negotiation client.
@@ -56,9 +75,24 @@ public final class NegotiationClient {
      * @param logSink log output sink
      */
     public NegotiationClient(A2ATClient client, NegotiationStrategy strategy, Consumer<String> logSink) {
+        this(client, strategy, logSink, true);
+    }
+
+    /**
+     * Creates the negotiation client with an explicit endpoint preference.
+     *
+     * @param client client facade used for prompt generation and the negotiation state machine
+     * @param strategy negotiation-message generation strategy (fromData or fromText)
+     * @param logSink log output sink
+     * @param preferStreaming true selects {@code message:stream} when the server advertises streaming support; false
+     *     always uses blocking {@code message:send}
+     */
+    public NegotiationClient(
+            A2ATClient client, NegotiationStrategy strategy, Consumer<String> logSink, boolean preferStreaming) {
         this.client = client;
         this.strategy = strategy;
         this.logSink = logSink;
+        this.preferStreaming = preferStreaming;
     }
 
     /**
@@ -127,7 +161,7 @@ public final class NegotiationClient {
         return summary;
     }
 
-    /** Sends one extension's prompt as an A2A message ({@code message:send}) and returns the raw reply event. */
+    /** Sends one extension's prompt as an A2A message and returns the raw reply event. */
     private EventKind send(
             AgentCard agentCard, String extensionUri, MetadataContent content, Map<String, Object> contextMap) {
         Map<String, Object> metadata = NegotiationMessage.buildMetadata(
@@ -135,11 +169,18 @@ public final class NegotiationClient {
         return sendRaw(agentCard, metadata, content.promptText(), contextMap);
     }
 
+    /**
+     * Sends one A2A request. The endpoint follows the server's declared capability and the client preference:
+     * {@code message:stream} when the AgentCard advertises streaming and streaming is preferred, otherwise
+     * {@code message:send}. Streamed events are aggregated into the same reply carrier the blocking path produces
+     * (final task state or last agent message).
+     */
     private EventKind sendRaw(
             AgentCard agentCard, Map<String, Object> metadata, String promptText, Map<String, Object> contextMap) {
-        if (transport == null) {
-            transport = new RestTransport(agentCard);
-        }
+        boolean streaming = preferStreaming
+                && agentCard.capabilities() != null
+                && agentCard.capabilities().streaming();
+        emit("[client] transport endpoint: " + (streaming ? "message:stream" : "message:send"));
         Message message = Message.builder()
                 .messageId(UUID.randomUUID().toString())
                 .role(Message.Role.ROLE_USER)
@@ -150,9 +191,99 @@ public final class NegotiationClient {
         String extensionsHeader = DemoConstants.TASK_T_URI + "," + DemoConstants.NEGOTIATION_T_URI;
         ClientCallContext callContext = new ClientCallContext(Map.of(), Map.of("A2A-Extensions", extensionsHeader));
         try {
-            return transport.sendMessage(request, callContext);
+            if (streaming) {
+                return sendStreaming(agentCard, request, callContext);
+            }
+            return sendBlocking(agentCard, request, callContext);
         } catch (org.a2aproject.sdk.spec.A2AClientException exception) {
             throw new RuntimeException("a2a-java sendMessage failed: " + exception.getMessage(), exception);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("interrupted while waiting for streamed events", exception);
+        }
+    }
+
+    /** Blocking {@code message:send} round trip. */
+    private EventKind sendBlocking(AgentCard agentCard, MessageSendParams request, ClientCallContext callContext)
+            throws org.a2aproject.sdk.spec.A2AClientException, InterruptedException {
+        if (a2aClient == null) {
+            a2aClient = buildClient(agentCard, false);
+        }
+        // Client.sendMessage falls back to the blocking transport when streaming is disabled client-side
+        StreamAggregator aggregator = new StreamAggregator();
+        a2aClient.sendMessage(
+                request, List.of((event, ignored) -> aggregator.accept(event)), aggregator::fail, callContext);
+        return aggregator.awaitReply();
+    }
+
+    /** Streaming {@code message:stream} request; events are aggregated until a terminal task state arrives. */
+    private EventKind sendStreaming(AgentCard agentCard, MessageSendParams request, ClientCallContext callContext)
+            throws org.a2aproject.sdk.spec.A2AClientException, InterruptedException {
+        if (a2aClient == null) {
+            a2aClient = buildClient(agentCard, true);
+        }
+        StreamAggregator aggregator = new StreamAggregator();
+        a2aClient.sendMessage(
+                request, List.of((event, ignored) -> aggregator.accept(event)), aggregator::fail, callContext);
+        return aggregator.awaitReply();
+    }
+
+    /** Builds the a2a-java client with the requested streaming mode over the REST transport. */
+    private static Client buildClient(AgentCard agentCard, boolean streaming)
+            throws org.a2aproject.sdk.spec.A2AClientException {
+        return Client.builder(agentCard)
+                .withTransport(RestTransport.class, new RestTransportConfig())
+                .clientConfig(new ClientConfig.Builder().setStreaming(streaming).build())
+                .build();
+    }
+
+    /**
+     * Aggregates streamed client events into one reply carrier: the final task for task-backed replies, or the last
+     * agent message for message-backed replies. Also serves the blocking path, which emits a single event.
+     */
+    private static final class StreamAggregator {
+
+        private final CountDownLatch done = new CountDownLatch(1);
+        private final AtomicReference<Task> lastTask = new AtomicReference<>();
+        private final AtomicReference<Message> lastAgentMessage = new AtomicReference<>();
+        private final AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        void accept(ClientEvent event) {
+            if (event instanceof TaskEvent taskEvent) {
+                lastTask.set(taskEvent.getTask());
+            } else if (event instanceof TaskUpdateEvent updateEvent) {
+                lastTask.set(updateEvent.getTask());
+            } else if (event instanceof MessageEvent messageEvent
+                    && messageEvent.getMessage().role() == Message.Role.ROLE_AGENT) {
+                lastAgentMessage.set(messageEvent.getMessage());
+            }
+            if (SampleStreamTerminalStateDecider.isTerminal(event)) {
+                done.countDown();
+            }
+        }
+
+        void fail(Throwable error) {
+            failure.compareAndSet(null, error);
+            done.countDown();
+        }
+
+        EventKind awaitReply() throws InterruptedException {
+            if (!done.await(STREAM_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                throw new RuntimeException("timed out waiting for the agent reply");
+            }
+            Throwable error = failure.get();
+            if (error != null) {
+                throw new RuntimeException("a2a-java stream failed: " + error.getMessage(), error);
+            }
+            Task task = lastTask.get();
+            if (task != null) {
+                return task;
+            }
+            Message message = lastAgentMessage.get();
+            if (message != null) {
+                return message;
+            }
+            throw new IllegalStateException("a2a-java reply carried neither a task nor an agent message");
         }
     }
 
@@ -202,8 +333,8 @@ public final class NegotiationClient {
 
     /** Releases the underlying HTTP transport. */
     public void close() {
-        if (transport != null) {
-            transport.close();
+        if (a2aClient != null) {
+            a2aClient.close();
         }
     }
 

@@ -73,9 +73,28 @@ public final class NegotiationDemoApp {
      * @return scenario summary
      */
     public static Map<String, Object> runMain(Path envPath, boolean useFromText, Consumer<String> logSink) {
+        return runMain(envPath, useFromText, true, logSink);
+    }
+
+    /**
+     * Runs the 4-message flow with an explicit strategy and transport preference.
+     *
+     * @param envPath resolved env path
+     * @param useFromText true for fromText (LLM), false for fromData (rule-based)
+     * @param preferStreaming true prefers {@code message:stream} when the server supports it; false forces blocking
+     *     {@code message:send}
+     * @param logSink log output sink
+     * @return scenario summary
+     */
+    public static Map<String, Object> runMain(
+            Path envPath, boolean useFromText, boolean preferStreaming, Consumer<String> logSink) {
         requireLlmApiKey(envPath);
         SampleMockLlmInstaller.installLlmLogger(false, "negotiation");
         emit(logSink, "[negotiation] strategy: " + (useFromText ? "fromText (LLM)" : "fromData (rule-based)"));
+        emit(
+                logSink,
+                "[negotiation] transport preference: "
+                        + (preferStreaming ? "message:stream (fallback message:send)" : "message:send"));
         NegotiationStrategy strategy = useFromText ? new FromTextStrategy() : new FromDataStrategy();
 
         NegotiationServerRuntime serverRuntime = new NegotiationServerRuntime(envPath, strategy, logSink);
@@ -88,7 +107,7 @@ public final class NegotiationDemoApp {
         emit(logSink, "[negotiation] embedded a2a-java HTTP server started");
 
         A2ATClient clientFacade = new A2ATClient(envPath);
-        NegotiationClient client = new NegotiationClient(clientFacade, strategy, logSink);
+        NegotiationClient client = new NegotiationClient(clientFacade, strategy, logSink, preferStreaming);
         try {
             Map<String, Object> summary = client.runFourMessageFlow(serverRuntime, envPath);
             emit(logSink, "[negotiation] === Summary ===");
@@ -104,16 +123,21 @@ public final class NegotiationDemoApp {
     /**
      * Entry point.
      *
-     * @param args optional {@code --fromText} flag and the path to the {@code .env} file
+     * @param args optional {@code --fromText} flag, optional {@code --no-stream} flag, and the path to the {@code .env}
+     *     file
      */
     public static void main(String[] args) {
         boolean useFromText = false;
+        boolean preferStreaming = true;
         for (String arg : args) {
             if ("--fromText".equals(arg)) {
                 useFromText = true;
             }
+            if ("--no-stream".equals(arg)) {
+                preferStreaming = false;
+            }
         }
-        runMain(resolveEnvPath(args), useFromText, System.out::println);
+        runMain(resolveEnvPath(args), useFromText, preferStreaming, System.out::println);
     }
 
     /**

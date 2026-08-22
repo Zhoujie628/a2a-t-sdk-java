@@ -44,7 +44,7 @@
 | 目录 | 作用 |
 |---|---|
 | `negotiation/` | 入口 `NegotiationDemoApp`：启动嵌入式 HTTP server + 跑 client，`--fromText` 切换策略 |
-| `negotiation/client/` | `NegotiationClient`：4 报文编排（Task-T 缺失→收协商→补齐→收诊断） |
+| `negotiation/client/` | `NegotiationClient`：4 报文编排 + 传输端点选择（按 AgentCard 能力走 message:stream / message:send） |
 | `negotiation/server/` | `NegotiationAgentExecutor`（validateAndFillingTaskData→缺失检测→协商请求→诊断）+ `NegotiationServerRuntime`（HTTP server 装配）+ `DiagnosisService`（从 FilledParamData 动态生成诊断） |
 | `negotiation/shared/` | 策略层（`NegotiationStrategy` + `FromDataStrategy`/`FromTextStrategy`）、A2A metadata 桥接（`NegotiationMessage`）、扩展/模板 URI 常量（`DemoConstants`）、场景数据加载器（`ScenarioData`，数据在 `scenario.json`）、样例公共辅助（`NegotiationSampleSupport`） |
 | `negotiation/fromdata/`、`negotiation/fromtext/` | 9 用例 API 验证样例（见下文两节） |
@@ -59,6 +59,9 @@ java @a2a-t-sample/target/negotiation.javaargs.txt /path/to/.env
 
 # fromText 策略（协商报文由 LLM 生成）
 java @a2a-t-sample/target/negotiation.javaargs.txt --fromText /path/to/.env
+
+# 强制阻塞端点（默认按 AgentCard 能力优先 message:stream）
+java @a2a-t-sample/target/negotiation.javaargs.txt --no-stream /path/to/.env
 ```
 
 如果不传参数，`NegotiationDemoApp` 会回退到包内的 `sample/negotiation/negotiation.env`（该模板 key 为空，仅用于占位）。Windows 控制台如遇中文乱码，先执行 `chcp 65001`。
