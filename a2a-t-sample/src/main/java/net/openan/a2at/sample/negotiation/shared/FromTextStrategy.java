@@ -1,6 +1,7 @@
 package net.openan.a2at.sample.negotiation.shared;
 
 import java.util.List;
+import java.util.Map;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.TemplateUri;
@@ -12,7 +13,9 @@ import net.openan.a2at.sdk.server.A2ATServer;
  * LLM-based negotiation strategy: converts the items to natural-language text and calls the fromText API.
  *
  * <p>The SDK runs one LLM content-extraction step to parse the text into typed content, then renders deterministically.
- * This is the "natural language" path.
+ * The sentence framing of the assembled text comes from the scenario configuration ({@code from_text_propose_prefix},
+ * {@code from_text_accept_prefix}, {@code from_text_accept_suffix}); the item lines follow one generic numbered-list
+ * rule.
  *
  * @since 2026-08
  */
@@ -44,15 +47,9 @@ public final class FromTextStrategy implements NegotiationStrategy {
     }
 
     private static String itemsToProposeText(List<NegotiationItem> items, String relationship) {
-        StringBuilder sb = new StringBuilder("请提供以下缺失信息：");
-        for (int i = 0; i < items.size(); i++) {
-            NegotiationItem item = items.get(i);
-            sb.append(i + 1).append(". ").append(item.name());
-            if (item.value() != null && !item.value().isBlank()) {
-                sb.append("：").append(item.value());
-            }
-            sb.append("；");
-        }
+        StringBuilder sb =
+                new StringBuilder(ScenarioData.negotiationPhrasing().getOrDefault("from_text_propose_prefix", ""));
+        appendNumberedItems(sb, items);
         if (relationship != null && !relationship.isBlank()) {
             sb.append(relationship);
         }
@@ -60,7 +57,15 @@ public final class FromTextStrategy implements NegotiationStrategy {
     }
 
     private static String itemsToAcceptText(List<NegotiationItem> items) {
-        StringBuilder sb = new StringBuilder("同意补充以下信息：");
+        Map<String, String> phrasing = ScenarioData.negotiationPhrasing();
+        StringBuilder sb = new StringBuilder(phrasing.getOrDefault("from_text_accept_prefix", ""));
+        appendNumberedItems(sb, items);
+        sb.append(phrasing.getOrDefault("from_text_accept_suffix", ""));
+        return sb.toString();
+    }
+
+    /** Generic numbered-list rule: {@code N. name：value；} per item, value omitted when blank. */
+    private static void appendNumberedItems(StringBuilder sb, List<NegotiationItem> items) {
         for (int i = 0; i < items.size(); i++) {
             NegotiationItem item = items.get(i);
             sb.append(i + 1).append(". ").append(item.name());
@@ -69,7 +74,5 @@ public final class FromTextStrategy implements NegotiationStrategy {
             }
             sb.append("；");
         }
-        sb.append("信息已完整，可以启动诊断。");
-        return sb.toString();
     }
 }

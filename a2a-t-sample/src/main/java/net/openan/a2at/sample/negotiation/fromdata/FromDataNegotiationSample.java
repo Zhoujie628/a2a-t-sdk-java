@@ -17,7 +17,6 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
-import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
@@ -75,41 +74,37 @@ public final class FromDataNegotiationSample {
                 new NegotiationContext(NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
         List<Map<String, Object>> results = new ArrayList<>();
 
+        Map<String, Object> section = ScenarioData.caseSection("information");
+
         // propose: request missing information items
-        MetadataContent propose = client.generateNegotiationProposePromptFromData(
+        Map<String, Object> propose = ScenarioData.map(section, "propose");
+        MetadataContent proposeResult = client.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
                         ctx,
                         new InformationProposeContent(
-                                List.of(
-                                        new NegotiationItem("接入端口名称", "请提供业务接入端口名称"),
-                                        new NegotiationItem("投诉分类", "专线中断或专线质差")),
-                                "两个参数均为必选，缺少无法启动诊断")),
+                                ScenarioData.items(propose, "items"), ScenarioData.text(propose, "relationship"))),
                 NegotiationSampleSupport.INFO_PROPOSE_URI);
-        results.add(NegotiationSampleSupport.summary("information", "propose", propose, logSink));
+        results.add(NegotiationSampleSupport.summary("information", "propose", proposeResult, logSink));
 
         // accept: deliver the missing information
-        MetadataContent accept = client.generateNegotiationAcceptPromptFromData(
+        Map<String, Object> accept = ScenarioData.map(section, "accept");
+        MetadataContent acceptResult = client.generateNegotiationAcceptPromptFromData(
                 new NegotiationEndingData(
                         ctx,
                         new InformationEndingContent(
-                                NegotiationConclusion.ACCEPT,
-                                List.of(
-                                        new NegotiationItem(
-                                                "接入端口名称",
-                                                String.valueOf(ScenarioData.filledParams()
-                                                        .get("任务对象"))),
-                                        new NegotiationItem("投诉分类", "专线质差")))),
+                                NegotiationConclusion.ACCEPT, ScenarioData.items(accept, "items"))),
                 NegotiationSampleSupport.INFO_ACCEPT_REJECT_URI);
-        results.add(NegotiationSampleSupport.summary("information", "accept", accept, logSink));
+        results.add(NegotiationSampleSupport.summary("information", "accept", acceptResult, logSink));
 
         // reject: cannot provide the information
-        MetadataContent reject = client.generateNegotiationRejectPromptFromData(
+        Map<String, Object> reject = ScenarioData.map(section, "reject");
+        MetadataContent rejectResult = client.generateNegotiationRejectPromptFromData(
                 new NegotiationEndingData(
                         ctx,
                         new InformationEndingContent(
-                                NegotiationConclusion.REJECT, List.of(new NegotiationItem("接入端口名称", "站点清单不可用，无法提供")))),
+                                NegotiationConclusion.REJECT, ScenarioData.items(reject, "items"))),
                 NegotiationSampleSupport.INFO_ACCEPT_REJECT_URI);
-        results.add(NegotiationSampleSupport.summary("information", "reject", reject, logSink));
+        results.add(NegotiationSampleSupport.summary("information", "reject", rejectResult, logSink));
 
         return results;
     }
@@ -124,35 +119,40 @@ public final class FromDataNegotiationSample {
                 new NegotiationContext(NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
         List<Map<String, Object>> results = new ArrayList<>();
 
+        Map<String, Object> section = ScenarioData.caseSection("target");
+
         // propose: state the target intent and request clarification
-        MetadataContent propose = client.generateNegotiationProposePromptFromData(
+        Map<String, Object> propose = ScenarioData.map(section, "propose");
+        MetadataContent proposeResult = client.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
                         ctx,
                         new TargetProposeContent(
-                                "对无线节点节能优化任务的意图理解待澄清",
-                                List.of(new NegotiationItem("任务意图", "08:00-18:00对目标站点启用无线节点节能优化")),
-                                null,
-                                List.of(new NegotiationItem("节能区域", "松山湖还是其他站点？")))),
+                                ScenarioData.text(propose, "description"),
+                                ScenarioData.items(propose, "intent_understanding"),
+                                ScenarioData.items(propose, "alignment_and_clarification"),
+                                ScenarioData.items(propose, "request_for_clarification"))),
                 NegotiationSampleSupport.TARGET_PROPOSE_URI);
-        results.add(NegotiationSampleSupport.summary("target", "propose", propose, logSink));
+        results.add(NegotiationSampleSupport.summary("target", "propose", proposeResult, logSink));
 
         // accept: confirm the negotiated target intent
-        MetadataContent accept = client.generateNegotiationAcceptPromptFromData(
+        Map<String, Object> accept = ScenarioData.map(section, "accept");
+        MetadataContent acceptResult = client.generateNegotiationAcceptPromptFromData(
                 new NegotiationEndingData(
                         ctx,
                         new TargetEndingContent(
-                                NegotiationConclusion.ACCEPT,
-                                "最终确认意图：08:00-18:00对松山湖站点启用无线节点节能优化，速率保障不低于10Mbps",
-                                null)),
+                                NegotiationConclusion.ACCEPT, ScenarioData.text(accept, "confirmed_intent"), null)),
                 NegotiationSampleSupport.TARGET_ACCEPT_REJECT_URI);
-        results.add(NegotiationSampleSupport.summary("target", "accept", accept, logSink));
+        results.add(NegotiationSampleSupport.summary("target", "accept", acceptResult, logSink));
 
         // reject: cannot agree on the target
-        MetadataContent reject = client.generateNegotiationRejectPromptFromData(
+        Map<String, Object> reject = ScenarioData.map(section, "reject");
+        MetadataContent rejectResult = client.generateNegotiationRejectPromptFromData(
                 new NegotiationEndingData(
-                        ctx, new TargetEndingContent(NegotiationConclusion.REJECT, null, "节能区域信息因站点清单不可用而无法完整澄清")),
+                        ctx,
+                        new TargetEndingContent(
+                                NegotiationConclusion.REJECT, null, ScenarioData.text(reject, "rejection_reason"))),
                 NegotiationSampleSupport.TARGET_ACCEPT_REJECT_URI);
-        results.add(NegotiationSampleSupport.summary("target", "reject", reject, logSink));
+        results.add(NegotiationSampleSupport.summary("target", "reject", rejectResult, logSink));
 
         return results;
     }
@@ -167,34 +167,40 @@ public final class FromDataNegotiationSample {
                 new NegotiationContext(NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
         List<Map<String, Object>> results = new ArrayList<>();
 
+        Map<String, Object> section = ScenarioData.caseSection("feasibility");
+
         // propose: request a feasibility evaluation
-        MetadataContent propose = client.generateNegotiationProposePromptFromData(
+        Map<String, Object> propose = ScenarioData.map(section, "propose");
+        MetadataContent proposeResult = client.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
                         ctx,
                         new FeasibilityProposeContent(
-                                "请评估无线节点节能优化在高峰时段是否可行",
-                                NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
-                                List.of(
-                                        new NegotiationItem("评估对象", "松山湖站点08:00-18:00节能窗口"),
-                                        new NegotiationItem("评估约束", "速率保障不低于10Mbps")),
-                                null)),
+                                ScenarioData.text(propose, "description"),
+                                NegotiationAction.valueOf(ScenarioData.text(propose, "action")),
+                                ScenarioData.items(propose, "contents_to_evaluate"),
+                                ScenarioData.items(propose, "infeasibility_details_and_proposal"))),
                 NegotiationSampleSupport.FEASIBILITY_PROPOSE_URI);
-        results.add(NegotiationSampleSupport.summary("feasibility", "propose", propose, logSink));
+        results.add(NegotiationSampleSupport.summary("feasibility", "propose", proposeResult, logSink));
 
         // accept: feasibility confirmed
-        MetadataContent accept = client.generateNegotiationAcceptPromptFromData(
+        Map<String, Object> accept = ScenarioData.map(section, "accept");
+        MetadataContent acceptResult = client.generateNegotiationAcceptPromptFromData(
                 new NegotiationEndingData(
                         ctx,
-                        new FeasibilityEndingContent(NegotiationConclusion.ACCEPT, "高峰时段节能优化可行，速率保障满足10Mbps下限，可启用")),
+                        new FeasibilityEndingContent(
+                                NegotiationConclusion.ACCEPT, ScenarioData.text(accept, "summary"))),
                 NegotiationSampleSupport.FEASIBILITY_ACCEPT_REJECT_URI);
-        results.add(NegotiationSampleSupport.summary("feasibility", "accept", accept, logSink));
+        results.add(NegotiationSampleSupport.summary("feasibility", "accept", acceptResult, logSink));
 
         // reject: not feasible
-        MetadataContent reject = client.generateNegotiationRejectPromptFromData(
+        Map<String, Object> reject = ScenarioData.map(section, "reject");
+        MetadataContent rejectResult = client.generateNegotiationRejectPromptFromData(
                 new NegotiationEndingData(
-                        ctx, new FeasibilityEndingContent(NegotiationConclusion.REJECT, "节能目标在现有供电约束下无法实现，需调整方案")),
+                        ctx,
+                        new FeasibilityEndingContent(
+                                NegotiationConclusion.REJECT, ScenarioData.text(reject, "summary"))),
                 NegotiationSampleSupport.FEASIBILITY_ACCEPT_REJECT_URI);
-        results.add(NegotiationSampleSupport.summary("feasibility", "reject", reject, logSink));
+        results.add(NegotiationSampleSupport.summary("feasibility", "reject", rejectResult, logSink));
 
         return results;
     }

@@ -123,7 +123,7 @@ public final class NegotiationAgentExecutor implements AgentExecutor {
                 server,
                 new NegotiationContext(UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS),
                 missingItems,
-                "以上参数均为必选，缺少无法启动诊断",
+                ScenarioData.negotiationPhrasing().get("propose_relationship"),
                 DemoConstants.NEGOTIATION_PROPOSE);
         emit("[server] negotiation request rendered");
 
@@ -180,7 +180,7 @@ public final class NegotiationAgentExecutor implements AgentExecutor {
             }
             Object value = entry.getValue();
             if (isMissing(value)) {
-                missing.add(new NegotiationItem(key, "请提供" + key));
+                missing.add(missingItem(key));
             }
         }
         return missing;
@@ -198,10 +198,35 @@ public final class NegotiationAgentExecutor implements AgentExecutor {
         for (SlotValidationError error : errors) {
             String slotName = error.slotName();
             if (slotName != null && !slotName.isBlank()) {
-                missing.add(new NegotiationItem(slotName, "请提供" + slotName));
+                missing.add(missingItem(slotName));
             }
         }
         return missing;
+    }
+
+    /**
+     * Builds one missing-item entry from the phrasing template in the scenario configuration
+     * ({@code missing_item_hint}, {@code {slot}} and {@code {description}} placeholders), falling back to the bare slot
+     * name when no template is configured.
+     */
+    private static NegotiationItem missingItem(String slotName) {
+        String template = ScenarioData.negotiationPhrasing().getOrDefault("missing_item_hint", "{slot}");
+        String description = slotDescription(slotName);
+        String hint =
+                template.replace("{slot}", slotName).replace("{description}", description == null ? "" : description);
+        return new NegotiationItem(slotName, hint);
+    }
+
+    /** Looks up the description of one slot in the scenario Task-T schema. */
+    private static String slotDescription(String slotName) {
+        Object properties = ScenarioData.taskSchema().get("properties");
+        if (properties instanceof Map<?, ?> propertyMap && propertyMap.get(slotName) instanceof Map<?, ?> slot) {
+            Object description = slot.get("description");
+            if (description instanceof String text && !text.isBlank()) {
+                return text;
+            }
+        }
+        return null;
     }
 
     /** Extracts the filled (non-null, non-blank) parameters as NegotiationItems. */
