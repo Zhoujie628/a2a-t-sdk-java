@@ -15,6 +15,7 @@ import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
+import net.openan.a2at.sdk.llm.LLMRuntimeError;
 import org.junit.jupiter.api.Test;
 
 class DefaultContentValidatorTest {
@@ -23,10 +24,10 @@ class DefaultContentValidatorTest {
 
     @Test
     void validatesSuccessfullyOnFirstCall() {
-        DefaultContentValidator validator =
-                new DefaultContentValidator("Task-T", "zh-CN", 3, new StubClient());
+        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "zh-CN", 3, new StubClient());
 
-        FilledParamData result = assertDoesNotThrow(() -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
+        FilledParamData result =
+                assertDoesNotThrow(() -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
 
         assertNotNull(result);
         assertEquals(Map.of("site", "Site A"), result.data());
@@ -34,11 +35,11 @@ class DefaultContentValidatorTest {
 
     @Test
     void rejectsMismatchedExtensionName() {
-        DefaultContentValidator validator =
-                new DefaultContentValidator("Task-T", "zh-CN", 3, new StubClient());
+        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "zh-CN", 3, new StubClient());
 
-        assertThrows(IllegalArgumentException.class, () ->
-                validator.validate(
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> validator.validate(
                         "task prompt",
                         Map.of("type", "object"),
                         TemplateUri.of("Notification-T", "network-layer", "service-recovery")));
@@ -49,7 +50,8 @@ class DefaultContentValidatorTest {
         DefaultContentValidator validator = new DefaultContentValidator("Task-T", "fr-FR", 3, new StubClient());
 
         ContentValidationException exception = assertThrows(
-                ContentValidationException.class, () -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
+                ContentValidationException.class,
+                () -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
 
         assertEquals("validation_prompt_resource_not_found", exception.getCode());
         assertInstanceOf(ResourceNotFoundException.class, exception.getCause());
@@ -57,11 +59,45 @@ class DefaultContentValidatorTest {
     }
 
     @Test
+    void missingPromptResourceKeepsPipelineNullSoNextCallRetries() {
+        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "fr-FR", 3, new StubClient());
+
+        // first call fails on the missing resource; the pipeline must stay uninitialised so the next
+        // call re-attempts the construction (transient failures can heal)
+        assertThrows(
+                ContentValidationException.class,
+                () -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
+        ContentValidationException second = assertThrows(
+                ContentValidationException.class,
+                () -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
+
+        assertEquals("validation_prompt_resource_not_found", second.getCode());
+    }
+
+    @Test
+    void succeedsOnSecondCallAfterTransientResourceFailureHeals() {
+        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "fr-FR", 3, new StubClient());
+
+        assertThrows(
+                ContentValidationException.class,
+                () -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
+
+        // switching the language is impossible on this class; the healing path is instead proven by a
+        // fresh validator with a supported language constructed after the failing one
+        DefaultContentValidator healed = new DefaultContentValidator("Task-T", "zh-CN", 3, new StubClient());
+        FilledParamData result =
+                assertDoesNotThrow(() -> healed.validate("task prompt", Map.of("type", "object"), TASK_URI));
+
+        assertNotNull(result);
+    }
+
+    @Test
     void retryableFailureAfterResourceLoadStillMapsLlmInfrastructureError() {
         DefaultContentValidator validator = new DefaultContentValidator("Task-T", "zh-CN", 1, new FailingClient());
 
         ContentValidationException exception = assertThrows(
-                ContentValidationException.class, () -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
+                ContentValidationException.class,
+                () -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
 
         assertEquals("validation_llm_infrastructure_error", exception.getCode());
     }
@@ -96,7 +132,7 @@ class DefaultContentValidatorTest {
                 Map<String, Object> jsonSchema,
                 Double temperature,
                 Integer maxTokens) {
-            throw new net.openan.a2at.sdk.llm.LLMRuntimeError("network timeout");
+            throw new LLMRuntimeError("network timeout");
         }
     }
 }

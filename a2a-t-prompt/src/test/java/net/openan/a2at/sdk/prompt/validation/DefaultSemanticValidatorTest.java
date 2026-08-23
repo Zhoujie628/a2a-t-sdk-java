@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,7 +25,8 @@ import org.junit.jupiter.api.Test;
 
 class DefaultSemanticValidatorTest {
 
-    private static final String VALID_RESPONSE = """
+    private static final String VALID_RESPONSE =
+            """
             {
               "semantic_verdict": true,
               "errors": [],
@@ -79,7 +81,9 @@ class DefaultSemanticValidatorTest {
 
     @Test
     void validateExhaustsRetriesAndWrapsLlmError() {
-        FlakyClient flakyClient = new FlakyClient(Integer.MAX_VALUE, """
+        FlakyClient flakyClient = new FlakyClient(
+                Integer.MAX_VALUE,
+                """
                 {
                   "semantic_verdict": true,
                   "errors": [],
@@ -94,7 +98,9 @@ class DefaultSemanticValidatorTest {
         ContentValidationException exception = assertThrows(
                 ContentValidationException.class,
                 () -> pipeline.validate(
-                        "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving")));
+                        "Check Site A power usage.",
+                        Map.of("type", "object"),
+                        TemplateUri.of("Task-T", "energy-saving")));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertInstanceOf(LLMRuntimeError.class, exception.getCause().getCause());
@@ -112,8 +118,8 @@ class DefaultSemanticValidatorTest {
 
         ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 2);
 
-        FilledParamData result = pipeline.validate(
-                "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
+        FilledParamData result =
+                pipeline.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
 
         assertEquals(2, result.data().size());
         assertEquals("端口A", result.data().get("任务对象"));
@@ -209,16 +215,37 @@ class DefaultSemanticValidatorTest {
     }
 
     @Test
-    void nonStringParamKeyFailsWithInfrastructureError() {
-        // JSON object keys are strings by definition; this simulates a parser that produced non-string keys
+    void stringParamKeysPassTheContract() {
         DefaultSemanticValidator validator = new DefaultSemanticValidator(
-                new StubClient("{\"semantic_verdict\": true, \"errors\": [], \"params\": {\"site\": \"Site A\"}}"), "en-US");
+                new StubClient("{\"semantic_verdict\": true, \"errors\": [], \"params\": {\"site\": \"Site A\"}}"),
+                "en-US");
 
-        // string keys pass the contract; a valid response must not fail
-        ValidationResult result = validator.validate(
-                "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
+        ValidationResult result =
+                validator.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
 
         assertTrue(result.verdict());
+    }
+
+    @Test
+    void nonStringParamKeyFailsWithInfrastructureError() {
+        // JSON object keys are strings by definition, so the negative path is driven through a parser
+        // stub that produces a non-string key
+        Map<Object, Object> rawParams = new LinkedHashMap<>();
+        rawParams.put(42, "Site A");
+        Map<String, Object> parsed = new LinkedHashMap<>();
+        parsed.put("semantic_verdict", Boolean.TRUE);
+        parsed.put("errors", List.of());
+        parsed.put("params", rawParams);
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(
+                new StubClient("payload content is irrelevant"), "en-US", prompt -> parsed);
+
+        ContentValidationException exception = assertThrows(
+                ContentValidationException.class,
+                () -> validator.validate(
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+
+        assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
+        assertTrue(exception.getMessage().contains("params keys"));
     }
 
     @Test
@@ -240,8 +267,8 @@ class DefaultSemanticValidatorTest {
 
     @Test
     void contractViolationExhaustsRetriesThroughPipeline() {
-        FlakyPayloadClient client = new FlakyPayloadClient(
-                "{\"semantic_verdict\": \"true\", \"errors\": [], \"params\": {}}", null);
+        FlakyPayloadClient client =
+                new FlakyPayloadClient("{\"semantic_verdict\": \"true\", \"errors\": [], \"params\": {}}", null);
 
         DefaultSemanticValidator validator = new DefaultSemanticValidator(client, "en-US");
         ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 3);
@@ -249,7 +276,9 @@ class DefaultSemanticValidatorTest {
         ContentValidationException exception = assertThrows(
                 ContentValidationException.class,
                 () -> pipeline.validate(
-                        "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving")));
+                        "Check Site A power usage.",
+                        Map.of("type", "object"),
+                        TemplateUri.of("Task-T", "energy-saving")));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertEquals(3, client.invocations());
@@ -336,7 +365,9 @@ class DefaultSemanticValidatorTest {
         }
     }
 
-    /** LLM client returning a malformed payload first, then a compliant one (or always malformed when success is null). */
+    /**
+     * LLM client returning a malformed payload first, then a compliant one (or always malformed when success is null).
+     */
     private static final class FlakyPayloadClient implements LLMClient {
 
         private final String malformedPayload;

@@ -18,10 +18,10 @@ import net.openan.a2at.sdk.core.json.JacksonJsonValueParser;
 import net.openan.a2at.sdk.core.json.JsonValueParser;
 import net.openan.a2at.sdk.core.model.PromptMessage;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
 import net.openan.a2at.sdk.core.validation.SemanticValidator;
-import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ValidationResult;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMError;
@@ -56,18 +56,35 @@ final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
     /**
      * Creates a semantic validator backed by the given LLM client and prompt resources for the specified language.
      *
-     * @param llmClient LLM client for structured calls; may be {@code null}, in which case {@link #validate}
-     *     fails with {@code ContentValidationException} carrying
-     *     {@code VALIDATION_LLM_INFRASTRUCTURE_ERROR}; there is no late injection point
+     * @param llmClient LLM client for structured calls; may be {@code null}, in which case {@link #validate} fails with
+     *     {@code ContentValidationException} carrying {@code VALIDATION_LLM_INFRASTRUCTURE_ERROR}; there is no late
+     *     injection point
      * @param language language code for prompt resource loading
-     * @throws ResourceNotFoundException if the content_validation prompt resources of the given language are missing
-     *     on the classpath
+     * @throws ResourceNotFoundException if the content_validation prompt resources of the given language are missing on
+     *     the classpath
      */
     DefaultSemanticValidator(@Nullable LLMClient llmClient, @NonNull String language) {
+        this(llmClient, language, new JacksonJsonValueParser());
+    }
+
+    /**
+     * Creates a semantic validator backed by the given LLM client, prompt resources for the specified language and a
+     * shared JSON value parser abstraction.
+     *
+     * @param llmClient LLM client for structured calls; may be {@code null}, in which case {@link #validate} fails with
+     *     {@code ContentValidationException} carrying {@code VALIDATION_LLM_INFRASTRUCTURE_ERROR}; there is no late
+     *     injection point
+     * @param language language code for prompt resource loading
+     * @param jsonValueParser shared JSON value parser abstraction
+     * @throws ResourceNotFoundException if the content_validation prompt resources of the given language are missing on
+     *     the classpath
+     */
+    DefaultSemanticValidator(
+            @Nullable LLMClient llmClient, @NonNull String language, @NonNull JsonValueParser jsonValueParser) {
         this.llmClient = llmClient;
         this.systemPrompt = loadPromptResource("system.md", language);
         this.userPromptTemplate = loadPromptResource("user.md", language);
-        this.jsonValueParser = new JacksonJsonValueParser();
+        this.jsonValueParser = jsonValueParser;
     }
 
     @Override
@@ -237,7 +254,6 @@ final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
         return new ContentValidationException(
                 A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR,
                 "Semantic validation LLM response violates the output contract: " + message,
-                List.of(new SlotValidationError(
-                        "_llm", A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, message)));
+                List.of(new SlotValidationError("_llm", A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, message)));
     }
 }

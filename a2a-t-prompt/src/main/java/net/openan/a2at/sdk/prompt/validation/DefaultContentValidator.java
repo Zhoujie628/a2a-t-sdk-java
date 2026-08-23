@@ -5,9 +5,9 @@ import java.util.Objects;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.FilledParamData;
+import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
 import net.openan.a2at.sdk.core.validation.ContentValidator;
-import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ValidationPipeline;
 import net.openan.a2at.sdk.llm.LLMClient;
 import org.jspecify.annotations.NonNull;
@@ -75,14 +75,12 @@ public final class DefaultContentValidator implements ContentValidator {
         Objects.requireNonNull(templateUri, "templateUri");
 
         if (!extensionName.equals(templateUri.extensionName())) {
-            throw new IllegalArgumentException(
-                    "Template URI extension '" + templateUri.extensionName()
-                            + "' does not match expected extension '" + extensionName + "'.");
+            throw new IllegalArgumentException("Template URI extension '" + templateUri.extensionName()
+                    + "' does not match expected extension '" + extensionName + "'.");
         }
 
         if (!TemplateUri.DEFAULT_TEMPLATE_VERSION.equals(templateUri.templateVersion())) {
-            throw new IllegalArgumentException(
-                    "Unsupported template URI version: " + templateUri.templateVersion());
+            throw new IllegalArgumentException("Unsupported template URI version: " + templateUri.templateVersion());
         }
 
         return pipeline().validate(prompt, schema, templateUri);
@@ -99,9 +97,7 @@ public final class DefaultContentValidator implements ContentValidator {
                                 prompt -> Map.of(), new DefaultSemanticValidator(llmClient, language), maxAttempts);
                     } catch (ResourceNotFoundException exception) {
                         throw new ContentValidationException(
-                                A2ATErrorCodes.VALIDATION_PROMPT_RESOURCE_NOT_FOUND,
-                                exception.getMessage(),
-                                exception);
+                                A2ATErrorCodes.VALIDATION_PROMPT_RESOURCE_NOT_FOUND, exception.getMessage(), exception);
                     }
                     pipeline = p;
                 }

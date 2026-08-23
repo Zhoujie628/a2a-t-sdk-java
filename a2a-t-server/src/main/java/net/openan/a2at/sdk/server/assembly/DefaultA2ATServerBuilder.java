@@ -166,7 +166,7 @@ public final class DefaultA2ATServerBuilder {
      * Builds the task content validator from the configured unified SDK config.
      *
      * <p>The validator enforces the {@code Task-T} extension prefix and reuses the configured language, LLM retry
-     * attempt limit, LLM client and prompt resource access.
+     * attempt limit and LLM client; the content_validation prompt resources are loaded from the classpath.
      *
      * @return assembled task content validator
      */
@@ -178,7 +178,7 @@ public final class DefaultA2ATServerBuilder {
      * Builds the notification content validator from the configured unified SDK config.
      *
      * <p>The validator enforces the {@code Notification-T} extension prefix and reuses the configured language, LLM
-     * retry attempt limit, LLM client and prompt resource access.
+     * retry attempt limit and LLM client; the content_validation prompt resources are loaded from the classpath.
      *
      * @return assembled notification content validator
      */
@@ -190,7 +190,7 @@ public final class DefaultA2ATServerBuilder {
      * Builds the authorization content validator from the configured unified SDK config.
      *
      * <p>The validator enforces the {@code Authorization-T} extension prefix and reuses the configured language, LLM
-     * retry attempt limit, LLM client and prompt resource access.
+     * retry attempt limit and LLM client; the content_validation prompt resources are loaded from the classpath.
      *
      * @return assembled authorization content validator
      */
