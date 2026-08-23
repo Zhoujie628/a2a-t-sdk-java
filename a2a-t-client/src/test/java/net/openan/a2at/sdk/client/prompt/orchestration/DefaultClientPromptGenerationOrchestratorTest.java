@@ -9,10 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
-import net.openan.a2at.sdk.client.prompt.extractor.ClientSlotValueExtractor;
-import net.openan.a2at.sdk.client.prompt.loader.ClientSlotSchemaLoader;
-import net.openan.a2at.sdk.client.prompt.loader.ClientTemplateLoader;
-import net.openan.a2at.sdk.client.prompt.recognition.ClientScenarioRecognizer;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.PromptGenerationException;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
@@ -22,7 +18,12 @@ import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
+import net.openan.a2at.sdk.prompt.analysis.impl.PromptSlotValueExtractor;
+import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognitionFunction;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
+import net.openan.a2at.sdk.prompt.analysis.model.StructuredSlotExtractionResult;
+import net.openan.a2at.sdk.prompt.resources.loader.PromptSlotSchemaLoader;
+import net.openan.a2at.sdk.prompt.resources.loader.PromptTemplateTextLoader;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotDefinition;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
@@ -31,7 +32,7 @@ import org.junit.jupiter.api.Test;
 
 class DefaultClientPromptGenerationOrchestratorTest {
 
-    private static final ClientSlotSchemaLoader EMPTY_SCHEMA_LOADER =
+    private static final PromptSlotSchemaLoader EMPTY_SCHEMA_LOADER =
             (scenarioCode, language) -> new PromptSlotSchema(scenarioCode, List.of());
 
     private static final TemplateUri AUTH_DATABASE_READ = TemplateUri.of("Authorization-T", "database_read");
@@ -41,9 +42,9 @@ class DefaultClientPromptGenerationOrchestratorTest {
         FakeTemplateLoader templateLoader = new FakeTemplateLoader("Site: {site}\nNotes: {additional_notes}");
         FakeSlotValueExtractor slotValueExtractor =
                 new FakeSlotValueExtractor(Map.of("site", "Site A", "additional_notes", "critical"));
+        RecordingScenarioRecognizer recognizer = new RecordingScenarioRecognizer();
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
-                (normalizedInput, scenarios, systemPrompt, userPrompt) ->
-                        new ScenarioRecognitionResult(true, "energy-saving", null),
+                recognizer,
                 List.of(new ScenarioDefinition(
                         "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
@@ -58,13 +59,12 @@ class DefaultClientPromptGenerationOrchestratorTest {
 
         assertTrue(result.success());
         assertEquals("Site: Site A\nNotes: critical", result.promptText());
-        assertEquals("Analyze Site A.", orchestrator.lastNormalizedInput());
+        assertEquals("Analyze Site A.", recognizer.lastNormalizedInput);
         assertEquals("energy-saving", templateLoader.lastScenarioCode);
         assertEquals("en-US", templateLoader.lastLanguage);
         assertEquals("Analyze Site A.", slotValueExtractor.lastUserInput);
         assertEquals("energy-saving", slotValueExtractor.lastScenarioCode);
         assertEquals("en-US", slotValueExtractor.lastLanguage);
-        assertEquals("Site: {site}\nNotes: {additional_notes}", slotValueExtractor.lastTemplateText);
     }
 
     @Test
@@ -78,8 +78,8 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
                 (scenarioCode, language) -> "Scenario: {scenario}\nInput: {input}",
-                (userInput, scenarioCode, language, templateText) ->
-                        Map.of("scenario", scenarioCode, "input", String.valueOf(userInput)),
+                (userInput, scenarioCode, language) -> new StructuredSlotExtractionResult(
+                        Map.of("scenario", scenarioCode, "input", String.valueOf(userInput)), List.of()),
                 new TaskPromptRenderer(),
                 EMPTY_SCHEMA_LOADER);
 
@@ -104,8 +104,8 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 (scenarioCode, language) -> {
                     throw new ResourceNotFoundException("Prompt resource file does not exist.", scenarioCode);
                 },
-                (userInput, scenarioCode, language, templateText) ->
-                        Map.of("scenario", scenarioCode, "input", String.valueOf(userInput)),
+                (userInput, scenarioCode, language) -> new StructuredSlotExtractionResult(
+                        Map.of("scenario", scenarioCode, "input", String.valueOf(userInput)), List.of()),
                 new TaskPromptRenderer(),
                 EMPTY_SCHEMA_LOADER);
 
@@ -128,7 +128,8 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
                 (scenarioCode, language) -> "Scenario: {scenario}\nMissing: {{missing_slot}}",
-                (userInput, scenarioCode, language, templateText) -> Map.of("scenario", scenarioCode),
+                (userInput, scenarioCode, language) ->
+                        new StructuredSlotExtractionResult(Map.of("scenario", scenarioCode), List.of()),
                 new TaskPromptRenderer(),
                 EMPTY_SCHEMA_LOADER);
 
@@ -154,8 +155,8 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
                 (scenarioCode, language) -> "Scenario: {scenario}\nInput: {input}",
-                (userInput, scenarioCode, language, templateText) ->
-                        Map.of("scenario", scenarioCode, "input", String.valueOf(userInput)),
+                (userInput, scenarioCode, language) -> new StructuredSlotExtractionResult(
+                        Map.of("scenario", scenarioCode, "input", String.valueOf(userInput)), List.of()),
                 new TaskPromptRenderer(),
                 EMPTY_SCHEMA_LOADER);
 
@@ -168,9 +169,9 @@ class DefaultClientPromptGenerationOrchestratorTest {
     }
 
     private static DefaultClientPromptGenerationOrchestrator newTemplateUriOrchestrator(
-            ClientScenarioRecognizer recognizer,
-            ClientTemplateLoader templateLoader,
-            ClientSlotValueExtractor slotValueExtractor) {
+            ScenarioRecognitionFunction recognizer,
+            PromptTemplateTextLoader templateLoader,
+            PromptSlotValueExtractor slotValueExtractor) {
         return new DefaultClientPromptGenerationOrchestrator(
                 recognizer,
                 List.of(new ScenarioDefinition(
@@ -184,18 +185,20 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 EMPTY_SCHEMA_LOADER);
     }
 
-    private static final class RecordingScenarioRecognizer implements ClientScenarioRecognizer {
+    private static final class RecordingScenarioRecognizer implements ScenarioRecognitionFunction {
         private int invocationCount;
+        private String lastNormalizedInput;
 
         @Override
         public ScenarioRecognitionResult recognize(
                 String normalizedInput, List<ScenarioDefinition> scenarios, String systemPrompt, String userPrompt) {
             this.invocationCount++;
+            this.lastNormalizedInput = normalizedInput;
             return new ScenarioRecognitionResult(true, "energy-saving", null);
         }
     }
 
-    private static final class CountingFailingTemplateLoader implements ClientTemplateLoader {
+    private static final class CountingFailingTemplateLoader implements PromptTemplateTextLoader {
         private int loadCount;
 
         @Override
@@ -205,7 +208,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
         }
     }
 
-    private static final class FakeTemplateLoader implements ClientTemplateLoader {
+    private static final class FakeTemplateLoader implements PromptTemplateTextLoader {
         private final String templateText;
         private String lastScenarioCode;
         private String lastLanguage;
@@ -222,86 +225,70 @@ class DefaultClientPromptGenerationOrchestratorTest {
         }
     }
 
-    private static final class FakeSlotValueExtractor implements ClientSlotValueExtractor {
+    private static final class FakeSlotValueExtractor implements PromptSlotValueExtractor {
         private final Map<String, String> slots;
         private Object lastUserInput;
         private String lastScenarioCode;
         private String lastLanguage;
-        private String lastTemplateText;
 
         private FakeSlotValueExtractor(Map<String, String> slots) {
             this.slots = slots;
         }
 
         @Override
-        public Map<String, String> extractSlots(
-                Object userInput, String scenarioCode, String language, String templateText) {
+        public StructuredSlotExtractionResult extractSlots(Object userInput, String scenarioCode, String language) {
             this.lastUserInput = userInput;
             this.lastScenarioCode = scenarioCode;
             this.lastLanguage = language;
-            this.lastTemplateText = templateText;
-            return slots;
+            return new StructuredSlotExtractionResult(slots, List.of());
         }
     }
 
-    private static final class FakeSlotValueExtractorWithSchema implements ClientSlotValueExtractor {
+    private static final class FakeSlotValueExtractorWithSchema implements PromptSlotValueExtractor {
         private final Map<String, String> slots;
         private Object lastUserInput;
         private String lastScenarioCode;
         private String lastLanguage;
-        private String lastTemplateText;
-        private Map<String, Object> lastSchema;
+        private Map<String, Object> lastDataSchema;
 
         private FakeSlotValueExtractorWithSchema(Map<String, String> slots) {
             this.slots = slots;
         }
 
         @Override
-        public Map<String, String> extractSlots(
-                Object userInput, String scenarioCode, String language, String templateText) {
+        public StructuredSlotExtractionResult extractSlots(Object userInput, String scenarioCode, String language) {
             this.lastUserInput = userInput;
             this.lastScenarioCode = scenarioCode;
             this.lastLanguage = language;
-            this.lastTemplateText = templateText;
-            return slots;
+            return new StructuredSlotExtractionResult(slots, List.of());
         }
 
         @Override
-        public Map<String, String> extractSlotsWithSchema(
-                Object userInput,
-                String scenarioCode,
-                String language,
-                String templateText,
-                Map<String, Object> dataSchema) {
+        public StructuredSlotExtractionResult extractSlots(
+                Object userInput, String scenarioCode, String language, Map<String, Object> dataSchema) {
             this.lastUserInput = userInput;
             this.lastScenarioCode = scenarioCode;
             this.lastLanguage = language;
-            this.lastTemplateText = templateText;
-            this.lastSchema = dataSchema;
-            return slots;
+            this.lastDataSchema = dataSchema;
+            return new StructuredSlotExtractionResult(slots, List.of());
         }
     }
 
-    private static final class FailingExtractSlotsWithSchema implements ClientSlotValueExtractor {
+    private static final class FailingSlotValueExtractor implements PromptSlotValueExtractor {
         private final RuntimeException exception;
 
-        private FailingExtractSlotsWithSchema(RuntimeException exception) {
+        private FailingSlotValueExtractor(RuntimeException exception) {
             this.exception = exception;
         }
 
         @Override
-        public Map<String, String> extractSlots(
-                Object userInput, String scenarioCode, String language, String templateText) {
-            return Map.of();
+        public StructuredSlotExtractionResult extractSlots(Object userInput, String scenarioCode, String language) {
+            return new StructuredSlotExtractionResult(Map.of(), List.of());
         }
 
         @Override
-        public Map<String, String> extractSlotsWithSchema(
-                Object userInput,
-                String scenarioCode,
-                String language,
-                String templateText,
-                Map<String, Object> dataSchema) {
+        public StructuredSlotExtractionResult extractSlots(
+                Object userInput, String scenarioCode, String language, Map<String, Object> dataSchema) {
             throw exception;
         }
     }
@@ -394,7 +381,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
         DefaultClientPromptGenerationOrchestrator orchestrator = newTemplateUriOrchestrator(
                 new RecordingScenarioRecognizer(),
                 new FakeTemplateLoader("Site: {site}"),
-                (userInput, scenarioCode, language, templateText) -> {
+                (userInput, scenarioCode, language) -> {
                     throw new LLMRuntimeError("LLM invocation failed.");
                 });
 
@@ -434,9 +421,23 @@ class DefaultClientPromptGenerationOrchestratorTest {
         orchestrator.generateTaskPromptFromDataWithSchema(
                 Map.of("site", "Site A"), schema, StandardTemplates.ENERGY_SAVING);
 
-        assertEquals(schema, slotValueExtractor.lastSchema);
+        assertEquals(schema, slotValueExtractor.lastDataSchema);
         assertEquals(StandardTemplates.ENERGY_SAVING.uri(), slotValueExtractor.lastScenarioCode);
-        assertEquals("Site: {site}", slotValueExtractor.lastTemplateText);
+    }
+
+    @Test
+    void generateTaskPromptFromDataWithSchemaRejectsNullData() {
+        FakeTemplateLoader templateLoader = new FakeTemplateLoader("Site: {site}");
+        FakeSlotValueExtractorWithSchema slotValueExtractor =
+                new FakeSlotValueExtractorWithSchema(Map.of("site", "Site A"));
+        DefaultClientPromptGenerationOrchestrator orchestrator =
+                newTemplateUriOrchestrator(new RecordingScenarioRecognizer(), templateLoader, slotValueExtractor);
+
+        NullPointerException ex = assertThrows(
+                NullPointerException.class,
+                () -> orchestrator.generateTaskPromptFromDataWithSchema(
+                        null, Map.of("site", "string"), StandardTemplates.ENERGY_SAVING));
+        assertTrue(ex.getMessage().contains("data"));
     }
 
     @Test
@@ -504,7 +505,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
         DefaultClientPromptGenerationOrchestrator orchestrator = newTemplateUriOrchestrator(
                 new RecordingScenarioRecognizer(),
                 new FakeTemplateLoader("Site: {site}"),
-                new FailingExtractSlotsWithSchema(new LLMRuntimeError("LLM invocation failed.")));
+                new FailingSlotValueExtractor(new LLMRuntimeError("LLM invocation failed.")));
 
         PromptGenerationException ex = assertThrows(
                 PromptGenerationException.class,
@@ -518,7 +519,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
         DefaultClientPromptGenerationOrchestrator orchestrator = newTemplateUriOrchestrator(
                 new RecordingScenarioRecognizer(),
                 new FakeTemplateLoader("Site: {site}"),
-                new FailingExtractSlotsWithSchema(
+                new FailingSlotValueExtractor(
                         new ResourceNotFoundException("Slot schema file does not exist.", "energy-saving")));
 
         PromptGenerationException ex = assertThrows(
@@ -608,14 +609,14 @@ class DefaultClientPromptGenerationOrchestratorTest {
         assertEquals("Authorization-T/database_read/v1", jsonResult.templateUri());
         assertEquals("Authorization-T/database_read/v1", templateLoader.lastScenarioCode);
         assertEquals(Map.of("scope", "read"), slotValueExtractor.lastUserInput);
-        assertEquals(Map.of("scope", "string"), slotValueExtractor.lastSchema);
+        assertEquals(Map.of("scope", "string"), slotValueExtractor.lastDataSchema);
     }
 
     // --- slot validation tests ---
 
     @Test
     void validateRequiredSlotsThrowsSlotValidationErrorWhenRequiredSlotsMissing() {
-        ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
+        PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
                 scenarioCode,
                 List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null)));
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
@@ -641,7 +642,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
 
     @Test
     void validateRequiredSlotsThrowsSlotValidationErrorWhenMultipleRequiredSlotsMissing() {
-        ClientSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
+        PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
                 scenarioCode,
                 List.of(
                         new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null),
@@ -695,7 +696,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 "",
                 "",
                 new FakeTemplateLoader("Site: {site}"),
-                (userInput, scenarioCode, language, templateText) -> {
+                (userInput, scenarioCode, language) -> {
                     throw new ResourceNotFoundException("Slot schema file does not exist.", scenarioCode);
                 },
                 new TaskPromptRenderer(),
@@ -737,7 +738,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 "",
                 "",
                 new FakeTemplateLoader("Site: {site}"),
-                (userInput, scenarioCode, language, templateText) -> {
+                (userInput, scenarioCode, language) -> {
                     throw new A2ATError("Unparseable LLM response.");
                 },
                 new TaskPromptRenderer(),
@@ -747,5 +748,98 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 PromptGenerationException.class,
                 () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
         assertEquals("llm_invocation_failed", ex.getCode());
+    }
+
+    @Test
+    void validateRequiredSlotsThrowsSlotValidationErrorWhenSlotValueIsEmptyString() {
+        PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
+                scenarioCode,
+                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null)));
+        DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
+                new RecordingScenarioRecognizer(),
+                List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
+                "en-US",
+                "",
+                "",
+                new FakeTemplateLoader("Site: {site}"),
+                new FakeSlotValueExtractor(Map.of("site", "")),
+                new TaskPromptRenderer(),
+                schemaLoader);
+
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
+                () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
+        assertEquals("slot_validation_error", ex.getCode());
+        assertEquals(1, ex.failedParameters().size());
+        assertEquals("site", ex.failedParameters().get(0).slotName());
+        assertEquals("missing_required", ex.failedParameters().get(0).code());
+    }
+
+    @Test
+    void validateRequiredSlotsThrowsSlotValidationErrorWhenSlotValueIsBlankString() {
+        PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
+                scenarioCode,
+                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null)));
+        DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
+                new RecordingScenarioRecognizer(),
+                List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
+                "en-US",
+                "",
+                "",
+                new FakeTemplateLoader("Site: {site}"),
+                new FakeSlotValueExtractor(Map.of("site", "   ")),
+                new TaskPromptRenderer(),
+                schemaLoader);
+
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
+                () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
+        assertEquals("slot_validation_error", ex.getCode());
+        assertEquals(1, ex.failedParameters().size());
+        assertEquals("site", ex.failedParameters().get(0).slotName());
+    }
+
+    @Test
+    void validateRequiredSlotsSucceedsWhenSchemaHasNoRequiredSlotsAndAllSlotsAreEmpty() {
+        PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
+                scenarioCode,
+                List.of(new PromptSlotDefinition("site", false, "string", null, null, null, null, "Site name", null)));
+        DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
+                new RecordingScenarioRecognizer(),
+                List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
+                "en-US",
+                "",
+                "",
+                new FakeTemplateLoader("Site: {site}"),
+                new FakeSlotValueExtractor(Map.of()),
+                new TaskPromptRenderer(),
+                schemaLoader);
+
+        MetadataContent result =
+                orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING);
+        assertNotNull(result);
+        assertNotNull(result.promptText());
+    }
+
+    @Test
+    void validateRequiredSlotsIsNotInvokedInGenerateTaskPromptPipeline() {
+        PromptSlotSchemaLoader failingSchemaLoader = (scenarioCode, language) -> {
+            throw new A2ATError("Schema loading should not be triggered in generateTaskPrompt pipeline.");
+        };
+        DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
+                (normalizedInput, scenarios, systemPrompt, userPrompt) ->
+                        new ScenarioRecognitionResult(true, "energy_saving", null),
+                List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
+                "en-US",
+                "",
+                "",
+                (scenarioCode, language) -> "Site: {site}",
+                new FakeSlotValueExtractor(Map.of("site", "Site A")),
+                new TaskPromptRenderer(),
+                failingSchemaLoader);
+
+        PromptGenerationResult result = orchestrator.generateTaskPrompt("Analyze Site A.");
+        assertTrue(result.success());
+        assertEquals("Site: Site A", result.promptText());
     }
 }

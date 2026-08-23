@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.prompt.analysis.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -40,8 +41,7 @@ class ScenarioRecognizerTest {
 
     @Test
     void recognizeRejectsMatchedPayloadWithoutScenarioCode() {
-        LLMClient llmClient =
-                new RecordingClient("{\"matched\":true,\"scenario_code\":null,\"error_message\":null}");
+        LLMClient llmClient = new RecordingClient("{\"matched\":true,\"scenario_code\":null,\"error_message\":null}");
 
         ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient);
 
@@ -75,6 +75,12 @@ class ScenarioRecognizerTest {
         assertTrue(result.matched());
         assertEquals("energy-saving", result.scenarioCode());
         assertEquals("ignored", parser.lastPayload);
+    }
+
+    @Test
+    void scenarioRecognizerImplementsScenarioRecognitionFunction() {
+        ScenarioRecognizer recognizer = new ScenarioRecognizer(new RecordingClient("ignored"));
+        assertInstanceOf(ScenarioRecognitionFunction.class, recognizer);
     }
 
     private static final class RecordingClient implements LLMClient {

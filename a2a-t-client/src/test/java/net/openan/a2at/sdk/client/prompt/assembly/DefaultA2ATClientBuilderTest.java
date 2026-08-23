@@ -3,13 +3,11 @@ package net.openan.a2at.sdk.client.prompt.assembly;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import net.openan.a2at.sdk.client.prompt.extractor.ClientSlotValueExtractor;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
@@ -28,51 +26,6 @@ class DefaultA2ATClientBuilderTest {
     }
 
     @Test
-    void structuredInputAwareExtractSlotsWithSchemaDelegatesToLlmExtractorForMapInput() throws Exception {
-        ClientSlotValueExtractor structuredExtractor =
-                (userInput, scenarioCode, language, templateText) -> Map.of("key", "structured");
-        ClientSlotValueExtractor llmExtractor =
-                (userInput, scenarioCode, language, templateText) -> Map.of("key", "llm");
-
-        Class<?> innerClass = Class.forName(
-                "net.openan.a2at.sdk.client.prompt.assembly.DefaultA2ATClientBuilder$StructuredInputAwareSlotValueExtractor");
-        Constructor<?> constructor = innerClass.getDeclaredConstructor(
-                ClientSlotValueExtractor.class, ClientSlotValueExtractor.class);
-        constructor.setAccessible(true);
-        ClientSlotValueExtractor extractor =
-                (ClientSlotValueExtractor) constructor.newInstance(structuredExtractor, llmExtractor);
-
-        Map<String, String> result = extractor.extractSlotsWithSchema(
-                Map.of("key", "value"), "scenario", "en", "template", Map.of("field", "description"));
-
-        assertEquals(Map.of("key", "llm"), result);
-    }
-
-    @Test
-    void structuredInputAwareExtractSlotsStillDispatchesByType() throws Exception {
-        ClientSlotValueExtractor structuredExtractor =
-                (userInput, scenarioCode, language, templateText) -> Map.of("key", "structured");
-        ClientSlotValueExtractor llmExtractor =
-                (userInput, scenarioCode, language, templateText) -> Map.of("key", "llm");
-
-        Class<?> innerClass = Class.forName(
-                "net.openan.a2at.sdk.client.prompt.assembly.DefaultA2ATClientBuilder$StructuredInputAwareSlotValueExtractor");
-        Constructor<?> constructor = innerClass.getDeclaredConstructor(
-                ClientSlotValueExtractor.class, ClientSlotValueExtractor.class);
-        constructor.setAccessible(true);
-        ClientSlotValueExtractor extractor =
-                (ClientSlotValueExtractor) constructor.newInstance(structuredExtractor, llmExtractor);
-
-        Map<String, String> mapResult = extractor.extractSlots(
-                Map.of("key", "value"), "scenario", "en", "template");
-        assertEquals(Map.of("key", "structured"), mapResult);
-
-        Map<String, String> stringResult = extractor.extractSlots(
-                "plain text", "scenario", "en", "template");
-        assertEquals(Map.of("key", "llm"), stringResult);
-    }
-
-    @Test
     void should_createLlmClientOnlyOnce_When_multipleBuildMethodsCalled() throws IOException {
         String provider = "test-lazy-cache";
         if (!LLMClientFactory.availableProviders().contains(provider)) {
@@ -81,12 +34,11 @@ class DefaultA2ATClientBuilderTest {
 
         Path envFile = createTempEnvFile(provider);
         A2ATConfig config = A2ATConfig.load(envFile);
-        config = net.openan.a2at.sdk.negotiation.generation.NegotiationContentService
-                .resolvePromptResourceLocalRootDir(config, envFile);
+        config = net.openan.a2at.sdk.negotiation.generation.NegotiationContentService.resolvePromptResourceLocalRootDir(
+                config, envFile);
 
-        DefaultA2ATClientBuilder builder = DefaultA2ATClientBuilder.builder()
-                .config(config)
-                .envPath(envFile);
+        DefaultA2ATClientBuilder builder =
+                DefaultA2ATClientBuilder.builder().config(config).envPath(envFile);
 
         builder.buildPromptGenerationOrchestrator();
         builder.buildNegotiationGenerationOrchestrator();
@@ -97,8 +49,10 @@ class DefaultA2ATClientBuilderTest {
     private static Path createTempEnvFile(String provider) throws IOException {
         Path tempDir = Files.createTempDirectory("a2at-client-builder-lazy");
         Path promptRoot = tempDir.resolve("prompt_resources");
-        Path scenarioPromptDir = promptRoot.resolve("prompts").resolve("scenario_recognition").resolve("zh-CN");
-        Path slotPromptDir = promptRoot.resolve("prompts").resolve("slot_extraction").resolve("zh-CN");
+        Path scenarioPromptDir =
+                promptRoot.resolve("prompts").resolve("scenario_recognition").resolve("zh-CN");
+        Path slotPromptDir =
+                promptRoot.resolve("prompts").resolve("slot_extraction").resolve("zh-CN");
         Path scenariosDir = promptRoot.resolve("scenarios").resolve("zh-CN");
         Files.createDirectories(scenarioPromptDir);
         Files.createDirectories(slotPromptDir);
@@ -166,8 +120,7 @@ class DefaultA2ATClientBuilderTest {
                 }
             }
             slots.append("}");
-            return new LLMResponse(
-                    "{\"slots\":" + slots + ",\"slot_errors\":[]}", config.model(), Map.of(), Map.of());
+            return new LLMResponse("{\"slots\":" + slots + ",\"slot_errors\":[]}", config.model(), Map.of(), Map.of());
         }
     }
 }

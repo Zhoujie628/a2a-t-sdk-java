@@ -18,7 +18,7 @@ import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
  *
  * @since 2026-05
  */
-public final class ScenarioRecognizer {
+public final class ScenarioRecognizer implements ScenarioRecognitionFunction {
 
     private final LLMClient llmClient;
 
@@ -53,6 +53,7 @@ public final class ScenarioRecognizer {
      * @param userPrompt user prompt for recognition
      * @return recognition result
      */
+    @Override
     public ScenarioRecognitionResult recognize(
             String normalizedInput, List<ScenarioDefinition> scenarios, String systemPrompt, String userPrompt) {
         Map<String, Object> payload = parser.parseObject(llmClient
