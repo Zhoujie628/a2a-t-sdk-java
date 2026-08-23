@@ -14,7 +14,7 @@ HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 SLOT = re.compile(r"{{\s*([^{}\s]+)\s*}}")
 TASK = {"Task Description", "Task Type", "Task Target", "Task Object", "Task Context", "Constraints", "Expected Output", "Operation Type"}
 NOTIFICATION = {"Subscription Description", "Notification Topic", "Subscribe Condition", "Notification Data Format", "Expected Output"}
-AUTHORIZATION = {"Authorization Policy Operation Type", "Authorization Policy Operation Description", "Dynamic Network Operation Authorization Policy List", "Expected Output"}
+AUTHORIZATION = {"Authorization Policy Operation Type", "Authorization Policy Operation Description", "Network Operation Authorization Policy List", "Expected Output"}
 ALIASES = {
     "任务描述": "Task Description", "任务类型": "Task Type", "任务目标": "Task Target", "任务对象": "Task Object",
     "目标对象": "Task Object", "任务上下文": "Task Context", "约束条件": "Constraints", "预期输出": "Expected Output",
@@ -23,7 +23,7 @@ ALIASES = {
     "通知数据格式": "Notification Data Format", "上报通知数据格式": "Notification Data Format",
     "授权策略的操作类型": "Authorization Policy Operation Type",
     "授权策略的操作描述": "Authorization Policy Operation Description",
-    "动网操作的授权策略列表": "Dynamic Network Operation Authorization Policy List",
+    "动网操作的授权策略列表": "Network Operation Authorization Policy List",
 }
 
 NEGOTIATION_TYPE_SEGMENTS = ("information-negotiation", "target-negotiation", "feasibility-negotiation")
