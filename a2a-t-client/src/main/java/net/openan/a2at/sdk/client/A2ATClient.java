@@ -329,7 +329,7 @@ public final class A2ATClient {
      * {@code negotiation_content_extract_failed} and {@code negotiation_llm_infrastructure_error}.
      *
      * @param text free-text input describing the message content
-     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI such as {@code Negotiation-T/target-negotiation/propose/v1}; its phase segment
      *     must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
@@ -358,7 +358,7 @@ public final class A2ATClient {
      * conclusion must be {@code Accept}.
      *
      * @param text free-text input describing the message content
-     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI such as {@code Negotiation-T/information-negotiation/accept-reject/v1}; its phase
      *     segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
@@ -387,7 +387,7 @@ public final class A2ATClient {
      * conclusion must be {@code Reject}.
      *
      * @param text free-text input describing the message content
-     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI such as {@code Negotiation-T/feasibility-negotiation/accept-reject/v1}; its phase
      *     segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
@@ -417,7 +417,7 @@ public final class A2ATClient {
      * {@code negotiation_content_extract_failed} and {@code negotiation_llm_infrastructure_error}.
      *
      * @param text free-text input stating the termination reason
-     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the context is null
@@ -495,10 +495,11 @@ public final class A2ATClient {
     /**
      * Validates a propose-phase negotiation message and extracts its parameters.
      *
-     * <p>The pipeline first runs the deterministic rule gate (recognition of the negotiation context section and its
-     * strong constraints) before any LLM call, then performs one LLM semantic validation call that also extracts the
-     * parameters, and finally merges the parameters with the context parameters taking precedence. The semantic step is
-     * retried up to the configured attempt limit on the retryable LLM infrastructure failure code.
+     * <p>The pipeline checks the template URI before any LLM call, runs the deterministic rule gate on the negotiation
+     * context carried in the {@code negotiationContext} metadata entry, then performs one LLM semantic validation call
+     * that also extracts the parameters, and finally merges the parameters with the context parameters taking
+     * precedence. The semantic step is retried up to the configured attempt limit on the retryable LLM infrastructure
+     * failure code.
      *
      * @param prompt rendered negotiation message text to validate
      * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
@@ -528,7 +529,7 @@ public final class A2ATClient {
     /**
      * Validates an accept-phase negotiation message and extracts its parameters.
      *
-     * <p>The pipeline is the one of {@link #validateProposePromptAndDataFilling(String, Map, TemplateUri)} with the expected
+     * <p>The pipeline is the one of {@link #validateProposePromptAndDataFilling} with the expected
      * phase fixed to accept: the template URI must declare the {@code accept-reject} segment and the message must
      * satisfy the accept-phase semantic constraints.
      *
@@ -560,7 +561,7 @@ public final class A2ATClient {
     /**
      * Validates a reject-phase negotiation message and extracts its parameters.
      *
-     * <p>The pipeline is the one of {@link #validateProposePromptAndDataFilling(String, Map, TemplateUri)} with the expected
+     * <p>The pipeline is the one of {@link #validateProposePromptAndDataFilling} with the expected
      * phase fixed to reject: the template URI must declare the {@code accept-reject} segment and the message must
      * satisfy the reject-phase semantic constraints.
      *
@@ -592,7 +593,7 @@ public final class A2ATClient {
     /**
      * Validates an abort negotiation message and extracts its parameters.
      *
-     * <p>The pipeline is the one of {@link #validateProposePromptAndDataFilling(String, Map, TemplateUri)} with the expected
+     * <p>The pipeline is the one of {@link #validateProposePromptAndDataFilling} with the expected
      * phase fixed to abort: the template URI must address the common abort template and the message must satisfy the
      * abort-phase semantic constraints.
      *
