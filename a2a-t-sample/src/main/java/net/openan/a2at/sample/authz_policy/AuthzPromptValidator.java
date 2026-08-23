@@ -4,6 +4,11 @@ import java.util.Map;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 
+/**
+ * Functional interface for validating an authorization prompt and extracting filled slot data.
+ *
+ * @since 2026-08
+ */
 @FunctionalInterface
 public interface AuthzPromptValidator {
 

@@ -8,6 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Loads and validates demo scenarios from a JSON resource file.
+ *
+ * <p>The JSON file must contain a top-level {@code scenarios} array. Each scenario entry is parsed into an
+ * {@link AuthzScenario} record and then validated via {@link AuthzScenario#validate(AuthzScenario)}.
+ *
+ * @since 2026-08
+ */
 public final class AuthzScenarioLoader {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();

@@ -25,6 +25,15 @@ import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.server.A2ATServer;
 
+/**
+ * Entry point for the Authorization-T demo.
+ *
+ * <p>Loads scenarios from {@code sample/authz-policy/scenarios.json}, generates authorization prompts through
+ * {@link A2ATClient}, validates them through {@link A2ATServer}, and writes a JSON report with
+ * expected/actual outcome and per-slot error details for each scenario.
+ *
+ * @since 2026-08
+ */
 public final class AuthzSampleMain {
 
     private static final String DEFAULT_ENV_FILE = "authz.env";

@@ -13,6 +13,12 @@ import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
 
+/**
+ * Scenario execution engine that runs a single scenario through prompt generation and validation,
+ * comparing the actual outcome against the expected outcome and per-slot error details.
+ *
+ * @since 2026-08
+ */
 public final class AuthzScenarioRunner {
 
     private final AuthzPromptGenerator generator;
