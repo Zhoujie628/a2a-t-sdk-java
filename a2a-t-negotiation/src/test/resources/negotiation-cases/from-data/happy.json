@@ -1,0 +1,285 @@
+[
+  {
+    "id": "FD-HAPPY-01",
+    "api": "generateProposeFromData",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "information", "propose", "deterministic"],
+    "summary": "结构化数据直接生成信息协商提议消息，双语渲染均与 golden 一致，全程零 LLM 调用",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "input": {
+      "data": {
+        "items": [
+          { "name": "energy-saving area information", "value": "e.g. Songshan Lake" },
+          { "name": "energy-saving rate guarantee target", "value": "e.g. 20Mbps" },
+          { "name": "VLANId", "value": null }
+        ],
+        "relationship": "OR"
+      }
+    },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 0,
+      "promptTextEqualsGolden": "information_propose",
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/information-negotiation/propose/v1",
+        "contextEcho": true
+      },
+      "contracts": ["metadataTripleShape"]
+    }
+  },
+  {
+    "id": "FD-HAPPY-02",
+    "api": "generateAcceptFromData",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "information", "accept", "deterministic"],
+    "summary": "结构化数据直接生成信息协商接受消息，消息含 Accept 结论字面量，双语渲染均与 golden 一致，全程零 LLM 调用",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+    "input": {
+      "data": {
+        "conclusion": "Accept",
+        "items": [
+          { "name": "energy-saving area information", "value": "Songshan Lake" },
+          { "name": "energy-saving rate guarantee target", "value": "20Mbps" }
+        ]
+      }
+    },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 0,
+      "promptTextEqualsGolden": "information_accept",
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "contextEcho": true
+      },
+      "contracts": ["conclusionLiteralPresent", "metadataTripleShape"]
+    }
+  },
+  {
+    "id": "FD-HAPPY-03",
+    "api": "generateRejectFromData",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "information", "reject", "deterministic"],
+    "summary": "结构化数据直接生成信息协商拒绝消息，消息含 Reject 结论字面量，双语渲染均与 golden 一致，全程零 LLM 调用",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+    "input": {
+      "data": {
+        "conclusion": "Reject",
+        "items": [
+          { "name": "energy-saving area information", "value": "cannot be provided because the site inventory is unavailable" }
+        ]
+      }
+    },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 0,
+      "promptTextEqualsGolden": "information_reject",
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "contextEcho": true
+      },
+      "contracts": ["conclusionLiteralPresent", "metadataTripleShape"]
+    }
+  },
+  {
+    "id": "FD-HAPPY-04",
+    "api": "generateProposeFromData",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "target", "propose", "first-round", "deterministic"],
+    "summary": "首轮目标协商从结构化数据直接生成提议消息，首轮渲染意图理解与待澄清内容两个板块，全程零 LLM 调用",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/target-negotiation/propose/v1",
+    "input": {
+      "data": {
+        "target_negotiation_description": "The intent understanding of the wireless energy-saving optimization task is listed in <Intent Understanding Statement>; open questions remain about the area and the time range, see <Content to Clarify>; please clarify and confirm.",
+        "intent_understanding": [
+          { "name": "task intent", "value": "apply wireless energy-saving optimization to the target site during 08:00-18:00" },
+          { "name": "rate guarantee target", "value": "at least 20Mbps during the energy-saving period" }
+        ],
+        "alignment_and_clarification": null,
+        "request_for_clarification": [
+          { "name": "area", "value": "which site is covered: Songshan Lake or another site" },
+          { "name": "time range", "value": "is the energy-saving period 08:00-18:00 or 00:00-06:00" }
+        ]
+      }
+    },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 0,
+      "promptTextEqualsGolden": "target_propose",
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/target-negotiation/propose/v1",
+        "contextEcho": true
+      },
+      "contracts": ["metadataTripleShape"]
+    }
+  },
+  {
+    "id": "FD-HAPPY-05",
+    "api": "generateAcceptFromData",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "target", "accept", "deterministic"],
+    "summary": "结构化数据直接生成目标协商接受消息，消息携带最终确认意图并含 Accept 结论字面量，全程零 LLM 调用",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+    "input": {
+      "data": {
+        "conclusion": "Accept",
+        "confirmed_intent": "The finally confirmed intent: apply wireless energy-saving optimization to the Songshan Lake site during 08:00-18:00 with a guaranteed rate of at least 20Mbps.",
+        "failure_reason": null
+      }
+    },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 0,
+      "promptTextEqualsGolden": "target_accept",
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/target-negotiation/accept-reject/v1",
+        "contextEcho": true
+      },
+      "contracts": ["conclusionLiteralPresent", "metadataTripleShape"]
+    }
+  },
+  {
+    "id": "FD-HAPPY-06",
+    "api": "generateRejectFromData",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "target", "reject", "deterministic"],
+    "summary": "结构化数据直接生成目标协商拒绝消息，消息携带拒绝原因并含 Reject 结论字面量，全程零 LLM 调用",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+    "input": {
+      "data": {
+        "conclusion": "Reject",
+        "confirmed_intent": null,
+        "failure_reason": "The area information cannot be clarified in full because the site inventory is unavailable."
+      }
+    },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 0,
+      "promptTextEqualsGolden": "target_reject",
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/target-negotiation/accept-reject/v1",
+        "contextEcho": true
+      },
+      "contracts": ["conclusionLiteralPresent", "metadataTripleShape"]
+    }
+  },
+  {
+    "id": "FD-HAPPY-07",
+    "api": "generateProposeFromData",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "feasibility", "propose", "evaluation-request", "deterministic"],
+    "summary": "结构化数据直接生成可行性协商提议消息，请求对方评估调整后的速率保障目标，全程零 LLM 调用",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+    "input": {
+      "data": {
+        "feasibility_negotiation_description": "Please assess whether the adjusted rate guarantee target of the site-level energy-saving task can be achieved, see <Under Evaluation Description>; please assess.",
+        "action": "REQUEST_FEASIBILITY_EVALUATION",
+        "contents_to_evaluate": [
+          { "name": "adjusted target", "value": "rate guarantee target lowered from 5Mbps to 2Mbps during 08:00-18:00" },
+          { "name": "existing constraint", "value": "at least 10 hours of power supply duration in outage scenarios" }
+        ],
+        "infeasibility_details_and_proposal": null
+      }
+    },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 0,
+      "promptTextEqualsGolden": "feasibility_propose",
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/feasibility-negotiation/propose/v1",
+        "contextEcho": true
+      },
+      "contracts": ["metadataTripleShape"]
+    }
+  },
+  {
+    "id": "FD-HAPPY-08",
+    "api": "generateAcceptFromData",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "feasibility", "accept", "deterministic"],
+    "summary": "结构化数据直接生成可行性协商接受消息，消息携带可行性结论并含 Accept 结论字面量，全程零 LLM 调用",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+    "input": {
+      "data": {
+        "conclusion": "Accept",
+        "feasibility_summary": "The adjusted rate guarantee target is achievable and satisfies the outage duration requirement; this negotiation is confirmed as concluded."
+      }
+    },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 0,
+      "promptTextEqualsGolden": "feasibility_accept",
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+        "contextEcho": true
+      },
+      "contracts": ["conclusionLiteralPresent", "metadataTripleShape"]
+    }
+  },
+  {
+    "id": "FD-HAPPY-09",
+    "api": "generateRejectFromData",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "feasibility", "reject", "deterministic"],
+    "summary": "结构化数据直接生成可行性协商拒绝消息，消息携带不可行结论并含 Reject 结论字面量，全程零 LLM 调用",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+    "input": {
+      "data": {
+        "conclusion": "Reject",
+        "feasibility_summary": "The energy-saving target cannot be achieved under the existing power supply constraint; this negotiation is confirmed as concluded."
+      }
+    },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 0,
+      "promptTextEqualsGolden": "feasibility_reject",
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+        "contextEcho": true
+      },
+      "contracts": ["conclusionLiteralPresent", "metadataTripleShape"]
+    }
+  },
+  {
+    "id": "FD-HAPPY-10",
+    "api": "generateAbortFromData",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "abort", "common", "deterministic"],
+    "summary": "结构化数据直接生成协商终止消息，走通用 abort 模板并含终止原因，双语渲染均与 golden 一致，全程零 LLM 调用",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/common/abort/v1",
+    "input": {
+      "data": {
+        "termination_reason": "The negotiation round limit is reached; this negotiation is confirmed as terminated."
+      }
+    },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 0,
+      "promptTextEqualsGolden": "abort",
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/common/abort/v1",
+        "contextEcho": true
+      },
+      "contracts": ["conclusionLiteralPresent", "metadataTripleShape"]
+    }
+  }
+]

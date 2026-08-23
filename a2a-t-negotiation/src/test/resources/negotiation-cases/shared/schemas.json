@@ -1,0 +1,58 @@
+{
+  "flat": {
+    "type": "object",
+    "properties": {
+      "region": {
+        "type": "string"
+      }
+    }
+  },
+  "noType": {
+    "properties": {
+      "region": {
+        "type": "string"
+      }
+    }
+  },
+  "no_type": {
+    "properties": {
+      "region": {
+        "type": "string"
+      }
+    }
+  },
+  "nestedArray": {
+    "type": "object",
+    "properties": {
+      "regions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "nested_array": {
+    "type": "object",
+    "properties": {
+      "regions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "colliding": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "round": {
+        "type": "integer"
+      }
+    }
+  },
+  "empty": {}
+}

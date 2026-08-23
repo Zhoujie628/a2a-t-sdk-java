@@ -8,6 +8,8 @@ import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
@@ -33,8 +35,9 @@ import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestra
  * <p>The fixture data deliberately exercises the known rendering pitfalls: a non-null relationship with an appended
  * line and a null-value item (information propose), the round-driven conditional sections with a non-empty
  * clarification list (target propose, round 1), the action-driven conditional section (feasibility propose, evaluation
- * request action), the accept and reject conclusion literals, and the feasibility summary rendered into the
- * vocabulary-exception slot of the feasibility result confirmation section.
+ * request action), the accept and reject conclusion literals, the feasibility summary rendered into the
+ * vocabulary-exception slot of the feasibility result confirmation section, and the common abort template rendering
+ * the termination reason.
  */
 public final class GoldenInputs {
 
@@ -211,6 +214,15 @@ public final class GoldenInputs {
                         "The energy-saving target cannot be achieved under the existing power supply constraint;"
                                 + " this negotiation is confirmed as concluded.");
             }
+        },
+
+        /** Common abort fixture terminating the negotiation at the round limit. */
+        ABORT(NegotiationPhase.ABORT, "common", "abort") {
+            @Override
+            public NegotiationContent content() {
+                return new NegotiationAbortContent(
+                        "The negotiation round limit is reached; this negotiation is confirmed as terminated.");
+            }
         };
 
         private final NegotiationPhase phase;
@@ -302,7 +314,8 @@ public final class GoldenInputs {
                         new NegotiationEndingData(context(), (NegotiationEndingContent) content()), template());
                 case REJECT -> orchestrator.generateRejectFromData(
                         new NegotiationEndingData(context(), (NegotiationEndingContent) content()), template());
-                case ABORT -> throw new IllegalArgumentException("The typed golden fixtures carry no abort phase.");
+                case ABORT -> orchestrator.generateAbortFromData(
+                        new NegotiationAbortData(context(), (NegotiationAbortContent) content()), template());
             };
         }
     }

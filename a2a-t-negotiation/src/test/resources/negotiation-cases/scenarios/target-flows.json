@@ -1,0 +1,242 @@
+[
+  {
+    "id": "SC-TGT-01",
+    "summary": "目标协商单轮闭环：A 从自然语言生成携带最终确认意图的接受消息，B 校验通过并提取站点与速率保障参数",
+    "languages": ["zh-CN", "en-US"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateAcceptFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "最终确认的意图：对松山湖站点在08:00-18:00执行无线节能优化，节能期间速率保障不低于20Mbps。",
+            "en-US": "The finally confirmed intent: apply wireless energy-saving optimization to the Songshan Lake site during 08:00-18:00 with a guaranteed rate of at least 20Mbps."
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.target.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "target_accept"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "validateAcceptPromptAndDataFilling",
+        "prompt": { "fromStep": 1 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "site": { "type": "string" },
+            "guaranteed_rate": { "type": "string" }
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/semantic.target.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 1,
+            "maxRounds": 5,
+            "site": "Songshan Lake",
+            "guaranteed_rate": "at least 20Mbps"
+          },
+          "contracts": ["contextKeysInMergedParams"]
+        }
+      }
+    ],
+    "expectFlow": { "terminalCondition": "accept", "roundsUsed": 1, "distinctMessages": true }
+  },
+  {
+    "id": "SC-TGT-02",
+    "summary": "目标协商两轮演进：首轮区域信息无法澄清被拒后，发起方对齐区域理解并于第2轮重新提议，接收方接受且参数校验提取成功",
+    "languages": ["zh-CN", "en-US"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/target-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "无线节能优化任务的意图理解：对目标站点在08:00-18:00执行无线节能优化，节能期间速率保障不低于20Mbps；对区域与节能时间范围仍有疑问，请澄清和确认。",
+            "en-US": "The intent understanding of the wireless energy-saving optimization task: apply wireless energy-saving optimization to the target site during 08:00-18:00 with a guaranteed rate of at least 20Mbps; open questions remain about the area and the time range, please clarify and confirm."
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.target.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "target_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "generateRejectFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "无法完整澄清区域信息：站点库存数据不可用，本轮目标协商拒绝。",
+            "en-US": "The area information cannot be clarified in full because the site inventory is unavailable; this target negotiation round is rejected."
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.target.reject.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "target_reject",
+          "contracts": ["conclusionLiteralPresent"]
+        }
+      },
+      {
+        "step": 3,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/target-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "第2轮目标协商：区域已确认为松山湖；节能时间范围仍有疑问（08:00-18:00还是00:00-06:00），请澄清和确认。",
+            "en-US": "Second-round target negotiation: the area is confirmed as Songshan Lake; an open question remains about the energy-saving time range (08:00-18:00 or 00:00-06:00), please clarify and confirm."
+          }
+        },
+        "llm": { "script": [ "{\"target_negotiation_description\":\"The area of the wireless energy-saving optimization task has been aligned, see <Understanding Alignment and Clarification>; an open question remains about the energy-saving time range, see <Content to Clarify>; please clarify and confirm.\",\"intent_understanding\":null,\"alignment_and_clarification\":[{\"name\":\"area\",\"value\":\"confirmed: the covered site is Songshan Lake\"}],\"request_for_clarification\":[{\"name\":\"time range\",\"value\":\"is the energy-saving period 08:00-18:00 or 00:00-06:00\"}]}" ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "metadata": {
+            "templateUriEcho": "Negotiation-T/target-negotiation/propose/v1",
+            "contextEcho": true
+          },
+          "contracts": ["metadataTripleShape"]
+        }
+      },
+      {
+        "step": 4,
+        "role": "B",
+        "api": "generateAcceptFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "最终确认的意图：对松山湖站点在08:00-18:00执行无线节能优化，节能期间速率保障不低于20Mbps。",
+            "en-US": "The finally confirmed intent: apply wireless energy-saving optimization to the Songshan Lake site during 08:00-18:00 with a guaranteed rate of at least 20Mbps."
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.target.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "target_accept",
+          "contracts": ["conclusionLiteralPresent", "metadataTripleShape"]
+        }
+      },
+      {
+        "step": 5,
+        "role": "A",
+        "api": "validateAcceptPromptAndDataFilling",
+        "prompt": { "fromStep": 4 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "site": { "type": "string" },
+            "guaranteed_rate": { "type": "string" }
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/semantic.target.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 2,
+            "maxRounds": 5,
+            "site": "Songshan Lake",
+            "guaranteed_rate": "at least 20Mbps"
+          },
+          "contracts": ["contextKeysInMergedParams"]
+        }
+      }
+    ],
+    "expectFlow": { "terminalCondition": "accept", "roundsUsed": 2, "distinctMessages": true }
+  },
+  {
+    "id": "SC-TGT-03",
+    "summary": "目标协商中断：区域信息持续无法澄清，发起方在第2轮发起协商终止并生成终止消息",
+    "languages": ["zh-CN"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 2 },
+        "templateUri": "Negotiation-T/target-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "无线节能优化任务的意图理解：对目标站点在08:00-18:00执行无线节能优化，节能期间速率保障不低于20Mbps；对区域与节能时间范围仍有疑问，请澄清和确认。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.target.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "target_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "generateRejectFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 2 },
+        "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "无法完整澄清区域信息：站点库存数据不可用，本轮目标协商拒绝。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.target.reject.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "target_reject",
+          "contracts": ["conclusionLiteralPresent"]
+        }
+      },
+      {
+        "step": 3,
+        "role": "A",
+        "api": "generateAbortFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 2 },
+        "templateUri": "Negotiation-T/common/abort/v1",
+        "input": {
+          "text": {
+            "zh-CN": "协商轮次已达上限，区域信息仍无法澄清，本次协商确认终止。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.common.abort.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "abort",
+          "contracts": ["conclusionLiteralPresent"]
+        }
+      }
+    ],
+    "expectFlow": { "terminalCondition": "abort", "roundsUsed": 2, "distinctMessages": true }
+  }
+]

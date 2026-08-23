@@ -1,0 +1,753 @@
+[
+  {
+    "id": "SC-EXH-01",
+    "summary": "轮次预算耗尽边界：三轮提议均遭拒绝，round 3 达到 maxRounds 上限后生成终止消息结束协商",
+    "languages": ["zh-CN"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 3 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "请补充节能区域信息（如松山湖）、节能速率保障目标（如20Mbps）与VLANId三项信息，三项之间为或的关系。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.information.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "information_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "generateRejectFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 3 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "无法提供节能区域信息：站点库存数据暂不可用，本轮协商拒绝。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.information.reject.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "information_reject"
+        }
+      },
+      {
+        "step": 3,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 3 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "经内部核实，现仅请求补充节能区域信息（松山湖）与节能速率保障目标（20Mbps）两项，两项之间为且的关系。"
+          }
+        },
+        "llm": {
+          "script": [
+            "{\"items\":[{\"name\":\"energy-saving area information\",\"value\":\"Songshan Lake\"},{\"name\":\"energy-saving rate guarantee target\",\"value\":\"20Mbps\"}],\"relationship\":\"AND\"}"
+          ]
+        },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "contracts": ["metadataTripleShape"]
+        }
+      },
+      {
+        "step": 4,
+        "role": "B",
+        "api": "generateRejectFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 3 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "仍无法提供节能区域信息：站点库存数据暂不可用，本轮协商再次拒绝。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.information.reject.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "information_reject"
+        }
+      },
+      {
+        "step": 5,
+        "role": "A",
+        "api": "generateAbortFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 3, "maxRounds": 3 },
+        "templateUri": "Negotiation-T/common/abort/v1",
+        "input": {
+          "text": {
+            "zh-CN": "协商轮次已达上限，本次协商确认终止。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.common.abort.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "abort"
+        }
+      },
+      {
+        "step": 6,
+        "role": "B",
+        "api": "validateAbortPromptAndDataFilling",
+        "prompt": { "fromStep": 5 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 3, "maxRounds": 3 },
+        "templateUri": "Negotiation-T/common/abort/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.common.abort.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 3,
+            "maxRounds": 3,
+            "termination_reason": "The negotiation round limit is reached."
+          }
+        }
+      }
+    ],
+    "expectFlow": { "terminalCondition": "exhausted", "roundsUsed": 3 }
+  },
+  {
+    "id": "SC-EXH-02",
+    "summary": "过期重放边界：携带 round 超过轮次预算的消息被规则门直接拦截且不调用大模型，修正轮次后重放校验通过",
+    "languages": ["zh-CN"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "请补充节能区域信息（如松山湖）、节能速率保障目标（如20Mbps）与VLANId三项信息，三项之间为或的关系。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.information.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "information_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "validateProposePromptAndDataFilling",
+        "prompt": { "fromStep": 1 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 6, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "expect": {
+          "outcome": "failure",
+          "code": "negotiation_rule_violation",
+          "slotErrors": [ { "slot": "round", "code": "out_of_range" } ],
+          "llmCalls": 0
+        }
+      },
+      {
+        "step": 3,
+        "role": "B",
+        "api": "validateProposePromptAndDataFilling",
+        "prompt": { "fromStep": 1 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 5, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 5,
+            "maxRounds": 5,
+            "region": "Songshan Lake"
+          }
+        }
+      }
+    ],
+    "expectFlow": { "roundsUsed": 6 }
+  },
+  {
+    "id": "SC-ERR-01",
+    "summary": "流程中错误恢复：大模型内容抽取首次返回不可解析结果，重试第二次成功后协商流程继续推进直至接受闭环",
+    "languages": ["zh-CN"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "请补充节能区域信息（如松山湖）、节能速率保障目标（如20Mbps）与VLANId三项信息，三项之间为或的关系。"
+          }
+        },
+        "llm": {
+          "maxAttempts": 3,
+          "script": [
+            { "$fail": "non-json" },
+            { "$ref": "responses/extract.information.propose.full" }
+          ]
+        },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 2,
+          "promptTextEqualsGolden": "information_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "validateProposePromptAndDataFilling",
+        "prompt": { "fromStep": 1 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 1,
+            "maxRounds": 5,
+            "region": "Songshan Lake"
+          }
+        }
+      },
+      {
+        "step": 3,
+        "role": "B",
+        "api": "generateAcceptFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "我确认第一阶段的信息：节能区域为松山湖，节能速率保障目标为20Mbps。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "information_accept"
+        }
+      },
+      {
+        "step": 4,
+        "role": "A",
+        "api": "validateAcceptPromptAndDataFilling",
+        "prompt": { "fromStep": 3 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 1,
+            "maxRounds": 5,
+            "region": "Songshan Lake"
+          }
+        }
+      }
+    ],
+    "expectFlow": { "terminalCondition": "accept", "roundsUsed": 1, "distinctMessages": true }
+  },
+  {
+    "id": "SC-ERR-02",
+    "summary": "流程中错误恢复：round 1 提议因缺少节能区域信息被语义校验拒绝，round 2 补充内容重新提议后通过并接受",
+    "languages": ["zh-CN"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "请补充节能区域信息（如松山湖）、节能速率保障目标（如20Mbps）与VLANId三项信息，三项之间为或的关系。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.information.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "information_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "validateProposePromptAndDataFilling",
+        "prompt": { "fromStep": 1 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.information.reject" } ] },
+        "expect": {
+          "outcome": "failure",
+          "code": "negotiation_semantic_rejected",
+          "slotErrors": [ { "slot": "region", "code": "missing" } ],
+          "llmCalls": 1
+        }
+      },
+      {
+        "step": 3,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "现已补充完成：节能区域信息为松山湖，节能速率保障目标为20Mbps，请确认。"
+          }
+        },
+        "llm": {
+          "script": [
+            "{\"items\":[{\"name\":\"energy-saving area information\",\"value\":\"Songshan Lake\"},{\"name\":\"energy-saving rate guarantee target\",\"value\":\"20Mbps\"}],\"relationship\":\"OR\"}"
+          ]
+        },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "contracts": ["metadataTripleShape"]
+        }
+      },
+      {
+        "step": 4,
+        "role": "B",
+        "api": "validateProposePromptAndDataFilling",
+        "prompt": { "fromStep": 3 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 2,
+            "maxRounds": 5,
+            "region": "Songshan Lake"
+          }
+        }
+      },
+      {
+        "step": 5,
+        "role": "B",
+        "api": "generateAcceptFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "我确认第一阶段的信息：节能区域为松山湖，节能速率保障目标为20Mbps。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "information_accept"
+        }
+      },
+      {
+        "step": 6,
+        "role": "A",
+        "api": "validateAcceptPromptAndDataFilling",
+        "prompt": { "fromStep": 5 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 2,
+            "maxRounds": 5,
+            "region": "Songshan Lake"
+          }
+        }
+      }
+    ],
+    "expectFlow": { "terminalCondition": "accept", "roundsUsed": 2, "distinctMessages": true }
+  },
+  {
+    "id": "SC-ERR-03",
+    "summary": "重传幂等：同一条接受消息被重复校验两次，两次提取的参数结果完全一致，重传不产生副作用",
+    "languages": ["zh-CN"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateAcceptFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "我确认第一阶段的信息：节能区域为松山湖，节能速率保障目标为20Mbps。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "information_accept"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "validateAcceptPromptAndDataFilling",
+        "prompt": { "fromStep": 1 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 2,
+            "maxRounds": 5,
+            "region": "Songshan Lake"
+          }
+        }
+      },
+      {
+        "step": 3,
+        "role": "B",
+        "api": "validateAcceptPromptAndDataFilling",
+        "prompt": { "fromStep": 1 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 2,
+            "maxRounds": 5,
+            "region": "Songshan Lake"
+          }
+        }
+      }
+    ],
+    "expectFlow": { "terminalCondition": "accept", "roundsUsed": 2 }
+  },
+  {
+    "id": "SC-ERR-04",
+    "summary": "乱序失同步探针：B 以滞后的 round 1 上下文校验 A 在 round 2 生成的提议，规则门不拦截失同步（doc-gap 探针）",
+    "languages": ["zh-CN"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "请补充节能区域信息（如松山湖）、节能速率保障目标（如20Mbps）与VLANId三项信息，三项之间为或的关系。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.information.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "information_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "validateProposePromptAndDataFilling",
+        "prompt": { "fromStep": 1 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 1,
+            "maxRounds": 5,
+            "region": "Songshan Lake"
+          }
+        }
+      }
+    ],
+    "expectFlow": { "roundsUsed": 2 }
+  },
+  {
+    "id": "SC-ERR-05",
+    "summary": "截断消息探针：传输中被截断的提议消息缺失后两项信息，语义校验以槽位缺失为由拒绝",
+    "languages": ["zh-CN"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "请补充节能区域信息（如松山湖）、节能速率保障目标（如20Mbps）与VLANId三项信息，三项之间为或的关系。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.information.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "information_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "validateProposePromptAndDataFilling",
+        "prompt": {
+          "text": "## 信息协商\n请根据<所需信息项>补充相关内容。\n\n## 所需信息项\n1. energy-saving area information：e.g. Songshan L"
+        },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": {
+          "script": [
+            "{\"semantic_verdict\":false,\"negotiation_type\":\"information\",\"errors\":[{\"slot_name\":\"energy-saving rate guarantee target\",\"code\":\"missing\",\"message\":\"The message is truncated and the item is missing.\"},{\"slot_name\":\"VLANId\",\"code\":\"missing\",\"message\":\"The message is truncated and the item is missing.\"}],\"params\":{}}"
+          ]
+        },
+        "expect": {
+          "outcome": "failure",
+          "code": "negotiation_semantic_rejected",
+          "slotErrors": [
+            { "slot": "energy-saving rate guarantee target", "code": "missing" },
+            { "slot": "VLANId", "code": "missing" }
+          ],
+          "llmCalls": 1
+        }
+      }
+    ],
+    "expectFlow": { "roundsUsed": 1 }
+  },
+  {
+    "id": "SC-ERR-06",
+    "summary": "编码边界探针：带 UTF-8 BOM 前缀或全角标点的接受消息可正常校验提取，GBK 乱码形态的消息被语义校验拒绝",
+    "languages": ["zh-CN"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateAcceptFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "我确认第一阶段的信息：节能区域为松山湖，节能速率保障目标为20Mbps。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "information_accept"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "validateAcceptPromptAndDataFilling",
+        "prompt": {
+          "text": "﻿## 信息协商结果\nAccept\n\n## 信息协商结果内容\n1. energy-saving area information：Songshan Lake\n2. energy-saving rate guarantee target：20Mbps"
+        },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 2,
+            "maxRounds": 5,
+            "region": "Songshan Lake"
+          }
+        }
+      },
+      {
+        "step": 3,
+        "role": "B",
+        "api": "validateAcceptPromptAndDataFilling",
+        "prompt": {
+          "text": "## 信息协商结果\nAccept\n\n## 信息协商结果内容\n１．节能区域信息：松山湖\n２．节能速率保障目标：２０Ｍｂｐｓ"
+        },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": {
+          "script": [
+            "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{\"region\":\"松山湖\"}}"
+          ]
+        },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 2,
+            "maxRounds": 5,
+            "region": "松山湖"
+          }
+        }
+      },
+      {
+        "step": 4,
+        "role": "B",
+        "api": "validateAcceptPromptAndDataFilling",
+        "prompt": {
+          "text": "## 信息协商结果\nAccept\n\n## 信息协商结果内容\n1. energy-saving area information：锟斤拷锟斤拷\n2. energy-saving rate guarantee target：锟斤拷烫烫"
+        },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": {
+          "script": [
+            "{\"semantic_verdict\":false,\"negotiation_type\":\"information\",\"errors\":[{\"slot_name\":\"energy-saving area information\",\"code\":\"unreadable\",\"message\":\"The item value is garbled and unreadable.\"},{\"slot_name\":\"energy-saving rate guarantee target\",\"code\":\"unreadable\",\"message\":\"The item value is garbled and unreadable.\"}],\"params\":{}}"
+          ]
+        },
+        "expect": {
+          "outcome": "failure",
+          "code": "negotiation_semantic_rejected",
+          "slotErrors": [
+            { "slot": "energy-saving area information", "code": "unreadable" },
+            { "slot": "energy-saving rate guarantee target", "code": "unreadable" }
+          ],
+          "llmCalls": 1
+        }
+      }
+    ],
+    "expectFlow": { "terminalCondition": "accept", "roundsUsed": 2 }
+  },
+  {
+    "id": "SC-ERR-07",
+    "summary": "双会话交错：信息协商与目标协商两个会话步骤交替执行，各自提取的上下文参数互不串扰",
+    "languages": ["zh-CN"],
+    "roles": ["A1", "B1", "A2", "B2"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A1",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "请补充节能区域信息（如松山湖）、节能速率保障目标（如20Mbps）与VLANId三项信息，三项之间为或的关系。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.information.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "information_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "A2",
+        "api": "generateProposeFromText",
+        "context": { "id": "7f3c9a2e-1b4d-4e8f-9a6c-2d5b8e7f4a1c", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/target-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "无线节能优化任务的意图理解：对目标站点在08:00-18:00执行无线节能优化，节能期间速率保障不低于20Mbps；对区域与节能时间范围仍有疑问，请澄清和确认。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.target.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "target_propose"
+        }
+      },
+      {
+        "step": 3,
+        "role": "B1",
+        "api": "validateProposePromptAndDataFilling",
+        "prompt": { "fromStep": 1 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 1,
+            "maxRounds": 5,
+            "region": "Songshan Lake"
+          }
+        }
+      },
+      {
+        "step": 4,
+        "role": "B2",
+        "api": "validateProposePromptAndDataFilling",
+        "prompt": { "fromStep": 2 },
+        "context": { "id": "7f3c9a2e-1b4d-4e8f-9a6c-2d5b8e7f4a1c", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/target-negotiation/propose/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.target.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "7f3c9a2e-1b4d-4e8f-9a6c-2d5b8e7f4a1c",
+            "round": 1,
+            "maxRounds": 5,
+            "site": "Songshan Lake",
+            "guaranteed_rate": "at least 20Mbps"
+          }
+        }
+      }
+    ],
+    "expectFlow": { "roundsUsed": 1, "distinctMessages": true }
+  }
+]

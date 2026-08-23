@@ -39,7 +39,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 /**
  * Verifies the template-URI entry matrix of the from-data generation.
  *
- * <p>The six built-in URIs address their templates and render outputs identical to the golden fixtures; a well-formed
+ * <p>The seven built-in URIs (six typed negotiation templates plus the common abort template) address their templates
+ * and render outputs identical to the golden fixtures; a well-formed
  * URI that resolves to no template fails with the code {@code template_not_found} before any LLM call; a typed URI
  * that does not address a negotiation template of the expected phase (wrong extension name, version, type segment,
  * phase segment or separator, including the underscore misspelling of the type segment) fails as a programming error
@@ -57,8 +58,8 @@ class TemplateUriEntryMatrixTest {
             "templates/Negotiation-T/information-negotiation/propose/v1/zh-CN/template.md";
 
     /**
-     * Entry (a): every one of the six built-in URIs reaches its template and renders output byte-identical to the
-     * golden fixtures locked by the comparison test.
+     * Entry (a): every one of the seven built-in URIs (six typed templates plus the common abort template) reaches its
+     * template and renders output byte-identical to the golden fixtures locked by the comparison test.
      */
     @Test
     void everyBuiltInUriRendersItsGoldenFixture() {
@@ -72,7 +73,7 @@ class TemplateUriEntryMatrixTest {
                         .computeIfAbsent(goldenCase.templateUri(), uri -> new ArrayList<>())
                         .add(goldenCase);
             }
-            assertEquals(6, casesByUri.size(), "the built-in template set has exactly six URIs");
+            assertEquals(7, casesByUri.size(), "the built-in template set has exactly seven URIs");
             for (Map.Entry<String, List<GoldenCase>> entry : casesByUri.entrySet()) {
                 for (GoldenCase goldenCase : entry.getValue()) {
                     MetadataContent result = goldenCase.generate(orchestrator);

@@ -1,0 +1,272 @@
+[
+  {
+    "id": "FT-EXTRACT-01",
+    "api": "generateAcceptFromText",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["extraction-failure", "information", "accept", "slot-missing"],
+    "summary": "接受消息抽取结果缺少结论字段时生成失败并返回槽位缺失错误码，不发起重试",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+    "input": { "text": { "zh-CN": "我确认第一阶段的信息：节能区域为松山湖，节能速率保障目标为20Mbps。" } },
+    "llm": { "script": [ { "$ref": "responses/extract.information.accept.missing_conclusion" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_slot_missing",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-02",
+    "api": "generateAcceptFromText",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["extraction-failure", "information", "accept", "conclusion-mismatch"],
+    "summary": "接受消息抽取出的结论为拒绝时判定为内容与阶段矛盾，立即失败并返回输入无效错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+    "input": { "text": { "zh-CN": "我确认第一阶段的信息：节能区域为松山湖，节能速率保障目标为20Mbps。" } },
+    "llm": { "script": [ { "$ref": "responses/extract.information.accept.conclusion_swapped" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_invalid_input",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-03",
+    "api": "generateRejectFromText",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["extraction-failure", "information", "reject", "conclusion-mismatch"],
+    "summary": "拒绝消息抽取出的结论为接受时判定为内容与阶段矛盾，立即失败并返回输入无效错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+    "input": { "text": { "zh-CN": "无法提供节能区域信息：站点库存数据暂不可用，本轮协商拒绝。" } },
+    "llm": { "script": [ { "$ref": "responses/extract.information.reject.conclusion_swapped" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_invalid_input",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-04",
+    "api": "generateProposeFromText",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["extraction-failure", "information", "propose", "slot-missing"],
+    "summary": "信息提议消息抽取结果缺少信息项列表时生成失败并返回槽位缺失错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "input": { "text": { "zh-CN": "请补充节能区域信息、节能速率保障目标与VLANId三项信息。" } },
+    "llm": { "script": [ { "$ref": "responses/extract.information.propose.missing_items" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_slot_missing",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-05",
+    "api": "generateProposeFromText",
+    "languages": ["en-US"],
+    "priority": "P1",
+    "tags": ["extraction-failure", "information", "propose", "shape-error", "max-attempts-1"],
+    "summary": "信息项列表被抽取为字符串而非数组时内容抽取失败，单次尝试额度即耗尽并返回抽取失败错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "input": { "text": { "en-US": "Please supplement the energy-saving area information, the energy-saving rate guarantee target and the VLANId." } },
+    "llm": { "maxAttempts": 1, "script": [ { "$ref": "responses/extract.information.propose.items_not_array" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_content_extract_failed",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-06",
+    "api": "generateProposeFromText",
+    "languages": ["zh-CN"],
+    "priority": "P2",
+    "tags": ["extraction-failure", "information", "propose", "shape-error", "max-attempts-1"],
+    "summary": "信息项缺少名称字段时内容抽取失败，返回抽取失败错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "input": { "text": { "zh-CN": "请补充节能区域信息、节能速率保障目标与VLANId三项信息。" } },
+    "llm": { "maxAttempts": 1, "script": [ "{\"items\":[{\"value\":\"Songshan Lake\"}],\"relationship\":\"OR\"}" ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_content_extract_failed",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-07",
+    "api": "generateAcceptFromText",
+    "languages": ["zh-CN"],
+    "priority": "P1",
+    "tags": ["extraction-failure", "target", "accept", "shape-error", "max-attempts-1"],
+    "summary": "结论字面量大小写错误（ACCEPT 而非 Accept）时内容抽取失败，返回抽取失败错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+    "input": { "text": { "zh-CN": "最终确认的意图：对松山湖站点在08:00-18:00执行无线节能优化，节能期间速率保障不低于20Mbps。" } },
+    "llm": { "maxAttempts": 1, "script": [ "{\"conclusion\":\"ACCEPT\",\"confirmed_intent\":\"The finally confirmed intent: apply wireless energy-saving optimization to the Songshan Lake site during 08:00-18:00 with a guaranteed rate of at least 20Mbps.\",\"failure_reason\":null}" ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_content_extract_failed",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-08",
+    "api": "generateAcceptFromText",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["extraction-failure", "target", "accept", "slot-missing"],
+    "summary": "目标接受消息抽取结果缺少最终确认意图时生成失败并返回槽位缺失错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+    "input": { "text": { "zh-CN": "最终确认的意图：对松山湖站点在08:00-18:00执行无线节能优化，节能期间速率保障不低于20Mbps。" } },
+    "llm": { "script": [ { "$ref": "responses/extract.target.accept.missing_confirmed_intent" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_slot_missing",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-09",
+    "api": "generateRejectFromText",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["extraction-failure", "target", "reject", "slot-missing"],
+    "summary": "目标拒绝消息抽取结果缺少拒绝原因时生成失败并返回槽位缺失错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+    "input": { "text": { "zh-CN": "无法完整澄清区域信息：站点库存数据不可用，本轮目标协商拒绝。" } },
+    "llm": { "script": [ { "$ref": "responses/extract.target.reject.missing_failure_reason" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_slot_missing",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-10",
+    "api": "generateProposeFromText",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["extraction-failure", "feasibility", "propose", "invalid-input"],
+    "summary": "可行性提议消息抽取结果缺少动作字段时判定为内容矛盾，立即失败并返回输入无效错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+    "input": { "text": { "zh-CN": "请评估站点级节能任务调整后的速率保障目标是否可行：节能期间速率保障目标由5Mbps下调至2Mbps。" } },
+    "llm": { "script": [ { "$ref": "responses/extract.feasibility.propose.missing_action" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_invalid_input",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-11",
+    "api": "generateProposeFromText",
+    "languages": ["zh-CN"],
+    "priority": "P1",
+    "tags": ["extraction-failure", "feasibility", "propose", "shape-error", "max-attempts-1"],
+    "summary": "动作字段为未知枚举值时内容抽取失败，单次尝试额度即耗尽并返回抽取失败错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+    "input": { "text": { "zh-CN": "请评估站点级节能任务调整后的速率保障目标是否可行：节能期间速率保障目标由5Mbps下调至2Mbps。" } },
+    "llm": { "maxAttempts": 1, "script": [ { "$ref": "responses/extract.feasibility.propose.unknown_action" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_content_extract_failed",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-12",
+    "api": "generateProposeFromText",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["extraction-failure", "feasibility", "propose", "invalid-input"],
+    "summary": "请求可行性评估却未抽取到任何待评估内容时判定为内容矛盾，立即失败并返回输入无效错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+    "input": { "text": { "zh-CN": "请评估站点级节能任务调整后的速率保障目标是否可行：节能期间速率保障目标由5Mbps下调至2Mbps。" } },
+    "llm": { "script": [ { "$ref": "responses/extract.feasibility.propose.evaluation_without_contents" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_invalid_input",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-13",
+    "api": "generateAbortFromText",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["extraction-failure", "abort", "common", "slot-missing"],
+    "summary": "终止消息抽取结果缺少终止原因时生成失败并返回槽位缺失错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/common/abort/v1",
+    "input": { "text": { "zh-CN": "协商轮次已达上限，本次协商确认终止。" } },
+    "llm": { "script": [ { "$ref": "responses/extract.common.abort.missing_termination_reason" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_slot_missing",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-14",
+    "api": "generateAbortFromText",
+    "languages": ["zh-CN"],
+    "priority": "P2",
+    "tags": ["extraction-failure", "abort", "common", "slot-missing", "blank-value"],
+    "summary": "终止原因为空白字符串时等同于缺失，生成失败并返回槽位缺失错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/common/abort/v1",
+    "input": { "text": { "zh-CN": "协商轮次已达上限，本次协商确认终止。" } },
+    "llm": { "script": [ "{\"termination_reason\":\"\"}" ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_slot_missing",
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "FT-EXTRACT-15",
+    "api": "generateProposeFromText",
+    "languages": ["zh-CN"],
+    "priority": "P2",
+    "tags": ["extraction-failure", "information", "propose", "shape-error", "max-attempts-1"],
+    "summary": "信息项取值为数字而非字符串时内容抽取失败，返回抽取失败错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "input": { "text": { "zh-CN": "请补充节能区域信息、节能速率保障目标与VLANId三项信息。" } },
+    "llm": { "maxAttempts": 1, "script": [ "{\"items\":[{\"name\":\"VLANId\",\"value\":100}],\"relationship\":\"OR\"}" ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationGenerationException",
+      "code": "negotiation_content_extract_failed",
+      "llmCalls": 1
+    }
+  }
+]

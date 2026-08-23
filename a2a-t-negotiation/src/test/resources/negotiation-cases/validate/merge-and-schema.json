@@ -1,0 +1,130 @@
+[
+  {
+    "id": "VAL-MERGE-01",
+    "api": "validateProposePromptAndDataFilling",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P1",
+    "tags": ["merge", "context-wins", "key-conflict", "colliding-schema", "propose", "information"],
+    "summary": "业务参数与上下文 id、round 键冲突时上下文参数优先，LLM 提取的错误取值不覆盖规则层结果",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "prompt": { "golden": "information_propose" },
+    "schema": { "$ref": "schemas/colliding" },
+    "llm": {
+      "script": [
+        "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{\"id\":\"00000000-0000-0000-0000-000000000000\",\"round\":99,\"region\":\"Songshan Lake\"}}"
+      ]
+    },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "params": {
+        "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+        "round": 2,
+        "maxRounds": 5,
+        "region": "Songshan Lake"
+      },
+      "contracts": ["contextKeysInMergedParams"]
+    }
+  },
+  {
+    "id": "VAL-MERGE-02",
+    "api": "validateAcceptPromptAndDataFilling",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P1",
+    "tags": ["merge", "no-type-schema", "schema-wrapping", "accept", "information"],
+    "summary": "调用方未声明 type 关键字的参数 schema 被自动包装为对象 schema，语义校验与参数提取不受影响",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+    "prompt": { "golden": "information_accept" },
+    "schema": { "$ref": "schemas/noType" },
+    "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "params": {
+        "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+        "round": 2,
+        "maxRounds": 5,
+        "region": "Songshan Lake"
+      },
+      "contracts": ["contextKeysInMergedParams"]
+    }
+  },
+  {
+    "id": "VAL-MERGE-03",
+    "api": "validateProposePromptAndDataFilling",
+    "languages": ["zh-CN"],
+    "priority": "P1",
+    "tags": ["null-context", "invalid-input", "rule-gate", "propose"],
+    "summary": "校验提议消息时未携带协商上下文，判定为非协商消息并以 negotiation_invalid_input 失败，不发起 LLM 调用",
+    "context": null,
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "prompt": { "text": "请补充节能区域信息（如松山湖）、节能速率保障目标（如20Mbps）与VLANId三项信息。" },
+    "schema": { "$ref": "schemas/flat" },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationParamExtractionException",
+      "code": "negotiation_invalid_input",
+      "messageContains": ["missing negotiation context"],
+      "llmCalls": 0
+    }
+  },
+  {
+    "id": "VAL-MERGE-04",
+    "api": "validateAcceptPromptAndDataFilling",
+    "languages": ["zh-CN"],
+    "priority": "P1",
+    "tags": ["null-context", "invalid-input", "rule-gate", "accept"],
+    "summary": "校验接受消息时未携带协商上下文，判定为非协商消息并以 negotiation_invalid_input 失败，不发起 LLM 调用",
+    "context": null,
+    "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+    "prompt": { "text": "我确认第一阶段的信息：节能区域为松山湖，节能速率保障目标为20Mbps。" },
+    "schema": { "$ref": "schemas/flat" },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationParamExtractionException",
+      "code": "negotiation_invalid_input",
+      "messageContains": ["missing negotiation context"],
+      "llmCalls": 0
+    }
+  },
+  {
+    "id": "VAL-MERGE-05",
+    "api": "validateRejectPromptAndDataFilling",
+    "languages": ["zh-CN"],
+    "priority": "P1",
+    "tags": ["null-context", "invalid-input", "rule-gate", "reject"],
+    "summary": "校验拒绝消息时未携带协商上下文，判定为非协商消息并以 negotiation_invalid_input 失败，不发起 LLM 调用",
+    "context": null,
+    "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+    "prompt": { "text": "无法提供节能区域信息：站点库存数据暂不可用，本轮协商拒绝。" },
+    "schema": { "$ref": "schemas/flat" },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationParamExtractionException",
+      "code": "negotiation_invalid_input",
+      "messageContains": ["missing negotiation context"],
+      "llmCalls": 0
+    }
+  },
+  {
+    "id": "VAL-MERGE-06",
+    "api": "validateAbortPromptAndDataFilling",
+    "languages": ["zh-CN"],
+    "priority": "P1",
+    "tags": ["null-context", "invalid-input", "rule-gate", "abort", "common"],
+    "summary": "校验终止消息时未携带协商上下文，判定为非协商消息并以 negotiation_invalid_input 失败，不发起 LLM 调用",
+    "context": null,
+    "templateUri": "Negotiation-T/common/abort/v1",
+    "prompt": { "text": "协商轮次已达上限，本次协商确认终止。" },
+    "schema": { "$ref": "schemas/flat" },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationParamExtractionException",
+      "code": "negotiation_invalid_input",
+      "messageContains": ["missing negotiation context"],
+      "llmCalls": 0
+    }
+  }
+]

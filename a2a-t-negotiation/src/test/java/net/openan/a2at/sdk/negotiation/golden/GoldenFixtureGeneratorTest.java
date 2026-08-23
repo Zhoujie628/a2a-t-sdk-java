@@ -13,9 +13,9 @@ import org.junit.jupiter.api.Test;
 /**
  * Regeneration helper for the golden fixture set of the negotiation content layer.
  *
- * <p>The test writes the 18 golden fixture files (9 type/phase combinations x 2 languages) under
- * {@code src/test/resources/golden/} by rendering the fixed {@link GoldenInputs} through an orchestrator wired with the
- * real built-in resources. It is disabled in normal builds: golden fixtures are locked by
+ * <p>The test writes the 20 golden fixture files (9 type/phase combinations plus the common abort fixture, x 2
+ * languages) under {@code src/test/resources/golden/} by rendering the fixed {@link GoldenInputs} through an
+ * orchestrator wired with the real built-in resources. It is disabled in normal builds: golden fixtures are locked by
  * {@link GoldenFixtureComparisonTest} and may only change together with a reviewed template or vocabulary revision. To
  * regenerate, temporarily enable this test, run it from the {@code a2a-t-negotiation} module directory and review the
  * resulting files before committing them.

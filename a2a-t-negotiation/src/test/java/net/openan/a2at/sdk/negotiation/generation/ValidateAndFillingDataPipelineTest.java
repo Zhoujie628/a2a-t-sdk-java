@@ -116,36 +116,10 @@ class ValidateAndFillingDataPipelineTest {
         assertEquals(4, filled.data().size());
     }
 
-    @ParameterizedTest
-    @MethodSource("ruleViolationCases")
-    void ruleViolationsFailBeforeAnyLlmCall(String caseName, NegotiationContext context, List<String> expectedSlots) {
-        ScriptedLlmClient llm = new ScriptedLlmClient(
-                "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}");
-        NegotiationGenerationOrchestrator orchestrator = orchestrator(llm);
-        String message = informationProposeMessage(orchestrator);
-
-        NegotiationParamExtractionException exception = assertThrows(
-                NegotiationParamExtractionException.class,
-                () -> orchestrator.validateProposePromptAndDataFilling(
-                        message, context, REGION_SCHEMA, INFORMATION_PROPOSE_URI));
-
-        assertEquals(A2ATErrorCodes.NEGOTIATION_RULE_VIOLATION, exception.getCode(), caseName);
-        assertEquals(expectedSlots.size(), exception.getErrors().size(), caseName);
-        for (int index = 0; index < expectedSlots.size(); index++) {
-            String slotName = exception.getErrors().get(index).slotName();
-            assertEquals(expectedSlots.get(index), slotName, caseName);
-            assertTrue(
-                    List.of("id", "round", "maxRounds").contains(slotName),
-                    caseName + ": rule errors must only address context slots but was " + slotName);
-        }
-        assertEquals(0, llm.calls, caseName + ": the rule gate must run before any LLM call");
-    }
-
-    static List<Object[]> ruleViolationCases() {
-        return List.of(
-                new Object[] {"non-uuid id", new NegotiationContext("not-a-uuid", 1, 5), List.of("id")},
-                new Object[] {"round above maxRounds", new NegotiationContext(SESSION_ID, 3, 2), List.of("round")});
-    }
+    // The rule-violation table of this suite (non-uuid id, round above maxRounds, 0 LLM calls) is absorbed by the
+    // VAL-RULE batch of the test corpus (negotiation-cases/validate/rule-gate.json): every row there asserts the same
+    // negotiation_rule_violation code, the exact slot error pairs and the zero-LLM guarantee, plus the boundary and
+    // combined-error rows the hand-written table never carried (design §6 Q8).
 
     @Test
     void semanticRejectionIsNotRetriedAndPassesTheErrorsThrough() {

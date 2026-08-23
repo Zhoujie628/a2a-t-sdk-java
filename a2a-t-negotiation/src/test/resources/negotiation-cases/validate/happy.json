@@ -1,0 +1,245 @@
+[
+  {
+    "id": "VAL-HAPPY-01",
+    "api": "validateProposePromptAndDataFilling",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "information", "propose", "merge"],
+    "summary": "校验信息协商提议消息并提取参数，合并结果含上下文三键与业务参数 region",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "prompt": { "golden": "information_propose" },
+    "schema": { "$ref": "schemas/flat" },
+    "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "params": {
+        "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+        "round": 2,
+        "maxRounds": 5,
+        "region": "Songshan Lake"
+      },
+      "contracts": ["contextKeysInMergedParams"]
+    }
+  },
+  {
+    "id": "VAL-HAPPY-02",
+    "api": "validateAcceptPromptAndDataFilling",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "information", "accept", "merge"],
+    "summary": "校验信息协商接受消息并提取参数，合并结果含上下文三键与业务参数 region",
+    "context": { "id": "7f3c9a2e-1b4d-4e8f-9c2a-5d6b7e8f9a01", "round": 3, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+    "prompt": { "golden": "information_accept" },
+    "schema": { "$ref": "schemas/flat" },
+    "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "params": {
+        "id": "7f3c9a2e-1b4d-4e8f-9c2a-5d6b7e8f9a01",
+        "round": 3,
+        "maxRounds": 5,
+        "region": "Songshan Lake"
+      },
+      "contracts": ["contextKeysInMergedParams"]
+    }
+  },
+  {
+    "id": "VAL-HAPPY-03",
+    "api": "validateRejectPromptAndDataFilling",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "information", "reject", "merge"],
+    "summary": "校验信息协商拒绝消息并提取参数，合并结果含上下文三键与业务参数 region",
+    "context": { "id": "0a1b2c3d-4e5f-4a6b-8c9d-0e1f2a3b4c5d", "round": 4, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+    "prompt": { "golden": "information_reject" },
+    "schema": { "$ref": "schemas/flat" },
+    "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "params": {
+        "id": "0a1b2c3d-4e5f-4a6b-8c9d-0e1f2a3b4c5d",
+        "round": 4,
+        "maxRounds": 5,
+        "region": "Songshan Lake"
+      },
+      "contracts": ["contextKeysInMergedParams"]
+    }
+  },
+  {
+    "id": "VAL-HAPPY-04",
+    "api": "validateProposePromptAndDataFilling",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "target", "propose", "merge"],
+    "summary": "校验目标协商提议消息并提取参数，合并结果含上下文三键与站点、速率保障参数",
+    "context": { "id": "9e8d7c6b-5a4f-4392-8172-6b5c4d3e2f1a", "round": 1, "maxRounds": 3 },
+    "templateUri": "Negotiation-T/target-negotiation/propose/v1",
+    "prompt": { "golden": "target_propose" },
+    "schema": { "$ref": "schemas/empty" },
+    "llm": { "script": [ { "$ref": "responses/semantic.target.accept.full" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "params": {
+        "id": "9e8d7c6b-5a4f-4392-8172-6b5c4d3e2f1a",
+        "round": 1,
+        "maxRounds": 3,
+        "site": "Songshan Lake",
+        "guaranteed_rate": "at least 20Mbps"
+      },
+      "contracts": ["contextKeysInMergedParams"]
+    }
+  },
+  {
+    "id": "VAL-HAPPY-05",
+    "api": "validateAcceptPromptAndDataFilling",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "target", "accept", "merge"],
+    "summary": "校验目标协商接受消息并提取参数，合并结果含上下文三键与站点、速率保障参数",
+    "context": { "id": "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f", "round": 2, "maxRounds": 3 },
+    "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+    "prompt": { "golden": "target_accept" },
+    "schema": { "$ref": "schemas/empty" },
+    "llm": { "script": [ { "$ref": "responses/semantic.target.accept.full" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "params": {
+        "id": "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f",
+        "round": 2,
+        "maxRounds": 3,
+        "site": "Songshan Lake",
+        "guaranteed_rate": "at least 20Mbps"
+      },
+      "contracts": ["contextKeysInMergedParams"]
+    }
+  },
+  {
+    "id": "VAL-HAPPY-06",
+    "api": "validateRejectPromptAndDataFilling",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "target", "reject", "merge"],
+    "summary": "校验目标协商拒绝消息并提取参数，合并结果含上下文三键与站点、速率保障参数",
+    "context": { "id": "6f5e4d3c-2b1a-4988-7766-5544332211ff", "round": 2, "maxRounds": 3 },
+    "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
+    "prompt": { "golden": "target_reject" },
+    "schema": { "$ref": "schemas/empty" },
+    "llm": { "script": [ { "$ref": "responses/semantic.target.accept.full" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "params": {
+        "id": "6f5e4d3c-2b1a-4988-7766-5544332211ff",
+        "round": 2,
+        "maxRounds": 3,
+        "site": "Songshan Lake",
+        "guaranteed_rate": "at least 20Mbps"
+      },
+      "contracts": ["contextKeysInMergedParams"]
+    }
+  },
+  {
+    "id": "VAL-HAPPY-07",
+    "api": "validateProposePromptAndDataFilling",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "feasibility", "propose", "merge"],
+    "summary": "校验可行性协商提议消息并提取参数，合并结果含上下文三键与可行性结论参数",
+    "context": { "id": "2a4b6c8d-0e1f-4a3b-8c5d-9e7f1a2b3c4d", "round": 2, "maxRounds": 4 },
+    "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+    "prompt": { "golden": "feasibility_propose" },
+    "schema": { "$ref": "schemas/empty" },
+    "llm": { "script": [ { "$ref": "responses/semantic.feasibility.accept.full" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "params": {
+        "id": "2a4b6c8d-0e1f-4a3b-8c5d-9e7f1a2b3c4d",
+        "round": 2,
+        "maxRounds": 4,
+        "feasibility_result": "achievable"
+      },
+      "contracts": ["contextKeysInMergedParams"]
+    }
+  },
+  {
+    "id": "VAL-HAPPY-08",
+    "api": "validateAcceptPromptAndDataFilling",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "feasibility", "accept", "merge"],
+    "summary": "校验可行性协商接受消息并提取参数，合并结果含上下文三键与可行性结论参数",
+    "context": { "id": "3b5c7d9e-1f2a-4b3c-8d4e-9f6a1b2c3d4e", "round": 3, "maxRounds": 4 },
+    "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+    "prompt": { "golden": "feasibility_accept" },
+    "schema": { "$ref": "schemas/empty" },
+    "llm": { "script": [ { "$ref": "responses/semantic.feasibility.accept.full" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "params": {
+        "id": "3b5c7d9e-1f2a-4b3c-8d4e-9f6a1b2c3d4e",
+        "round": 3,
+        "maxRounds": 4,
+        "feasibility_result": "achievable"
+      },
+      "contracts": ["contextKeysInMergedParams"]
+    }
+  },
+  {
+    "id": "VAL-HAPPY-09",
+    "api": "validateRejectPromptAndDataFilling",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "feasibility", "reject", "merge"],
+    "summary": "校验可行性协商拒绝消息并提取参数，合并结果含上下文三键与可行性结论参数",
+    "context": { "id": "4c6d8e0f-2a3b-4c5d-8e6f-0a7b1c2d3e4f", "round": 3, "maxRounds": 4 },
+    "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+    "prompt": { "golden": "feasibility_reject" },
+    "schema": { "$ref": "schemas/empty" },
+    "llm": { "script": [ { "$ref": "responses/semantic.feasibility.accept.full" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "params": {
+        "id": "4c6d8e0f-2a3b-4c5d-8e6f-0a7b1c2d3e4f",
+        "round": 3,
+        "maxRounds": 4,
+        "feasibility_result": "achievable"
+      },
+      "contracts": ["contextKeysInMergedParams"]
+    }
+  },
+  {
+    "id": "VAL-HAPPY-10",
+    "api": "validateAbortPromptAndDataFilling",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "abort", "common", "merge"],
+    "summary": "校验协商终止消息并提取参数，合并结果含上下文三键与终止原因参数",
+    "context": { "id": "5d7e9f1a-3b4c-4d5e-8f7a-1b8c2d3e4f5a", "round": 5, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/common/abort/v1",
+    "prompt": { "golden": "abort" },
+    "schema": { "$ref": "schemas/empty" },
+    "llm": { "script": [ { "$ref": "responses/semantic.common.abort.full" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "params": {
+        "id": "5d7e9f1a-3b4c-4d5e-8f7a-1b8c2d3e4f5a",
+        "round": 5,
+        "maxRounds": 5,
+        "termination_reason": "The negotiation round limit is reached."
+      },
+      "contracts": ["contextKeysInMergedParams"]
+    }
+  }
+]

@@ -1,0 +1,104 @@
+[
+  {
+    "id": "VAL-MAP-01",
+    "api": "validateProposePromptAndDataFilling",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["error-code-mapping", "map-code", "null-context", "invalid-input"],
+    "summary": "消息未携带协商上下文元数据时校验判定其不是协商消息，内部无效输入错误码对外映射为协商无效输入错误且不发起任何大模型调用",
+    "context": null,
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "prompt": { "golden": "information_propose" },
+    "schema": { "$ref": "schemas/flat" },
+    "llm": { "script": [ { "$fail": "assertion" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationParamExtractionException",
+      "code": "negotiation_invalid_input",
+      "messageContains": ["missing negotiation context"],
+      "llmCalls": 0
+    }
+  },
+  {
+    "id": "VAL-MAP-02",
+    "api": "validateProposePromptAndDataFilling",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["error-code-mapping", "map-code", "rule-violation", "round"],
+    "summary": "协商轮次超限触发的内部规则违反错误码对外映射为协商规则违反错误码，并保留轮次越界槽位错误",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 6, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "prompt": { "golden": "information_propose" },
+    "schema": { "$ref": "schemas/flat" },
+    "llm": { "script": [ { "$fail": "assertion" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationParamExtractionException",
+      "code": "negotiation_rule_violation",
+      "slotErrors": [ { "slot": "round", "code": "out_of_range" } ],
+      "llmCalls": 0
+    }
+  },
+  {
+    "id": "VAL-MAP-03",
+    "api": "validateProposePromptAndDataFilling",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["error-code-mapping", "map-code", "semantic-rejected"],
+    "summary": "大模型语义校验否决消息时内部语义拒绝错误码对外映射为协商语义拒绝错误码，并保留大模型报告的槽位错误",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "prompt": { "golden": "information_propose" },
+    "schema": { "$ref": "schemas/flat" },
+    "llm": { "script": [ { "$ref": "responses/semantic.information.reject" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationParamExtractionException",
+      "code": "negotiation_semantic_rejected",
+      "slotErrors": [ { "slot": "region", "code": "missing" } ],
+      "llmCalls": 1
+    }
+  },
+  {
+    "id": "VAL-MAP-04",
+    "api": "validateProposePromptAndDataFilling",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["error-code-mapping", "map-code", "llm-infrastructure-error", "retry-exhausted"],
+    "summary": "大模型服务连续两次不可用并耗尽重试后，内部基础设施错误码对外映射为协商大模型基础设施错误码，错误详情以 _llm 伪槽位保留内部错误码",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "prompt": { "golden": "information_propose" },
+    "schema": { "$ref": "schemas/flat" },
+    "llm": { "maxAttempts": 2, "script": [ { "$fail": "llm-error" }, { "$fail": "llm-error" } ] },
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationParamExtractionException",
+      "code": "negotiation_llm_infrastructure_error",
+      "messageContains": ["Semantic validation LLM step failed"],
+      "slotErrors": [ { "slot": "_llm", "code": "validation_llm_infrastructure_error" } ],
+      "llmCalls": 2
+    }
+  },
+  {
+    "id": "VAL-MAP-05",
+    "api": "validateProposePromptAndDataFilling",
+    "languages": ["zh-CN"],
+    "priority": "P0",
+    "tags": ["error-code-mapping", "map-code", "template-not-found", "inject"],
+    "summary": "语义校验提示词资源缺失时内部资源未找到错误码对外映射为 template_not_found 错误码，原始资源异常不透出且不发起任何大模型调用",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "prompt": { "golden": "information_propose" },
+    "schema": { "$ref": "schemas/flat" },
+    "llm": { "script": [ { "$fail": "assertion" } ] },
+    "inject": "failingSemanticValidator",
+    "expect": {
+      "outcome": "failure",
+      "exception": "NegotiationParamExtractionException",
+      "code": "template_not_found",
+      "messageContains": ["Negotiation semantic validation prompt resource does not exist"],
+      "llmCalls": 0
+    }
+  }
+]

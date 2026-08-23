@@ -30,6 +30,7 @@ import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
@@ -146,9 +147,10 @@ class FromTextLlmPipelineTest {
     }
 
     /**
-     * IT-B-002: every from-text method (propose, accept, reject) succeeds for every negotiation type with exactly one
-     * LLM call per generation, the caller-supplied template URI is echoed, the output matches the golden fixture and
-     * the phase token reaches the LLM so the ending phases can be distinguished.
+     * IT-B-002: every from-text method (propose, accept, reject, abort) succeeds for every negotiation type with
+     * exactly one LLM call per generation, the caller-supplied template URI is echoed, the output matches the golden
+     * fixture, the phase token reaches the LLM so the accept and reject phases can be distinguished, and the abort
+     * method addresses the termination-specific extraction prompt.
      */
     @ParameterizedTest(name = "from-text succeeds for {0}")
     @EnumSource(GoldenCase.class)
@@ -163,9 +165,15 @@ class FromTextLlmPipelineTest {
         assertEquals(goldenCase.templateUri(), result.templateUri());
         assertEquals(readGoldenFixture(goldenCase, ZH_CN), result.promptText());
         String userPrompt = llm.lastMessages.get(1).get("content");
-        assertTrue(
-                userPrompt.contains(phaseToken(goldenCase.phase())),
-                "the user prompt must carry the phase token of the addressed method");
+        if (goldenCase.phase() == NegotiationPhase.ABORT) {
+            assertTrue(
+                    userPrompt.contains("终止"),
+                    "the abort user prompt must address the termination content but was: " + userPrompt);
+        } else {
+            assertTrue(
+                    userPrompt.contains(phaseToken(goldenCase.phase())),
+                    "the user prompt must carry the phase token of the addressed method");
+        }
     }
 
     /**
@@ -565,7 +573,7 @@ class FromTextLlmPipelineTest {
             case PROPOSE -> orchestrator.generateProposeFromText(text, goldenCase.context(), goldenCase.template());
             case ACCEPT -> orchestrator.generateAcceptFromText(text, goldenCase.context(), goldenCase.template());
             case REJECT -> orchestrator.generateRejectFromText(text, goldenCase.context(), goldenCase.template());
-            case ABORT -> throw new IllegalArgumentException("The typed golden cases carry no abort phase.");
+            case ABORT -> orchestrator.generateAbortFromText(text, goldenCase.context(), goldenCase.template());
         };
     }
 
@@ -663,6 +671,9 @@ class FromTextLlmPipelineTest {
                     + ",\"infeasibility_details_and_proposal\":"
                     + itemsJson(feasibility.infeasibilityDetailsAndProposal())
                     + "}";
+        }
+        if (content instanceof NegotiationAbortContent abort) {
+            return "{\"termination_reason\":" + quote(abort.terminationReason()) + "}";
         }
         if (content instanceof InformationEndingContent info) {
             return "{\"conclusion\":" + quote(info.conclusion().literal()) + ",\"items\":" + itemsJson(info.items())

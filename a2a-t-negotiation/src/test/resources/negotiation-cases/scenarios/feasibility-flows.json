@@ -1,0 +1,325 @@
+[
+  {
+    "id": "SC-FSB-01",
+    "summary": "可行性协商单轮闭环：A 发起调整后速率保障目标的可行性评估请求，B 评估通过后生成接受消息，A 校验确认达成一致",
+    "languages": ["zh-CN", "en-US"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "请评估站点级节能任务调整后的速率保障目标是否可行：节能期间速率保障目标由5Mbps下调至2Mbps，且停电场景下供电时长不少于10小时。",
+            "en-US": "Please assess whether the adjusted rate guarantee target of the site-level energy-saving task can be achieved: the rate guarantee target is lowered from 5Mbps to 2Mbps during 08:00-18:00, with at least 10 hours of power supply duration in outage scenarios."
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.feasibility.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "feasibility_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "validateProposePromptAndDataFilling",
+        "prompt": { "fromStep": 1 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.feasibility.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 1,
+            "maxRounds": 5,
+            "feasibility_result": "achievable"
+          }
+        }
+      },
+      {
+        "step": 3,
+        "role": "B",
+        "api": "generateAcceptFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "评估结论：调整后的速率保障目标可以实现并满足停电时长要求，本次可行性协商确认达成一致。",
+            "en-US": "Evaluation outcome: the adjusted rate guarantee target is achievable and satisfies the outage duration requirement; this feasibility negotiation is confirmed as concluded."
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.feasibility.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "feasibility_accept"
+        }
+      },
+      {
+        "step": 4,
+        "role": "A",
+        "api": "validateAcceptPromptAndDataFilling",
+        "prompt": { "fromStep": 3 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.feasibility.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 1,
+            "maxRounds": 5,
+            "feasibility_result": "achievable"
+          }
+        }
+      }
+    ],
+    "expectFlow": { "terminalCondition": "accept", "roundsUsed": 1, "distinctMessages": true }
+  },
+  {
+    "id": "SC-FSB-02",
+    "summary": "可行性协商多轮演进：round 1 评估结论为不可行并拒绝，A 于 round 2 改提替代方案，B 评估通过并接受，协商达成一致",
+    "languages": ["zh-CN", "en-US"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "请评估站点级节能任务调整后的速率保障目标是否可行：节能期间速率保障目标由5Mbps下调至2Mbps，且停电场景下供电时长不少于10小时。",
+            "en-US": "Please assess whether the adjusted rate guarantee target of the site-level energy-saving task can be achieved: the rate guarantee target is lowered from 5Mbps to 2Mbps during 08:00-18:00, with at least 10 hours of power supply duration in outage scenarios."
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.feasibility.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "feasibility_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "generateRejectFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "经评估，在现有供电约束下节能目标无法达成，本次可行性协商确认无法达成一致。",
+            "en-US": "After evaluation, the energy-saving target cannot be achieved under the existing power supply constraint; this feasibility negotiation is confirmed as concluded without agreement."
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.feasibility.reject.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "feasibility_reject"
+        }
+      },
+      {
+        "step": 3,
+        "role": "A",
+        "api": "validateRejectPromptAndDataFilling",
+        "prompt": { "fromStep": 2 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": {
+          "script": [
+            "{\"semantic_verdict\":true,\"negotiation_type\":\"feasibility\",\"errors\":[],\"params\":{\"feasibility_result\":\"infeasible under the existing power supply constraint\"}}"
+          ]
+        },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 1,
+            "maxRounds": 5,
+            "feasibility_result": "infeasible under the existing power supply constraint"
+          }
+        }
+      },
+      {
+        "step": 4,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "原速率保障目标在停电场景下无法维持，现提出替代方案：将节能期间速率保障目标下调至2Mbps，或将节能时段缩短为6小时，请评估确认。",
+            "en-US": "The original rate guarantee target cannot be held in outage scenarios; an alternative is proposed: lower the rate guarantee target to 2Mbps or shorten the energy-saving period to 6 hours; please assess and confirm."
+          }
+        },
+        "llm": {
+          "script": [
+            "{\"feasibility_negotiation_description\":\"The original rate guarantee target cannot be achieved under the power supply constraint; an alternative is proposed in <Infeasibility Details and Alternative Proposal>; please confirm.\",\"action\":\"PROPOSE_ALTERNATIVE_ON_FAILURE\",\"contents_to_evaluate\":null,\"infeasibility_details_and_proposal\":[{\"name\":\"infeasible target\",\"value\":\"rate guarantee target of 5Mbps during 08:00-18:00 cannot be held in outage scenarios\"},{\"name\":\"alternative proposal\",\"value\":\"lower the rate guarantee target to 2Mbps or shorten the energy-saving period to 6 hours\"}]}"
+          ]
+        },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "contracts": ["metadataTripleShape"]
+        }
+      },
+      {
+        "step": 5,
+        "role": "B",
+        "api": "validateProposePromptAndDataFilling",
+        "prompt": { "fromStep": 4 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.feasibility.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 2,
+            "maxRounds": 5,
+            "feasibility_result": "achievable"
+          }
+        }
+      },
+      {
+        "step": 6,
+        "role": "B",
+        "api": "generateAcceptFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "替代方案可行：下调后的速率保障目标能够同时满足停电时长要求，本次可行性协商确认达成一致。",
+            "en-US": "The alternative is feasible: the lowered rate guarantee target also satisfies the outage duration requirement; this feasibility negotiation is confirmed as concluded."
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.feasibility.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "feasibility_accept"
+        }
+      },
+      {
+        "step": 7,
+        "role": "A",
+        "api": "validateAcceptPromptAndDataFilling",
+        "prompt": { "fromStep": 6 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.feasibility.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 2,
+            "maxRounds": 5,
+            "feasibility_result": "achievable"
+          }
+        }
+      }
+    ],
+    "expectFlow": { "terminalCondition": "accept", "roundsUsed": 2, "distinctMessages": true }
+  },
+  {
+    "id": "SC-FSB-03",
+    "summary": "可行性协商中止：round 1 评估不可行且双方无法推进，round 2 生成通用终止消息并经校验确认协商提前终止",
+    "languages": ["zh-CN"],
+    "roles": ["A", "B"],
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "请评估站点级节能任务调整后的速率保障目标是否可行：节能期间速率保障目标由5Mbps下调至2Mbps，且停电场景下供电时长不少于10小时。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.feasibility.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "feasibility_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "generateRejectFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "经评估，在现有供电约束下节能目标无法达成，本次可行性协商确认无法达成一致。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.feasibility.reject.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "feasibility_reject"
+        }
+      },
+      {
+        "step": 3,
+        "role": "A",
+        "api": "generateAbortFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/common/abort/v1",
+        "input": {
+          "text": {
+            "zh-CN": "双方在轮次预算内无法就可行性达成一致，本次协商确认提前终止。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.common.abort.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "abort"
+        }
+      },
+      {
+        "step": 4,
+        "role": "B",
+        "api": "validateAbortPromptAndDataFilling",
+        "prompt": { "fromStep": 3 },
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/common/abort/v1",
+        "schema": { "$ref": "schemas/flat" },
+        "llm": { "script": [ { "$ref": "responses/semantic.common.abort.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "params": {
+            "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
+            "round": 2,
+            "maxRounds": 5,
+            "termination_reason": "The negotiation round limit is reached."
+          }
+        }
+      }
+    ],
+    "expectFlow": { "terminalCondition": "abort", "roundsUsed": 2, "distinctMessages": true }
+  }
+]
