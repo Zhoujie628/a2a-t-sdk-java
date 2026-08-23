@@ -222,6 +222,41 @@ class A2ATClientTest {
         assertEquals("Site A", continueData.get("message"));
     }
 
+    /**
+     * Regression test: the client orchestrator must register handlers for all built-in
+     * negotiation types. Before the fix every {@code receiveNegotiation} call failed with
+     * "Unsupported negotiation type: ..." because {@code DefaultA2ATClientBuilder} built the
+     * handler map empty (the server-side builder registers all three).
+     */
+    @Test
+    void receiveNegotiationDispatchesToBuiltInHandlers() throws IOException {
+        Path envFile = writeMinimalLocalClientEnv();
+        A2ATClient client = new A2ATClient(envFile);
+
+        for (NegotiationType type : NegotiationType.values()) {
+            Map<String, Object> startResult =
+                    client.startNegotiation(type, "Please provide the missing parameter.", Map.of());
+            @SuppressWarnings("unchecked")
+            Map<String, Object> startData = (Map<String, Object>)
+                    startResult.get(net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler.NEGOTIATION_T_URI_NL);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> contextMap = new java.util.LinkedHashMap<>(startData);
+            contextMap.remove("message");
+
+            Map<String, Object> receiveResult = client.receiveNegotiation(
+                    "Parameter provided: port-1.", contextMap);
+
+            assertEquals(Boolean.TRUE, receiveResult.get("needResponse"),
+                    type + " must dispatch to a registered handler");
+            assertEquals("Parameter provided: port-1.", receiveResult.get("message"),
+                    type + " handler must echo the received message");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> roundTripped = (Map<String, Object>) receiveResult.get("context");
+            assertEquals(startData.get("negotiationId"), roundTripped.get("negotiationId"),
+                    type + " receive must carry the negotiation context");
+        }
+    }
+
     @Test
     void pathBasedConstructorSupportsNonEnergySavingLocalScenarioCatalog() throws IOException {
         Path tempDir = Files.createTempDirectory("a2at-client-private-line");

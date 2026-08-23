@@ -122,6 +122,10 @@ public final class DefaultA2ATClientBuilder {
     /**
      * Builds the default negotiation orchestrator from the configured unified SDK config.
      *
+     * <p>Registers handlers for all three built-in negotiation types, mirroring the server-side
+     * {@code ServerNegotiationOrchestratorBuilder}. Without them {@code receiveNegotiation}
+     * fails with "Unsupported negotiation type" for every message.
+     *
      * @return assembled negotiation orchestrator
      */
     public RoleBoundNegotiationOrchestrator buildNegotiationOrchestrator() {
@@ -130,6 +134,15 @@ public final class DefaultA2ATClientBuilder {
         return new RoleBoundNegotiationOrchestrator(
                 NegotiationHandler.builder()
                         .store(new InMemoryNegotiationStore())
+                        .register(
+                                net.openan.a2at.sdk.negotiation.types.model.NegotiationType.INFORMATION,
+                                new net.openan.a2at.sdk.negotiation.handler.InformationNegotiation())
+                        .register(
+                                net.openan.a2at.sdk.negotiation.types.model.NegotiationType.TARGET,
+                                new net.openan.a2at.sdk.negotiation.handler.TargetNegotiation())
+                        .register(
+                                net.openan.a2at.sdk.negotiation.types.model.NegotiationType.FEASIBILITY,
+                                new net.openan.a2at.sdk.negotiation.handler.FeasibilityNegotiation())
                         .build(),
                 NegotiationRole.CLIENT);
     }
