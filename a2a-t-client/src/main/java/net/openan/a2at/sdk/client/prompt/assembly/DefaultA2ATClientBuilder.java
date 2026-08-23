@@ -15,7 +15,7 @@ import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationRole;
 import net.openan.a2at.sdk.prompt.analysis.impl.DefaultStructuredPromptSlotValueExtractor;
 import net.openan.a2at.sdk.prompt.analysis.impl.PromptSlotValueExtractor;
-import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognitionFunction;
+import net.openan.a2at.sdk.prompt.analysis.impl.LlmScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.resources.catalog.TemplateQueryService;
@@ -98,8 +98,8 @@ public final class DefaultA2ATClientBuilder {
         String slotSystemPrompt = resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "system.md");
         String slotUserPrompt = resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "user.md");
 
-        ScenarioRecognitionFunction scenarioRecognizer =
-                new SingleScenarioAwareRecognizer(scenarios, new ScenarioRecognizer(client)::recognize);
+        ScenarioRecognizer scenarioRecognizer =
+                new SingleScenarioAwareRecognizer(scenarios, new LlmScenarioRecognizer(client)::recognize);
         PromptSlotValueExtractor slotValueExtractor = new DefaultStructuredPromptSlotValueExtractor(
                 client, slotSchemaLoader, slotSystemPrompt, slotUserPrompt);
 
@@ -195,14 +195,14 @@ public final class DefaultA2ATClientBuilder {
         }
     }
 
-    private static final class SingleScenarioAwareRecognizer implements ScenarioRecognitionFunction {
+    private static final class SingleScenarioAwareRecognizer implements ScenarioRecognizer {
 
         private final List<ScenarioDefinition> scenarios;
 
-        private final ScenarioRecognitionFunction delegate;
+        private final ScenarioRecognizer delegate;
 
         private SingleScenarioAwareRecognizer(
-                List<ScenarioDefinition> scenarios, ScenarioRecognitionFunction delegate) {
+                List<ScenarioDefinition> scenarios, ScenarioRecognizer delegate) {
             this.scenarios = scenarios;
             this.delegate = delegate;
         }

@@ -17,7 +17,7 @@ import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.prompt.analysis.impl.PromptSlotValueExtractor;
-import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognitionFunction;
+import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.analysis.model.StructuredSlotExtractionResult;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptSlotSchemaLoader;
@@ -35,7 +35,7 @@ import net.openan.a2at.sdk.prompt.taskrendering.exception.TaskPromptRenderExcept
  */
 public final class DefaultClientPromptGenerationOrchestrator implements ClientPromptGenerationOrchestrator {
 
-    private final ScenarioRecognitionFunction scenarioRecognizer;
+    private final ScenarioRecognizer scenarioRecognizer;
 
     private final List<ScenarioDefinition> scenarios;
 
@@ -67,7 +67,7 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
      * @param slotSchemaLoader slot schema loader
      */
     public DefaultClientPromptGenerationOrchestrator(
-            ScenarioRecognitionFunction scenarioRecognizer,
+            ScenarioRecognizer scenarioRecognizer,
             List<ScenarioDefinition> scenarios,
             String language,
             String systemPrompt,

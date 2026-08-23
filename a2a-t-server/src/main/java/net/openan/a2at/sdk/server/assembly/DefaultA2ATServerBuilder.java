@@ -12,7 +12,7 @@ import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
 import net.openan.a2at.sdk.prompt.analysis.impl.DefaultStructuredPromptSlotValueExtractor;
-import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
+import net.openan.a2at.sdk.prompt.analysis.impl.LlmScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.resources.catalog.TemplateQueryService;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptSlotSchemaLoader;
@@ -104,7 +104,7 @@ public final class DefaultA2ATServerBuilder {
 
         promptComplianceOrchestrator = new DefaultServerPromptComplianceOrchestrator(
                 new LlmBackedPromptMetadataExtractor(
-                        new ScenarioRecognizer(client),
+                        new LlmScenarioRecognizer(client),
                         scenarios,
                         language,
                         scenarioSystemPrompt,

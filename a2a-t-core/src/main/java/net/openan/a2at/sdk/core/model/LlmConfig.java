@@ -2,11 +2,11 @@ package net.openan.a2at.sdk.core.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Structured LLM runtime configuration resolved from unified SDK config.
@@ -20,13 +20,13 @@ public record LlmConfig(
         String apiKey,
         String baseUrl,
         int historyWindow,
-        Integer maxTokens,
-        Double temperature,
-        Double timeoutSeconds,
-        boolean disableSystemProxy,
-        String reasoningEffort,
+        @Nullable Integer maxTokens,
+        @Nullable Double temperature,
+        @Nullable Double timeoutSeconds,
         int sessionMaxTotal,
         int sessionMaxPerProvider,
+        boolean disableSystemProxy,
+        @Nullable String reasoningEffort,
         int maxAttempts,
         List<String> parseErrors) {
 
@@ -73,13 +73,13 @@ public record LlmConfig(
                         A2ATConfigKeys.Llm.TEMPERATURE, parseErrors, Double::parseDouble),
                 parseOptionalNumeric(values.get(A2ATConfigKeys.Llm.TIMEOUT_SECONDS),
                         A2ATConfigKeys.Llm.TIMEOUT_SECONDS, parseErrors, Double::parseDouble),
-                parseBoolean(values.get(A2ATConfigKeys.Llm.DISABLE_SYSTEM_PROXY),
-                        A2ATConfigKeys.Llm.DISABLE_SYSTEM_PROXY, false, parseErrors),
-                parseReasoningEffort(values.get(A2ATConfigKeys.Llm.REASONING_EFFORT)),
                 parseInt(values.get(A2ATConfigKeys.Llm.SESSION_MAX_TOTAL),
                         A2ATConfigKeys.Llm.SESSION_MAX_TOTAL, DEFAULT_SESSION_MAX_TOTAL, parseErrors),
                 parseInt(values.get(A2ATConfigKeys.Llm.SESSION_MAX_PER_PROVIDER),
                         A2ATConfigKeys.Llm.SESSION_MAX_PER_PROVIDER, DEFAULT_SESSION_MAX_PER_PROVIDER, parseErrors),
+                parseBoolean(values.get(A2ATConfigKeys.Llm.DISABLE_SYSTEM_PROXY),
+                        A2ATConfigKeys.Llm.DISABLE_SYSTEM_PROXY, false, parseErrors),
+                parseReasoningEffort(values.get(A2ATConfigKeys.Llm.REASONING_EFFORT)),
                 parseMaxAttempts(values.get(A2ATConfigKeys.Llm.MAX_ATTEMPTS)),
                 parseErrors);
     }
@@ -164,6 +164,6 @@ public record LlmConfig(
         if (StringUtils.isBlank(rawValue)) {
             return null;
         }
-        return rawValue.trim().toLowerCase(Locale.ROOT);
+        return rawValue.trim();
     }
 }

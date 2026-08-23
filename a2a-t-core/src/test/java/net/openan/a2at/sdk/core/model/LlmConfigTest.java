@@ -90,7 +90,7 @@ class LlmConfigTest {
         assertEquals(500, config.sessionMaxTotal());
         assertEquals(150, config.sessionMaxPerProvider());
         assertEquals(5, config.maxAttempts());
-        assertEquals("high", config.reasoningEffort());
+        assertEquals("HIGH", config.reasoningEffort());
     }
 
     /**
@@ -141,14 +141,14 @@ class LlmConfigTest {
     /**
      * Verifies that {@link LlmConfig#fromMap(Map)} parses reasoning effort with case normalization.
      *
-     * <p>Scenario: A2AT_LLM_REASONING_EFFORT is set to "MEDIUM". Expected result: reasoningEffort resolves to "medium"
-     * (lowercased).
+     * <p>Scenario: A2AT_LLM_REASONING_EFFORT is set to "MEDIUM". Expected result: reasoningEffort resolves to "MEDIUM"
+     * (preserved as-is after trimming).
      */
     @Test
     void should_normalizeReasoningEffort_When_configured() {
         LlmConfig config = LlmConfig.fromMap(Map.of("A2AT_LLM_REASONING_EFFORT", "MEDIUM"));
 
-        assertEquals("medium", config.reasoningEffort());
+        assertEquals("MEDIUM", config.reasoningEffort());
     }
 
     /**

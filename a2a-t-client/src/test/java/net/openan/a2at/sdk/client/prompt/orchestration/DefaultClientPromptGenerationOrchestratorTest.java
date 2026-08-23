@@ -20,7 +20,7 @@ import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
 import net.openan.a2at.sdk.prompt.analysis.impl.PromptSlotValueExtractor;
-import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognitionFunction;
+import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.analysis.model.StructuredSlotExtractionResult;
 import net.openan.a2at.sdk.prompt.analysis.model.StructuredSlotValidationError;
@@ -171,7 +171,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
     }
 
     private static DefaultClientPromptGenerationOrchestrator newTemplateUriOrchestrator(
-            ScenarioRecognitionFunction recognizer,
+            ScenarioRecognizer recognizer,
             PromptTemplateTextLoader templateLoader,
             PromptSlotValueExtractor slotValueExtractor) {
         return new DefaultClientPromptGenerationOrchestrator(
@@ -187,7 +187,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 EMPTY_SCHEMA_LOADER);
     }
 
-    private static final class RecordingScenarioRecognizer implements ScenarioRecognitionFunction {
+    private static final class RecordingScenarioRecognizer implements ScenarioRecognizer {
         private int invocationCount;
         private String lastNormalizedInput;
 

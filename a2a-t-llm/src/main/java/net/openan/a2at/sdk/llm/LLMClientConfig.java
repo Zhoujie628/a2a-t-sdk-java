@@ -19,9 +19,9 @@ import org.apache.commons.lang3.StringUtils;
  * @param maxTokens optional default max tokens
  * @param temperature optional default temperature
  * @param timeoutSeconds optional provider timeout in seconds
- * @param disableSystemProxy whether to bypass the JVM or operating-system HTTP proxy
  * @param sessionMaxTotal reserved total session limit
  * @param sessionMaxPerProvider reserved per-provider session limit
+ * @param disableSystemProxy whether to bypass the JVM or operating-system HTTP proxy
  * @param reasoningEffort optional reasoning effort for reasoning models (none/minimal/low/medium/high/xhigh); null
  *     leaves the parameter unset
  * @since 2026-06
@@ -35,9 +35,9 @@ public record LLMClientConfig(
         Integer maxTokens,
         Double temperature,
         Double timeoutSeconds,
-        boolean disableSystemProxy,
         int sessionMaxTotal,
         int sessionMaxPerProvider,
+        boolean disableSystemProxy,
         String reasoningEffort) {
 
     private static final int MAX_HISTORY_WINDOW = 100;
@@ -75,9 +75,9 @@ public record LLMClientConfig(
                 llmConfig.maxTokens(),
                 llmConfig.temperature(),
                 llmConfig.timeoutSeconds(),
-                llmConfig.disableSystemProxy(),
                 llmConfig.sessionMaxTotal(),
                 llmConfig.sessionMaxPerProvider(),
+                llmConfig.disableSystemProxy(),
                 reasoningEffort);
     }
 

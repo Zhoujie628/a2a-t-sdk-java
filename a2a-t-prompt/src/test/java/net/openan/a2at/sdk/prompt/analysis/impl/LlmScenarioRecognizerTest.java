@@ -18,14 +18,14 @@ import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import org.junit.jupiter.api.Test;
 
-class ScenarioRecognizerTest {
+class LlmScenarioRecognizerTest {
 
     @Test
     void recognizeBuildsStructuredMessagesAndReturnsMatchedScenario() {
         RecordingClient llmClient =
                 new RecordingClient("{\"matched\":true,\"scenario_code\":\"energy-saving\",\"error_message\":null}");
 
-        ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient);
+        LlmScenarioRecognizer recognizer = new LlmScenarioRecognizer(llmClient);
         ScenarioRecognitionResult result = recognizer.recognize(
                 "Please analyze site A energy usage.",
                 List.of(new ScenarioDefinition(
@@ -45,7 +45,7 @@ class ScenarioRecognizerTest {
     void recognizeRejectsMatchedPayloadWithoutScenarioCode() {
         LLMClient llmClient = new RecordingClient("{\"matched\":true,\"scenario_code\":null,\"error_message\":null}");
 
-        ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient);
+        LlmScenarioRecognizer recognizer = new LlmScenarioRecognizer(llmClient);
 
         assertThrows(
                 ScenarioRecognitionException.class,
@@ -66,7 +66,7 @@ class ScenarioRecognizerTest {
         payload.put("error_message", null);
         RecordingJsonValueParser parser = new RecordingJsonValueParser(payload);
 
-        ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient, parser);
+        LlmScenarioRecognizer recognizer = new LlmScenarioRecognizer(llmClient, parser);
         ScenarioRecognitionResult result = recognizer.recognize(
                 "Please analyze site A energy usage.",
                 List.of(new ScenarioDefinition(
@@ -80,9 +80,9 @@ class ScenarioRecognizerTest {
     }
 
     @Test
-    void scenarioRecognizerImplementsScenarioRecognitionFunction() {
-        ScenarioRecognizer recognizer = new ScenarioRecognizer(new RecordingClient("ignored"));
-        assertInstanceOf(ScenarioRecognitionFunction.class, recognizer);
+    void scenarioRecognizerImplementsScenarioRecognizer() {
+        LlmScenarioRecognizer recognizer = new LlmScenarioRecognizer(new RecordingClient("ignored"));
+        assertInstanceOf(ScenarioRecognizer.class, recognizer);
     }
 
     @Test
@@ -90,7 +90,7 @@ class ScenarioRecognizerTest {
         LLMClient llmClient = new RecordingClient(
                 "{\"matched\":false,\"scenario_code\":null,\"error_message\":\"No scenario matched.\"}");
 
-        ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient);
+        LlmScenarioRecognizer recognizer = new LlmScenarioRecognizer(llmClient);
         ScenarioRecognitionResult result = recognizer.recognize(
                 "Unrelated input.",
                 List.of(new ScenarioDefinition(
@@ -108,7 +108,7 @@ class ScenarioRecognizerTest {
         LLMClient llmClient = new RecordingClient(
                 "{\"matched\":\"yes\",\"scenario_code\":null,\"error_message\":\"Ambiguous\"}");
 
-        ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient);
+        LlmScenarioRecognizer recognizer = new LlmScenarioRecognizer(llmClient);
         ScenarioRecognitionResult result = recognizer.recognize(
                 "Ambiguous input.",
                 List.of(new ScenarioDefinition(
@@ -125,7 +125,7 @@ class ScenarioRecognizerTest {
         LLMClient llmClient = new RecordingClient(
                 "{\"matched\":false,\"scenario_code\":\"energy-saving\",\"error_message\":null}");
 
-        ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient);
+        LlmScenarioRecognizer recognizer = new LlmScenarioRecognizer(llmClient);
 
         assertThrows(
                 ScenarioRecognitionException.class,
@@ -142,7 +142,7 @@ class ScenarioRecognizerTest {
         LLMClient llmClient = new RecordingClient(
                 "{\"matched\":true,\"scenario_code\":42,\"error_message\":null}");
 
-        ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient);
+        LlmScenarioRecognizer recognizer = new LlmScenarioRecognizer(llmClient);
 
         assertThrows(
                 ScenarioRecognitionException.class,

@@ -36,8 +36,14 @@ class DefaultA2ATClientBuilderTest {
 
         Path envFile = createTempEnvFile(provider);
         A2ATConfig config = A2ATConfig.load(envFile);
-        config = net.openan.a2at.sdk.negotiation.generation.NegotiationContentService.resolvePromptResourceLocalRootDir(
-                config, envFile);
+        String resolvedRoot = envFile.getParent()
+                .resolve(config.prompt().localRootDir())
+                .toAbsolutePath()
+                .toString();
+        config = new A2ATConfig(
+                new net.openan.a2at.sdk.core.model.PromptRuntimeConfig(
+                        config.prompt().language(), config.prompt().sourceType(), resolvedRoot),
+                config.llm(), config.negotiation(), config.promptCompliance());
 
         DefaultA2ATClientBuilder builder =
                 DefaultA2ATClientBuilder.builder().config(config).envPath(envFile);
@@ -57,8 +63,14 @@ class DefaultA2ATClientBuilderTest {
 
         Path envFile = createTempEnvFileWithoutScenarioCatalog(provider);
         A2ATConfig config = A2ATConfig.load(envFile);
-        config = net.openan.a2at.sdk.negotiation.generation.NegotiationContentService.resolvePromptResourceLocalRootDir(
-                config, envFile);
+        String resolvedRoot = envFile.getParent()
+                .resolve(config.prompt().localRootDir())
+                .toAbsolutePath()
+                .toString();
+        config = new A2ATConfig(
+                new net.openan.a2at.sdk.core.model.PromptRuntimeConfig(
+                        config.prompt().language(), config.prompt().sourceType(), resolvedRoot),
+                config.llm(), config.negotiation(), config.promptCompliance());
 
         DefaultA2ATClientBuilder builder =
                 DefaultA2ATClientBuilder.builder().config(config).envPath(envFile);

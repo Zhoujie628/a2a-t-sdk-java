@@ -12,7 +12,7 @@ import net.openan.a2at.sdk.client.prompt.orchestration.DefaultClientPromptGenera
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.prompt.analysis.impl.PromptSlotValueExtractor;
-import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognitionFunction;
+import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.analysis.model.StructuredSlotExtractionResult;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptTemplateTextLoader;
@@ -130,7 +130,7 @@ class ClientPromptGenerationOrchestratorBuilderTest {
         }
     }
 
-    private static final class RecordingScenarioRecognizer implements ScenarioRecognitionFunction {
+    private static final class RecordingScenarioRecognizer implements ScenarioRecognizer {
 
         private final ScenarioRecognitionResult result;
 

@@ -5,7 +5,7 @@ import net.openan.a2at.sdk.client.prompt.orchestration.DefaultClientPromptGenera
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.prompt.analysis.impl.DefaultStructuredPromptSlotValueExtractor;
 import net.openan.a2at.sdk.prompt.analysis.impl.PromptSlotValueExtractor;
-import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognitionFunction;
+import net.openan.a2at.sdk.prompt.analysis.impl.LlmScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.resources.loader.ClasspathPromptSlotSchemaLoader;
 import net.openan.a2at.sdk.prompt.resources.loader.ClasspathPromptTemplateLoader;
@@ -38,7 +38,7 @@ public final class ClientPromptGenerationOrchestratorBuilder {
 
     private String slotUserPrompt;
 
-    private ScenarioRecognitionFunction scenarioRecognizer;
+    private ScenarioRecognizer scenarioRecognizer;
 
     private PromptTemplateTextLoader templateLoader;
 
@@ -143,7 +143,7 @@ public final class ClientPromptGenerationOrchestratorBuilder {
      * @return current builder
      */
     public ClientPromptGenerationOrchestratorBuilder scenarioRecognizer(
-            ScenarioRecognitionFunction scenarioRecognizer) {
+            ScenarioRecognizer scenarioRecognizer) {
         this.scenarioRecognizer = scenarioRecognizer;
         return this;
     }
@@ -230,8 +230,8 @@ public final class ClientPromptGenerationOrchestratorBuilder {
                 ? new DefaultStructuredPromptSlotValueExtractor(
                         llmClient, effectiveSlotSchemaLoader, slotSystemPrompt, slotUserPrompt)
                 : slotValueExtractor;
-        ScenarioRecognitionFunction effectiveScenarioRecognizer =
-                scenarioRecognizer == null ? new ScenarioRecognizer(llmClient)::recognize : scenarioRecognizer;
+        ScenarioRecognizer effectiveScenarioRecognizer =
+                scenarioRecognizer == null ? new LlmScenarioRecognizer(llmClient)::recognize : scenarioRecognizer;
         TaskPromptRenderer effectiveRenderer = renderer == null ? new TaskPromptRenderer() : renderer;
 
         return new DefaultClientPromptGenerationOrchestrator(
