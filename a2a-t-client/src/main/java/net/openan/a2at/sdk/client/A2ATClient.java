@@ -25,8 +25,8 @@ import net.openan.a2at.sdk.prompt.resources.catalog.TemplateQueryService;
 import org.jspecify.annotations.NonNull;
 
 /**
- * High-level client facade for prompt generation and negotiation APIs. The caller provides the `.env` file path
- * explicitly, typically after copying the repository `env.example`.
+ * High-level client facade for prompt generation and negotiation APIs. The caller provides the {@code .env} file path
+ * explicitly, typically after copying the repository {@code env.example}.
  *
  * @since 2026-06
  */
@@ -41,9 +41,9 @@ public final class A2ATClient {
     private final TemplateQueryService templateQueryService;
 
     /**
-     * Creates a client facade from one user-supplied `.env` path.
+     * Creates a client facade from one user-supplied {@code .env} path.
      *
-     * @param envPath user-supplied `.env` file path
+     * @param envPath user-supplied {@code .env} file path
      */
     public A2ATClient(Path envPath) {
         Path resolvedEnvPath = envPath.toAbsolutePath().normalize();
@@ -59,9 +59,10 @@ public final class A2ATClient {
     }
 
     /**
-     * Generates a processed task prompt from raw user input.
+     * Generates a processed task prompt from raw user input. Both text and structured input ({@code Map}) are unified
+     * through LLM extraction; there is no zero-LLM rule shortcut.
      *
-     * @param userInput user-provided task description or structured input map
+     * @param userInput user-provided task description (text or structured input map)
      * @return prompt generation result containing either rendered prompt text or failure details
      */
     public PromptGenerationResult generateTaskPrompt(Object userInput) {

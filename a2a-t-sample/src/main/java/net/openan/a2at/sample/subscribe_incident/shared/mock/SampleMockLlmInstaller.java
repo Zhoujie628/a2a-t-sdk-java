@@ -52,8 +52,9 @@ public final class SampleMockLlmInstaller {
      *
      * <p>The mock fallback is needed when no usable real LLM configuration is present: a missing,
      * blank, or placeholder {@code A2AT_LLM_API_KEY}, or a missing/blank {@code A2AT_LLM_MODEL} or
-     * {@code A2AT_LLM_BASE_URL}. When the environment file lacks any of these, the SDK's
-     * {@code LLMConfigLoader} would fail at startup, so the mock is installed instead.
+* {@code A2AT_LLM_BASE_URL}. When the environment file lacks any of these, the SDK's
+ * {@code LLMClientConfig.from(LlmConfig)} would fail at startup with an {@code LLMConfigError},
+ * so the mock is installed instead.
      *
      * @param envPath sample environment file path
      * @return {@code true} when no usable real LLM configuration is present
@@ -84,7 +85,6 @@ public final class SampleMockLlmInstaller {
         if (mockInstalled) {
             return;
         }
-        SampleLoggingLLMClient.configure(mockEnabled, roleLabel, System.out::println);
         try {
             Field clientsField = LLMClientFactory.class.getDeclaredField("CLIENTS");
             clientsField.setAccessible(true);
@@ -92,6 +92,7 @@ public final class SampleMockLlmInstaller {
             Map<String, Class<? extends LLMClient>> clients =
                     (Map<String, Class<? extends LLMClient>>) clientsField.get(null);
             clients.put(OPENAI_PROVIDER, SampleLoggingLLMClient.class);
+            SampleLoggingLLMClient.configure(mockEnabled, roleLabel, System.out::println);
             mockInstalled = true;
         } catch (ReflectiveOperationException exception) {
             throw new ValueErrorException("Failed to install logging LLM client", exception);

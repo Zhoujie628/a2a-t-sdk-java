@@ -9,7 +9,7 @@ import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.prompt.analysis.impl.PromptSlotValueExtractor;
-import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
+import net.openan.a2at.sdk.prompt.analysis.impl.LlmScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.model.StructuredSlotExtractionResult;
 import net.openan.a2at.sdk.prompt.analysis.model.StructuredSlotValidationError;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptSlotSchemaLoader;
@@ -37,7 +37,7 @@ class LlmBackedPromptMetadataExtractorTest {
         PromptSlotValueExtractor slotValueExtractor = (userInput, scenarioCode, language) ->
                 new StructuredSlotExtractionResult(Map.of(SLOT_NAME, "Incident"), List.of());
         LlmBackedPromptMetadataExtractor extractor = new LlmBackedPromptMetadataExtractor(
-                new ScenarioRecognizer(llmClient),
+                new LlmScenarioRecognizer(llmClient),
                 List.of(new ScenarioDefinition(
                         "subscribe-incident", "Incident subscription", "Subscribe incident", "Subscribe Incident")),
                 "zh-CN",
@@ -60,7 +60,7 @@ class LlmBackedPromptMetadataExtractorTest {
         LLMClient llmClient = new RecordingClient(
                 "{\"matched\":false,\"scenario_code\":null,\"error_message\":\"No scenario matched.\"}");
         LlmBackedPromptMetadataExtractor extractor = new LlmBackedPromptMetadataExtractor(
-                new ScenarioRecognizer(llmClient),
+                new LlmScenarioRecognizer(llmClient),
                 List.of(new ScenarioDefinition(
                         "subscribe-incident", "Incident subscription", "Subscribe incident", "Subscribe Incident")),
                 "zh-CN",
@@ -82,7 +82,7 @@ class LlmBackedPromptMetadataExtractorTest {
         LLMClient llmClient = new RecordingClient(
                 "{\"matched\":true,\"scenario_code\":\"subscribe-incident\",\"error_message\":null}");
         LlmBackedPromptMetadataExtractor extractor = new LlmBackedPromptMetadataExtractor(
-                new ScenarioRecognizer(llmClient),
+                new LlmScenarioRecognizer(llmClient),
                 List.of(new ScenarioDefinition(
                         "subscribe-incident", "Incident subscription", "Subscribe incident", "Subscribe Incident")),
                 "zh-CN",
@@ -109,7 +109,7 @@ class LlmBackedPromptMetadataExtractorTest {
         LLMClient llmClient = new RecordingClient(
                 "{\"matched\":true,\"scenario_code\":\"subscribe-incident\",\"error_message\":null}");
         LlmBackedPromptMetadataExtractor extractor = new LlmBackedPromptMetadataExtractor(
-                new ScenarioRecognizer(llmClient),
+                new LlmScenarioRecognizer(llmClient),
                 List.of(new ScenarioDefinition(
                         "subscribe-incident", "Incident subscription", "Subscribe incident", "Subscribe Incident")),
                 "zh-CN",

@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.negotiation.generation;
 
 import java.nio.file.Path;
+import net.openan.a2at.sdk.core.model.LlmConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.negotiation.resources.DefaultNegotiationTemplateLoader;
@@ -26,15 +27,13 @@ import org.slf4j.Logger;
  */
 public final class NegotiationGenerationOrchestratorBuilder {
 
-    private static final int DEFAULT_MAX_ATTEMPTS = 3;
-
     private String language;
 
     private String localRootDir;
 
     private LLMClient llmClient;
 
-    private int maxAttempts = DEFAULT_MAX_ATTEMPTS;
+    private int maxAttempts = LlmConfig.DEFAULT_MAX_ATTEMPTS;
 
     private NegotiationTemplateLoader templateLoader;
 

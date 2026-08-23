@@ -22,7 +22,6 @@ class LlmPackageStructureTest {
                         "LLMClientConfig.java",
                         "LLMClientFactory.java",
                         "LLMConfigError.java",
-                        "LLMConfigLoader.java",
                         "LLMError.java",
                         "LLMResponse.java",
                         "LLMRuntimeError.java",
@@ -70,8 +69,7 @@ class LlmPackageStructureTest {
 
     private static List<String> topLevelJavaFiles(Path path) throws IOException {
         try (var files = Files.list(path)) {
-            return files
-                    .filter(file -> file.getFileName().toString().endsWith(".java"))
+            return files.filter(file -> file.getFileName().toString().endsWith(".java"))
                     .map(file -> file.getFileName().toString())
                     .sorted()
                     .collect(Collectors.toList());
@@ -80,8 +78,7 @@ class LlmPackageStructureTest {
 
     private static List<String> topLevelDirectories(Path path) throws IOException {
         try (var files = Files.list(path)) {
-            return files
-                    .filter(Files::isDirectory)
+            return files.filter(Files::isDirectory)
                     .map(file -> file.getFileName().toString())
                     .sorted()
                     .collect(Collectors.toList());

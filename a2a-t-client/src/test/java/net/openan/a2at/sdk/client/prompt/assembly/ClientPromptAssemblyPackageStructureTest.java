@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
 import net.openan.a2at.sdk.client.prompt.orchestration.DefaultClientPromptGenerationOrchestrator;
-import net.openan.a2at.sdk.core.model.PromptGenerationConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
@@ -21,17 +20,16 @@ class ClientPromptAssemblyPackageStructureTest {
                 "{\"matched\":true,\"scenario_code\":\"energy-saving\",\"error_message\":null}",
                 "{\"slots\":{\"site\":\"Site A\",\"additional_notes\":\"critical\",\"limit\":\"5\",\"severity\":\"high\"},\"slot_errors\":[]}");
 
-        DefaultClientPromptGenerationOrchestrator orchestrator =
-                DefaultClientPromptGenerationOrchestratorFactory.create(
-                        llmClient,
-                        List.of(new ScenarioDefinition(
-                                "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
-                        new PromptGenerationConfig(
-                                "en-US",
-                                "Identify the best matching scenario.",
-                                "Choose from the provided scenario list.",
-                                "Extract slots from the input.",
-                                "Return slots as JSON."));
+        DefaultClientPromptGenerationOrchestrator orchestrator = ClientPromptGenerationOrchestratorBuilder.builder()
+                .llmClient(llmClient)
+                .scenarios(List.of(new ScenarioDefinition(
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")))
+                .language("en-US")
+                .scenarioSystemPrompt("Identify the best matching scenario.")
+                .scenarioUserPrompt("Choose from the provided scenario list.")
+                .slotSystemPrompt("Extract slots from the input.")
+                .slotUserPrompt("Return slots as JSON.")
+                .build();
 
         PromptGenerationResult result = orchestrator.generateTaskPrompt(Map.of(
                 "site", "Site A",

@@ -17,9 +17,9 @@ class LLMClientConfigTest {
                 1024,
                 0.2d,
                 15.5d,
-                true,
                 300,
                 100,
+                true,
                 "none");
 
         assertEquals("openai", config.provider());
