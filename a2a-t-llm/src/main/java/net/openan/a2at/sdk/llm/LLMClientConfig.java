@@ -106,27 +106,23 @@ public record LLMClientConfig(
 
     private static void validateBounds(LlmConfig llmConfig) {
         if (llmConfig.historyWindow() <= 0 || llmConfig.historyWindow() > MAX_HISTORY_WINDOW) {
-            throw new LLMConfigError(
-                    "LLM configuration key 'historyWindow' value " + llmConfig.historyWindow()
-                            + " must be between 1 and " + MAX_HISTORY_WINDOW);
+            throw new LLMConfigError("LLM configuration key 'historyWindow' value " + llmConfig.historyWindow()
+                    + " must be between 1 and " + MAX_HISTORY_WINDOW);
         }
         if (llmConfig.sessionMaxTotal() <= 0 || llmConfig.sessionMaxTotal() > MAX_SESSION_TOTAL) {
-            throw new LLMConfigError(
-                    "LLM configuration key 'sessionMaxTotal' value " + llmConfig.sessionMaxTotal()
-                            + " must be between 1 and " + MAX_SESSION_TOTAL);
+            throw new LLMConfigError("LLM configuration key 'sessionMaxTotal' value " + llmConfig.sessionMaxTotal()
+                    + " must be between 1 and " + MAX_SESSION_TOTAL);
         }
         if (llmConfig.sessionMaxPerProvider() <= 0 || llmConfig.sessionMaxPerProvider() > MAX_SESSION_PER_PROVIDER) {
-            throw new LLMConfigError(
-                    "LLM configuration key 'sessionMaxPerProvider' value " + llmConfig.sessionMaxPerProvider()
-                            + " must be between 1 and " + MAX_SESSION_PER_PROVIDER);
+            throw new LLMConfigError("LLM configuration key 'sessionMaxPerProvider' value "
+                    + llmConfig.sessionMaxPerProvider() + " must be between 1 and " + MAX_SESSION_PER_PROVIDER);
         }
     }
 
     private static void validateSessionOrder(LlmConfig llmConfig) {
         if (llmConfig.sessionMaxTotal() < llmConfig.sessionMaxPerProvider()) {
-            throw new LLMConfigError(
-                    "LLM configuration key 'sessionMaxTotal' (" + llmConfig.sessionMaxTotal()
-                            + ") must be >= 'sessionMaxPerProvider' (" + llmConfig.sessionMaxPerProvider() + ")");
+            throw new LLMConfigError("LLM configuration key 'sessionMaxTotal' (" + llmConfig.sessionMaxTotal()
+                    + ") must be >= 'sessionMaxPerProvider' (" + llmConfig.sessionMaxPerProvider() + ")");
         }
     }
 

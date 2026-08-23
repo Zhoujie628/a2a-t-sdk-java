@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.core.model.LlmConfig;
 import net.openan.a2at.sdk.core.model.NegotiationConfig;
@@ -48,9 +47,8 @@ class DefaultA2ATServerBuilderTest {
     void llmClientCreatedOnlyOnceAcrossMultipleBuildMethods() throws IOException {
         Path envFile = writeEnv();
         A2ATConfig config = A2ATConfig.load(envFile);
-        DefaultA2ATServerBuilder builder = DefaultA2ATServerBuilder.builder()
-                .config(config)
-                .envPath(envFile);
+        DefaultA2ATServerBuilder builder =
+                DefaultA2ATServerBuilder.builder().config(config).envPath(envFile);
 
         builder.buildPromptComplianceOrchestrator();
         builder.buildNegotiationGenerationOrchestrator();
@@ -66,9 +64,8 @@ class DefaultA2ATServerBuilderTest {
     void buildNegotiationOrchestratorReusesCachedComplianceOrchestrator() throws IOException {
         Path envFile = writeEnv();
         A2ATConfig config = A2ATConfig.load(envFile);
-        DefaultA2ATServerBuilder builder = DefaultA2ATServerBuilder.builder()
-                .config(config)
-                .envPath(envFile);
+        DefaultA2ATServerBuilder builder =
+                DefaultA2ATServerBuilder.builder().config(config).envPath(envFile);
 
         DefaultServerPromptComplianceOrchestrator first = builder.buildPromptComplianceOrchestrator();
         DefaultServerPromptComplianceOrchestrator second = builder.buildPromptComplianceOrchestrator();
@@ -76,7 +73,9 @@ class DefaultA2ATServerBuilderTest {
 
         builder.buildNegotiationOrchestrator();
 
-        assertEquals(1, CountingRecorderClient.instanceCount(),
+        assertEquals(
+                1,
+                CountingRecorderClient.instanceCount(),
                 "LLM client should still be created only once after negotiation orchestrator build");
     }
 
@@ -85,31 +84,44 @@ class DefaultA2ATServerBuilderTest {
         Path envFile = writeEnvWithDifferentModel();
         A2ATConfig config = new A2ATConfig(
                 new PromptRuntimeConfig("zh-CN", "classpath", "."),
-                new LlmConfig(TEST_MOCK_PROVIDER, "from-config-model", "from-config-key",
-                        "https://from-config.example.com", 10, null, null, null, false, null, 300, 100, 3,
+                new LlmConfig(
+                        TEST_MOCK_PROVIDER,
+                        "from-config-model",
+                        "from-config-key",
+                        "https://from-config.example.com",
+                        10,
+                        null,
+                        null,
+                        null,
+                        false,
+                        null,
+                        300,
+                        100,
+                        3,
                         List.of()),
                 new NegotiationConfig("in_memory"),
                 new PromptComplianceConfig(false));
 
-        DefaultA2ATServerBuilder builder = DefaultA2ATServerBuilder.builder()
-                .config(config)
-                .envPath(envFile);
+        DefaultA2ATServerBuilder builder =
+                DefaultA2ATServerBuilder.builder().config(config).envPath(envFile);
 
         builder.buildPromptComplianceOrchestrator();
 
         assertEquals(1, CountingRecorderClient.instanceCount());
         LLMClientConfig recorded = CountingRecorderClient.lastInstance().recordedConfig();
-        assertEquals("from-config-model", recorded.model(),
-                "Model should come from config.llm(), not from envPath");
-        assertEquals("from-config-key", recorded.apiKey(),
-                "API key should come from config.llm(), not from envPath");
-        assertEquals(LLMClientConfig.from(config.llm()), recorded,
+        assertEquals("from-config-model", recorded.model(), "Model should come from config.llm(), not from envPath");
+        assertEquals("from-config-key", recorded.apiKey(), "API key should come from config.llm(), not from envPath");
+        assertEquals(
+                LLMClientConfig.from(config.llm()),
+                recorded,
                 "Recorded config should equal LLMClientConfig.from(config.llm())");
     }
 
     private Path writeEnv() throws IOException {
         Path envFile = tempDir.resolve("server.env");
-        Files.writeString(envFile, """
+        Files.writeString(
+                envFile,
+                """
                 A2AT_LANGUAGE=zh-CN
                 A2AT_PROMPT_SOURCE_TYPE=classpath
                 A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR=
@@ -124,7 +136,9 @@ class DefaultA2ATServerBuilderTest {
 
     private Path writeEnvWithDifferentModel() throws IOException {
         Path envFile = tempDir.resolve("alt.env");
-        Files.writeString(envFile, """
+        Files.writeString(
+                envFile,
+                """
                 A2AT_LANGUAGE=zh-CN
                 A2AT_PROMPT_SOURCE_TYPE=classpath
                 A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR=

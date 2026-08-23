@@ -1,7 +1,6 @@
 package net.openan.a2at.sdk.core.model;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -82,7 +81,7 @@ public record LlmConfig(
                 parseInt(values.get(A2ATConfigKeys.Llm.SESSION_MAX_PER_PROVIDER),
                         A2ATConfigKeys.Llm.SESSION_MAX_PER_PROVIDER, DEFAULT_SESSION_MAX_PER_PROVIDER, parseErrors),
                 parseMaxAttempts(values.get(A2ATConfigKeys.Llm.MAX_ATTEMPTS)),
-                Collections.unmodifiableList(parseErrors));
+                parseErrors);
     }
 
     private static int parseMaxAttempts(String rawValue) {
