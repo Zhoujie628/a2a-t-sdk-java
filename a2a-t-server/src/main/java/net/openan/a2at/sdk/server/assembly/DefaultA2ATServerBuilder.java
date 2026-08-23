@@ -203,11 +203,7 @@ public final class DefaultA2ATServerBuilder {
         requireSupportedConfig();
         require(envPath, "Unified SDK env path must be configured.");
         return new DefaultContentValidator(
-                extensionName,
-                config.prompt().language(),
-                config.llm().maxAttempts(),
-                llmClient(),
-                PromptResourceAccess.create(config.prompt()));
+                extensionName, config.prompt().language(), config.llm().maxAttempts(), llmClient());
     }
 
     private static void require(Object value, String message) {
