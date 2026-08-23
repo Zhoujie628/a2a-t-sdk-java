@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.client.model.PromptGenerationResult;
@@ -22,6 +23,7 @@ import net.openan.a2at.sdk.prompt.analysis.impl.PromptSlotValueExtractor;
 import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognitionFunction;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
 import net.openan.a2at.sdk.prompt.analysis.model.StructuredSlotExtractionResult;
+import net.openan.a2at.sdk.prompt.analysis.model.StructuredSlotValidationError;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptSlotSchemaLoader;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptTemplateTextLoader;
 import net.openan.a2at.sdk.prompt.resources.model.PromptSlotDefinition;
@@ -841,5 +843,144 @@ class DefaultClientPromptGenerationOrchestratorTest {
         PromptGenerationResult result = orchestrator.generateTaskPrompt("Analyze Site A.");
         assertTrue(result.success());
         assertEquals("Site: Site A", result.promptText());
+    }
+
+    @Test
+    void generateTaskPromptNormalizesNullInputToString() {
+        RecordingScenarioRecognizer recognizer = new RecordingScenarioRecognizer();
+        DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
+                recognizer,
+                List.of(new ScenarioDefinition(
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                "en-US",
+                "Identify the best matching scenario.",
+                "Choose from the provided scenario list.",
+                new FakeTemplateLoader("Site: {site}"),
+                new FakeSlotValueExtractor(Map.of("site", "Site A")),
+                new TaskPromptRenderer(),
+                EMPTY_SCHEMA_LOADER);
+
+        PromptGenerationResult result = orchestrator.generateTaskPrompt(null);
+
+        assertTrue(result.success());
+        assertEquals("null", recognizer.lastNormalizedInput);
+        assertEquals("Site: Site A", result.promptText());
+    }
+
+    @Test
+    void generateTaskPromptReturnsFailureWithEmptyScenarioList() {
+        DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
+                (normalizedInput, scenarios, systemPrompt, userPrompt) -> {
+                    assertEquals(0, scenarios.size());
+                    return new ScenarioRecognitionResult(false, null, "No scenarios available.");
+                },
+                List.of(),
+                "en-US",
+                "Identify the best matching scenario.",
+                "Choose from the provided scenario list.",
+                (scenarioCode, language) -> "Scenario: {scenario}\nInput: {input}",
+                (userInput, scenarioCode, language) -> new StructuredSlotExtractionResult(Map.of(), List.of()),
+                new TaskPromptRenderer(),
+                EMPTY_SCHEMA_LOADER);
+
+        PromptGenerationResult result = orchestrator.generateTaskPrompt("Analyze Site A.");
+
+        assertFalse(result.success());
+        assertNotNull(result.failure());
+        assertEquals("scenario_not_matched", result.failure().code());
+        assertEquals("scenario", result.failure().stage());
+    }
+
+    @Test
+    void generateTaskPromptEscapesLlmRuntimeErrorFromExtractor() {
+        DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
+                (normalizedInput, scenarios, systemPrompt, userPrompt) ->
+                        new ScenarioRecognitionResult(true, "energy-saving", null),
+                List.of(new ScenarioDefinition(
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                "en-US",
+                "Identify the best matching scenario.",
+                "Choose from the provided scenario list.",
+                (scenarioCode, language) -> "Site: {site}",
+                (userInput, scenarioCode, language) -> {
+                    throw new LLMRuntimeError("LLM invocation failed.");
+                },
+                new TaskPromptRenderer(),
+                EMPTY_SCHEMA_LOADER);
+
+        assertThrows(LLMRuntimeError.class, () -> orchestrator.generateTaskPrompt("Analyze Site A."));
+    }
+
+    @Test
+    void generateTaskPromptSucceedsWhenExtractionHasErrors() {
+        RecordingScenarioRecognizer recognizer = new RecordingScenarioRecognizer();
+        DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
+                recognizer,
+                List.of(new ScenarioDefinition(
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                "en-US",
+                "Identify the best matching scenario.",
+                "Choose from the provided scenario list.",
+                new FakeTemplateLoader("Site: {site}"),
+                (userInput, scenarioCode, language) -> new StructuredSlotExtractionResult(
+                        Map.of("site", "Site A"),
+                        List.of(new StructuredSlotValidationError(
+                                "extra_field", "unexpected_field", "Extra field ignored."))),
+                new TaskPromptRenderer(),
+                EMPTY_SCHEMA_LOADER);
+
+        PromptGenerationResult result = orchestrator.generateTaskPrompt("Analyze Site A.");
+
+        assertTrue(result.success());
+        assertEquals("Site: Site A", result.promptText());
+    }
+
+    @Test
+    void generateFromTemplateUriWithMetadataEmptyInputProducesSlotValidationError() {
+        PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
+                scenarioCode,
+                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null)));
+        DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
+                new RecordingScenarioRecognizer(),
+                List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
+                "en-US",
+                "",
+                "",
+                new FakeTemplateLoader("Site: {site}"),
+                new FakeSlotValueExtractor(Map.of()),
+                new TaskPromptRenderer(),
+                schemaLoader);
+
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
+                () -> orchestrator.generateTaskPromptFromText("", StandardTemplates.ENERGY_SAVING));
+        assertEquals("slot_validation_error", ex.getCode());
+        assertEquals(1, ex.failedParameters().size());
+        assertEquals("site", ex.failedParameters().get(0).slotName());
+    }
+
+    @Test
+    void validateRequiredSlotsTreatsNullSlotValueAsMissing() {
+        PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
+                scenarioCode,
+                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null)));
+        DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
+                new RecordingScenarioRecognizer(),
+                List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
+                "en-US",
+                "",
+                "",
+                new FakeTemplateLoader("Site: {site}"),
+                new FakeSlotValueExtractor(Collections.singletonMap("site", null)),
+                new TaskPromptRenderer(),
+                schemaLoader);
+
+        PromptGenerationException ex = assertThrows(
+                PromptGenerationException.class,
+                () -> orchestrator.generateTaskPromptFromText("Analyze Site A.", StandardTemplates.ENERGY_SAVING));
+        assertEquals("slot_validation_error", ex.getCode());
+        assertEquals(1, ex.failedParameters().size());
+        assertEquals("site", ex.failedParameters().get(0).slotName());
+        assertEquals("missing_required", ex.failedParameters().get(0).code());
     }
 }

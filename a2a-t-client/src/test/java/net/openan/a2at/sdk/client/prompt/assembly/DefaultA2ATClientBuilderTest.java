@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.client.prompt.assembly;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,6 +9,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
@@ -44,6 +46,58 @@ class DefaultA2ATClientBuilderTest {
         builder.buildNegotiationGenerationOrchestrator();
 
         assertEquals(1, CLIENT_INSTANCE_COUNT.get());
+    }
+
+    @Test
+    void buildPromptGenerationOrchestratorPropagatesMissingScenarioCatalog() throws IOException {
+        String provider = "test-scenario-failure";
+        if (!LLMClientFactory.availableProviders().contains(provider)) {
+            LLMClientFactory.register(provider, CountingClient.class);
+        }
+
+        Path envFile = createTempEnvFileWithoutScenarioCatalog(provider);
+        A2ATConfig config = A2ATConfig.load(envFile);
+        config = net.openan.a2at.sdk.negotiation.generation.NegotiationContentService.resolvePromptResourceLocalRootDir(
+                config, envFile);
+
+        DefaultA2ATClientBuilder builder =
+                DefaultA2ATClientBuilder.builder().config(config).envPath(envFile);
+
+        assertThrows(ResourceNotFoundException.class, () -> builder.buildPromptGenerationOrchestrator());
+    }
+
+    private static Path createTempEnvFileWithoutScenarioCatalog(String provider) throws IOException {
+        Path tempDir = Files.createTempDirectory("a2at-client-builder-scenario");
+        Path promptRoot = tempDir.resolve("prompt_resources");
+        Path scenarioPromptDir =
+                promptRoot.resolve("prompts").resolve("scenario_recognition").resolve("zh-CN");
+        Path slotPromptDir =
+                promptRoot.resolve("prompts").resolve("slot_extraction").resolve("zh-CN");
+        Path scenariosDir = promptRoot.resolve("scenarios").resolve("zh-CN");
+        Files.createDirectories(scenarioPromptDir);
+        Files.createDirectories(slotPromptDir);
+        Files.createDirectories(scenariosDir);
+
+        Files.writeString(scenarioPromptDir.resolve("system.md"), "You are a scenario recognition assistant.");
+        Files.writeString(scenarioPromptDir.resolve("user.md"), "Identify the best matching scenario.");
+        Files.writeString(slotPromptDir.resolve("system.md"), "You are a slot extraction assistant.");
+        Files.writeString(slotPromptDir.resolve("user.md"), "Extract slots from the input.");
+
+        Path envFile = tempDir.resolve("client.env");
+        Files.writeString(
+                envFile,
+                """
+                A2AT_LANGUAGE=zh-CN
+                A2AT_PROMPT_SOURCE_TYPE=local_file
+                A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR=prompt_resources
+                A2AT_LLM_PROVIDER=%s
+                A2AT_LLM_MODEL=example-model
+                A2AT_LLM_BASE_URL=https://llm.example.test/v1
+                A2AT_LLM_API_KEY=test-key
+                A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
+                """
+                        .formatted(provider));
+        return envFile;
     }
 
     private static Path createTempEnvFile(String provider) throws IOException {

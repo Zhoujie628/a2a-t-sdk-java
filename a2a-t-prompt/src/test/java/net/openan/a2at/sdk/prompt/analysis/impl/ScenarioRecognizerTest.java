@@ -1,7 +1,9 @@
 package net.openan.a2at.sdk.prompt.analysis.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -81,6 +83,75 @@ class ScenarioRecognizerTest {
     void scenarioRecognizerImplementsScenarioRecognitionFunction() {
         ScenarioRecognizer recognizer = new ScenarioRecognizer(new RecordingClient("ignored"));
         assertInstanceOf(ScenarioRecognitionFunction.class, recognizer);
+    }
+
+    @Test
+    void recognizeReturnsUnmatchedWithErrorMessageWhenMatchedIsFalse() {
+        LLMClient llmClient = new RecordingClient(
+                "{\"matched\":false,\"scenario_code\":null,\"error_message\":\"No scenario matched.\"}");
+
+        ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient);
+        ScenarioRecognitionResult result = recognizer.recognize(
+                "Unrelated input.",
+                List.of(new ScenarioDefinition(
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                "Identify the best matching scenario.",
+                "Choose from the provided scenario list.");
+
+        assertFalse(result.matched());
+        assertNotNull(result.errorMessage());
+        assertEquals("No scenario matched.", result.errorMessage());
+    }
+
+    @Test
+    void recognizeTreatsNonBooleanMatchedAsUnmatched() {
+        LLMClient llmClient = new RecordingClient(
+                "{\"matched\":\"yes\",\"scenario_code\":null,\"error_message\":\"Ambiguous\"}");
+
+        ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient);
+        ScenarioRecognitionResult result = recognizer.recognize(
+                "Ambiguous input.",
+                List.of(new ScenarioDefinition(
+                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                "Identify the best matching scenario.",
+                "Choose from the provided scenario list.");
+
+        assertFalse(result.matched());
+        assertEquals("Ambiguous", result.errorMessage());
+    }
+
+    @Test
+    void recognizeRejectsUnmatchedPayloadWithScenarioCode() {
+        LLMClient llmClient = new RecordingClient(
+                "{\"matched\":false,\"scenario_code\":\"energy-saving\",\"error_message\":null}");
+
+        ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient);
+
+        assertThrows(
+                ScenarioRecognitionException.class,
+                () -> recognizer.recognize(
+                        "Analyze site A energy usage.",
+                        List.of(new ScenarioDefinition(
+                                "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "Identify the best matching scenario.",
+                        "Choose from the provided scenario list."));
+    }
+
+    @Test
+    void recognizeRejectsNonStringScenarioCodeField() {
+        LLMClient llmClient = new RecordingClient(
+                "{\"matched\":true,\"scenario_code\":42,\"error_message\":null}");
+
+        ScenarioRecognizer recognizer = new ScenarioRecognizer(llmClient);
+
+        assertThrows(
+                ScenarioRecognitionException.class,
+                () -> recognizer.recognize(
+                        "Analyze site A energy usage.",
+                        List.of(new ScenarioDefinition(
+                                "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "Identify the best matching scenario.",
+                        "Choose from the provided scenario list."));
     }
 
     private static final class RecordingClient implements LLMClient {
