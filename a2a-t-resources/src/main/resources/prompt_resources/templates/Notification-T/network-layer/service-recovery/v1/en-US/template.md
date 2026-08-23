@@ -15,8 +15,9 @@ Requirement: Please provide the following information for the content to be repo
 2. Allowed values (optional)
 3. Example (optional)
 
-The following is a sample of the notification data format:
+The following is an example of notification data format:
 ### Service Recovery Event
+Requirement:
 1. Service recovery plan execution status. Allowed values: not started, ended. Example: ended (required)
 2. Complaint diagnosis task sequence number. Example: 9de168c0-6179-4778-8b72-4279582c0a3f (required)
 3. OSS-side event sequence number. Example: event-id-202606250128 (required)
