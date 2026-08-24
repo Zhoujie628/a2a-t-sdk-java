@@ -1,6 +1,8 @@
 package net.openan.a2at.sdk.core.validation;
 
 import java.util.List;
+import java.util.Map;
+
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 
@@ -17,6 +19,8 @@ public class ContentValidationException extends A2ATError {
 
     private final List<SlotValidationError> errors;
 
+    private final Map<String, Object> params;
+
     /**
      * Creates a content validation failure with an error code and one message.
      *
@@ -24,7 +28,7 @@ public class ContentValidationException extends A2ATError {
      * @param message failure message
      */
     public ContentValidationException(String code, String message) {
-        this(code, message, List.of());
+        this(code, message, List.of(), Map.of(), null);
     }
 
     /**
@@ -35,7 +39,7 @@ public class ContentValidationException extends A2ATError {
      * @param errors structured per-slot validation error details
      */
     public ContentValidationException(String code, String message, List<SlotValidationError> errors) {
-        this(code, message, errors, null);
+        this(code, message, errors, Map.of(), null);
     }
 
     /**
@@ -46,7 +50,11 @@ public class ContentValidationException extends A2ATError {
      * @param cause root cause
      */
     public ContentValidationException(String code, String message, Throwable cause) {
-        this(code, message, List.of(), cause);
+        this(code, message, List.of(), Map.of(), cause);
+    }
+
+    public ContentValidationException(String code, String message, List<SlotValidationError> errors, Throwable cause) {
+        this(code, message, errors, Map.of(), cause);
     }
 
     /**
@@ -58,9 +66,10 @@ public class ContentValidationException extends A2ATError {
      * @param cause root cause
      */
     public ContentValidationException(
-            String code, String message, List<SlotValidationError> errors, Throwable cause) {
+            String code, String message, List<SlotValidationError> errors, Map<String, Object> params, Throwable cause) {
         super(code, message, cause);
         this.errors = errors == null ? List.of() : List.copyOf(errors);
+        this.params = params == null ? Map.of() : Map.copyOf(params);
     }
 
     /**
@@ -70,5 +79,9 @@ public class ContentValidationException extends A2ATError {
      */
     public List<SlotValidationError> errors() {
         return errors;
+    }
+
+    public Map<String, Object> params() {
+        return params;
     }
 }
