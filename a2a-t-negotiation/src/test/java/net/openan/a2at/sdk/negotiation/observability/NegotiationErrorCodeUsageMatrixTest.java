@@ -343,7 +343,7 @@ class NegotiationErrorCodeUsageMatrixTest {
     }
 
     private static NegotiationSemanticValidator throwingSemanticValidator() {
-        return (prompt, callerSchema, reference) -> {
+        return (prompt, callerSchema, reference, templateContent) -> {
             throw new ResourceNotFoundException(
                     "Semantic validation prompt does not exist.", "prompt_resources/prompts");
         };

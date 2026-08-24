@@ -423,7 +423,7 @@ class ValidateAndFillingDataPipelineTest {
         NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
                 .language("zh-CN")
                 .llmClient(llm)
-                .semanticValidator((prompt, callerSchema, reference) -> {
+                .semanticValidator((prompt, callerSchema, reference, templateContent) -> {
                     throw new ResourceNotFoundException(
                             "Negotiation semantic validation prompt resource does not exist.",
                             "prompt_resources/prompts/negotiation_semantic_validation/zh-CN/system.md");

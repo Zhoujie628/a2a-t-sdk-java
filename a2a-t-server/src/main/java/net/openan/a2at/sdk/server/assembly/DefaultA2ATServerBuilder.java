@@ -42,6 +42,8 @@ public final class DefaultA2ATServerBuilder {
 
     private LLMClient llmClient;
 
+    private PromptResourceAccess promptResourceAccess;
+
     private DefaultServerPromptComplianceOrchestrator promptComplianceOrchestrator;
 
     /**
@@ -88,7 +90,7 @@ public final class DefaultA2ATServerBuilder {
             return promptComplianceOrchestrator;
         }
 
-        PromptResourceAccess resources = PromptResourceAccess.create(config.prompt());
+        PromptResourceAccess resources = promptResourceAccess();
         String language = config.prompt().language();
         List<ScenarioDefinition> scenarios = resources.loadScenarios(language);
         PromptTemplateTextLoader templateLoader = resources.templateLoader();
@@ -203,7 +205,11 @@ public final class DefaultA2ATServerBuilder {
         requireSupportedConfig();
         require(envPath, "Unified SDK env path must be configured.");
         return new DefaultContentValidator(
-                extensionName, config.prompt().language(), config.llm().maxAttempts(), llmClient());
+                extensionName,
+                config.prompt().language(),
+                config.llm().maxAttempts(),
+                llmClient(),
+                promptResourceAccess().templateLoader());
     }
 
     private static void require(Object value, String message) {
@@ -234,5 +240,12 @@ public final class DefaultA2ATServerBuilder {
             llmClient = LLMClientFactory.create(config.llm().provider(), LLMClientConfig.from(config.llm()));
         }
         return llmClient;
+    }
+
+    private synchronized PromptResourceAccess promptResourceAccess() {
+        if (promptResourceAccess == null) {
+            promptResourceAccess = PromptResourceAccess.create(config.prompt());
+        }
+        return promptResourceAccess;
     }
 }

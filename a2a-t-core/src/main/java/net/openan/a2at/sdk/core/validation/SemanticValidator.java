@@ -22,10 +22,11 @@ public interface SemanticValidator<T> {
      * @param prompt content prompt text
      * @param schema caller-provided parameter JSON schema embedded into the structured-call output contract
      * @param reference template addressing value the content is validated against
+     * @param templateContent loaded template text used as a reference for structure/completeness checks
      * @return semantic validation outcome carrying the verdict, the semantic errors and the extracted parameters
      * @throws net.openan.a2at.sdk.core.exception.ResourceNotFoundException if the semantic validation prompt resources
      *     are missing
      */
     @NonNull ValidationResult validate(
-            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull T reference);
+            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull T reference, @NonNull String templateContent);
 }

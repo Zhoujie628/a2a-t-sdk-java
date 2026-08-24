@@ -203,7 +203,7 @@ public final class NegotiationGenerationOrchestratorBuilder {
      */
     private NegotiationSemanticValidator defaultSemanticValidator() {
         if (llmClient == null) {
-            return (prompt, callerSchema, reference) -> {
+            return (prompt, callerSchema, reference, templateContent) -> {
                 throw new NegotiationValidationException(
                         "Semantic validation requires an LLM client but none is configured.");
             };

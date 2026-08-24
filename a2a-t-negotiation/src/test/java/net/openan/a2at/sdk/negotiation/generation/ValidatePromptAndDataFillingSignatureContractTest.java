@@ -15,13 +15,14 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Pins the compile-time contract of the validate-and-filling API: the negotiation context, the parameter schema and
- * the template URI are mandatory parts of the full signature of each of the three methods, so a caller that omits
+ * the template URI are mandatory parts of the full signature of each of the four methods, so a caller that omits
  * any argument is rejected at compile time and no reduced-arity overload can silently appear later.
  */
 class ValidatePromptAndDataFillingSignatureContractTest {
 
     private static final List<String> VALIDATE_PROMPT_FILLING_METHODS =
-            List.of("validateProposePromptAndDataFilling", "validateAcceptPromptAndDataFilling", "validateRejectPromptAndDataFilling");
+            List.of("validateProposePromptAndDataFilling", "validateAcceptPromptAndDataFilling",
+                    "validateRejectPromptAndDataFilling", "validateAbortPromptAndDataFilling");
 
     @Test
     void everyValidatePromptAndDataFillingMethodHasExactlyTheFullFourArgumentSignature() {
@@ -50,15 +51,15 @@ class ValidatePromptAndDataFillingSignatureContractTest {
     }
 
     @Test
-    void semanticValidatorSeamCarriesThePromptSchemaAndReferenceTogether() throws NoSuchMethodException {
+    void semanticValidatorSeamCarriesThePromptSchemaReferenceAndTemplateContentTogether() throws NoSuchMethodException {
         Method validate = NegotiationSemanticValidator.class.getMethod(
-                "validate", String.class, Map.class, NegotiationReference.class);
+                "validate", String.class, Map.class, NegotiationReference.class, String.class);
 
         assertTrue(Modifier.isPublic(validate.getModifiers()));
         assertEquals(
-                3,
+                4,
                 validate.getParameterCount(),
-                "the semantic validator seam must require the prompt, the caller schema and the template reference"
-                        + " together");
+                "the semantic validator seam must require the prompt, the caller schema, the template reference and"
+                        + " the template content together");
     }
 }

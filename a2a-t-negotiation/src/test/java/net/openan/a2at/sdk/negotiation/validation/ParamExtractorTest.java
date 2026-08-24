@@ -31,6 +31,8 @@ class ParamExtractorTest {
 
     private static final int MAX_ATTEMPTS = 1;
 
+    private static final String TEMPLATE_CONTENT = "dummy template content";
+
     private final StubComplianceChecker complianceChecker = new StubComplianceChecker();
 
     private final StubSemanticValidator semanticValidator = new StubSemanticValidator();
@@ -46,7 +48,7 @@ class ParamExtractorTest {
                 List.of(),
                 Map.of("id", "llm-value", "confirmed_rate_mbps", 2, "nested", Map.of("a", 1)));
 
-        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE);
+        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE, TEMPLATE_CONTENT);
 
         assertEquals(SESSION_ID, filled.data().get("id"));
         assertEquals(2, filled.data().get("round"));
@@ -62,7 +64,7 @@ class ParamExtractorTest {
         complianceChecker.result = new NegotiationRuleCheckResult(true, List.of());
         semanticValidator.result = new SemanticValidationResult(true, "information", List.of(), Map.of());
 
-        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, new NegotiationContext(SESSION_ID, 3, 7), Map.of(), REFERENCE);
+        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, new NegotiationContext(SESSION_ID, 3, 7), Map.of(), REFERENCE, TEMPLATE_CONTENT);
 
         assertTrue(filled.data().get("round") instanceof Integer);
         assertTrue(filled.data().get("maxRounds") instanceof Integer);
@@ -77,7 +79,7 @@ class ParamExtractorTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE));
+                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE, TEMPLATE_CONTENT));
 
         assertEquals("negotiation_rule_violation", exception.getCode());
         assertEquals(1, exception.getErrors().size());
@@ -92,7 +94,7 @@ class ParamExtractorTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE));
+                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE, TEMPLATE_CONTENT));
 
         assertEquals("negotiation_rule_violation", exception.getCode());
         assertEquals("id", exception.getErrors().get(0).slotName());
@@ -105,7 +107,7 @@ class ParamExtractorTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> extractor.extract("## 任务目标\n诊断\n", null, Map.of(), REFERENCE));
+                () -> extractor.extract("## 任务目标\n诊断\n", null, Map.of(), REFERENCE, TEMPLATE_CONTENT));
 
         assertEquals("negotiation_invalid_input", exception.getCode());
         assertEquals(
@@ -126,7 +128,7 @@ class ParamExtractorTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE));
+                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE, TEMPLATE_CONTENT));
 
         assertEquals("negotiation_semantic_rejected", exception.getCode());
         assertEquals(semanticErrors, exception.getErrors());
@@ -138,7 +140,7 @@ class ParamExtractorTest {
         semanticValidator.result =
                 new SemanticValidationResult(true, "information", List.of(), Map.of("confirmed_rate_mbps", 2));
 
-        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE);
+        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE, TEMPLATE_CONTENT);
 
         assertEquals(1, semanticValidator.invocations);
         assertEquals(2, filled.data().get("confirmed_rate_mbps"));
@@ -151,7 +153,7 @@ class ParamExtractorTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE));
+                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE, TEMPLATE_CONTENT));
 
         assertEquals("negotiation_llm_infrastructure_error", exception.getCode());
         assertEquals(1, exception.getErrors().size());
@@ -167,7 +169,7 @@ class ParamExtractorTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE));
+                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE, TEMPLATE_CONTENT));
 
         assertEquals("template_not_found", exception.getCode());
         assertEquals(List.of(), exception.getErrors());
@@ -196,7 +198,7 @@ class ParamExtractorTest {
 
         @Override
         public SemanticValidationResult validateNegotiation(
-                String prompt, Map<String, Object> callerSchema, NegotiationReference reference) {
+                String prompt, Map<String, Object> callerSchema, NegotiationReference reference, String templateContent) {
             invocations++;
             if (failure != null) {
                 throw failure;

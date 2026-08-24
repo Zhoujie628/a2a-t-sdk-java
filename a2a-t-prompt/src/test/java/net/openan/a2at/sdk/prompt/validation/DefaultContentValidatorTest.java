@@ -16,15 +16,18 @@ import net.openan.a2at.sdk.core.validation.ContentValidationException;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
+import net.openan.a2at.sdk.prompt.resources.loader.PromptTemplateTextLoader;
 import org.junit.jupiter.api.Test;
 
 class DefaultContentValidatorTest {
 
     private static final TemplateUri TASK_URI = TemplateUri.of("Task-T", "network-layer", "energy-saving");
 
+    private static final PromptTemplateTextLoader STUB_LOADER = (scenarioCode, language) -> "dummy template content";
+
     @Test
     void validatesSuccessfullyOnFirstCall() {
-        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "zh-CN", 3, new StubClient());
+        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "zh-CN", 3, new StubClient(), STUB_LOADER);
 
         FilledParamData result =
                 assertDoesNotThrow(() -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
@@ -35,7 +38,7 @@ class DefaultContentValidatorTest {
 
     @Test
     void rejectsMismatchedExtensionName() {
-        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "zh-CN", 3, new StubClient());
+        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "zh-CN", 3, new StubClient(), STUB_LOADER);
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -47,7 +50,7 @@ class DefaultContentValidatorTest {
 
     @Test
     void missingPromptResourceFailsWithValidationPromptResourceNotFound() {
-        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "fr-FR", 3, new StubClient());
+        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "fr-FR", 3, new StubClient(), STUB_LOADER);
 
         ContentValidationException exception = assertThrows(
                 ContentValidationException.class,
@@ -60,7 +63,7 @@ class DefaultContentValidatorTest {
 
     @Test
     void missingPromptResourceKeepsPipelineNullSoNextCallRetries() {
-        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "fr-FR", 3, new StubClient());
+        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "fr-FR", 3, new StubClient(), STUB_LOADER);
 
         // first call fails on the missing resource; the pipeline must stay uninitialised so the next
         // call re-attempts the construction (transient failures can heal)
@@ -76,7 +79,7 @@ class DefaultContentValidatorTest {
 
     @Test
     void succeedsOnSecondCallAfterTransientResourceFailureHeals() {
-        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "fr-FR", 3, new StubClient());
+        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "fr-FR", 3, new StubClient(), STUB_LOADER);
 
         assertThrows(
                 ContentValidationException.class,
@@ -84,7 +87,7 @@ class DefaultContentValidatorTest {
 
         // switching the language is impossible on this class; the healing path is instead proven by a
         // fresh validator with a supported language constructed after the failing one
-        DefaultContentValidator healed = new DefaultContentValidator("Task-T", "zh-CN", 3, new StubClient());
+        DefaultContentValidator healed = new DefaultContentValidator("Task-T", "zh-CN", 3, new StubClient(), STUB_LOADER);
         FilledParamData result =
                 assertDoesNotThrow(() -> healed.validate("task prompt", Map.of("type", "object"), TASK_URI));
 
@@ -93,13 +96,45 @@ class DefaultContentValidatorTest {
 
     @Test
     void retryableFailureAfterResourceLoadStillMapsLlmInfrastructureError() {
-        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "zh-CN", 1, new FailingClient());
+        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "zh-CN", 1, new FailingClient(), STUB_LOADER);
 
         ContentValidationException exception = assertThrows(
                 ContentValidationException.class,
                 () -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
 
         assertEquals("validation_llm_infrastructure_error", exception.getCode());
+    }
+
+    @Test
+    void missingTemplateFailsWithTemplateNotFound() {
+        PromptTemplateTextLoader failingLoader = (scenarioCode, language) -> {
+            throw new ResourceNotFoundException("Template does not exist.", scenarioCode);
+        };
+        DefaultContentValidator validator = new DefaultContentValidator("Task-T", "zh-CN", 3, new StubClient(), failingLoader);
+
+        ContentValidationException exception = assertThrows(
+                ContentValidationException.class,
+                () -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
+
+        assertEquals("template_not_found", exception.getCode());
+        assertInstanceOf(ResourceNotFoundException.class, exception.getCause());
+    }
+
+    @Test
+    void missingTemplateLoadsBeforePromptResourcesSoTemplateErrorTakesPrecedence() {
+        // template load fails on an otherwise-valid, resource-complete configuration: the template gate must
+        // short-circuit before the pipeline (and its prompt resources) are ever initialised
+        PromptTemplateTextLoader failingLoader = (scenarioCode, language) -> {
+            throw new ResourceNotFoundException("Template does not exist.", scenarioCode);
+        };
+        DefaultContentValidator validator =
+                new DefaultContentValidator("Task-T", "fr-FR", 3, new StubClient(), failingLoader);
+
+        ContentValidationException exception = assertThrows(
+                ContentValidationException.class,
+                () -> validator.validate("task prompt", Map.of("type", "object"), TASK_URI));
+
+        assertEquals("template_not_found", exception.getCode());
     }
 
     private static final class StubClient implements LLMClient {

@@ -41,6 +41,20 @@ public class A2ATParamExtractionError extends A2ATError {
     }
 
     /**
+     * Creates a parameter-extraction failure with one specific error code, slot details and a root cause.
+     *
+     * @param code machine-readable error code for the failure
+     * @param message failure message
+     * @param errors structured per-slot validation error details
+     * @param cause root cause of the failure
+     */
+    public A2ATParamExtractionError(
+            @NonNull String code, String message, @NonNull List<SlotValidationError> errors, Throwable cause) {
+        super(code, message, cause);
+        this.errors = List.copyOf(errors);
+    }
+
+    /**
      * Returns the structured per-slot validation error details.
      *
      * @return immutable list of slot validation errors, never null

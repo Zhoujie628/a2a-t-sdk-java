@@ -34,6 +34,8 @@ class DefaultSemanticValidatorTest {
             }
             """;
 
+    private static final String TEMPLATE_CONTENT = "dummy template content";
+
     @Test
     void validatesEnUSPromptAndExtractsParams() {
         RecordingClient llmClient = new RecordingClient(VALID_RESPONSE);
@@ -41,7 +43,7 @@ class DefaultSemanticValidatorTest {
         DefaultSemanticValidator validator = new DefaultSemanticValidator(llmClient, "en-US");
 
         ValidationResult result = validator.validate(
-                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"));
+                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"), TEMPLATE_CONTENT);
 
         assertTrue(result.verdict());
         assertEquals(Map.of("site", "Site A"), result.params());
@@ -73,7 +75,7 @@ class DefaultSemanticValidatorTest {
         ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 2);
 
         FilledParamData result = pipeline.validate(
-                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"));
+                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"), TEMPLATE_CONTENT);
 
         assertEquals(Map.of("site", "Site A"), result.data());
         assertEquals(2, flakyClient.invocations());
@@ -100,7 +102,7 @@ class DefaultSemanticValidatorTest {
                 () -> pipeline.validate(
                         "Check Site A power usage.",
                         Map.of("type", "object"),
-                        TemplateUri.of("Task-T", "energy-saving")));
+                        TemplateUri.of("Task-T", "energy-saving"), TEMPLATE_CONTENT));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertInstanceOf(LLMRuntimeError.class, exception.getCause().getCause());
@@ -119,7 +121,7 @@ class DefaultSemanticValidatorTest {
         ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 2);
 
         FilledParamData result =
-                pipeline.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
+                pipeline.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"), TEMPLATE_CONTENT);
 
         assertEquals(2, result.data().size());
         assertEquals("端口A", result.data().get("任务对象"));
@@ -133,7 +135,7 @@ class DefaultSemanticValidatorTest {
         DefaultSemanticValidator validator = new DefaultSemanticValidator(new StubClient(llmJson), "zh-CN");
 
         ValidationResult result =
-                validator.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
+                validator.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"), TEMPLATE_CONTENT);
 
         assertTrue(result.verdict());
         // a null param is the validator's signal that a schema slot is missing from the content; the key must stay
@@ -152,7 +154,7 @@ class DefaultSemanticValidatorTest {
         ContentValidationException exception = assertThrows(
                 ContentValidationException.class,
                 () -> validator.validate(
-                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"), TEMPLATE_CONTENT));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertTrue(exception.getMessage().contains("semantic_verdict"));
@@ -166,7 +168,7 @@ class DefaultSemanticValidatorTest {
         ContentValidationException exception = assertThrows(
                 ContentValidationException.class,
                 () -> validator.validate(
-                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"), TEMPLATE_CONTENT));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertTrue(exception.getMessage().contains("semantic_verdict"));
@@ -180,7 +182,7 @@ class DefaultSemanticValidatorTest {
         ContentValidationException exception = assertThrows(
                 ContentValidationException.class,
                 () -> validator.validate(
-                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"), TEMPLATE_CONTENT));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertTrue(exception.getMessage().contains("errors"));
@@ -194,7 +196,7 @@ class DefaultSemanticValidatorTest {
         ContentValidationException exception = assertThrows(
                 ContentValidationException.class,
                 () -> validator.validate(
-                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"), TEMPLATE_CONTENT));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertTrue(exception.getMessage().contains("errors"));
@@ -208,7 +210,7 @@ class DefaultSemanticValidatorTest {
         ContentValidationException exception = assertThrows(
                 ContentValidationException.class,
                 () -> validator.validate(
-                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"), TEMPLATE_CONTENT));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertTrue(exception.getMessage().contains("params"));
@@ -221,7 +223,7 @@ class DefaultSemanticValidatorTest {
                 "en-US");
 
         ValidationResult result =
-                validator.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
+                validator.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"), TEMPLATE_CONTENT);
 
         assertTrue(result.verdict());
     }
@@ -242,7 +244,7 @@ class DefaultSemanticValidatorTest {
         ContentValidationException exception = assertThrows(
                 ContentValidationException.class,
                 () -> validator.validate(
-                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"), TEMPLATE_CONTENT));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertTrue(exception.getMessage().contains("params keys"));
@@ -257,7 +259,7 @@ class DefaultSemanticValidatorTest {
         ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 2);
 
         FilledParamData result = pipeline.validate(
-                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"));
+                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"), TEMPLATE_CONTENT);
 
         // first attempt violates the output contract (string verdict) → retryable infra error → second attempt
         // returns a compliant response and the pipeline succeeds
@@ -278,10 +280,44 @@ class DefaultSemanticValidatorTest {
                 () -> pipeline.validate(
                         "Check Site A power usage.",
                         Map.of("type", "object"),
-                        TemplateUri.of("Task-T", "energy-saving")));
+                        TemplateUri.of("Task-T", "energy-saving"), TEMPLATE_CONTENT));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertEquals(3, client.invocations());
+    }
+
+    @Test
+    void templateContentWithPlaceholderLiteralIsNotSecondOrderReplaced() {
+        String templateContentWithPlaceholder = "Template body with [extension_name] and [input] literals.";
+        RecordingClient recordingClient = new RecordingClient(VALID_RESPONSE);
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(recordingClient, "en-US");
+
+        validator.validate(
+                "Check Site A power usage.",
+                Map.of("type", "object"),
+                TemplateUri.of("Task-T", "network-layer"),
+                templateContentWithPlaceholder);
+
+        String userContent = recordingClient.userContent();
+        assertTrue(userContent.contains("Template body with [extension_name] and [input] literals."));
+        assertTrue(userContent.contains("Task-T"));
+        assertTrue(userContent.contains("Check Site A power usage"));
+    }
+
+    @Test
+    void templateContentPlaceholderIsFilled() {
+        RecordingClient recordingClient = new RecordingClient(VALID_RESPONSE);
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(recordingClient, "en-US");
+
+        validator.validate(
+                "Check Site A power usage.",
+                Map.of("type", "object"),
+                TemplateUri.of("Task-T", "network-layer"),
+                "## Energy Saving Template\n\nCheck the energy saving region.");
+
+        String userContent = recordingClient.userContent();
+        assertTrue(userContent.contains("## Energy Saving Template"));
+        assertTrue(userContent.contains("energy saving region"));
     }
 
     private static final class RecordingClient implements LLMClient {
@@ -307,6 +343,15 @@ class DefaultSemanticValidatorTest {
         String lastSystemContent() {
             for (Map<String, String> message : lastMessages) {
                 if ("system".equals(message.get("role"))) {
+                    return message.get("content");
+                }
+            }
+            return "";
+        }
+
+        String userContent() {
+            for (Map<String, String> message : lastMessages) {
+                if ("user".equals(message.get("role"))) {
                     return message.get("content");
                 }
             }
