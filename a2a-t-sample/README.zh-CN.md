@@ -168,6 +168,22 @@ java @a2a-t-sample/target/eval.javaargs.txt --out eval-report-my-model.json /pat
 
 **换用其他模型测试**：只需在 env 文件里改 4 个 LLM 变量（`A2AT_LLM_PROVIDER` / `A2AT_LLM_MODEL` / `A2AT_LLM_API_KEY` / `A2AT_LLM_BASE_URL`），无需改任何代码或用例。报告的 `llm` 字段会记录当次使用的 provider / model / base_url，`negotiation_channel` 字段记录当次通道（`per-case` 或强制值），便于横向对比多个模型的报告。
 
+**env 配置**：复制以下内容为 `eval.env`，填入你的模型信息即可（完整变量说明见根目录 `env.example`）：
+
+```bash
+A2AT_LANGUAGE=zh-CN
+A2AT_PROMPT_SOURCE_TYPE=classpath
+A2AT_LLM_PROVIDER=openai                     # OpenAI 兼容端点均为 openai
+A2AT_LLM_MODEL=glm-5.2                       # 换成你的模型名
+A2AT_LLM_API_KEY=sk-xxxxxxxx                 # 你的 API key
+A2AT_LLM_BASE_URL=https://your-endpoint/v1   # OpenAI 兼容 base URL
+A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
+A2AT_LLM_TIMEOUT_SECONDS=180                 # 推理型模型建议调大（默认 60）
+A2AT_LLM_MAX_TOKENS=8192                     # 推理型模型建议调大（默认 2000）
+```
+
+`*.env` 已被 .gitignore 忽略，携带真实 key 的 env 文件不会被提交。
+
 用例集：`sample/negotiation/eval/eval-suite.json`（15 条用例：fromData/fromText × 完整输入/任务对象缺失/投诉分类缺失/OSS流水号缺失/可选槽缺失/双槽缺失/负例补槽约束违反，含正反两类断言）。报告中每个 case 输出逐步证据（`api_calls`、生成 prompt 原文、校验判定与抽取参数、耗时），`metrics` 汇总通过率。
 
 ## 授权策略（Authorization-T）演示 Demo
