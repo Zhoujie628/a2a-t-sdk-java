@@ -2,33 +2,26 @@ package net.openan.a2at.sdk.client.prompt.assembly;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
-import net.openan.a2at.sdk.client.prompt.extractor.ClientSlotValueExtractor;
-import net.openan.a2at.sdk.client.prompt.extractor.DefaultStructuredClientSlotValueExtractor;
-import net.openan.a2at.sdk.client.prompt.extractor.DefaultTemplateDrivenSlotValueExtractor;
-import net.openan.a2at.sdk.client.prompt.loader.ClientSlotSchemaLoader;
-import net.openan.a2at.sdk.client.prompt.loader.ClientTemplateLoader;
-import net.openan.a2at.sdk.client.prompt.loader.DefaultClasspathClientSlotSchemaLoader;
-import net.openan.a2at.sdk.client.prompt.loader.DefaultClasspathClientTemplateLoader;
-import net.openan.a2at.sdk.client.prompt.loader.LocalFileClientSlotSchemaLoader;
-import net.openan.a2at.sdk.client.prompt.loader.LocalFileClientTemplateLoader;
 import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrchestrator;
-import net.openan.a2at.sdk.client.prompt.recognition.ClientScenarioRecognizer;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMClientConfig;
 import net.openan.a2at.sdk.llm.LLMClientFactory;
-import net.openan.a2at.sdk.llm.LLMConfigLoader;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.runtime.NegotiationHandler;
 import net.openan.a2at.sdk.negotiation.runtime.RoleBoundNegotiationOrchestrator;
 import net.openan.a2at.sdk.negotiation.store.impl.InMemoryNegotiationStore;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationRole;
-import net.openan.a2at.sdk.prompt.resources.catalog.TemplateQueryService;
+import net.openan.a2at.sdk.prompt.analysis.impl.DefaultStructuredPromptSlotValueExtractor;
+import net.openan.a2at.sdk.prompt.analysis.impl.PromptSlotValueExtractor;
+import net.openan.a2at.sdk.prompt.analysis.impl.LlmScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.model.ScenarioRecognitionResult;
+import net.openan.a2at.sdk.prompt.resources.catalog.TemplateQueryService;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
+import net.openan.a2at.sdk.prompt.resources.loader.PromptSlotSchemaLoader;
+import net.openan.a2at.sdk.prompt.resources.loader.PromptTemplateTextLoader;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import net.openan.a2at.sdk.prompt.taskrendering.TaskPromptRenderer;
 
@@ -46,6 +39,8 @@ public final class DefaultA2ATClientBuilder {
     private A2ATConfig config;
 
     private Path envPath;
+
+    private LLMClient llmClient;
 
     /**
      * Creates one new builder instance.
@@ -92,28 +87,24 @@ public final class DefaultA2ATClientBuilder {
         List<ScenarioDefinition> scenarios =
                 resources.loadScenarios(config.prompt().language());
 
-        ClientSlotSchemaLoader slotSchemaLoader =
-                newClientSlotSchemaLoader(resources, config.prompt().sourceType());
-        ClientTemplateLoader templateLoader =
-                newClientTemplateLoader(resources, config.prompt().sourceType());
+        PromptSlotSchemaLoader slotSchemaLoader = resources.slotSchemaLoader();
+        PromptTemplateTextLoader templateLoader = resources.templateLoader();
         String language = config.prompt().language();
 
-        LLMClient llmClient = createLlmClient();
+        LLMClient client = llmClient();
 
         String scenarioSystemPrompt = resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "system.md");
         String scenarioUserPrompt = resources.loadPrompt(SCENARIO_RECOGNITION_PROMPT, language, "user.md");
         String slotSystemPrompt = resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "system.md");
         String slotUserPrompt = resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "user.md");
 
-        ClientScenarioRecognizer scenarioRecognizer =
-                new SingleScenarioAwareRecognizer(scenarios, new ScenarioRecognizer(llmClient)::recognize);
-        ClientSlotValueExtractor slotValueExtractor = new StructuredInputAwareSlotValueExtractor(
-                new DefaultTemplateDrivenSlotValueExtractor(slotSchemaLoader),
-                new DefaultStructuredClientSlotValueExtractor(
-                        llmClient, slotSchemaLoader, slotSystemPrompt, slotUserPrompt));
+        ScenarioRecognizer scenarioRecognizer =
+                new SingleScenarioAwareRecognizer(scenarios, new LlmScenarioRecognizer(client)::recognize);
+        PromptSlotValueExtractor slotValueExtractor = new DefaultStructuredPromptSlotValueExtractor(
+                client, slotSchemaLoader, slotSystemPrompt, slotUserPrompt);
 
         return ClientPromptGenerationOrchestratorBuilder.builder()
-                .llmClient(llmClient)
+                .llmClient(client)
                 .scenarios(scenarios)
                 .language(language)
                 .scenarioSystemPrompt(scenarioSystemPrompt)
@@ -156,21 +147,22 @@ public final class DefaultA2ATClientBuilder {
         require(config, "Unified SDK config must be configured.");
         requireSupportedConfig();
         require(envPath, "Unified SDK env path must be configured.");
-        return NegotiationContentService.buildOrchestrator(config, createLlmClient());
+        return NegotiationContentService.buildOrchestrator(config, llmClient());
     }
 
     /**
      * Builds the generic template query service from the configured unified SDK config.
      *
-     * <p>The service answers the extension-agnostic template queries: the message language and the local template
-     * root come from the prompt runtime config, exactly like the negotiation generation orchestrator wiring.
+     * <p>The service answers the extension-agnostic template queries: the message language and the local template root
+     * come from the prompt runtime config, exactly like the negotiation generation orchestrator wiring.
      *
      * @return assembled template query service
      */
     public TemplateQueryService buildTemplateQueryService() {
         require(config, "Unified SDK config must be configured.");
         requireSupportedConfig();
-        return new TemplateQueryService(config.prompt().language(), config.prompt().localRootDir());
+        return new TemplateQueryService(
+                config.prompt().language(), config.prompt().localRootDir());
     }
 
     private void requireSupportedConfig() {
@@ -190,9 +182,11 @@ public final class DefaultA2ATClientBuilder {
         }
     }
 
-    private LLMClient createLlmClient() {
-        LLMClientConfig loadedConfig = LLMConfigLoader.load(envPath);
-        return LLMClientFactory.create(loadedConfig.provider(), loadedConfig);
+    private synchronized LLMClient llmClient() {
+        if (llmClient == null) {
+            llmClient = LLMClientFactory.create(config.llm().provider(), LLMClientConfig.from(config.llm()));
+        }
+        return llmClient;
     }
 
     private static void require(Object value, String message) {
@@ -201,60 +195,25 @@ public final class DefaultA2ATClientBuilder {
         }
     }
 
-    private static ClientTemplateLoader newClientTemplateLoader(PromptResourceAccess resources, String sourceType) {
-        if (PromptResourceAccess.CLASSPATH_SOURCE_TYPE.equals(sourceType)) {
-            return new DefaultClasspathClientTemplateLoader(resources.classpathResourceLoader());
-        }
-        if (PromptResourceAccess.LOCAL_FILE_SOURCE_TYPE.equals(sourceType)) {
-            return new LocalFileClientTemplateLoader(resources.localRootDir());
-        }
-        throw new UnsupportedOperationException("Unsupported prompt source type: " + sourceType);
-    }
+    private static final class SingleScenarioAwareRecognizer implements ScenarioRecognizer {
 
-    private static ClientSlotSchemaLoader newClientSlotSchemaLoader(PromptResourceAccess resources, String sourceType) {
-        if (PromptResourceAccess.CLASSPATH_SOURCE_TYPE.equals(sourceType)) {
-            return new DefaultClasspathClientSlotSchemaLoader(resources.classpathResourceLoader());
-        }
-        if (PromptResourceAccess.LOCAL_FILE_SOURCE_TYPE.equals(sourceType)) {
-            return new LocalFileClientSlotSchemaLoader(resources.localRootDir());
-        }
-        throw new UnsupportedOperationException("Unsupported prompt source type: " + sourceType);
-    }
+        private final List<ScenarioDefinition> scenarios;
 
-    private record SingleScenarioAwareRecognizer(List<ScenarioDefinition> scenarios, ClientScenarioRecognizer delegate)
-            implements ClientScenarioRecognizer {
+        private final ScenarioRecognizer delegate;
+
+        private SingleScenarioAwareRecognizer(
+                List<ScenarioDefinition> scenarios, ScenarioRecognizer delegate) {
+            this.scenarios = scenarios;
+            this.delegate = delegate;
+        }
 
         @Override
         public ScenarioRecognitionResult recognize(
-                String normalizedInput,
-                List<ScenarioDefinition> ignoredScenarios,
-                String systemPrompt,
-                String userPrompt) {
-            if (scenarios.size() == 1) {
-                return new ScenarioRecognitionResult(true, scenarios.get(0).scenarioCode(), null);
+                String normalizedInput, List<ScenarioDefinition> scenarios, String systemPrompt, String userPrompt) {
+            if (this.scenarios.size() == 1) {
+                return new ScenarioRecognitionResult(true, this.scenarios.get(0).scenarioCode(), null);
             }
-            return delegate.recognize(normalizedInput, scenarios, systemPrompt, userPrompt);
-        }
-    }
-
-    private record StructuredInputAwareSlotValueExtractor(
-            ClientSlotValueExtractor structuredExtractor, ClientSlotValueExtractor llmExtractor)
-            implements ClientSlotValueExtractor {
-
-        @Override
-        public Map<String, String> extractSlots(
-                Object userInput, String scenarioCode, String language, String templateText) {
-            if (userInput instanceof Map<?, ?>) {
-                return structuredExtractor.extractSlots(userInput, scenarioCode, language, templateText);
-            }
-            return llmExtractor.extractSlots(userInput, scenarioCode, language, templateText);
-        }
-
-        @Override
-        public Map<String, String> extractSlotsWithSchema(
-                Object userInput, String scenarioCode, String language, String templateText,
-                Map<String, Object> dataSchema) {
-            return llmExtractor.extractSlotsWithSchema(userInput, scenarioCode, language, templateText, dataSchema);
+            return delegate.recognize(normalizedInput, this.scenarios, systemPrompt, userPrompt);
         }
     }
 }

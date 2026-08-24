@@ -14,7 +14,7 @@ import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
@@ -356,10 +356,6 @@ class NegotiationGeneratorsTest {
         PromptTemplate enTemplate = template(
                 StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE,
                 """
-                ## Negotiation Context
-                {{negotiation_context}} (required)
-                Requirement: context.
-
                 ## Required Information Items
                 {{required_information_items}} (required)
                 Requirement: items.
@@ -521,7 +517,8 @@ class NegotiationGeneratorsTest {
 
         String rendered = new TargetProposeGenerator().generate(context(1), content, loaded, zhVocabulary);
 
-        assertTrue(rendered.startsWith("## 协商上下文\n- id: " + CONTEXT_ID + "\n- round: 1\n- maxRounds: 5"));
+        assertTrue(rendered.startsWith("## 目标协商\n"));
+        assertFalse(rendered.contains("协商上下文"), "the context section must not be rendered");
         assertTrue(rendered.contains("## 目标协商\n对无线节能优化任务的意图理解参见<意图理解陈述>，请澄清和确认。"));
         assertTrue(rendered.contains("## 意图理解陈述"));
         assertFalse(rendered.contains("## 理解对齐与疑问澄清"));

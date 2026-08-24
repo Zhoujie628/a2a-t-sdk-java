@@ -95,8 +95,8 @@ class NegotiationTemplateQueryBoundaryTest {
 
         assertTrue(template.isPresent());
         assertEquals(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE, template.orElseThrow().templateUri());
-        String contextTitle = "zh-CN".equals(language) ? "## 协商上下文" : "## Negotiation Context";
-        assertTrue(template.orElseThrow().content().contains(contextTitle));
+        String firstSection = "zh-CN".equals(language) ? "## 可行性协商" : "## Feasibility Negotiation";
+        assertTrue(template.orElseThrow().content().startsWith(firstSection));
         assertTrue(
                 template.orElseThrow().content().startsWith("## "), "templates start directly with the first section");
         assertEquals("", template.orElseThrow().description(), "templates carry no description comment");

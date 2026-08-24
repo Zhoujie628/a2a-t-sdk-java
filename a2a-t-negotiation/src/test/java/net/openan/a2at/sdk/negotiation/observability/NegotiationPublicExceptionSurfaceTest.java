@@ -16,7 +16,7 @@ import net.openan.a2at.sdk.core.exception.A2ATParamExtractionError;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProcessingException;
@@ -74,7 +74,8 @@ class NegotiationPublicExceptionSurfaceTest {
                 failureMessageOf(() -> orchestrator.generateProposeFromText(
                         "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI)),
                 failureMessageOf(() -> orchestrator.validateProposePromptAndDataFilling(
-                        "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
+                        "## 所需信息项\n1. 区域\n",
+                        new NegotiationContext(UUID, 1, 5),
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI)),
                 failureMessageOf(() -> new NegotiationContext(" ", 1, 5)),
@@ -106,7 +107,8 @@ class NegotiationPublicExceptionSurfaceTest {
         NegotiationParamExtractionException extractionFailure = catchFailure(
                 NegotiationParamExtractionException.class,
                 () -> orchestrator.validateProposePromptAndDataFilling(
-                        "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
+                        "## 所需信息项\n1. 区域\n",
+                        new NegotiationContext(UUID, 1, 5),
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI));
         assertTrue(extractionFailure.getCode().equals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR));

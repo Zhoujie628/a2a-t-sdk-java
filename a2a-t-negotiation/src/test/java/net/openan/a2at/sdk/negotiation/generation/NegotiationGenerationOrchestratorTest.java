@@ -16,7 +16,7 @@ import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -47,16 +47,20 @@ class NegotiationGenerationOrchestratorTest {
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertEquals(NegotiationHandler.NEGOTIATION_T_URI, result.extensionUri());
         assertFalse(result.promptText().isBlank());
-        assertTrue(result.promptText().contains("- id: " + UUID));
-        assertTrue(result.promptText().contains("- round: 1"));
-        assertTrue(result.promptText().contains("- maxRounds: 5"));
-        assertTrue(result.promptText().contains("协商上下文"));
+        assertFalse(result.promptText().contains("协商上下文"), "the context section must not be rendered");
         assertTrue(result.promptText().contains("所需信息项"));
 
-        Map<String, String> metadata = result.buildMetadataContent();
-        assertEquals(2, metadata.size());
+        Map<String, Object> metadata = result.buildMetadataContent();
+        assertEquals(3, metadata.size());
         assertEquals(result.promptText(), metadata.get(NegotiationHandler.NEGOTIATION_T_URI));
         assertEquals(result.templateUri(), metadata.get(MetadataContent.TEMPLATE_URI_METADATA_KEY));
+        assertEquals(new NegotiationContext(UUID, 1, 5), result.negotiationContext());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> nestedContext =
+                (Map<String, Object>) metadata.get(MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY);
+        assertEquals(UUID, nestedContext.get("id"));
+        assertEquals(1, nestedContext.get("round"));
+        assertEquals(5, nestedContext.get("maxRounds"));
     }
 
     @Test
@@ -70,8 +74,8 @@ class NegotiationGenerationOrchestratorTest {
 
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertFalse(result.promptText().isBlank());
-        assertTrue(result.promptText().contains("- id: " + UUID));
-        assertTrue(result.promptText().contains("Negotiation Context"));
+        assertFalse(result.promptText().contains("Negotiation Context"), "the context section must not be rendered");
+        assertEquals(new NegotiationContext(UUID, 2, 5), result.negotiationContext());
         assertTrue(result.promptText().contains("Required Information Items"));
     }
 
@@ -90,7 +94,7 @@ class NegotiationGenerationOrchestratorTest {
         assertEquals(1, llm.calls);
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertFalse(result.promptText().isBlank());
-        assertTrue(result.promptText().contains("- round: 2"));
+        assertEquals(2, result.negotiationContext().round());
         assertTrue(result.promptText().contains("故障发生时间"));
     }
 
@@ -111,6 +115,7 @@ class NegotiationGenerationOrchestratorTest {
 
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                 message.promptText(),
+                new NegotiationContext(UUID, 1, 5),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                 INFORMATION_PROPOSE);
 
@@ -202,7 +207,8 @@ class NegotiationGenerationOrchestratorTest {
         NegotiationParamExtractionException extractionFailure = assertThrows(
                 NegotiationParamExtractionException.class,
                 () -> validationOrchestrator.validateProposePromptAndDataFilling(
-                        "## 协商上下文\n- id: " + UUID + "\n- round: 1\n- maxRounds: 5",
+                        "## 所需信息项\n1. 区域\n",
+                        new NegotiationContext(UUID, 1, 5),
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE));
         assertEquals(A2ATErrorCodes.TEMPLATE_NOT_FOUND, extractionFailure.getCode());
@@ -221,6 +227,7 @@ class NegotiationGenerationOrchestratorTest {
                 NegotiationParamExtractionException.class,
                 () -> orchestrator.validateProposePromptAndDataFilling(
                         "plain text without any negotiation section",
+                        null,
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE));
 

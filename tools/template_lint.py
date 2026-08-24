@@ -14,7 +14,7 @@ HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 SLOT = re.compile(r"{{\s*([^{}\s]+)\s*}}")
 TASK = {"Task Description", "Task Type", "Task Target", "Task Object", "Task Context", "Constraints", "Expected Output", "Operation Type"}
 NOTIFICATION = {"Subscription Description", "Notification Topic", "Subscribe Condition", "Notification Data Format", "Expected Output"}
-AUTHORIZATION = {"Authorization Policy Operation Type", "Authorization Policy Operation Description", "Dynamic Network Operation Authorization Policy List", "Expected Output"}
+AUTHORIZATION = {"Authorization Policy Operation Type", "Authorization Policy Operation Description", "Network Operation Authorization Policy List", "Expected Output"}
 ALIASES = {
     "任务描述": "Task Description", "任务类型": "Task Type", "任务目标": "Task Target", "任务对象": "Task Object",
     "目标对象": "Task Object", "任务上下文": "Task Context", "约束条件": "Constraints", "预期输出": "Expected Output",
@@ -23,7 +23,7 @@ ALIASES = {
     "通知数据格式": "Notification Data Format", "上报通知数据格式": "Notification Data Format",
     "授权策略的操作类型": "Authorization Policy Operation Type",
     "授权策略的操作描述": "Authorization Policy Operation Description",
-    "动网操作的授权策略列表": "Dynamic Network Operation Authorization Policy List",
+    "动网操作的授权策略列表": "Network Operation Authorization Policy List",
 }
 
 NEGOTIATION_TYPE_SEGMENTS = ("information-negotiation", "target-negotiation", "feasibility-negotiation")
@@ -31,12 +31,12 @@ NEGOTIATION_PHASE_SEGMENTS = ("propose", "accept-reject")
 NEGOTIATION_LANGUAGES = ("zh-CN", "en-US")
 NEGOTIATION_STATIC_SECTIONS = {"info_static"}
 NEGOTIATION_PROFILES = {
-    ("information-negotiation", "propose"): ("context", "info_static", "info_items"),
-    ("information-negotiation", "accept-reject"): ("context", "info_conclusion", "info_result_content"),
-    ("target-negotiation", "propose"): ("context", "target", "target_intent", "target_alignment", "target_clarification"),
-    ("target-negotiation", "accept-reject"): ("context", "target_conclusion", "target_result_content"),
-    ("feasibility-negotiation", "propose"): ("context", "feasibility", "feasibility_evaluate", "feasibility_infeasible"),
-    ("feasibility-negotiation", "accept-reject"): ("context", "feasibility_conclusion", "feasibility_confirm"),
+    ("information-negotiation", "propose"): ("info_static", "info_items"),
+    ("information-negotiation", "accept-reject"): ("info_conclusion", "info_result_content"),
+    ("target-negotiation", "propose"): ("target", "target_intent", "target_alignment", "target_clarification"),
+    ("target-negotiation", "accept-reject"): ("target_conclusion", "target_result_content"),
+    ("feasibility-negotiation", "propose"): ("feasibility", "feasibility_evaluate", "feasibility_infeasible"),
+    ("feasibility-negotiation", "accept-reject"): ("feasibility_conclusion", "feasibility_confirm"),
 }
 NEGOTIATION_MARKER = re.compile(
     r"^\{\{(?P<slot>[^{}]+)\}\}(?:(?P<zh>（(?P<zh_kind>必填|选填)）)| \((?P<en_kind>required|optional)\))\s*$"
@@ -320,8 +320,6 @@ def lint_negotiation_file(
             errors.append(error(path, marker_line_no, "negotiation-slot-name", f"Slot name '{{{{{marker.group('slot')}}}}}' must be '{expected_slot}'."))
         if not any(text.rstrip() == requirements_label for _, text in body):
             errors.append(error(path, line_no, "negotiation-requirements", f"Slot section '{title}' must contain a '{requirements_label}' line."))
-        if key == "context" and required is not True:
-            errors.append(error(path, marker_line_no, "negotiation-context", "The negotiation context section must be marked as required."))
         shape.append((key, required, marker.group("slot") == expected_slot, line_no))
     for key in profile:
         if key not in seen:

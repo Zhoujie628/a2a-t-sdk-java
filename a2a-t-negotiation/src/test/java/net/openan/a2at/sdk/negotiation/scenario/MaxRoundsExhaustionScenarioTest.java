@@ -13,7 +13,7 @@ import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
@@ -49,10 +49,10 @@ class MaxRoundsExhaustionScenarioTest {
         assertTrue(terminal.promptText().contains("## 协商结果\nAbort"));
         assertTrue(terminal.promptText().contains("## 协商终止原因"));
         assertTrue(terminal.promptText().contains("达到协商轮次上限，本次协商确认结束。"));
-        assertTrue(terminal.promptText().contains("- round: 5"));
+        assertEquals(5, terminal.negotiationContext().round());
 
         FilledParamData terminalParameters = peer.validateAbortPromptAndDataFilling(
-                terminal.promptText(), parameterSchema(), StandardTemplates.NEGOTIATION_ABORT);
+                terminal.promptText(), lastRound, parameterSchema(), StandardTemplates.NEGOTIATION_ABORT);
         assertEquals(1, peerLlm.callCount());
         assertEquals(SESSION_ID, terminalParameters.data().get("id"));
         assertEquals(5, terminalParameters.data().get("round"));
@@ -64,7 +64,10 @@ class MaxRoundsExhaustionScenarioTest {
         NegotiationParamExtractionException ruleFailure = assertThrows(
                 NegotiationParamExtractionException.class,
                 () -> peer.validateAbortPromptAndDataFilling(
-                        beyondBudgetMessage.promptText(), parameterSchema(), StandardTemplates.NEGOTIATION_ABORT));
+                        beyondBudgetMessage.promptText(),
+                        beyondBudget,
+                        parameterSchema(),
+                        StandardTemplates.NEGOTIATION_ABORT));
         assertEquals(A2ATErrorCodes.NEGOTIATION_RULE_VIOLATION, ruleFailure.getCode());
         assertTrue(
                 ruleFailure.getErrors().stream().anyMatch(error -> "round".equals(error.slotName())),

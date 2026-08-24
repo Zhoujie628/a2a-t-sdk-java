@@ -1,18 +1,16 @@
 package net.openan.a2at.sdk.client.prompt.assembly;
 
 import java.util.List;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-import net.openan.a2at.sdk.client.prompt.extractor.ClientSlotValueExtractor;
-import net.openan.a2at.sdk.client.prompt.extractor.DefaultStructuredClientSlotValueExtractor;
-import net.openan.a2at.sdk.client.prompt.loader.ClientSlotSchemaLoader;
-import net.openan.a2at.sdk.client.prompt.loader.ClientTemplateLoader;
-import net.openan.a2at.sdk.client.prompt.loader.DefaultClasspathClientSlotSchemaLoader;
-import net.openan.a2at.sdk.client.prompt.loader.DefaultClasspathClientTemplateLoader;
 import net.openan.a2at.sdk.client.prompt.orchestration.DefaultClientPromptGenerationOrchestrator;
-import net.openan.a2at.sdk.client.prompt.recognition.ClientScenarioRecognizer;
 import net.openan.a2at.sdk.llm.LLMClient;
+import net.openan.a2at.sdk.prompt.analysis.impl.DefaultStructuredPromptSlotValueExtractor;
+import net.openan.a2at.sdk.prompt.analysis.impl.PromptSlotValueExtractor;
+import net.openan.a2at.sdk.prompt.analysis.impl.LlmScenarioRecognizer;
 import net.openan.a2at.sdk.prompt.analysis.impl.ScenarioRecognizer;
+import net.openan.a2at.sdk.prompt.resources.loader.ClasspathPromptSlotSchemaLoader;
+import net.openan.a2at.sdk.prompt.resources.loader.ClasspathPromptTemplateLoader;
+import net.openan.a2at.sdk.prompt.resources.loader.PromptSlotSchemaLoader;
+import net.openan.a2at.sdk.prompt.resources.loader.PromptTemplateTextLoader;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import net.openan.a2at.sdk.prompt.taskrendering.TaskPromptRenderer;
 import net.openan.a2at.sdk.resources.ClasspathPromptResourceLoader;
@@ -22,8 +20,9 @@ import net.openan.a2at.sdk.resources.ClasspathPromptResourceLoader;
  *
  * @since 2026-06
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ClientPromptGenerationOrchestratorBuilder {
+
+    private ClientPromptGenerationOrchestratorBuilder() {}
 
     private LLMClient llmClient;
 
@@ -39,13 +38,13 @@ public final class ClientPromptGenerationOrchestratorBuilder {
 
     private String slotUserPrompt;
 
-    private ClientScenarioRecognizer scenarioRecognizer;
+    private ScenarioRecognizer scenarioRecognizer;
 
-    private ClientTemplateLoader templateLoader;
+    private PromptTemplateTextLoader templateLoader;
 
-    private ClientSlotSchemaLoader slotSchemaLoader;
+    private PromptSlotSchemaLoader slotSchemaLoader;
 
-    private ClientSlotValueExtractor slotValueExtractor;
+    private PromptSlotValueExtractor slotValueExtractor;
 
     private TaskPromptRenderer renderer;
 
@@ -143,7 +142,8 @@ public final class ClientPromptGenerationOrchestratorBuilder {
      * @param scenarioRecognizer scenario recognizer implementation
      * @return current builder
      */
-    public ClientPromptGenerationOrchestratorBuilder scenarioRecognizer(ClientScenarioRecognizer scenarioRecognizer) {
+    public ClientPromptGenerationOrchestratorBuilder scenarioRecognizer(
+            ScenarioRecognizer scenarioRecognizer) {
         this.scenarioRecognizer = scenarioRecognizer;
         return this;
     }
@@ -154,7 +154,7 @@ public final class ClientPromptGenerationOrchestratorBuilder {
      * @param templateLoader template loader implementation
      * @return current builder
      */
-    public ClientPromptGenerationOrchestratorBuilder templateLoader(ClientTemplateLoader templateLoader) {
+    public ClientPromptGenerationOrchestratorBuilder templateLoader(PromptTemplateTextLoader templateLoader) {
         this.templateLoader = templateLoader;
         return this;
     }
@@ -165,7 +165,7 @@ public final class ClientPromptGenerationOrchestratorBuilder {
      * @param slotSchemaLoader slot schema loader implementation
      * @return current builder
      */
-    public ClientPromptGenerationOrchestratorBuilder slotSchemaLoader(ClientSlotSchemaLoader slotSchemaLoader) {
+    public ClientPromptGenerationOrchestratorBuilder slotSchemaLoader(PromptSlotSchemaLoader slotSchemaLoader) {
         this.slotSchemaLoader = slotSchemaLoader;
         return this;
     }
@@ -176,7 +176,7 @@ public final class ClientPromptGenerationOrchestratorBuilder {
      * @param slotValueExtractor slot extractor implementation
      * @return current builder
      */
-    public ClientPromptGenerationOrchestratorBuilder slotValueExtractor(ClientSlotValueExtractor slotValueExtractor) {
+    public ClientPromptGenerationOrchestratorBuilder slotValueExtractor(PromptSlotValueExtractor slotValueExtractor) {
         this.slotValueExtractor = slotValueExtractor;
         return this;
     }
@@ -209,6 +209,7 @@ public final class ClientPromptGenerationOrchestratorBuilder {
      * @return fully assembled orchestrator with all required dependencies resolved
      */
     public DefaultClientPromptGenerationOrchestrator build() {
+        require(llmClient, "LLM client must be configured.");
         require(scenarios, "Scenario definitions must be configured.");
         require(language, "Prompt language must be configured.");
         require(scenarioSystemPrompt, "Scenario system prompt must be configured.");
@@ -220,18 +221,17 @@ public final class ClientPromptGenerationOrchestratorBuilder {
         // defaults.
         ClasspathPromptResourceLoader effectiveResourceLoader =
                 resourceLoader == null ? new ClasspathPromptResourceLoader() : resourceLoader;
-        ClientTemplateLoader effectiveTemplateLoader = templateLoader == null
-                ? new DefaultClasspathClientTemplateLoader(effectiveResourceLoader)
-                : templateLoader;
-        ClientSlotSchemaLoader effectiveSlotSchemaLoader = slotSchemaLoader == null
-                ? new DefaultClasspathClientSlotSchemaLoader(effectiveResourceLoader)
+        PromptTemplateTextLoader effectiveTemplateLoader =
+                templateLoader == null ? new ClasspathPromptTemplateLoader(effectiveResourceLoader) : templateLoader;
+        PromptSlotSchemaLoader effectiveSlotSchemaLoader = slotSchemaLoader == null
+                ? new ClasspathPromptSlotSchemaLoader(effectiveResourceLoader)
                 : slotSchemaLoader;
-        ClientSlotValueExtractor effectiveSlotValueExtractor = slotValueExtractor == null
-                ? new DefaultStructuredClientSlotValueExtractor(
+        PromptSlotValueExtractor effectiveSlotValueExtractor = slotValueExtractor == null
+                ? new DefaultStructuredPromptSlotValueExtractor(
                         llmClient, effectiveSlotSchemaLoader, slotSystemPrompt, slotUserPrompt)
                 : slotValueExtractor;
-        ClientScenarioRecognizer effectiveScenarioRecognizer =
-                scenarioRecognizer == null ? new ScenarioRecognizer(llmClient)::recognize : scenarioRecognizer;
+        ScenarioRecognizer effectiveScenarioRecognizer =
+                scenarioRecognizer == null ? new LlmScenarioRecognizer(llmClient)::recognize : scenarioRecognizer;
         TaskPromptRenderer effectiveRenderer = renderer == null ? new TaskPromptRenderer() : renderer;
 
         return new DefaultClientPromptGenerationOrchestrator(

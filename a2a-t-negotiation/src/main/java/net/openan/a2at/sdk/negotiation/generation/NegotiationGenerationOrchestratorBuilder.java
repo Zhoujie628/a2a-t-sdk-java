@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.negotiation.generation;
 
 import java.nio.file.Path;
+import net.openan.a2at.sdk.core.model.LlmConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.negotiation.resources.DefaultNegotiationTemplateLoader;
@@ -8,7 +9,6 @@ import net.openan.a2at.sdk.negotiation.resources.NegotiationTemplateLoader;
 import net.openan.a2at.sdk.negotiation.validation.DefaultNegotiationComplianceChecker;
 import net.openan.a2at.sdk.negotiation.validation.DefaultNegotiationSemanticValidator;
 import net.openan.a2at.sdk.negotiation.validation.NegotiationComplianceChecker;
-import net.openan.a2at.sdk.negotiation.validation.NegotiationRuleCheckerAdapter;
 import net.openan.a2at.sdk.negotiation.validation.NegotiationSemanticValidator;
 import net.openan.a2at.sdk.negotiation.validation.NegotiationValidationException;
 import net.openan.a2at.sdk.negotiation.validation.ParamExtractor;
@@ -27,15 +27,13 @@ import org.slf4j.Logger;
  */
 public final class NegotiationGenerationOrchestratorBuilder {
 
-    private static final int DEFAULT_MAX_ATTEMPTS = 3;
-
     private String language;
 
     private String localRootDir;
 
     private LLMClient llmClient;
 
-    private int maxAttempts = DEFAULT_MAX_ATTEMPTS;
+    private int maxAttempts = LlmConfig.DEFAULT_MAX_ATTEMPTS;
 
     private NegotiationTemplateLoader templateLoader;
 
@@ -183,10 +181,8 @@ public final class NegotiationGenerationOrchestratorBuilder {
                 complianceChecker != null ? complianceChecker : new DefaultNegotiationComplianceChecker();
         NegotiationSemanticValidator effectiveSemanticValidator =
                 semanticValidator != null ? semanticValidator : defaultSemanticValidator();
-        NegotiationRuleCheckerAdapter ruleCheckerAdapter =
-                new NegotiationRuleCheckerAdapter(effectiveComplianceChecker, vocabulary);
         ParamExtractor paramExtractor =
-                new ParamExtractor(ruleCheckerAdapter, effectiveSemanticValidator, maxAttempts);
+                new ParamExtractor(effectiveComplianceChecker, effectiveSemanticValidator, maxAttempts);
         return new NegotiationGenerationOrchestrator(
                 language,
                 maxAttempts,

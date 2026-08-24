@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
@@ -19,8 +19,6 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
 abstract class AbstractNegotiationGenerator implements NegotiationGenerator {
 
     private final NegotiationPromptRenderer promptRenderer = new NegotiationPromptRenderer();
-
-    private final NegotiationContextRenderer contextRenderer = new NegotiationContextRenderer();
 
     private final NegotiationItemFormatter itemFormatter = new NegotiationItemFormatter();
 
@@ -97,17 +95,6 @@ abstract class AbstractNegotiationGenerator implements NegotiationGenerator {
             throw new IllegalArgumentException(description + " must contain at least one item.");
         }
         return items;
-    }
-
-    /**
-     * Builds the slot value for the negotiation context section.
-     *
-     * @param context negotiation context of the message
-     * @param vocabulary vocabulary of the message language
-     * @return rendered context list
-     */
-    protected String contextSlotValue(NegotiationContext context, Vocabulary vocabulary) {
-        return contextRenderer.render(context);
     }
 
     /**

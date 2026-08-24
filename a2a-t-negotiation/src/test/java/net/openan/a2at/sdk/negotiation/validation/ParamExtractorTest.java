@@ -10,11 +10,10 @@ import java.util.Map;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
-import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import org.junit.jupiter.api.Test;
 
@@ -22,11 +21,9 @@ class ParamExtractorTest {
 
     private static final String SESSION_ID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final String VALID_ZH_PROMPT = "## 协商上下文\n"
-            + "- id: " + SESSION_ID + "\n"
-            + "- round: 2\n"
-            + "- maxRounds: 5\n\n"
-            + "## 所需信息项\n"
+    private static final NegotiationContext CONTEXT = new NegotiationContext(SESSION_ID, 2, 5);
+
+    private static final String VALID_ZH_PROMPT = "## 所需信息项\n"
             + "1. 节能区域信息：请提供真实存在的区域\n";
 
     private static final NegotiationReference REFERENCE =
@@ -38,22 +35,18 @@ class ParamExtractorTest {
 
     private final StubSemanticValidator semanticValidator = new StubSemanticValidator();
 
-    private final NegotiationRuleCheckerAdapter ruleChecker =
-            new NegotiationRuleCheckerAdapter(complianceChecker, Vocabulary.forLanguage("zh-CN"));
-
-    private final ParamExtractor extractor = new ParamExtractor(ruleChecker, semanticValidator, MAX_ATTEMPTS);
+    private final ParamExtractor extractor = new ParamExtractor(complianceChecker, semanticValidator, MAX_ATTEMPTS);
 
     @Test
     void happyPathMergesContextParamsFirstAndLetsContextWinOnConflict() {
-        complianceChecker.result =
-                new NegotiationRuleCheckResult(true, true, List.of(), new NegotiationContext(SESSION_ID, 2, 5));
+        complianceChecker.result = new NegotiationRuleCheckResult(true, List.of());
         semanticValidator.result = new SemanticValidationResult(
                 true,
                 "information",
                 List.of(),
                 Map.of("id", "llm-value", "confirmed_rate_mbps", 2, "nested", Map.of("a", 1)));
 
-        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, Map.of(), REFERENCE);
+        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE);
 
         assertEquals(SESSION_ID, filled.data().get("id"));
         assertEquals(2, filled.data().get("round"));
@@ -66,11 +59,10 @@ class ParamExtractorTest {
 
     @Test
     void extractRequiresIntegerRoundAndMaxRoundsInMergedData() {
-        complianceChecker.result =
-                new NegotiationRuleCheckResult(true, true, List.of(), new NegotiationContext(SESSION_ID, 3, 7));
+        complianceChecker.result = new NegotiationRuleCheckResult(true, List.of());
         semanticValidator.result = new SemanticValidationResult(true, "information", List.of(), Map.of());
 
-        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, Map.of(), REFERENCE);
+        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, new NegotiationContext(SESSION_ID, 3, 7), Map.of(), REFERENCE);
 
         assertTrue(filled.data().get("round") instanceof Integer);
         assertTrue(filled.data().get("maxRounds") instanceof Integer);
@@ -81,14 +73,11 @@ class ParamExtractorTest {
     @Test
     void ruleFailureSkipsTheSemanticValidationCall() {
         complianceChecker.result = new NegotiationRuleCheckResult(
-                false,
-                true,
-                List.of(new SlotValidationError("round", "out_of_range", "round exceeds maxRounds")),
-                null);
+                false, List.of(new SlotValidationError("round", "out_of_range", "round exceeds maxRounds")));
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> extractor.extract(VALID_ZH_PROMPT, Map.of(), REFERENCE));
+                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE));
 
         assertEquals("negotiation_rule_violation", exception.getCode());
         assertEquals(1, exception.getErrors().size());
@@ -98,12 +87,12 @@ class ParamExtractorTest {
 
     @Test
     void extractFailsOnRuleViolationWithoutTouchingTheValidator() {
-        complianceChecker.result = new NegotiationRuleCheckResult(
-                false, true, List.of(new SlotValidationError("id", "invalid_uuid", "not a uuid")), null);
+        complianceChecker.result =
+                new NegotiationRuleCheckResult(false, List.of(new SlotValidationError("id", "invalid_uuid", "not a uuid")));
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> extractor.extract(VALID_ZH_PROMPT, Map.of(), REFERENCE));
+                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE));
 
         assertEquals("negotiation_rule_violation", exception.getCode());
         assertEquals("id", exception.getErrors().get(0).slotName());
@@ -111,26 +100,25 @@ class ParamExtractorTest {
     }
 
     @Test
-    void nonNegotiationInputFailsWithLanguageNeutralMessage() {
-        complianceChecker.result = new NegotiationRuleCheckResult(false, false, List.of(), null);
+    void nullContextFailsAsNonNegotiationInputWithLanguageNeutralMessage() {
+        complianceChecker.result = new NegotiationRuleCheckResult(false, List.of());
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> extractor.extract("## 任务目标\n诊断\n", Map.of(), REFERENCE));
+                () -> extractor.extract("## 任务目标\n诊断\n", null, Map.of(), REFERENCE));
 
         assertEquals("negotiation_invalid_input", exception.getCode());
         assertEquals(
-                "missing negotiation context section; for Task-T compliance use checkTaskPrompt",
-                exception.getMessage());
+                "missing negotiation context; for Task-T compliance use checkTaskPrompt", exception.getMessage());
         assertFalse(exception.getMessage().contains("协商上下文"));
         assertEquals(List.of(), exception.getErrors());
         assertEquals(0, semanticValidator.invocations);
+        assertEquals(0, complianceChecker.invocations);
     }
 
     @Test
     void semanticRejectionPassesErrorsThrough() {
-        complianceChecker.result =
-                new NegotiationRuleCheckResult(true, true, List.of(), new NegotiationContext(SESSION_ID, 2, 5));
+        complianceChecker.result = new NegotiationRuleCheckResult(true, List.of());
         List<SlotValidationError> semanticErrors = List.of(
                 new SlotValidationError("section.target_result_content", "conclusion_content_mismatch", "Mismatch"),
                 new SlotValidationError("section.context", "invalid_conclusion", "Abort is reserved"));
@@ -138,7 +126,7 @@ class ParamExtractorTest {
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> extractor.extract(VALID_ZH_PROMPT, Map.of(), REFERENCE));
+                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE));
 
         assertEquals("negotiation_semantic_rejected", exception.getCode());
         assertEquals(semanticErrors, exception.getErrors());
@@ -146,12 +134,11 @@ class ParamExtractorTest {
 
     @Test
     void extractReturnsTheValidatorOutcome() {
-        complianceChecker.result =
-                new NegotiationRuleCheckResult(true, true, List.of(), new NegotiationContext(SESSION_ID, 2, 5));
+        complianceChecker.result = new NegotiationRuleCheckResult(true, List.of());
         semanticValidator.result =
                 new SemanticValidationResult(true, "information", List.of(), Map.of("confirmed_rate_mbps", 2));
 
-        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, Map.of(), REFERENCE);
+        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE);
 
         assertEquals(1, semanticValidator.invocations);
         assertEquals(2, filled.data().get("confirmed_rate_mbps"));
@@ -159,13 +146,12 @@ class ParamExtractorTest {
 
     @Test
     void internalValidationFailureIsMappedToRetryableInfrastructureError() {
-        complianceChecker.result =
-                new NegotiationRuleCheckResult(true, true, List.of(), new NegotiationContext(SESSION_ID, 2, 5));
+        complianceChecker.result = new NegotiationRuleCheckResult(true, List.of());
         semanticValidator.failure = new NegotiationValidationException("response is missing negotiation_type");
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> extractor.extract(VALID_ZH_PROMPT, Map.of(), REFERENCE));
+                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE));
 
         assertEquals("negotiation_llm_infrastructure_error", exception.getCode());
         assertEquals(1, exception.getErrors().size());
@@ -175,14 +161,13 @@ class ParamExtractorTest {
 
     @Test
     void promptResourceMissIsMappedToTemplateNotFound() {
-        complianceChecker.result =
-                new NegotiationRuleCheckResult(true, true, List.of(), new NegotiationContext(SESSION_ID, 2, 5));
+        complianceChecker.result = new NegotiationRuleCheckResult(true, List.of());
         semanticValidator.failure =
                 new ResourceNotFoundException("prompt resource missing", "prompt_resources/prompts/x");
 
         NegotiationParamExtractionException exception = assertThrows(
                 NegotiationParamExtractionException.class,
-                () -> extractor.extract(VALID_ZH_PROMPT, Map.of(), REFERENCE));
+                () -> extractor.extract(VALID_ZH_PROMPT, CONTEXT, Map.of(), REFERENCE));
 
         assertEquals("template_not_found", exception.getCode());
         assertEquals(List.of(), exception.getErrors());
@@ -190,10 +175,13 @@ class ParamExtractorTest {
 
     private static final class StubComplianceChecker implements NegotiationComplianceChecker {
 
-        private NegotiationRuleCheckResult result = new NegotiationRuleCheckResult(false, false, List.of(), null);
+        private NegotiationRuleCheckResult result = new NegotiationRuleCheckResult(false, List.of());
+
+        private int invocations;
 
         @Override
-        public NegotiationRuleCheckResult check(String prompt, Vocabulary vocabulary) {
+        public NegotiationRuleCheckResult check(NegotiationContext context) {
+            invocations++;
             return result;
         }
     }

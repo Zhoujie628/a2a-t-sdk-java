@@ -3,16 +3,17 @@ package net.openan.a2at.sdk.prompt.validation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.FilledParamData;
-import net.openan.a2at.sdk.core.model.PromptRuntimeConfig;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
 import net.openan.a2at.sdk.core.validation.ValidationPipeline;
@@ -20,81 +21,54 @@ import net.openan.a2at.sdk.core.validation.ValidationResult;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
-import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import net.openan.a2at.sdk.prompt.resources.loader.PromptSlotSchemaLoader;
-import net.openan.a2at.sdk.prompt.resources.loader.PromptTemplateTextLoader;
-import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
-import net.openan.a2at.sdk.resources.ClasspathPromptResourceLoader;
 import org.junit.jupiter.api.Test;
 
 class DefaultSemanticValidatorTest {
 
+    private static final String VALID_RESPONSE =
+            """
+            {
+              "semantic_verdict": true,
+              "errors": [],
+              "params": {"site": "Site A"}
+            }
+            """;
+
     @Test
     void validatesEnUSPromptAndExtractsParams() {
-        PromptResourceAccess resources =
-                PromptResourceAccess.create(new PromptRuntimeConfig("en-US", "classpath", null));
+        RecordingClient llmClient = new RecordingClient(VALID_RESPONSE);
 
-        RecordingClient llmClient = new RecordingClient(
-                """
-                {
-                  "semantic_verdict": true,
-                  "errors": [],
-                  "params": {"site": "Site A"}
-                }
-                """);
-
-        DefaultSemanticValidator validator = new DefaultSemanticValidator(llmClient, "en-US", resources);
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(llmClient, "en-US");
 
         ValidationResult result = validator.validate(
                 "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"));
 
         assertTrue(result.verdict());
         assertEquals(Map.of("site", "Site A"), result.params());
-
-        String expectedSystemPrompt = resources.loadPrompt("content_validation", "en-US", "system.md");
-        assertEquals(expectedSystemPrompt, llmClient.lastSystemContent());
+        assertTrue(llmClient.lastSystemContent().contains("validation"));
     }
 
     @Test
     void loadsZhCnResourcesWithoutException() {
-        PromptResourceAccess resources =
-                PromptResourceAccess.create(new PromptRuntimeConfig("zh-CN", "classpath", null));
-
-        DefaultSemanticValidator validator = new DefaultSemanticValidator(null, "zh-CN", resources);
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(null, "zh-CN");
 
         assertNotNull(validator);
     }
 
     @Test
     void throwsResourceNotFoundExceptionForMissingLanguage() {
-        PromptResourceAccess resources =
-                PromptResourceAccess.create(new PromptRuntimeConfig("fr-FR", "classpath", null));
-
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class, () -> new DefaultSemanticValidator(null, "fr-FR", resources));
+        ResourceNotFoundException exception =
+                assertThrows(ResourceNotFoundException.class, () -> new DefaultSemanticValidator(null, "fr-FR"));
 
         assertTrue(exception.resourcePath().contains("content_validation"));
+        assertTrue(exception.getMessage().contains("zh-CN or en-US"));
     }
 
     @Test
     void validateRetriesLlmInfrastructureErrorThroughPipeline() {
-        PromptResourceAccess resources =
-                PromptResourceAccess.create(new PromptRuntimeConfig("en-US", "classpath", null));
+        FlakyClient flakyClient = new FlakyClient(1, VALID_RESPONSE);
 
-        FlakyClient flakyClient = new FlakyClient(
-                1,
-                """
-                {
-                  "semantic_verdict": true,
-                  "errors": [],
-                  "params": {"site": "Site A"}
-                }
-                """);
-
-        DefaultSemanticValidator validator = new DefaultSemanticValidator(flakyClient, "en-US", resources);
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(flakyClient, "en-US");
 
         ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 2);
 
@@ -107,9 +81,6 @@ class DefaultSemanticValidatorTest {
 
     @Test
     void validateExhaustsRetriesAndWrapsLlmError() {
-        PromptResourceAccess resources =
-                PromptResourceAccess.create(new PromptRuntimeConfig("en-US", "classpath", null));
-
         FlakyClient flakyClient = new FlakyClient(
                 Integer.MAX_VALUE,
                 """
@@ -120,35 +91,197 @@ class DefaultSemanticValidatorTest {
                 }
                 """);
 
-        DefaultSemanticValidator validator = new DefaultSemanticValidator(flakyClient, "en-US", resources);
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(flakyClient, "en-US");
 
         ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 3);
 
         ContentValidationException exception = assertThrows(
                 ContentValidationException.class,
                 () -> pipeline.validate(
-                        "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving")));
+                        "Check Site A power usage.",
+                        Map.of("type", "object"),
+                        TemplateUri.of("Task-T", "energy-saving")));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertInstanceOf(LLMRuntimeError.class, exception.getCause().getCause());
         assertEquals(3, flakyClient.invocations());
     }
 
-
     @Test
-    void validateFiltersNullParamValues() {
+    void pipelineCarriesNullParamsIntoFilledParamData() {
+        // the semantic validator passed overall, but one schema slot is explicitly null: the merged
+        // FilledParamData must carry the key with a null value so callers scanning for blank slots can see the
+        // missing parameter and trigger negotiation for it
         String llmJson =
                 "{\"semantic_verdict\": true, \"errors\": []," + "\"params\": {\"任务对象\": \"端口A\", \"任务上下文\": null}}";
-        DefaultSemanticValidator validator =
-                new DefaultSemanticValidator(new StubClient(llmJson), "zh-CN", new RecordingResourceAccess());
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(new StubClient(llmJson), "zh-CN");
+
+        ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 2);
+
+        FilledParamData result =
+                pipeline.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
+
+        assertEquals(2, result.data().size());
+        assertEquals("端口A", result.data().get("任务对象"));
+        assertNull(result.data().get("任务上下文"));
+    }
+
+    @Test
+    void validatePreservesNullParamValuesAsMissingSlots() {
+        String llmJson =
+                "{\"semantic_verdict\": true, \"errors\": []," + "\"params\": {\"任务对象\": \"端口A\", \"任务上下文\": null}}";
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(new StubClient(llmJson), "zh-CN");
 
         ValidationResult result =
                 validator.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
 
         assertTrue(result.verdict());
-        // Map.copyOf rejects null values; the validator must drop them instead of throwing NPE
-        assertEquals(Map.of("任务对象", "端口A"), result.params());
-        assertFalse(result.params().containsKey("任务上下文"));
+        // a null param is the validator's signal that a schema slot is missing from the content; the key must stay
+        // present with a null value so downstream missing-slot detection (negotiation triggering) can see it
+        assertEquals(2, result.params().size());
+        assertEquals("端口A", result.params().get("任务对象"));
+        assertTrue(result.params().containsKey("任务上下文"));
+        assertNull(result.params().get("任务上下文"));
+    }
+
+    @Test
+    void missingVerdictKeyFailsWithInfrastructureError() {
+        DefaultSemanticValidator validator =
+                new DefaultSemanticValidator(new StubClient("{\"errors\": [], \"params\": {}}"), "en-US");
+
+        ContentValidationException exception = assertThrows(
+                ContentValidationException.class,
+                () -> validator.validate(
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+
+        assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
+        assertTrue(exception.getMessage().contains("semantic_verdict"));
+    }
+
+    @Test
+    void stringVerdictValueFailsWithInfrastructureError() {
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(
+                new StubClient("{\"semantic_verdict\": \"true\", \"errors\": [], \"params\": {}}"), "en-US");
+
+        ContentValidationException exception = assertThrows(
+                ContentValidationException.class,
+                () -> validator.validate(
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+
+        assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
+        assertTrue(exception.getMessage().contains("semantic_verdict"));
+    }
+
+    @Test
+    void nonListErrorsFailsWithInfrastructureError() {
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(
+                new StubClient("{\"semantic_verdict\": true, \"errors\": {}, \"params\": {}}"), "en-US");
+
+        ContentValidationException exception = assertThrows(
+                ContentValidationException.class,
+                () -> validator.validate(
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+
+        assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
+        assertTrue(exception.getMessage().contains("errors"));
+    }
+
+    @Test
+    void malformedErrorElementFailsWithInfrastructureError() {
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(
+                new StubClient("{\"semantic_verdict\": false, \"errors\": [\"oops\"], \"params\": {}}"), "en-US");
+
+        ContentValidationException exception = assertThrows(
+                ContentValidationException.class,
+                () -> validator.validate(
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+
+        assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
+        assertTrue(exception.getMessage().contains("errors"));
+    }
+
+    @Test
+    void nonMapParamsFailsWithInfrastructureError() {
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(
+                new StubClient("{\"semantic_verdict\": true, \"errors\": [], \"params\": []}"), "en-US");
+
+        ContentValidationException exception = assertThrows(
+                ContentValidationException.class,
+                () -> validator.validate(
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+
+        assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
+        assertTrue(exception.getMessage().contains("params"));
+    }
+
+    @Test
+    void stringParamKeysPassTheContract() {
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(
+                new StubClient("{\"semantic_verdict\": true, \"errors\": [], \"params\": {\"site\": \"Site A\"}}"),
+                "en-US");
+
+        ValidationResult result =
+                validator.validate("task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer"));
+
+        assertTrue(result.verdict());
+    }
+
+    @Test
+    void nonStringParamKeyFailsWithInfrastructureError() {
+        // JSON object keys are strings by definition, so the negative path is driven through a parser
+        // stub that produces a non-string key
+        Map<Object, Object> rawParams = new LinkedHashMap<>();
+        rawParams.put(42, "Site A");
+        Map<String, Object> parsed = new LinkedHashMap<>();
+        parsed.put("semantic_verdict", Boolean.TRUE);
+        parsed.put("errors", List.of());
+        parsed.put("params", rawParams);
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(
+                new StubClient("payload content is irrelevant"), "en-US", prompt -> parsed);
+
+        ContentValidationException exception = assertThrows(
+                ContentValidationException.class,
+                () -> validator.validate(
+                        "task prompt", Map.of("type", "object"), TemplateUri.of("Task-T", "network-layer")));
+
+        assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
+        assertTrue(exception.getMessage().contains("params keys"));
+    }
+
+    @Test
+    void contractViolationRetriesAndRecoversThroughPipeline() {
+        FlakyPayloadClient client = new FlakyPayloadClient(
+                "{\"semantic_verdict\": \"true\", \"errors\": [], \"params\": {}}", VALID_RESPONSE);
+
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(client, "en-US");
+        ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 2);
+
+        FilledParamData result = pipeline.validate(
+                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"));
+
+        // first attempt violates the output contract (string verdict) → retryable infra error → second attempt
+        // returns a compliant response and the pipeline succeeds
+        assertEquals(Map.of("site", "Site A"), result.data());
+        assertEquals(2, client.invocations());
+    }
+
+    @Test
+    void contractViolationExhaustsRetriesThroughPipeline() {
+        FlakyPayloadClient client =
+                new FlakyPayloadClient("{\"semantic_verdict\": \"true\", \"errors\": [], \"params\": {}}", null);
+
+        DefaultSemanticValidator validator = new DefaultSemanticValidator(client, "en-US");
+        ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 3);
+
+        ContentValidationException exception = assertThrows(
+                ContentValidationException.class,
+                () -> pipeline.validate(
+                        "Check Site A power usage.",
+                        Map.of("type", "object"),
+                        TemplateUri.of("Task-T", "energy-saving")));
+
+        assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
+        assertEquals(3, client.invocations());
     }
 
     private static final class RecordingClient implements LLMClient {
@@ -232,45 +365,37 @@ class DefaultSemanticValidatorTest {
         }
     }
 
-    /** Resource access recording loadPrompt calls and returning stub prompt text. */
-    private static final class RecordingResourceAccess implements PromptResourceAccess {
+    /**
+     * LLM client returning a malformed payload first, then a compliant one (or always malformed when success is null).
+     */
+    private static final class FlakyPayloadClient implements LLMClient {
 
-        private final List<String[]> calls = new ArrayList<>();
+        private final String malformedPayload;
 
-        @Override
-        public boolean classpath() {
-            return false;
+        private final String successPayload;
+
+        private final AtomicInteger counter = new AtomicInteger(0);
+
+        private FlakyPayloadClient(String malformedPayload, String successPayload) {
+            this.malformedPayload = malformedPayload;
+            this.successPayload = successPayload;
         }
 
         @Override
-        public ClasspathPromptResourceLoader classpathResourceLoader() {
-            throw new UnsupportedOperationException("Not used in this test.");
+        public LLMResponse structured(
+                List<Map<String, String>> messages,
+                Map<String, Object> jsonSchema,
+                Double temperature,
+                Integer maxTokens) {
+            int invocation = counter.incrementAndGet();
+            if (invocation == 1 || successPayload == null) {
+                return new LLMResponse(malformedPayload, "test-model", Map.of(), Map.of());
+            }
+            return new LLMResponse(successPayload, "test-model", Map.of(), Map.of());
         }
 
-        @Override
-        public Path localRootDir() {
-            return Path.of(".");
-        }
-
-        @Override
-        public List<ScenarioDefinition> loadScenarios(String language) {
-            return List.of();
-        }
-
-        @Override
-        public PromptTemplateTextLoader templateLoader() {
-            throw new UnsupportedOperationException("Not used in this test.");
-        }
-
-        @Override
-        public PromptSlotSchemaLoader slotSchemaLoader() {
-            throw new UnsupportedOperationException("Not used in this test.");
-        }
-
-        @Override
-        public String loadPrompt(String promptCategory, String language, String fileName) {
-            calls.add(new String[] {promptCategory, language, fileName});
-            return "stub prompt for " + promptCategory + "/" + fileName;
+        int invocations() {
+            return counter.get();
         }
     }
 }

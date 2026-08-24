@@ -57,6 +57,9 @@ public final class A2ATConfigKeys {
         /** Disables use of the JVM or operating-system HTTP proxy for the LLM request. */
         public static final String DISABLE_SYSTEM_PROXY = "A2AT_LLM_DISABLE_SYSTEM_PROXY";
 
+        /** Optional reasoning effort level for reasoning models (none/minimal/low/medium/high/xhigh). */
+        public static final String REASONING_EFFORT = "A2AT_LLM_REASONING_EFFORT";
+
         /** Maximum total number of tracked sessions. */
         public static final String SESSION_MAX_TOTAL = "A2AT_LLM_SESSION_MAX_TOTAL";
 

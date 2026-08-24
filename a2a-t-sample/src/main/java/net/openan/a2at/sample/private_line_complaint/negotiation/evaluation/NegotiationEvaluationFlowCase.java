@@ -18,11 +18,8 @@ public record NegotiationEvaluationFlowCase(
         return endingCase.expected();
     }
 
-    public String clientSupplement(String contextId, int round, int maxRounds) {
-        String header = "## 协商上下文\n- id: " + contextId
-                + "\n- round: " + round
-                + "\n- maxRounds: " + maxRounds
-                + "\n\n## 客户端补充信息\n";
+    public String clientSupplement() {
+        String header = "## 客户端补充信息\n";
         if ("accept".equals(decision)) {
             return header
                     + "1. 接入端口名称：" + expectedEnding().get("access_port_name")
@@ -31,8 +28,8 @@ public record NegotiationEvaluationFlowCase(
         return header + "无法补充所需信息，原因：" + expectedEnding().get("rejection_reason");
     }
 
-    public String endingGenerationText(String contextId, int round, int maxRounds) {
-        return clientSupplement(contextId, round, maxRounds)
+    public String endingGenerationText() {
+        return clientSupplement()
                 + "\n\n## 服务端协商结论生成要求\n"
                 + endingCase.text();
     }

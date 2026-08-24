@@ -13,13 +13,17 @@ class MetadataContentTest {
 
     private static final String TEMPLATE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
 
+    private static final NegotiationContext CONTEXT =
+            new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 1, 5);
+
     @Test
-    void recordExposesAllThreeComponents() {
+    void recordExposesAllComponents() {
         MetadataContent content = new MetadataContent(TEMPLATE_URI, "rendered message", "https://example/ext");
 
         assertEquals(TEMPLATE_URI, content.templateUri());
         assertEquals("rendered message", content.promptText());
         assertEquals("https://example/ext", content.extensionUri());
+        assertEquals(null, content.negotiationContext());
     }
 
     @Test
@@ -38,10 +42,10 @@ class MetadataContentTest {
     }
 
     @Test
-    void buildMetadataContentReturnsExactlyTwoDeterministicEntries() {
+    void buildMetadataContentReturnsExactlyTwoDeterministicEntriesWithoutContext() {
         MetadataContent content = new MetadataContent(TEMPLATE_URI, "rendered message", "https://example/ext");
 
-        Map<String, String> metadata = content.buildMetadataContent();
+        Map<String, Object> metadata = content.buildMetadataContent();
 
         assertEquals(2, metadata.size());
         assertEquals("rendered message", metadata.get(content.extensionUri()));
@@ -54,7 +58,7 @@ class MetadataContentTest {
     void buildMetadataContentKeepsFixedKeyOrder() {
         MetadataContent content = new MetadataContent(TEMPLATE_URI, "rendered message", "https://example/ext");
 
-        Map<String, String> metadata = content.buildMetadataContent();
+        Map<String, Object> metadata = content.buildMetadataContent();
 
         assertEquals(
                 java.util.List.of(content.extensionUri(), MetadataContent.TEMPLATE_URI_METADATA_KEY),
@@ -65,9 +69,32 @@ class MetadataContentTest {
     void buildMetadataContentNeverReturnsNullEvenWithNullFields() {
         MetadataContent content = new MetadataContent(null, null, "extension-uri");
 
-        Map<String, String> metadata = content.buildMetadataContent();
+        Map<String, Object> metadata = content.buildMetadataContent();
 
         assertEquals(2, metadata.size());
         assertTrue(metadata.containsKey(MetadataContent.TEMPLATE_URI_METADATA_KEY));
+    }
+
+    @Test
+    void buildMetadataContentCarriesNegotiationContextAsThirdKey() {
+        MetadataContent content =
+                new MetadataContent(TEMPLATE_URI, "rendered message", "https://example/ext", CONTEXT);
+
+        Map<String, Object> metadata = content.buildMetadataContent();
+
+        assertEquals(3, metadata.size());
+        assertEquals(
+                java.util.List.of(
+                        content.extensionUri(),
+                        MetadataContent.TEMPLATE_URI_METADATA_KEY,
+                        MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY),
+                new java.util.ArrayList<>(metadata.keySet()));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> nestedContext =
+                (Map<String, Object>) metadata.get(MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY);
+        assertEquals(CONTEXT.id(), nestedContext.get("id"));
+        assertEquals(CONTEXT.round(), nestedContext.get("round"));
+        assertEquals(CONTEXT.maxRounds(), nestedContext.get("maxRounds"));
+        assertEquals(metadata, content.buildMetadataContent());
     }
 }

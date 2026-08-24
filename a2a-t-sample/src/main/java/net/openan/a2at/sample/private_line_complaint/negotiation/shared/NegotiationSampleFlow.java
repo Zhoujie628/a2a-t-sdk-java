@@ -7,7 +7,7 @@ import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.server.A2ATServer;
 
 /** Runs the six Negotiation-T APIs used by the private-line complaint sample. */
@@ -28,20 +28,24 @@ public final class NegotiationSampleFlow {
         NegotiationContext requestContext = new NegotiationContext(UUID.randomUUID().toString(), 1, 3);
         MetadataContent propose =
                 client.generateNegotiationProposePromptFromText(scenario.proposeText(), requestContext, PROPOSE_TEMPLATE_URI);
-        String proposePrompt = NegotiationMetadataReader.readPrompt(propose.buildMetadataContent(), PROPOSE_TEMPLATE_URI);
-        FilledParamData proposeData =
-                server.validateProposePromptAndDataFilling(proposePrompt, InformationNegotiationSchemas.propose(), PROPOSE_TEMPLATE_URI);
+        Map<String, Object> proposeMetadata = propose.buildMetadataContent();
+        String proposePrompt = NegotiationMetadataReader.readPrompt(proposeMetadata, PROPOSE_TEMPLATE_URI);
+        NegotiationContext proposeContext = NegotiationMetadataReader.readContext(proposeMetadata);
+        FilledParamData proposeData = server.validateProposePromptAndDataFilling(
+                proposePrompt, proposeContext, InformationNegotiationSchemas.propose(), PROPOSE_TEMPLATE_URI);
 
-        NegotiationContext responseContext = contextFrom(proposeData.data());
+        NegotiationContext responseContext = proposeContext;
         MetadataContent ending = decision == NegotiationDecision.ACCEPT
                 ? server.generateNegotiationAcceptPromptFromText(scenario.acceptText(), responseContext, ENDING_TEMPLATE_URI)
                 : server.generateNegotiationRejectPromptFromText(scenario.rejectText(), responseContext, ENDING_TEMPLATE_URI);
-        String endingPrompt = NegotiationMetadataReader.readPrompt(ending.buildMetadataContent(), ENDING_TEMPLATE_URI);
+        Map<String, Object> endingMetadata = ending.buildMetadataContent();
+        String endingPrompt = NegotiationMetadataReader.readPrompt(endingMetadata, ENDING_TEMPLATE_URI);
+        NegotiationContext endingContext = NegotiationMetadataReader.readContext(endingMetadata);
         FilledParamData endingData = decision == NegotiationDecision.ACCEPT
                 ? client.validateAcceptPromptAndDataFilling(
-                        endingPrompt, InformationNegotiationSchemas.accept(), ENDING_TEMPLATE_URI)
+                        endingPrompt, endingContext, InformationNegotiationSchemas.accept(), ENDING_TEMPLATE_URI)
                 : client.validateRejectPromptAndDataFilling(
-                        endingPrompt, InformationNegotiationSchemas.reject(), ENDING_TEMPLATE_URI);
+                        endingPrompt, endingContext, InformationNegotiationSchemas.reject(), ENDING_TEMPLATE_URI);
         return new NegotiationFlowResult(requestContext, propose, proposeData, ending, endingData, decision);
     }
 

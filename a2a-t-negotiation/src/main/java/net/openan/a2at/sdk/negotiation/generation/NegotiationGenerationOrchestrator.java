@@ -15,7 +15,7 @@ import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -186,7 +186,7 @@ public final class NegotiationGenerationOrchestrator {
      * {@code negotiation_content_extract_failed} and {@code negotiation_llm_infrastructure_error}.
      *
      * @param text free-text input describing the message content
-     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI such as {@code Negotiation-T/target-negotiation/propose/v1}; its phase segment
      *     must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
@@ -211,7 +211,7 @@ public final class NegotiationGenerationOrchestrator {
      * conclusion must be {@code Accept}.
      *
      * @param text free-text input describing the message content
-     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI such as {@code Negotiation-T/information-negotiation/accept-reject/v1}; its phase
      *     segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
@@ -236,7 +236,7 @@ public final class NegotiationGenerationOrchestrator {
      * conclusion must be {@code Reject}.
      *
      * @param text free-text input describing the message content
-     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI such as {@code Negotiation-T/feasibility-negotiation/accept-reject/v1}; its phase
      *     segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
@@ -262,7 +262,7 @@ public final class NegotiationGenerationOrchestrator {
      * {@code negotiation_content_extract_failed} and {@code negotiation_llm_infrastructure_error}.
      *
      * @param text free-text input stating the termination reason
-     * @param context negotiation context injected into the rendered message without any LLM involvement
+     * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the context or the template URI is null
@@ -339,95 +339,118 @@ public final class NegotiationGenerationOrchestrator {
      * the rule-level context parameters; context parameters win on conflict.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code propose}
      * @return filled parameter data carrying the context parameters and the extracted parameters
      * @throws NullPointerException if the schema or the template URI is null
      * @throws IllegalArgumentException if the template URI's phase contradicts the method
-     * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input} when the prompt is
-     *     not a negotiation message, {@code negotiation_rule_violation} when the negotiation context violates a rule,
+     * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input} when the context is
+     *     null and the message is therefore not a negotiation message, {@code negotiation_rule_violation} when the
+     *     negotiation context violates a rule,
      *     {@code negotiation_semantic_rejected} when the semantic validation rejects the message,
      *     {@code negotiation_llm_infrastructure_error} when the semantic step fails after exhausting its retries, or
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateProposePromptAndDataFilling(
-            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
-        return validatePromptAndDataFilling(prompt, schema, templateUri, NegotiationPhase.PROPOSE);
+            String prompt,
+            NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
+        return validatePromptAndDataFilling(prompt, context, schema, templateUri, NegotiationPhase.PROPOSE);
     }
 
     /**
      * Validates an accept-phase negotiation message and extracts its parameters.
      *
-     * <p>The pipeline is the one of {@link #validateProposePromptAndDataFilling(String, Map, TemplateUri)} with the expected
+     * <p>The pipeline is the one of {@link #validateProposePromptAndDataFilling(String, NegotiationContext, Map,
+     * TemplateUri)} with the expected
      * phase fixed to accept: the template URI must declare the {@code accept-reject} segment and the message must
      * satisfy the accept-phase semantic constraints.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
      * @throws NullPointerException if the schema or the template URI is null
      * @throws IllegalArgumentException if the template URI's phase contradicts the method
-     * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input} when the prompt is
-     *     not a negotiation message, {@code negotiation_rule_violation} when the negotiation context violates a rule,
+     * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input} when the context is
+     *     null and the message is therefore not a negotiation message, {@code negotiation_rule_violation} when the
+     *     negotiation context violates a rule,
      *     {@code negotiation_semantic_rejected} when the semantic validation rejects the message,
      *     {@code negotiation_llm_infrastructure_error} when the semantic step fails after exhausting its retries, or
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateAcceptPromptAndDataFilling(
-            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
-        return validatePromptAndDataFilling(prompt, schema, templateUri, NegotiationPhase.ACCEPT);
+            String prompt,
+            NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
+        return validatePromptAndDataFilling(prompt, context, schema, templateUri, NegotiationPhase.ACCEPT);
     }
 
     /**
      * Validates a reject-phase negotiation message and extracts its parameters.
      *
-     * <p>The pipeline is the one of {@link #validateProposePromptAndDataFilling(String, Map, TemplateUri)} with the expected
+     * <p>The pipeline is the one of {@link #validateProposePromptAndDataFilling(String, NegotiationContext, Map,
+     * TemplateUri)} with the expected
      * phase fixed to reject: the template URI must declare the {@code accept-reject} segment and the message must
      * satisfy the reject-phase semantic constraints.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI declaring the expected negotiation type and phase; its phase segment must be
      *     {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
      * @throws NullPointerException if the schema or the template URI is null
      * @throws IllegalArgumentException if the template URI's phase contradicts the method
-     * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input} when the prompt is
-     *     not a negotiation message, {@code negotiation_rule_violation} when the negotiation context violates a rule,
+     * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input} when the context is
+     *     null and the message is therefore not a negotiation message, {@code negotiation_rule_violation} when the
+     *     negotiation context violates a rule,
      *     {@code negotiation_semantic_rejected} when the semantic validation rejects the message,
      *     {@code negotiation_llm_infrastructure_error} when the semantic step fails after exhausting its retries, or
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateRejectPromptAndDataFilling(
-            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
-        return validatePromptAndDataFilling(prompt, schema, templateUri, NegotiationPhase.REJECT);
+            String prompt,
+            NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
+        return validatePromptAndDataFilling(prompt, context, schema, templateUri, NegotiationPhase.REJECT);
     }
 
     /**
      * Validates an abort negotiation message and extracts its parameters.
      *
-     * <p>The pipeline is the one of {@link #validateProposePromptAndDataFilling(String, Map, TemplateUri)} with the expected
+     * <p>The pipeline is the one of {@link #validateProposePromptAndDataFilling(String, NegotiationContext, Map,
+     * TemplateUri)} with the expected
      * phase fixed to abort: the template URI must address the common abort template and the message must satisfy the
      * abort-phase semantic constraints.
      *
      * @param prompt rendered negotiation message text to validate
+     * @param context negotiation context carried alongside the message in the A2A-T metadata
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
      * @return filled parameter data carrying the context parameters and the extracted parameters
      * @throws NullPointerException if the schema or the template URI is null
      * @throws IllegalArgumentException if the template URI does not address the common abort template
-     * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input} when the prompt is
-     *     not a negotiation message, {@code negotiation_rule_violation} when the negotiation context violates a rule,
+     * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input} when the context is
+     *     null and the message is therefore not a negotiation message, {@code negotiation_rule_violation} when the
+     *     negotiation context violates a rule,
      *     {@code negotiation_semantic_rejected} when the semantic validation rejects the message,
      *     {@code negotiation_llm_infrastructure_error} when the semantic step fails after exhausting its retries, or
      *     {@code template_not_found} when the semantic validation prompt resources are missing
      */
     public FilledParamData validateAbortPromptAndDataFilling(
-            String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
-        return validatePromptAndDataFilling(prompt, schema, templateUri, NegotiationPhase.ABORT);
+            String prompt,
+            NegotiationContext context,
+            @NonNull Map<String, Object> schema,
+            @NonNull TemplateUri templateUri) {
+        return validatePromptAndDataFilling(prompt, context, schema, templateUri, NegotiationPhase.ABORT);
     }
 
     private MetadataContent generateFromData(
@@ -505,15 +528,19 @@ public final class NegotiationGenerationOrchestrator {
                 context.round(),
                 context.id());
         return new MetadataContent(
-                reference.uri(), promptText, ExtensionUriConstants.NEGOTIATION_T_EXTENSION_URI);
+                reference.uri(), promptText, ExtensionUriConstants.NEGOTIATION_T_EXTENSION_URI, context);
     }
 
     private FilledParamData validatePromptAndDataFilling(
-            String prompt, Map<String, Object> schema, TemplateUri templateUri, NegotiationPhase phase) {
+            String prompt,
+            NegotiationContext context,
+            Map<String, Object> schema,
+            TemplateUri templateUri,
+            NegotiationPhase phase) {
         Objects.requireNonNull(schema, "Parameter schema must not be null.");
         NegotiationReference reference = requireReference(templateUri, phase);
         try {
-            return paramExtractor.extract(prompt, schema, reference);
+            return paramExtractor.extract(prompt, context, schema, reference);
         } catch (NegotiationParamExtractionException failure) {
             logger.atWarn()
                     .log(

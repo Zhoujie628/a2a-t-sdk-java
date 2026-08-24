@@ -14,9 +14,9 @@ import net.openan.a2at.sdk.negotiation.validation.NegotiationSemanticValidator;
 import org.junit.jupiter.api.Test;
 
 /**
- * Pins the compile-time contract of the validate-and-filling API: the parameter schema and the template URI are
- * mandatory parts of the full signature of each of the three methods, so a caller that omits either argument is
- * rejected at compile time and no reduced-arity overload can silently appear later.
+ * Pins the compile-time contract of the validate-and-filling API: the negotiation context, the parameter schema and
+ * the template URI are mandatory parts of the full signature of each of the three methods, so a caller that omits
+ * any argument is rejected at compile time and no reduced-arity overload can silently appear later.
  */
 class ValidatePromptAndDataFillingSignatureContractTest {
 
@@ -24,7 +24,7 @@ class ValidatePromptAndDataFillingSignatureContractTest {
             List.of("validateProposePromptAndDataFilling", "validateAcceptPromptAndDataFilling", "validateRejectPromptAndDataFilling");
 
     @Test
-    void everyValidatePromptAndDataFillingMethodHasExactlyTheFullThreeArgumentSignature() {
+    void everyValidatePromptAndDataFillingMethodHasExactlyTheFullFourArgumentSignature() {
         for (String methodName : VALIDATE_PROMPT_FILLING_METHODS) {
             List<Method> declared = Arrays.stream(NegotiationGenerationOrchestrator.class.getDeclaredMethods())
                     .filter(method -> method.getName().equals(methodName))
@@ -34,14 +34,18 @@ class ValidatePromptAndDataFillingSignatureContractTest {
                     1,
                     declared.size(),
                     methodName + " must exist exactly once: no reduced-arity overload may bypass the mandatory"
-                            + " schema and template URI arguments");
+                            + " context, schema and template URI arguments");
             Method method = declared.get(0);
             assertTrue(Modifier.isPublic(method.getModifiers()), methodName + " must be public");
             Class<?>[] parameterTypes = method.getParameterTypes();
-            assertEquals(3, parameterTypes.length, methodName + " must take exactly three parameters");
+            assertEquals(4, parameterTypes.length, methodName + " must take exactly four parameters");
             assertEquals(String.class, parameterTypes[0], methodName + " first parameter is the prompt text");
-            assertEquals(Map.class, parameterTypes[1], methodName + " second parameter is the caller parameter schema");
-            assertEquals(TemplateUri.class, parameterTypes[2], methodName + " third parameter is the template URI");
+            assertEquals(
+                    net.openan.a2at.sdk.core.model.NegotiationContext.class,
+                    parameterTypes[1],
+                    methodName + " second parameter is the negotiation context");
+            assertEquals(Map.class, parameterTypes[2], methodName + " third parameter is the caller parameter schema");
+            assertEquals(TemplateUri.class, parameterTypes[3], methodName + " fourth parameter is the template URI");
         }
     }
 

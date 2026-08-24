@@ -17,7 +17,7 @@ import net.openan.a2at.sample.subscribe_incident.client.flow.SampleStreamTermina
 import net.openan.a2at.sample.subscribe_incident.client.runtime.DefaultSampleClientRuntime;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import org.a2aproject.sdk.client.ClientEvent;
 import org.a2aproject.sdk.client.transport.spi.interceptors.ClientCallContext;
 import org.a2aproject.sdk.spec.Message;
@@ -67,11 +67,20 @@ public final class NegotiationClientMain {
                         NegotiationDecision decision = prompt.matches("(?s).*## 信息协商结果\\R\\s*Reject.*")
                                 ? NegotiationDecision.REJECT
                                 : NegotiationDecision.ACCEPT;
+                        NegotiationContext endingContext = NegotiationMetadataReader.readContext(endingMetadata);
                         Map<String, Object> result = decision == NegotiationDecision.ACCEPT
                                 ? client.validateAcceptPromptAndDataFilling(
-                                        prompt, InformationNegotiationSchemas.accept(), NegotiationSampleFlow.ENDING_TEMPLATE_URI).data()
+                                        prompt,
+                                        endingContext,
+                                        InformationNegotiationSchemas.accept(),
+                                        NegotiationSampleFlow.ENDING_TEMPLATE_URI)
+                                        .data()
                                 : client.validateRejectPromptAndDataFilling(
-                                        prompt, InformationNegotiationSchemas.reject(), NegotiationSampleFlow.ENDING_TEMPLATE_URI).data();
+                                        prompt,
+                                        endingContext,
+                                        InformationNegotiationSchemas.reject(),
+                                        NegotiationSampleFlow.ENDING_TEMPLATE_URI)
+                                        .data();
                         System.out.println("[negotiation-client] result=" + result);
                     }
                 }

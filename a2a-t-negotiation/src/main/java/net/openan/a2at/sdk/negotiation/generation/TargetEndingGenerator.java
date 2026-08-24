@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
@@ -34,7 +34,6 @@ final class TargetEndingGenerator extends AbstractNegotiationGenerator {
         TargetEndingContent endingContent = contentOf(content, TargetEndingContent.class, "Target ending generator");
         NegotiationConclusion conclusion = renderableConclusion(endingContent.conclusion());
         Map<String, String> slots = new LinkedHashMap<>();
-        slots.put(vocabulary.get("slot.context"), contextSlotValue(context, vocabulary));
         slots.put(vocabulary.get("slot.target_conclusion"), conclusion.literal());
         slots.put(vocabulary.get("slot.target_result_content"), resultContentSlotValue(endingContent, conclusion));
         return render(template, slots);

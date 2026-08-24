@@ -18,7 +18,7 @@ import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
@@ -76,6 +76,7 @@ class TaskPromptNegotiationCoexistenceTest {
                 NegotiationParamExtractionException.class,
                 () -> server.validateProposePromptAndDataFilling(
                         TASK_T_MESSAGE,
+                        null,
                         Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                         INFORMATION_PROPOSE_TEMPLATE));
 
@@ -89,7 +90,7 @@ class TaskPromptNegotiationCoexistenceTest {
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_TEMPLATE);
         assertEquals(INFORMATION_PROPOSE_URI, negotiationMessage.templateUri());
-        assertTrue(negotiationMessage.promptText().contains("- id: " + UUID));
+        assertEquals(UUID, negotiationMessage.negotiationContext().id());
     }
 
     @Test
@@ -108,7 +109,7 @@ class TaskPromptNegotiationCoexistenceTest {
                         new NegotiationContext(UUID, 2, 5),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_TEMPLATE);
-        assertTrue(negotiationMessage.promptText().contains("- round: 2"));
+        assertEquals(2, negotiationMessage.negotiationContext().round());
 
         Map<String, Object> startedAgain = server.startNegotiation(NegotiationType.TARGET, "请澄清目标。", Map.of());
         assertEquals(

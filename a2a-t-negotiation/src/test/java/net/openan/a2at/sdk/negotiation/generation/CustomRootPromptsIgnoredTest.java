@@ -15,7 +15,7 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -78,6 +78,7 @@ class CustomRootPromptsIgnoredTest {
 
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                 message.promptText(),
+                new NegotiationContext(UUID, 1, 5),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                 INFORMATION_PROPOSE_URI);
 

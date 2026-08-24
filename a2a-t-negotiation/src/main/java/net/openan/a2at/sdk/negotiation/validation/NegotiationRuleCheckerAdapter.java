@@ -6,17 +6,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
 import net.openan.a2at.sdk.core.validation.RuleChecker;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
-import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 
 /**
- * Adapter that bridges {@link NegotiationComplianceChecker} to the {@link RuleChecker} contract.
+ * Adapter that bridges {@link NegotiationComplianceChecker} to the {@link RuleChecker} contract for one validation
+ * call.
  *
- * <p>The adapter holds a {@link NegotiationComplianceChecker} and a {@link Vocabulary}, delegating the
- * {@link RuleChecker#check(String)} call to the vocabulary-aware {@link NegotiationComplianceChecker#check(String,
- * Vocabulary)} method. The resulting {@link NegotiationRuleCheckResult} is converted into either a map of context
+ * <p>The adapter holds a {@link NegotiationComplianceChecker} and the negotiation context carried alongside the
+ * message in the A2A-T metadata, delegating the {@link RuleChecker#check(String)} call to the context-aware
+ * {@link NegotiationComplianceChecker#check(NegotiationContext)} method. A null context is reported as not being a
+ * negotiation message. The resulting {@link NegotiationRuleCheckResult} is converted into either a map of context
  * parameters ({@code id}, {@code round}, {@code maxRounds}) or a {@link ContentValidationException}.
  *
  * @since 2026-08
@@ -24,35 +25,34 @@ import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 public final class NegotiationRuleCheckerAdapter implements RuleChecker {
 
     private static final String NON_NEGOTIATION_MESSAGE =
-            "missing negotiation context section; for Task-T compliance use checkTaskPrompt";
+            "missing negotiation context; for Task-T compliance use checkTaskPrompt";
 
     private final NegotiationComplianceChecker checker;
 
-    private final Vocabulary vocabulary;
+    private final NegotiationContext context;
 
-    public NegotiationRuleCheckerAdapter(NegotiationComplianceChecker checker, Vocabulary vocabulary) {
+    public NegotiationRuleCheckerAdapter(NegotiationComplianceChecker checker, NegotiationContext context) {
         this.checker = Objects.requireNonNull(checker, "checker");
-        this.vocabulary = Objects.requireNonNull(vocabulary, "vocabulary");
+        this.context = context;
     }
 
     @Override
     public Map<String, Object> check(String prompt) {
-        NegotiationRuleCheckResult result = checker.check(prompt, vocabulary);
-        if (!result.isNegotiation()) {
+        if (context == null) {
             throw new ContentValidationException(
                     A2ATErrorCodes.VALIDATION_INVALID_INPUT, NON_NEGOTIATION_MESSAGE, List.of());
         }
+        NegotiationRuleCheckResult result = checker.check(context);
         if (!result.passed()) {
             throw new ContentValidationException(
                     A2ATErrorCodes.VALIDATION_RULE_VIOLATION,
                     "Negotiation context rule validation failed.",
                     result.errors());
         }
-        NegotiationContext ctx = result.context();
         Map<String, Object> params = new LinkedHashMap<>();
-        params.put("id", ctx.id());
-        params.put("round", ctx.round());
-        params.put("maxRounds", ctx.maxRounds());
+        params.put("id", context.id());
+        params.put("round", context.round());
+        params.put("maxRounds", context.maxRounds());
         return Collections.unmodifiableMap(params);
     }
 }

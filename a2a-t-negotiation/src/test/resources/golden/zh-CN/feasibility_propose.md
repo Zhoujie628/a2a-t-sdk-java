@@ -1,8 +1,3 @@
-## 协商上下文
-- id: 3dbc13b5-bd57-4c2b-b503-24e381b6c8d3
-- round: 2
-- maxRounds: 5
-
 ## 可行性协商
 Please assess whether the adjusted rate guarantee target of the site-level energy-saving task can be achieved, see <Under Evaluation Description>; please assess.
 

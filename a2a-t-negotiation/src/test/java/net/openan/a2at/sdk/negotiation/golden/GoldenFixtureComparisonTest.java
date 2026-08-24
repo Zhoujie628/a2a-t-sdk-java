@@ -40,6 +40,8 @@ class GoldenFixtureComparisonTest {
 
     private static final String TEMPLATE_URI_METADATA_KEY = MetadataContent.TEMPLATE_URI_METADATA_KEY;
 
+    private static final String NEGOTIATION_CONTEXT_METADATA_KEY = MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY;
+
     static Stream<Arguments> goldenCases() {
         List<Arguments> cases = new ArrayList<>();
         for (String language : GoldenInputs.LANGUAGES) {
@@ -86,16 +88,23 @@ class GoldenFixtureComparisonTest {
 
     @ParameterizedTest(name = "{0} [{1}] metadata contract")
     @MethodSource("goldenCases")
-    void buildsTheMetadataMapWithExactlyTwoEntries(GoldenCase goldenCase, String language) {
+    void buildsTheMetadataMapWithExactlyThreeEntries(GoldenCase goldenCase, String language) {
         MetadataContent result = render(goldenCase, language);
 
-        Map<String, String> metadata = result.buildMetadataContent();
-        assertEquals(2, metadata.size());
+        Map<String, Object> metadata = result.buildMetadataContent();
+        assertEquals(3, metadata.size());
         assertEquals(result.promptText(), metadata.get(EXTENSION_URI));
         assertEquals(goldenCase.templateUri(), metadata.get(TEMPLATE_URI_METADATA_KEY));
+        assertEquals(goldenCase.context(), result.negotiationContext());
         Iterator<String> keyOrder = metadata.keySet().iterator();
         assertEquals(EXTENSION_URI, keyOrder.next());
         assertEquals(TEMPLATE_URI_METADATA_KEY, keyOrder.next());
+        assertEquals(NEGOTIATION_CONTEXT_METADATA_KEY, keyOrder.next());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> nestedContext = (Map<String, Object>) metadata.get(NEGOTIATION_CONTEXT_METADATA_KEY);
+        assertEquals(goldenCase.context().id(), nestedContext.get("id"));
+        assertEquals(goldenCase.context().round(), nestedContext.get("round"));
+        assertEquals(goldenCase.context().maxRounds(), nestedContext.get("maxRounds"));
         assertEquals(metadata, result.buildMetadataContent());
     }
 
@@ -118,12 +127,9 @@ class GoldenFixtureComparisonTest {
         String promptText = result.promptText();
 
         String contextTitle = "zh-CN".equals(language) ? "协商上下文" : "Negotiation Context";
-        assertTrue(promptText.startsWith("## " + contextTitle + "\n"), "message must start with the context section");
-        assertTrue(
-                promptText.contains("- id: " + GoldenInputs.SESSION_ID + "\n- round: "
-                        + goldenCase.context().round() + "\n- maxRounds: "
-                        + goldenCase.context().maxRounds()),
-                "context section must be the fixed three-line list");
+        assertFalse(promptText.contains(contextTitle), "the context section must not be rendered into the message");
+        assertFalse(promptText.contains("- id: " + GoldenInputs.SESSION_ID), "context lines must not be rendered");
+        assertEquals(goldenCase.context(), result.negotiationContext(), "the context travels in the metadata");
         assertFalse(promptText.endsWith("\n"), "message must not end with a newline");
         assertFalse(promptText.contains("\n\n\n"), "sections must be joined by exactly one blank line");
         assertFalse(promptText.contains("{{"), "no unreplaced slot placeholder may remain");

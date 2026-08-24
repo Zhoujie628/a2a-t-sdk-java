@@ -9,7 +9,7 @@ import net.openan.a2at.sample.negotiation.shared.NegotiationSampleSupport;
 import net.openan.a2at.sample.negotiation.shared.ScenarioData;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 
 /**
  * Sample that demonstrates all three fromText negotiation APIs across all three negotiation types.

@@ -1,5 +1,7 @@
 package net.openan.a2at.sdk.negotiation.content;
 
+import net.openan.a2at.sdk.core.model.NegotiationContext;
+
 /**
  * Input bundle for generating a terminal (accept or reject) negotiation message from typed data.
  *
