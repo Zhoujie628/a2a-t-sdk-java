@@ -27,6 +27,8 @@ class DefaultNegotiationSemanticValidatorTest {
             + "## Required Information Items\n"
             + "1. energy saving region: provide a real region\n";
 
+    private static final String TEMPLATE_CONTENT = "dummy template content";
+
     private final RecordingSchemaBuilder schemaBuilder = new RecordingSchemaBuilder();
 
     private final RecordingLLMClient llmClient = new RecordingLLMClient();
@@ -45,7 +47,7 @@ class DefaultNegotiationSemanticValidatorTest {
         llmClient.payload = "{\"semantic_verdict\":true,\"negotiation_type\":\"information\","
                 + "\"errors\":[],\"params\":{\"confirmed_rate_mbps\":2}}";
 
-        SemanticValidationResult result = validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference);
+        SemanticValidationResult result = validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT);
 
         assertTrue(result.verdict());
         assertEquals("information", result.negotiationType());
@@ -60,7 +62,7 @@ class DefaultNegotiationSemanticValidatorTest {
         llmClient.payload =
                 "{\"semantic_verdict\":true,\"negotiation_type\":\"information\"," + "\"errors\":[],\"params\":{}}";
 
-        validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference);
+        validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT);
 
         List<Map<String, String>> messages = llmClient.lastMessages;
         assertEquals(2, messages.size());
@@ -68,7 +70,9 @@ class DefaultNegotiationSemanticValidatorTest {
         assertTrue(messages.get(0).get("content").contains("semantic validation"));
         assertEquals("user", messages.get(1).get("role"));
         String userPrompt = messages.get(1).get("content");
-        assertTrue(userPrompt.contains("information"));
+assertTrue(userPrompt.contains("information"));
+        assertTrue(userPrompt.contains("propose"));
+        assertTrue(userPrompt.contains(TEMPLATE_CONTENT));
         assertTrue(userPrompt.contains(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri()));
         assertTrue(userPrompt.contains("confirmed_rate_mbps"));
         assertTrue(userPrompt.contains("energy saving region"));
@@ -83,7 +87,7 @@ class DefaultNegotiationSemanticValidatorTest {
 
         NegotiationValidationException exception = assertThrows(
                 NegotiationValidationException.class,
-                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference));
+                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT));
 
         assertTrue(exception.getMessage().contains("negotiation_type"));
     }
@@ -93,17 +97,17 @@ class DefaultNegotiationSemanticValidatorTest {
         llmClient.payload = "{\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}";
         assertThrows(
                 NegotiationValidationException.class,
-                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference));
+                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT));
 
         llmClient.payload = "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"params\":{}}";
         assertThrows(
                 NegotiationValidationException.class,
-                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference));
+                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT));
 
         llmClient.payload = "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[]}";
         assertThrows(
                 NegotiationValidationException.class,
-                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference));
+                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT));
     }
 
     @Test
@@ -112,37 +116,37 @@ class DefaultNegotiationSemanticValidatorTest {
                 "{\"semantic_verdict\":\"yes\",\"negotiation_type\":\"information\"," + "\"errors\":[],\"params\":{}}";
         assertThrows(
                 NegotiationValidationException.class,
-                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference));
+                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT));
 
         llmClient.payload = "{\"semantic_verdict\":true,\"negotiation_type\":\"information\","
                 + "\"errors\":\"none\",\"params\":{}}";
         assertThrows(
                 NegotiationValidationException.class,
-                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference));
+                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT));
 
         llmClient.payload =
                 "{\"semantic_verdict\":true,\"negotiation_type\":\"information\"," + "\"errors\":[],\"params\":[]}";
         assertThrows(
                 NegotiationValidationException.class,
-                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference));
+                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT));
 
         llmClient.payload = "{\"semantic_verdict\":true,\"negotiation_type\":\"information\","
                 + "\"errors\":[{\"slot_name\":\"section.context\"}],\"params\":{}}";
         assertThrows(
                 NegotiationValidationException.class,
-                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference));
+                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT));
 
         llmClient.payload = "not json at all";
         assertThrows(
                 NegotiationValidationException.class,
-                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference));
+                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT));
     }
 
     @Test
     void nullTypeWithTrueVerdictIsTurnedIntoSemanticRejection() {
         llmClient.payload = "{\"semantic_verdict\":true,\"negotiation_type\":null,\"errors\":[],\"params\":{}}";
 
-        SemanticValidationResult result = validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference);
+        SemanticValidationResult result = validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT);
 
         assertFalse(result.verdict());
         assertNull(result.negotiationType());
@@ -156,7 +160,7 @@ class DefaultNegotiationSemanticValidatorTest {
         llmClient.payload =
                 "{\"semantic_verdict\":true,\"negotiation_type\":\"target\"," + "\"errors\":[],\"params\":{}}";
 
-        SemanticValidationResult result = validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference);
+        SemanticValidationResult result = validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT);
 
         assertFalse(result.verdict());
         assertEquals("target", result.negotiationType());
@@ -172,7 +176,7 @@ class DefaultNegotiationSemanticValidatorTest {
                 + "\"errors\":[{\"slot_name\":\"section.target_result_content\","
                 + "\"code\":\"conclusion_content_mismatch\",\"message\":\"Mismatch\"}],\"params\":{}}";
 
-        SemanticValidationResult result = validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference);
+        SemanticValidationResult result = validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT);
 
         assertFalse(result.verdict());
         assertNull(result.negotiationType());
@@ -186,7 +190,7 @@ class DefaultNegotiationSemanticValidatorTest {
 
         NegotiationValidationException exception = assertThrows(
                 NegotiationValidationException.class,
-                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference));
+                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT));
 
         assertTrue(exception.getMessage().contains("invocation failed"));
     }
@@ -198,7 +202,7 @@ class DefaultNegotiationSemanticValidatorTest {
 
         assertThrows(
                 ResourceNotFoundException.class,
-                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, unsupportedLanguageReference));
+                () -> validator.validateNegotiation(VALID_PROMPT, callerSchema, unsupportedLanguageReference, TEMPLATE_CONTENT));
         assertEquals(0, llmClient.invocations);
     }
 

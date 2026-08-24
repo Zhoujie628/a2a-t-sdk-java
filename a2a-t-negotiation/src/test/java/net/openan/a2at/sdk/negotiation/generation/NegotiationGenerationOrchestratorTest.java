@@ -198,7 +198,7 @@ class NegotiationGenerationOrchestratorTest {
 
         NegotiationGenerationOrchestrator validationOrchestrator = NegotiationGenerationOrchestratorBuilder.builder()
                 .language("zh-CN")
-                .semanticValidator((prompt, callerSchema, reference) -> {
+                .semanticValidator((prompt, callerSchema, reference, templateContent) -> {
                     throw new ResourceNotFoundException(
                             "Semantic validation prompt does not exist.", "prompt_resources/prompts");
                 })

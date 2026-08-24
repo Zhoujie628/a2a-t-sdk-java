@@ -29,6 +29,7 @@ public interface NegotiationSemanticValidator extends SemanticValidator<Negotiat
      * @param callerSchema caller-provided parameter JSON schema embedded into the structured-call output contract
      * @param reference negotiation reference the message is validated against, carrying the declared type, phase and
      *     language
+     * @param templateContent loaded template text used as a reference for structure/completeness checks
      * @return semantic validation outcome carrying the verdict, the implied negotiation type, the semantic errors and
      *     the extracted parameters
      * @throws NegotiationValidationException if the LLM invocation fails or the response misses a required key or has
@@ -37,12 +38,13 @@ public interface NegotiationSemanticValidator extends SemanticValidator<Negotiat
      *     of the reference language are missing
      */
     SemanticValidationResult validateNegotiation(
-            String prompt, Map<String, Object> callerSchema, NegotiationReference reference);
+            String prompt, Map<String, Object> callerSchema, NegotiationReference reference, String templateContent);
 
     @Override
-    default ValidationResult validate(String prompt, Map<String, Object> schema, NegotiationReference reference) {
+    default ValidationResult validate(
+            String prompt, Map<String, Object> schema, NegotiationReference reference, String templateContent) {
         try {
-            SemanticValidationResult result = validateNegotiation(prompt, schema, reference);
+            SemanticValidationResult result = validateNegotiation(prompt, schema, reference, templateContent);
             return new ValidationResult(result.verdict(), result.errors(), result.params());
         } catch (NegotiationValidationException exception) {
             throw new ContentValidationException(

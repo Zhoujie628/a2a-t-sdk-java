@@ -7,11 +7,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Arrays;
+import java.util.Objects;
+import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 import net.openan.a2at.sdk.core.exception.A2ATError;
@@ -164,10 +168,10 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
      */
     @Override
     public SemanticValidationResult validateNegotiation(
-            String prompt, Map<String, Object> callerSchema, NegotiationReference reference) {
+            String prompt, Map<String, Object> callerSchema, NegotiationReference reference, String templateContent) {
         Objects.requireNonNull(prompt, "prompt");
         Objects.requireNonNull(reference, "reference");
-        List<Map<String, String>> messages = buildMessages(prompt, callerSchema, reference);
+        List<Map<String, String>> messages = buildMessages(prompt, callerSchema, reference, templateContent);
         Map<String, Object> mergedSchema = schemaBuilder.apply(callerSchema);
         LLMResponse response;
         try {
@@ -184,17 +188,30 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
         return result;
     }
 
+    private static final Pattern USER_PROMPT_PLACEHOLDER_PATTERN =
+            Pattern.compile("\\[(phase|input|template_uri|negotiation_type|template_content|schema)\\]");
+
     private static List<Map<String, String>> buildMessages(
-            String prompt, Map<String, Object> callerSchema, NegotiationReference reference) {
+            String prompt, Map<String, Object> callerSchema, NegotiationReference reference, String templateContent) {
         String language = reference.language();
         String systemPrompt = loadPromptResource(SYSTEM_PROMPT_FILE, language);
         String userPrompt = loadPromptResource(USER_PROMPT_FILE, language);
-        String filledUserPrompt = userPrompt
-                .replace("[phase]", reference.phase().name().toLowerCase(Locale.ROOT))
-                .replace("[input]", prompt)
-                .replace("[template_uri]", reference.uri())
-                .replace("[negotiation_type]", declaredTypeName(reference))
-                .replace("[schema]", toJson(callerSchema));
+        Matcher matcher = USER_PROMPT_PLACEHOLDER_PATTERN.matcher(userPrompt);
+        StringBuilder sb = new StringBuilder();
+        while (matcher.find()) {
+            String replacement = switch (matcher.group(1)) {
+                case "phase" -> Matcher.quoteReplacement(reference.phase().name().toLowerCase(Locale.ROOT));
+                case "input" -> Matcher.quoteReplacement(prompt);
+                case "template_uri" -> Matcher.quoteReplacement(reference.uri());
+                case "negotiation_type" -> Matcher.quoteReplacement(declaredTypeName(reference));
+                case "template_content" -> Matcher.quoteReplacement(templateContent);
+                case "schema" -> Matcher.quoteReplacement(toJson(callerSchema));
+                default -> Matcher.quoteReplacement(matcher.group());
+            };
+            matcher.appendReplacement(sb, replacement);
+        }
+        matcher.appendTail(sb);
+        String filledUserPrompt = sb.toString();
         return List.of(
                 Map.of("role", "system", "content", systemPrompt), Map.of("role", "user", "content", filledUserPrompt));
     }

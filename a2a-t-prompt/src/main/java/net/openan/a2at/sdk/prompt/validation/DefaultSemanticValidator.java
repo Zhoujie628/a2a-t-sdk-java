@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
@@ -89,14 +90,14 @@ final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
 
     @Override
     public ValidationResult validate(
-            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri reference) {
+            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri reference, @NonNull String templateContent) {
         if (llmClient == null) {
             throw new ContentValidationException(
                     A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR,
                     "LLM client is not configured for semantic validation.");
         }
 
-        String userPrompt = fillUserPrompt(prompt, schema, reference);
+        String userPrompt = fillUserPrompt(prompt, schema, reference, templateContent);
         Map<String, Object> outputSchema = buildOutputSchema();
         List<Map<String, String>> messages = toStructuredMessages(
                 List.of(new PromptMessage("system", systemPrompt), new PromptMessage("user", userPrompt)));
@@ -150,7 +151,10 @@ final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
         }
     }
 
-    private String fillUserPrompt(String prompt, Map<String, Object> schema, TemplateUri reference) {
+    private static final Pattern PLACEHOLDER_PATTERN =
+            Pattern.compile("\\[(extension_name|input|template_uri|template_content|schema)\\]");
+
+    private String fillUserPrompt(String prompt, Map<String, Object> schema, TemplateUri reference, String templateContent) {
         String schemaJson;
         try {
             schemaJson = OBJECT_MAPPER.writeValueAsString(schema);
@@ -158,11 +162,21 @@ final class DefaultSemanticValidator implements SemanticValidator<TemplateUri> {
             throw new A2ATError("Failed to serialize schema to JSON.", exception);
         }
 
-        return userPromptTemplate
-                .replaceAll("\\[extension_name\\]", Matcher.quoteReplacement(reference.extensionName()))
-                .replaceAll("\\[input\\]", Matcher.quoteReplacement(prompt))
-                .replaceAll("\\[template_uri\\]", Matcher.quoteReplacement(reference.uri()))
-                .replaceAll("\\[schema\\]", Matcher.quoteReplacement(schemaJson));
+        Matcher matcher = PLACEHOLDER_PATTERN.matcher(userPromptTemplate);
+        StringBuilder sb = new StringBuilder();
+        while (matcher.find()) {
+            String replacement = switch (matcher.group(1)) {
+                case "extension_name" -> Matcher.quoteReplacement(reference.extensionName());
+                case "input" -> Matcher.quoteReplacement(prompt);
+                case "template_uri" -> Matcher.quoteReplacement(reference.uri());
+                case "template_content" -> Matcher.quoteReplacement(templateContent);
+                case "schema" -> Matcher.quoteReplacement(schemaJson);
+                default -> Matcher.quoteReplacement(matcher.group());
+            };
+            matcher.appendReplacement(sb, replacement);
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
     }
 
     private static Map<String, Object> buildOutputSchema() {

@@ -539,8 +539,15 @@ public final class NegotiationGenerationOrchestrator {
             NegotiationPhase phase) {
         Objects.requireNonNull(schema, "Parameter schema must not be null.");
         NegotiationReference reference = requireReference(templateUri, phase);
+        String templateContent;
         try {
-            return paramExtractor.extract(prompt, context, schema, reference);
+            templateContent = loadTemplate(reference).content();
+        } catch (NegotiationGenerationException exception) {
+            throw new NegotiationParamExtractionException(
+                    exception.getCode(), exception.getMessage(), List.of());
+        }
+        try {
+            return paramExtractor.extract(prompt, context, schema, reference, templateContent);
         } catch (NegotiationParamExtractionException failure) {
             logger.atWarn()
                     .log(

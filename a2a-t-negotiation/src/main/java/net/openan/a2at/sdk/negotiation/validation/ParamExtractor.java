@@ -56,6 +56,7 @@ public final class ParamExtractor {
      *     as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
      * @param reference template reference the message is validated against
+     * @param templateContent loaded template text used as a reference for structure/completeness checks
      * @return filled parameter data carrying the context parameters and the extracted parameters
      * @throws NegotiationParamExtractionException with the code {@code negotiation_invalid_input},
      *     {@code negotiation_rule_violation}, {@code negotiation_semantic_rejected},
@@ -63,11 +64,15 @@ public final class ParamExtractor {
      *     fails
      */
     public FilledParamData extract(
-            String prompt, NegotiationContext context, Map<String, Object> schema, NegotiationReference reference) {
+            String prompt,
+            NegotiationContext context,
+            Map<String, Object> schema,
+            NegotiationReference reference,
+            String templateContent) {
         ValidationPipeline<NegotiationReference> pipeline = new ValidationPipeline<>(
                 new NegotiationRuleCheckerAdapter(complianceChecker, context), semanticValidator, maxAttempts);
         try {
-            return pipeline.validate(prompt, schema, reference);
+            return pipeline.validate(prompt, schema, reference, templateContent);
         } catch (ContentValidationException e) {
             throw new NegotiationParamExtractionException(mapCode(e.getCode()), e.getMessage(), e.errors());
         }

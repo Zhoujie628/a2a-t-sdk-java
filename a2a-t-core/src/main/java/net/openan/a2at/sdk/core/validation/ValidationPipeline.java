@@ -56,13 +56,14 @@ public final class ValidationPipeline<T> {
      * @param prompt content prompt text
      * @param schema caller-provided parameter JSON schema
      * @param reference template addressing value the content is validated against
+     * @param templateContent loaded template text used as a reference for structure/completeness checks
      * @return filled parameter data carrying the merged parameters
      * @throws NullPointerException if the prompt, schema or reference is null
      * @throws IllegalArgumentException if the prompt is blank
      * @throws ContentValidationException if the validation fails at any stage
      */
     public @NonNull FilledParamData validate(
-            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull T reference) {
+            @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull T reference, @NonNull String templateContent) {
         Objects.requireNonNull(schema, "schema");
         Objects.requireNonNull(prompt, "prompt");
         if (prompt.isBlank()) {
@@ -77,7 +78,7 @@ public final class ValidationPipeline<T> {
             semanticResult = RetryUtil.withRetry(
                     maxAttempts,
                     "semantic_validation",
-                    () -> semanticValidator.validate(prompt, schema, reference));
+                    () -> semanticValidator.validate(prompt, schema, reference, templateContent));
         } catch (ResourceNotFoundException exception) {
             throw new ContentValidationException(
                     A2ATErrorCodes.VALIDATION_PROMPT_RESOURCE_NOT_FOUND, exception.getMessage(), exception);
