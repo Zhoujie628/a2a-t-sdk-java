@@ -215,6 +215,30 @@ class NegotiationGenerationOrchestratorTest {
     }
 
     @Test
+    void validationTemplateLoadFailurePreservesTheOriginalCause() {
+        NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
+                .language("zh-CN")
+                .templateLoader(missingTemplateLoader())
+                .build();
+
+        NegotiationParamExtractionException failure = assertThrows(
+                NegotiationParamExtractionException.class,
+                () -> orchestrator.validateProposePromptAndDataFilling(
+                        "## 所需信息项\n1. 区域\n",
+                        new NegotiationContext(UUID, 1, 5),
+                        Map.of("type", "object"),
+                        INFORMATION_PROPOSE));
+
+        assertEquals(A2ATErrorCodes.TEMPLATE_NOT_FOUND, failure.getCode());
+        assertTrue(
+                failure.getCause() instanceof NegotiationGenerationException,
+                "the template-load failure must preserve the wrapped generation failure as cause for debugging");
+        assertTrue(
+                failure.getCause().getCause() instanceof ResourceNotFoundException,
+                "the original resource failure stays reachable through the cause chain");
+    }
+
+    @Test
     void rejectsNonNegotiationPromptInParameterExtraction() {
         ScriptedClient llm = new ScriptedClient(
                 "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}");

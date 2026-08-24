@@ -544,7 +544,7 @@ public final class NegotiationGenerationOrchestrator {
             templateContent = loadTemplate(reference).content();
         } catch (NegotiationGenerationException exception) {
             throw new NegotiationParamExtractionException(
-                    exception.getCode(), exception.getMessage(), List.of());
+                    exception.getCode(), exception.getMessage(), List.of(), exception);
         }
         try {
             return paramExtractor.extract(prompt, context, schema, reference, templateContent);
