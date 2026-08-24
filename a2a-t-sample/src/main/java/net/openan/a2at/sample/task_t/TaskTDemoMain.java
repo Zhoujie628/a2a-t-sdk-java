@@ -36,8 +36,8 @@ import net.openan.a2at.sdk.server.A2ATServer;
  *
  * <p>Each generated prompt is passed to {@code A2ATServer#validateTaskPromptAndDataFilling}; for cases one and two the
  * extracted parameters are compared against the sample ground truth and the results are aggregated into a per-case
- * field accuracy and sample pass rate, while case three reports a rejection interception rate over the negative
- * samples.
+ * field accuracy and sample pass rate, while case three reports a server-side validation rejection rate and an overall
+ * interception rate (server rejection plus client-side generation block) over the negative samples.
  *
  * <p>Run with {@code java ... TaskTDemoMain [env-file-path] [case]}. The env file resolves as follows: an explicit first
  * argument wins; otherwise a {@code client.env} in the working directory (repo root) that carries the required LLM
@@ -49,7 +49,7 @@ import net.openan.a2at.sdk.server.A2ATServer;
  * {@code A2AT_LLM_PROVIDER=openai}) — the server-side semantic validation performs one LLM call per sample.
  *
  * <p>The second optional argument selects which case to run: {@code text} (case one), {@code data} (case two),
- * {@code rejection} (case three) or {@code all} (default); when a single case is selected only its summary is printed.
+ * {@code rejection} (case three) or {@code all} (default); when a single case is selected only its summary is printed.</p>
  */
 public final class TaskTDemoMain {
 
@@ -196,7 +196,9 @@ public final class TaskTDemoMain {
      * (fed to {@code generateTaskPromptFromText}) and a data variant (fed to
      * {@code generateTaskPromptFromDataWithSchema}); a sample is counted as "server-rejected" only when the
      * validation throws {@link ContentValidationException} — the structured slot errors are printed per sample — while
-     * a failure already at prompt generation counts as a client-side block. The run aggregates an interception rate.
+     * a failure already at prompt generation counts as a client-side block. The run aggregates a server-side validation
+     * rejection rate (server-rejected over total) side by side with an overall interception rate (server-rejected plus
+     * client-blocked over total), so the validation point itself can be read independently of client-side blocks.
      */
     private static RejectionSummary runRejectionCase(A2ATClient client, A2ATServer server) {
         println("========== 用例三：缺少关键槽位拒绝用例（期望 rejected） ==========");
@@ -226,6 +228,8 @@ public final class TaskTDemoMain {
                     metadata = client.generateTaskPromptFromText(sample.text(), StandardTemplates.PRIVATE_LINE_COMPLAINT);
                 }
                 System.out.println("  templateUri : " + metadata.templateUri());
+                System.out.println("  promptText : " + metadata.promptText());
+                System.out.println("  extensionUri : " + metadata.extensionUri());
                 println();
                 Map<String, Object> extracted = server
                         .validateTaskPromptAndDataFilling(
@@ -298,6 +302,26 @@ public final class TaskTDemoMain {
 
     private static void printFailure(String stage, A2ATError error) {
         println("[失败] " + stage + ": [" + error.getCode() + "] " + error.getMessage());
+        if (error instanceof ContentValidationException validationException) {
+            List<SlotValidationError> errors = validationException.errors();
+            if (!errors.isEmpty()) {
+                println("  详细原因:");
+                for (SlotValidationError slotError : errors) {
+                    println("    slot: " + slotError.slotName()
+                            + ", code: " + slotError.code()
+                            + ", message: " + slotError.message());
+                }
+            }
+            Map<String, Object> partialParams = validationException.params();
+            if (!partialParams.isEmpty()) {
+                println("  LLM部分提取参数:");
+                println(pretty(partialParams));
+            }
+        }
+        Throwable cause = error.getCause();
+        if (cause != null) {
+            println("  根因异常: " + cause.getClass().getName() + ": " + cause.getMessage());
+        }
     }
 
     private static void printSummary(TaskTAccuracyEvaluator.Summary summary) {
@@ -315,8 +339,14 @@ public final class TaskTDemoMain {
                 + "  服务端拒绝: " + summary.serverRejected()
                 + "  生成阶段拦截: " + summary.clientBlocked()
                 + "  意外通过: " + summary.unexpectedlyPassed());
-        println("  拦截率: " + percent(
-                (summary.serverRejected() + summary.clientBlocked()) * 100.0 / summary.total()));
+        println("  服务端校验点拒绝率: " + percent(rejectionRate(summary.serverRejected(), summary.total()))
+                + "  总拦截率(服务端+客户端): " + percent(rejectionRate(
+                        summary.serverRejected() + summary.clientBlocked(), summary.total())));
+    }
+
+    /** Rate guarded against a zero sample set. */
+    private static double rejectionRate(int numerator, int total) {
+        return total == 0 ? 0d : numerator * 100.0 / total;
     }
 
     /**

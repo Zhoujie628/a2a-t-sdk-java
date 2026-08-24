@@ -95,7 +95,9 @@ public final class ValidationPipeline<T> {
             throw new ContentValidationException(
                     A2ATErrorCodes.VALIDATION_SEMANTIC_REJECTED,
                     "Semantic validation rejected the content.",
-                    semanticResult.errors());
+                    semanticResult.errors(),
+                    semanticResult.params(),
+                    null);
         }
 
         Map<String, Object> merged = mergeParams(contextParams, semanticResult.params());
