@@ -36,7 +36,7 @@ from datetime import datetime
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CORPUS_ROOT = REPO_ROOT / "a2a-t-negotiation" / "src" / "test" / "resources" / "negotiation-cases"
+CORPUS_ROOT = REPO_ROOT / "a2a-t-corpus" / "src" / "test" / "resources" / "negotiation-cases"
 REVIEW_DIR = REPO_ROOT / "docs-local" / "review"
 HTML_PATH = REVIEW_DIR / "corpus-review.html"
 XLSX_PATH = REVIEW_DIR / "corpus-review.xlsx"

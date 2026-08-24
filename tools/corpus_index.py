@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_CORPUS_ROOT = REPO_ROOT / "a2a-t-negotiation" / "src" / "test" / "resources" / "negotiation-cases"
+DEFAULT_CORPUS_ROOT = REPO_ROOT / "a2a-t-corpus" / "src" / "test" / "resources" / "negotiation-cases"
 INDEX_NAME = "INDEX.md"
 SCHEMA_NAME = "corpus-schema.json"
 
@@ -194,7 +194,7 @@ def render_index(root: Path) -> str:
     lines.append("")
     lines.append("# Negotiation Test Corpus Index")
     lines.append("")
-    lines.append("Machine-generated view of the corpus under `a2a-t-negotiation/src/test/resources/negotiation-cases/`.")
+    lines.append("Machine-generated view of the corpus under `a2a-t-corpus/src/test/resources/negotiation-cases/`.")
     lines.append("Coverage matrices count base records (one case record, or one scenario step under its scenario's category);")
     lines.append("language expansion is listed per record and totaled in the statistics.")
     lines.append("")

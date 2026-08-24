@@ -67,6 +67,7 @@ SPDX-License-Identifier: Apache-2.0
 - `a2a-t-negotiation`：协商类型、运行时状态机与状态存储。
 - `a2a-t-client`：客户端封装，提供任务提示词生成与协商入口。
 - `a2a-t-server`：服务端封装，提供A2A-T协议报文的校验与协商入口。
+- `a2a-t-corpus`：A2A-T 一致性测试语料模块——纯测试模块，含数据驱动用例与属性测试。
 - `a2a-t-sample`：可运行的客户端/服务端示例。
 
 ## 安装与环境要求
