@@ -15,6 +15,10 @@
       "complaintScenario": {
         "type": "string",
         "description": "业务字段：投诉分类场景，专线中断或专线质差二者必选其一",
+        "enum": [
+          "专线中断",
+          "专线质差"
+        ],
         "examples": [
           "专线中断",
           "专线质差"
@@ -63,6 +67,10 @@
       "bizScenario": {
         "type": "string",
         "description": "投诉分类场景，必填，仅允许取值：专线中断、专线质差",
+        "enum": [
+          "专线中断",
+          "专线质差"
+        ],
         "examples": [
           "专线中断",
           "专线质差"
@@ -274,6 +282,30 @@
         "faultTime": "2026-06-18T10:05:00Z",
         "eventSerialNo": "event-id-20260618-03342",
         "faultDetail": "时延"
+      }
+    },
+    {
+      "name": "text-optional-slots-missing",
+      "kind": "text",
+      "text": "麻烦看下 P781-番禺广场-PTN7900-3-TPA1EG24-19 这条专线，客户报的是专线质差，视频会议频繁卡顿，时延抖动快到300ms，帮我创建投诉诊断任务。",
+      "expected": {
+        "accessPort": "P781-番禺广场-PTN7900-3-TPA1EG24-19",
+        "bizScenario": "专线质差",
+        "faultDetail": "卡顿"
+      }
+    },
+    {
+      "name": "data-optional-slots-missing",
+      "kind": "data",
+      "data": {
+        "portName": "P781-番禺市桥-PTN7900-7-TPA1EG24-18",
+        "complaintScenario": "专线中断",
+        "faultDetailText": "专线业务完全中断，核心交易系统无法访问，对端网关ping丢包率100%，流量归零。"
+      },
+      "expected": {
+        "accessPort": "P781-番禺市桥-PTN7900-7-TPA1EG24-18",
+        "bizScenario": "专线中断",
+        "faultDetail": "完全中断"
       }
     }
   ],

@@ -45,8 +45,8 @@ import java.util.Map;
  *
  * <p>Expected values ({@link TaskTSample#expectedParams()}) are keyed by the <b>server</b> field names, the keys the
  * accuracy evaluator actually reads out of {@code validateTaskPromptAndDataFilling}; they hold canonical key facts that
- * always appear in the input, and a field hits when the extracted value is equal to or contains the expected value
- * after whitespace-and-case normalization.
+ * always appear in the input. Structured fields (port, scenario, time, serial) hit only when equal after
+ * whitespace-and-case normalization; the free-text detail field hits on containment.
  */
 public final class TaskTPrivateLineComplaintSamples {
 
@@ -115,11 +115,13 @@ public final class TaskTPrivateLineComplaintSamples {
      * Rejection samples that deliberately omit one or more key slots.
      *
      * <p>Two variants mirror the two client APIs under test: {@code text} samples are colloquial natural-language
-     * complaints missing key facts (access port, complaint scenario, occurrence time, event serial, ...), while
-     * {@code data} samples are structured inputs under the client field names that omit required fields or carry an
-     * invalid slot value (e.g. a complaint category outside the allowed enum). The server-side semantic validation is
-     * expected to reject such content with {@code validation_semantic_rejected}; these samples are scored separately
-     * from the accuracy samples and are never fed into the field-accuracy evaluation.
+     * complaints missing a required fact (access port, complaint scenario), while {@code data} samples are structured
+     * inputs under the client field names that omit a required field or carry a complaint category outside the contract
+     * {@code enum}. Time and serial are <em>optional</em> slots and are deliberately not used as rejection criteria —
+     * their absence is exercised by the positive samples {@code text-optional-slots-missing} /
+     * {@code data-optional-slots-missing} instead. The server-side semantic validation is expected to reject these
+     * samples with {@code validation_semantic_rejected}; they are scored separately from the accuracy samples and are
+     * never fed into the field-accuracy evaluation.
      *
      * @return immutable rejection sample list
      */
