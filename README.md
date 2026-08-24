@@ -67,6 +67,7 @@ The repository is organized as a Maven multi-module reactor, with core code unde
 - `a2a-t-negotiation`: Negotiation types, runtime state machine, and state storage.
 - `a2a-t-client`: Client facade providing task prompt generation and negotiation entry points.
 - `a2a-t-server`: Server facade providing `processed task prompt` validation and negotiation entry points.
+- `a2a-t-corpus`: A2A-T conformance test corpus module — a pure test module with data-driven corpus cases and property-based tests.
 - `a2a-t-sample`: Runnable client/server sample.
 
 ## Installation and Environment Requirements

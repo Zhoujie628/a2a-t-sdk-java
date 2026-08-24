@@ -17,3 +17,5 @@ task_plan.md
 eval-results/
 eval-run*.log
 eval-smoke.json
+.jqwik-database
+__pycache__/

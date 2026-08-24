@@ -24,6 +24,7 @@ import net.openan.a2at.sdk.prompt.resources.loader.PromptSlotSchemaLoader;
 import net.openan.a2at.sdk.prompt.resources.loader.PromptTemplateTextLoader;
 import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import net.openan.a2at.sdk.prompt.taskrendering.TaskPromptRenderer;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default builder that assembles one high-level A2AT client runtime from unified config.
@@ -70,6 +71,22 @@ public final class DefaultA2ATClientBuilder {
      */
     public DefaultA2ATClientBuilder envPath(Path envPath) {
         this.envPath = envPath;
+        return this;
+    }
+
+    /**
+     * Injects an explicit LLM client that fully replaces the factory default.
+     *
+     * <p>The injection point exists for testability and custom LLM assemblies: when set, every orchestrator built by
+     * this builder reuses the given client and no client is created from the `.env` LLM config. When unset, the
+     * builder keeps creating its default client and the behavior is unchanged.
+     *
+     * @param llmClient LLM client to inject; {@code null} keeps the factory default built from the `.env` LLM config
+     * @return current builder
+     * @since 2026-08
+     */
+    public DefaultA2ATClientBuilder llmClient(@Nullable LLMClient llmClient) {
+        this.llmClient = llmClient;
         return this;
     }
 

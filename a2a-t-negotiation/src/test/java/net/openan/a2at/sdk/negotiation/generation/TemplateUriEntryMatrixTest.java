@@ -26,9 +26,8 @@ import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs.GoldenCase;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGoldenCases.GoldenCase;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationTemplateLoader;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import org.junit.jupiter.api.Test;
@@ -39,7 +38,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 /**
  * Verifies the template-URI entry matrix of the from-data generation.
  *
- * <p>The six built-in URIs address their templates and render outputs identical to the golden fixtures; a well-formed
+ * <p>The seven built-in URIs (six typed negotiation templates plus the common abort template) address their templates
+ * and render outputs identical to the golden fixtures; a well-formed
  * URI that resolves to no template fails with the code {@code template_not_found} before any LLM call; a typed URI
  * that does not address a negotiation template of the expected phase (wrong extension name, version, type segment,
  * phase segment or separator, including the underscore misspelling of the type segment) fails as a programming error
@@ -57,12 +57,12 @@ class TemplateUriEntryMatrixTest {
             "templates/Negotiation-T/information-negotiation/propose/v1/zh-CN/template.md";
 
     /**
-     * Entry (a): every one of the six built-in URIs reaches its template and renders output byte-identical to the
-     * golden fixtures locked by the comparison test.
+     * Entry (a): every one of the seven built-in URIs (six typed templates plus the common abort template) reaches its
+     * template and renders output byte-identical to the golden fixtures locked by the comparison test.
      */
     @Test
     void everyBuiltInUriRendersItsGoldenFixture() {
-        for (String language : GoldenInputs.LANGUAGES) {
+        for (String language : NegotiationGoldenCases.LANGUAGES) {
             NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
                     .language(language)
                     .build();
@@ -72,12 +72,12 @@ class TemplateUriEntryMatrixTest {
                         .computeIfAbsent(goldenCase.templateUri(), uri -> new ArrayList<>())
                         .add(goldenCase);
             }
-            assertEquals(6, casesByUri.size(), "the built-in template set has exactly six URIs");
+            assertEquals(7, casesByUri.size(), "the built-in template set has exactly seven URIs");
             for (Map.Entry<String, List<GoldenCase>> entry : casesByUri.entrySet()) {
                 for (GoldenCase goldenCase : entry.getValue()) {
-                    MetadataContent result = goldenCase.generate(orchestrator);
+                    MetadataContent result = goldenCase.generate(orchestrator, language);
                     assertEquals(entry.getKey(), result.templateUri());
-                    assertEquals(readClasspathText(goldenCase.goldenResourcePath(language)), result.promptText());
+                    assertEquals(goldenCase.goldenText(language), result.promptText());
                 }
             }
         }
@@ -172,10 +172,10 @@ class TemplateUriEntryMatrixTest {
                 .language("zh-CN")
                 .build();
         String builtinText =
-                GoldenCase.INFORMATION_PROPOSE.generate(builtinOrchestrator).promptText();
+                GoldenCase.INFORMATION_PROPOSE.generate(builtinOrchestrator, "zh-CN").promptText();
         assertFalse(builtinText.contains("CUSTOM-OVERRIDE-MARKER"));
         assertEquals(
-                readClasspathText(GoldenCase.INFORMATION_PROPOSE.goldenResourcePath("zh-CN")),
+                GoldenCase.INFORMATION_PROPOSE.goldenText("zh-CN"),
                 builtinText,
                 "without the local root the built-in golden output remains unchanged");
     }
@@ -183,7 +183,7 @@ class TemplateUriEntryMatrixTest {
     private static NegotiationProposeData informationProposeData() {
         return new NegotiationProposeData(
                 new NegotiationContext(UUID, 2, 5),
-                new InformationProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null));
+                new InformationProposeContent(List.of(new NegotiationItem("接入端口名称", "P533-珠江旧城-PTN3900-23-TPA1EG24-1")), null));
     }
 
     private static String readClasspathText(String resourcePath) {

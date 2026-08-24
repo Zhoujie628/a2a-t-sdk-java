@@ -22,6 +22,7 @@ import net.openan.a2at.sdk.prompt.validation.DefaultContentValidator;
 import net.openan.a2at.sdk.server.compliance.DefaultServerPromptComplianceOrchestrator;
 import net.openan.a2at.sdk.server.metadata.LlmBackedPromptMetadataExtractor;
 import net.openan.a2at.sdk.server.validation.LlmBackedPromptSemanticValidator;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Default builder that assembles one high-level A2AT server runtime from unified config.
@@ -74,6 +75,22 @@ public final class DefaultA2ATServerBuilder {
      */
     public DefaultA2ATServerBuilder envPath(Path envPath) {
         this.envPath = envPath;
+        return this;
+    }
+
+    /**
+     * Injects an explicit LLM client that fully replaces the factory default.
+     *
+     * <p>The injection point exists for testability and custom LLM assemblies: when set, every orchestrator and
+     * validator built by this builder reuses the given client and no client is created from the `.env` LLM config.
+     * When unset, the builder keeps creating its default client and the behavior is unchanged.
+     *
+     * @param llmClient LLM client to inject; {@code null} keeps the factory default built from the `.env` LLM config
+     * @return current builder
+     * @since 2026-08
+     */
+    public DefaultA2ATServerBuilder llmClient(@Nullable LLMClient llmClient) {
+        this.llmClient = llmClient;
         return this;
     }
 

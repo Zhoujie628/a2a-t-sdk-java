@@ -15,8 +15,6 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
-import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
-import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
@@ -28,12 +26,18 @@ import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
 import org.junit.jupiter.api.Test;
 
 /**
- * Verifies the programming-error matrix of the from-data generation as one table-driven suite.
+ * Verifies the corpus-inexpressible rows of the programming-error matrix of the from-data generation (design §6 Q8).
  *
- * <p>Every row of the input-validation matrix of the from-data variants — method-data mismatch, template URIs that
- * do not address a negotiation template of the expected phase, phase-conclusion mismatch, missing required fields and
- * empty conditional content — fails with a standard {@link NullPointerException} (pure null arguments) or
- * {@link IllegalArgumentException} (blank, range and semantic-contract violations) that is not part of the SDK
+ * <p>The remaining rows of the matrix — null context, phase-conclusion mismatch, blank conditional fields of the
+ * ending family, empty evaluation/alternative lists and every template-URI phase violation — are absorbed by the
+ * {@code FD-PROG} batch of the test corpus ({@code negotiation-cases/from-data/programming-errors.json}), which
+ * asserts the same exception type, message fragment and zero-LLM guarantee per case. Only the rows the corpus cannot
+ * express stay here: null propose/ending data (a corpus record always carries {@code input.data}), a null conclusion
+ * and a missing feasibility action (the typed-input assembler rejects both as authoring defects), blank propose
+ * descriptions and ending summaries (the assembler demands non-blank text), and a template URI whose type contradicts
+ * the content type (the assembler derives the content type from the URI, so the contradiction cannot be authored).
+ * Every row fails with a standard {@link NullPointerException} (pure null arguments) or
+ * {@link IllegalArgumentException} (blank and semantic-contract violations) that is not part of the SDK
  * processing-error hierarchy and carries an English message pointing at the offending input. No row ever reaches the
  * LLM. Structural URI malformation is impossible by construction of {@link TemplateUri} and is therefore not a row.
  */
@@ -66,7 +70,7 @@ class FromDataProgrammingErrorMatrixTest {
 
         // The propose-versus-ending family mismatch of UT-GEN-002 is deliberately absent here: the typed data records
         // make that mismatch a compile-time error at the facade, so it cannot occur at runtime.
-        assertEquals(22, matrix.size(), "the full matrix must be exercised");
+        assertEquals(8, matrix.size(), "exactly the corpus-inexpressible rows must stay (FD-PROG absorbs the rest)");
         for (MatrixRow row : matrix) {
             RuntimeException failure = assertThrows(
                     row.expectedException(), () -> row.call().get(), "row must fail: " + row.label());
@@ -87,7 +91,11 @@ class FromDataProgrammingErrorMatrixTest {
         assertEquals(0, llm.calls, "no matrix row may call the LLM");
     }
 
-    /** Returns the full programming-error matrix of the from-data variants. */
+    /**
+     * Returns the corpus-inexpressible rows of the programming-error matrix of the from-data variants (design §6 Q8:
+     * FD-PROG-01..14 absorb the other fourteen rows). See the class javadoc for why each row below cannot be expressed
+     * as a corpus record.
+     */
     private List<MatrixRow> matrix() {
         NegotiationContext context = new NegotiationContext(UUID, 2, 5);
         return List.of(
@@ -102,60 +110,12 @@ class FromDataProgrammingErrorMatrixTest {
                         NullPointerException.class,
                         "Negotiation ending data must not be null."),
                 new MatrixRow(
-                        "null context",
-                        () -> orchestrator.generateProposeFromData(
-                                new NegotiationProposeData(null, informationProposeContent()), INFORMATION_PROPOSE_URI),
-                        NullPointerException.class,
-                        "Negotiation context must not be null."),
-                new MatrixRow(
-                        "accept method with reject conclusion",
-                        () -> orchestrator.generateAcceptFromData(
-                                ending(NegotiationConclusion.REJECT), INFORMATION_ACCEPT_URI),
-                        IllegalArgumentException.class,
-                        "ACCEPT phase requires conclusion Accept but the content carries Reject"),
-                new MatrixRow(
-                        "reject method with accept conclusion",
-                        () -> orchestrator.generateRejectFromData(
-                                ending(NegotiationConclusion.ACCEPT), INFORMATION_ACCEPT_URI),
-                        IllegalArgumentException.class,
-                        "REJECT phase requires conclusion Reject but the content carries Accept"),
-                new MatrixRow(
-                        "accept method with abort conclusion",
-                        () -> orchestrator.generateAcceptFromData(
-                                ending(NegotiationConclusion.ABORT), INFORMATION_ACCEPT_URI),
-                        IllegalArgumentException.class,
-                        "the content carries Abort"),
-                new MatrixRow(
                         "accept method with null conclusion",
                         () -> orchestrator.generateAcceptFromData(
                                 new NegotiationEndingData(context, new TargetEndingContent(null, "intent", null)),
                                 TARGET_ACCEPT_URI),
                         NullPointerException.class,
                         "conclusion must not be null"),
-                new MatrixRow(
-                        "target accept without confirmed intent",
-                        () -> orchestrator.generateAcceptFromData(
-                                new NegotiationEndingData(
-                                        context, new TargetEndingContent(NegotiationConclusion.ACCEPT, null, null)),
-                                TARGET_ACCEPT_URI),
-                        IllegalArgumentException.class,
-                        "Confirmed intent of an accepting target negotiation message must not be blank."),
-                new MatrixRow(
-                        "target accept with blank confirmed intent",
-                        () -> orchestrator.generateAcceptFromData(
-                                new NegotiationEndingData(
-                                        context, new TargetEndingContent(NegotiationConclusion.ACCEPT, "   ", null)),
-                                TARGET_ACCEPT_URI),
-                        IllegalArgumentException.class,
-                        "Confirmed intent of an accepting target negotiation message must not be blank."),
-                new MatrixRow(
-                        "target reject without failure reason",
-                        () -> orchestrator.generateRejectFromData(
-                                new NegotiationEndingData(
-                                        context, new TargetEndingContent(NegotiationConclusion.REJECT, null, null)),
-                                TARGET_ACCEPT_URI),
-                        IllegalArgumentException.class,
-                        "Failure reason of a rejecting target negotiation message must not be blank."),
                 new MatrixRow(
                         "target propose with blank description",
                         () -> orchestrator.generateProposeFromData(
@@ -187,26 +147,6 @@ class FromDataProgrammingErrorMatrixTest {
                         NullPointerException.class,
                         "Feasibility negotiation action must not be null"),
                 new MatrixRow(
-                        "evaluation request without contents to evaluate",
-                        () -> orchestrator.generateProposeFromData(
-                                new NegotiationProposeData(
-                                        context,
-                                        new FeasibilityProposeContent(
-                                                "请评估。", NegotiationAction.REQUEST_FEASIBILITY_EVALUATION, null, null)),
-                                FEASIBILITY_PROPOSE_URI),
-                        IllegalArgumentException.class,
-                        "must contain at least one item"),
-                new MatrixRow(
-                        "alternative proposal without details",
-                        () -> orchestrator.generateProposeFromData(
-                                new NegotiationProposeData(
-                                        context,
-                                        new FeasibilityProposeContent(
-                                                "不可行。", NegotiationAction.PROPOSE_ALTERNATIVE_ON_FAILURE, null, null)),
-                                FEASIBILITY_PROPOSE_URI),
-                        IllegalArgumentException.class,
-                        "must contain at least one item"),
-                new MatrixRow(
                         "feasibility ending with blank summary",
                         () -> orchestrator.generateAcceptFromData(
                                 new NegotiationEndingData(
@@ -215,41 +155,6 @@ class FromDataProgrammingErrorMatrixTest {
                         IllegalArgumentException.class,
                         "must not be blank"),
                 new MatrixRow(
-                        "template URI with wrong prefix",
-                        () -> orchestrator.generateProposeFromData(
-                                new NegotiationProposeData(context, informationProposeContent()),
-                                TemplateUri.of("Task-T", "information-negotiation", "propose")),
-                        IllegalArgumentException.class,
-                        "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
-                new MatrixRow(
-                        "template URI with wrong version",
-                        () -> orchestrator.generateProposeFromData(
-                                new NegotiationProposeData(context, informationProposeContent()),
-                                TemplateUri.of("Negotiation-T", List.of("information-negotiation", "propose"), "v2")),
-                        IllegalArgumentException.class,
-                        "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
-                new MatrixRow(
-                        "template URI with underscore type segment",
-                        () -> orchestrator.generateProposeFromData(
-                                new NegotiationProposeData(context, informationProposeContent()),
-                                TemplateUri.of("Negotiation-T", "information_negotiation", "propose")),
-                        IllegalArgumentException.class,
-                        "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
-                new MatrixRow(
-                        "template URI with unknown type",
-                        () -> orchestrator.generateProposeFromData(
-                                new NegotiationProposeData(context, informationProposeContent()),
-                                TemplateUri.of("Negotiation-T", "unknown-negotiation", "propose")),
-                        IllegalArgumentException.class,
-                        "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
-                new MatrixRow(
-                        "template URI phase contradicts the method",
-                        () -> orchestrator.generateProposeFromData(
-                                new NegotiationProposeData(context, informationProposeContent()),
-                                INFORMATION_ACCEPT_URI),
-                        IllegalArgumentException.class,
-                        "Template URI does not address a negotiation template of the expected phase PROPOSE (propose)"),
-                new MatrixRow(
                         "template URI type contradicts the content type",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(
@@ -257,16 +162,6 @@ class FromDataProgrammingErrorMatrixTest {
                                 INFORMATION_PROPOSE_URI),
                         IllegalArgumentException.class,
                         "Negotiation type INFORMATION requires content of type InformationProposeContent"));
-    }
-
-    private static InformationProposeContent informationProposeContent() {
-        return new InformationProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null);
-    }
-
-    private static NegotiationEndingData ending(NegotiationConclusion conclusion) {
-        return new NegotiationEndingData(
-                new NegotiationContext(UUID, 2, 5),
-                new InformationEndingContent(conclusion, List.of(new NegotiationItem("区域", "松山湖"))));
     }
 
     private static boolean isAsciiText(String message) {

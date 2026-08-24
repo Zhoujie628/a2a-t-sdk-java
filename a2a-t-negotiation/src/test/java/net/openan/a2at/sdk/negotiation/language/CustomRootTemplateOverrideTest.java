@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -14,8 +12,8 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs.GoldenCase;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGoldenCases;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGoldenCases.GoldenCase;
 import net.openan.a2at.sdk.negotiation.resources.DefaultNegotiationTemplateLoader;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
@@ -44,9 +42,10 @@ class CustomRootTemplateOverrideTest {
     void customRootTemplateWinsWhilePresentAndTheRestOfTheOutputIsUntouched() throws IOException {
         writeCustomizedInformationProposeTemplate();
         NegotiationGenerationOrchestrator orchestrator = orchestratorWithCustomRoot();
-        MetadataContent builtinResult = GoldenCase.INFORMATION_PROPOSE.generate(orchestrator(GoldenInputs.ZH_CN, null));
+        MetadataContent builtinResult =
+                GoldenCase.INFORMATION_PROPOSE.generate(orchestrator(NegotiationGoldenCases.ZH_CN, null), NegotiationGoldenCases.ZH_CN);
 
-        MetadataContent result = GoldenCase.INFORMATION_PROPOSE.generate(orchestrator);
+        MetadataContent result = GoldenCase.INFORMATION_PROPOSE.generate(orchestrator, NegotiationGoldenCases.ZH_CN);
 
         assertEquals(
                 builtinResult.promptText() + "\n\n## " + MARKER_SECTION_TITLE + "\n" + MARKER_LINE,
@@ -61,7 +60,7 @@ class CustomRootTemplateOverrideTest {
         NegotiationGenerationOrchestrator orchestrator = orchestratorWithCustomRoot();
         assertTrue(
                 GoldenCase.INFORMATION_PROPOSE
-                        .generate(orchestrator)
+                        .generate(orchestrator, NegotiationGoldenCases.ZH_CN)
                         .promptText()
                         .contains(MARKER_LINE),
                 "precondition: the override is in effect");
@@ -69,8 +68,8 @@ class CustomRootTemplateOverrideTest {
         Files.delete(customTemplate);
 
         assertEquals(
-                readGoldenFixture(GoldenCase.INFORMATION_PROPOSE, GoldenInputs.ZH_CN),
-                GoldenCase.INFORMATION_PROPOSE.generate(orchestrator).promptText(),
+                GoldenCase.INFORMATION_PROPOSE.goldenText(NegotiationGoldenCases.ZH_CN),
+                GoldenCase.INFORMATION_PROPOSE.generate(orchestrator, NegotiationGoldenCases.ZH_CN).promptText(),
                 "after the removal the built-in template must reproduce the golden fixture byte for byte");
     }
 
@@ -83,9 +82,9 @@ class CustomRootTemplateOverrideTest {
         writeCustomizedInformationProposeTemplate();
         NegotiationGenerationOrchestrator orchestrator = orchestratorWithCustomRoot();
 
-        MetadataContent result = goldenCase.generate(orchestrator);
+        MetadataContent result = goldenCase.generate(orchestrator, NegotiationGoldenCases.ZH_CN);
 
-        assertEquals(readGoldenFixture(goldenCase, GoldenInputs.ZH_CN), result.promptText());
+        assertEquals(goldenCase.goldenText(NegotiationGoldenCases.ZH_CN), result.promptText());
         assertTrue(!result.promptText().contains(MARKER_LINE), "the marker must stay inside the overridden template");
     }
 
@@ -104,9 +103,9 @@ class CustomRootTemplateOverrideTest {
     }
 
     private Path writeCustomizedInformationProposeTemplate() throws IOException {
-        PromptTemplate builtinTemplate = new DefaultNegotiationTemplateLoader(GoldenInputs.ZH_CN, null)
+        PromptTemplate builtinTemplate = new DefaultNegotiationTemplateLoader(NegotiationGoldenCases.ZH_CN, null)
                 .load(new NegotiationReference(
-                        NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, GoldenInputs.ZH_CN));
+                        NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, NegotiationGoldenCases.ZH_CN));
         Path customTemplate = customRoot
                 .resolve("templates")
                 .resolve("Negotiation-T")
@@ -123,7 +122,7 @@ class CustomRootTemplateOverrideTest {
     }
 
     private NegotiationGenerationOrchestrator orchestratorWithCustomRoot() {
-        return orchestrator(GoldenInputs.ZH_CN, customRoot.toString());
+        return orchestrator(NegotiationGoldenCases.ZH_CN, customRoot.toString());
     }
 
     private static NegotiationGenerationOrchestrator orchestrator(String language, String localRootDir) {
@@ -133,14 +132,4 @@ class CustomRootTemplateOverrideTest {
                 .build();
     }
 
-    private static String readGoldenFixture(GoldenCase goldenCase, String language) {
-        String resourcePath = goldenCase.goldenResourcePath(language);
-        InputStream stream = CustomRootTemplateOverrideTest.class.getResourceAsStream(resourcePath);
-        assertTrue(stream != null, "Golden fixture must exist on the test classpath: " + resourcePath);
-        try (stream) {
-            return new String(stream.readAllBytes(), StandardCharsets.UTF_8).replace("\r\n", "\n");
-        } catch (IOException exception) {
-            throw new AssertionError("Failed to read golden fixture " + resourcePath, exception);
-        }
-    }
 }
