@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Business review support for the A2A-T negotiation test corpus (design doc-local/fromtext-validate-test-design.md §8.7, Q19).
 
+The corpus itself is the single-business-domain private-line complaint diagnosis corpus (Q20-Q23): every case,
+scenario and golden fixture speaks the complaint-diagnosis five-step closed loop, and the dictionaries below
+translate the corpus facts into that business wording (task API actions of A2ATClient/A2ATServer, task parameter
+names, complaint-diagnosis business domains).
+
 Review material is a *projection* of the corpus: generated from negotiation-cases/ JSON, never hand-maintained.
 
 Two modes:
@@ -57,6 +62,23 @@ API_ACTION_ZH = {
     "validateAcceptPromptAndDataFilling": "校验接受消息并提取参数",
     "validateRejectPromptAndDataFilling": "校验拒绝消息并提取参数",
     "validateAbortPromptAndDataFilling": "校验终止消息并提取参数",
+    # the three closed-loop task APIs (Q20-Q23): A2ATClient facade for generation, A2ATServer facade for validation
+    "generateTaskPromptFromText": "工作台从投诉文本生成任务报文（A2ATClient）",
+    "generateTaskPromptFromDataWithSchema": "工作台从结构化数据与参数模式生成任务报文（A2ATClient）",
+    "validateTaskPromptAndDataFilling": "OMC 校验对端任务报文并提取任务参数（A2ATServer）",
+}
+
+# Task parameter names of the private-line complaint diagnosis (schema biz.complaint.params), for business wording.
+TASK_PARAM_ZH = {
+    "accessPort": "接入端口名称",
+    "bizScenario": "投诉分类",
+    "faultTime": "问题发生时间",
+    "eventSerialNo": "OSS侧事件流水号",
+}
+
+# Shared schema references of the corpus, for business wording.
+SCHEMA_ZH = {
+    "biz.complaint.params": "专线投诉诊断业务参数模式（接入端口名称/投诉分类必填）",
 }
 
 ERROR_CODE_ZH = {
@@ -101,19 +123,34 @@ INJECT_ZH = {
 }
 
 TEMPLATE_URI_ZH = {
-    "information-negotiation": "信息协商",
-    "target-negotiation": "目标协商",
-    "feasibility-negotiation": "可行性协商",
-    "common": "通用",
+    # complaint-diagnosis business domains (Q20/Q23): every corpus record belongs to the private-line complaint
+    # diagnosis; the domain labels carry its closed-loop semantics instead of bare negotiation type names
+    "network-layer": "任务闭环（专线投诉诊断）",
+    "information-negotiation": "信息协商（缺参要数）",
+    "target-negotiation": "目标协商（修复目标确认）",
+    "feasibility-negotiation": "可行性协商（修复方案确认）",
+    "common": "通用（终止）",
 }
-PHASE_ZH = {"propose": "提议", "accept-reject": "接受/拒绝", "abort": "终止"}
+PHASE_ZH = {
+    "propose": "提议",
+    "accept-reject": "接受/拒绝",
+    "abort": "终止",
+    "private-line-complaint": "任务报文",
+}
 TERMINAL_ZH = {"accept": "接受（协商达成）", "reject": "拒绝（协商终止）", "abort": "终止", "exhausted": "轮次预算耗尽"}
 
-DOMAIN_ORDER = ["信息协商", "目标协商", "可行性协商", "通用（终止）", "未分类"]
+DOMAIN_ORDER = [
+    "任务闭环（专线投诉诊断）",
+    "信息协商（缺参要数）",
+    "目标协商（修复目标确认）",
+    "可行性协商（修复方案确认）",
+    "通用（终止）",
+    "未分类",
+]
 DOMAIN_FALLBACK_TAG = {
-    "information": "信息协商",
-    "target": "目标协商",
-    "feasibility": "可行性协商",
+    "information": "信息协商（缺参要数）",
+    "target": "目标协商（修复目标确认）",
+    "feasibility": "可行性协商（修复方案确认）",
     "abort": "通用（终止）",
     "common": "通用（终止）",
 }
@@ -258,7 +295,8 @@ def translate_input(rec: dict) -> str:
             chunks.append(f"待校验消息：{clip(str(prompt['text']), 90)}")
     schema = rec.get("schema")
     if isinstance(schema, dict) and "$ref" in schema:
-        chunks.append(f"参数模式：{schema['$ref'].split('/')[-1]}")
+        ref = schema["$ref"].split("/")[-1]
+        chunks.append(f"参数模式：{SCHEMA_ZH.get(ref, ref)}")
     return "；".join(chunks)
 
 
@@ -290,8 +328,12 @@ def translate_expect(rec: dict) -> str:
             lines.append(f"渲染消息与 golden 基准一致（{golden}）")
         params = expect.get("params")
         if isinstance(params, dict):
-            rendered = "、".join(f"{k}={v}" for k, v in params.items())
+            rendered = "、".join(f"{TASK_PARAM_ZH.get(k, k)}={v}" for k, v in params.items())
             lines.append(f"提取参数：{clip(rendered, 120)}")
+        missing = expect.get("missingParams")
+        if isinstance(missing, list) and missing:
+            rendered = "、".join(TASK_PARAM_ZH.get(k, k) for k in missing)
+            lines.append(f"缺失参数（协商要数动因）：{rendered}")
     elif outcome == "failure":
         code = expect.get("code")
         lines.append(f"失败：{ERROR_CODE_ZH.get(code, code or '（无错误码）')}" + (f"（{code}）" if code else ""))
@@ -426,7 +468,9 @@ def render_html(records: list[dict], statuses: dict) -> str:
     w("<!DOCTYPE html><html lang='zh-CN'><head><meta charset='utf-8'>")
     w("<meta name='viewport' content='width=device-width, initial-scale=1'>")
     w(f"<title>A2A-T 协商测试语料业务评审 · {now}</title><style>{CSS}</style></head><body>")
-    w(f"<header><h1>A2A-T 协商测试语料业务评审材料</h1>"
+    w(f"<header><h1>专线投诉诊断协商测试语料业务评审材料</h1>"
+      f"<p>单一业务域：传输专线业务投诉诊断五步闭环（Q23）· "
+      f"角色：A=工作台（client，任务发起/补数方） / B=OMC（server，执行/要数方，协商发起方）</p>"
       f"<p>自动生成于 {now} · 语料投影，请勿手工编辑 · 生成命令：python tools/corpus_review.py export</p></header>")
     w("<nav><a href='#dashboard'>总览仪表盘</a><a href='#cases'>分域用例卡片</a>"
       "<a href='#scenarios'>场景时序表</a><a href='#notes'>评审说明</a></nav><main>")
@@ -529,7 +573,7 @@ def render_html(records: list[dict], statuses: dict) -> str:
     for r in scenarios:
         status = statuses.get(r["id"], {}).get("status", "")
         w(f"<h3>{esc(r['id'])} · {esc(r.get('summary', ''))} " + status_badge(status) + "</h3>")
-        w("<table class='pingpong'><tr><th style='width:52px'>步骤</th><th>A（发起方）</th><th>B（接收方）</th></tr>")
+        w("<table class='pingpong'><tr><th style='width:52px'>步骤</th><th>A（工作台，发起/补数方）</th><th>B（OMC，执行/要数方）</th></tr>")
         for step in r.get("steps", []):
             role = step.get("role", "A")
             col = "B" if role == "B" else "A"

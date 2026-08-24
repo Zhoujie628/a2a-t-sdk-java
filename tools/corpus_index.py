@@ -33,6 +33,10 @@ APIS = (
     "validateAcceptPromptAndDataFilling",
     "validateRejectPromptAndDataFilling",
     "validateAbortPromptAndDataFilling",
+    # the three closed-loop task APIs (Q21): exercised as scenario steps, never as standalone case records
+    "generateTaskPromptFromText",
+    "generateTaskPromptFromDataWithSchema",
+    "validateTaskPromptAndDataFilling",
 )
 FAMILY_ORDER = ("FT", "FD", "VAL", "SC")
 FAMILY_LABELS = {"FT": "from-text", "FD": "from-data", "VAL": "validate", "SC": "scenarios"}
