@@ -226,6 +226,8 @@ public final class TaskTDemoMain {
                     metadata = client.generateTaskPromptFromText(sample.text(), StandardTemplates.PRIVATE_LINE_COMPLAINT);
                 }
                 System.out.println("  templateUri : " + metadata.templateUri());
+                System.out.println("  promptText : " + metadata.promptText());
+                System.out.println("  extensionUri : " + metadata.extensionUri());
                 println();
                 Map<String, Object> extracted = server
                         .validateTaskPromptAndDataFilling(
@@ -298,6 +300,26 @@ public final class TaskTDemoMain {
 
     private static void printFailure(String stage, A2ATError error) {
         println("[失败] " + stage + ": [" + error.getCode() + "] " + error.getMessage());
+        if (error instanceof ContentValidationException validationException) {
+            List<SlotValidationError> errors = validationException.errors();
+            if (!errors.isEmpty()) {
+                println("  详细原因:");
+                for (SlotValidationError slotError : errors) {
+                    println("    slot: " + slotError.slotName()
+                            + ", code: " + slotError.code()
+                            + ", message: " + slotError.message());
+                }
+            }
+            Map<String, Object> partialParams = validationException.params();
+            if (!partialParams.isEmpty()) {
+                println("  LLM部分提取参数:");
+                println(pretty(partialParams));
+            }
+        }
+        Throwable cause = error.getCause();
+        if (cause != null) {
+            println("  根因异常: " + cause.getClass().getName() + ": " + cause.getMessage());
+        }
     }
 
     private static void printSummary(TaskTAccuracyEvaluator.Summary summary) {
