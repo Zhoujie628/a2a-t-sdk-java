@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.testdata;
+package net.openan.a2at.sdk.corpus;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.testdata;
+package net.openan.a2at.sdk.corpus;
 
 /**
  * Signals a defect in the negotiation test corpus: an unknown key, a dangling or circular {@code $ref}, a duplicate

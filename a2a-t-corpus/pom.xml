@@ -9,29 +9,27 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>a2a-t-negotiation</artifactId>
-    <name>a2a-t Negotiation</name>
-    <description>Negotiation workflows and state handling for the a2a-t Java SDK.</description>
+    <artifactId>a2a-t-corpus</artifactId>
+    <packaging>jar</packaging>
+
+    <name>a2a-t Corpus</name>
+    <description>SDK-level consistency corpus suite: negotiation test cases, golden fixtures and property tests.</description>
 
     <dependencies>
         <dependency>
             <groupId>net.openan.a2a-t.sdk</groupId>
-            <artifactId>a2a-t-core</artifactId>
+            <artifactId>a2a-t-negotiation</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>net.openan.a2a-t.sdk</groupId>
-            <artifactId>a2a-t-llm</artifactId>
+            <artifactId>a2a-t-client</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>net.openan.a2a-t.sdk</groupId>
-            <artifactId>a2a-t-prompt</artifactId>
+            <artifactId>a2a-t-server</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
             <groupId>net.openan.a2a-t.sdk</groupId>
@@ -51,9 +49,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.4.14</version>
+            <groupId>net.jqwik</groupId>
+            <artifactId>jqwik</artifactId>
+            <version>${jqwik.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

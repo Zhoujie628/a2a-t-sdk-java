@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.testdata;
+package net.openan.a2at.sdk.corpus;
 
 import java.util.ArrayList;
 import java.util.List;

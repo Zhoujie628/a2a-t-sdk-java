@@ -4,7 +4,7 @@
 
 # Negotiation Test Corpus Index
 
-Machine-generated view of the corpus under `a2a-t-negotiation/src/test/resources/negotiation-cases/`.
+Machine-generated view of the corpus under `a2a-t-corpus/src/test/resources/negotiation-cases/`.
 Coverage matrices count base records (one case record, or one scenario step under its scenario's category);
 language expansion is listed per record and totaled in the statistics.
 

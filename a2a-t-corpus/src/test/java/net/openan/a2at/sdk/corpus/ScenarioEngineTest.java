@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.testdata;
+package net.openan.a2at.sdk.corpus;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -8,7 +8,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
-import net.openan.a2at.sdk.negotiation.testdata.ScenarioCase.ExpectFlow;
+import net.openan.a2at.sdk.corpus.ScenarioCase.ExpectFlow;
 import org.junit.jupiter.api.Test;
 import org.jspecify.annotations.Nullable;
 

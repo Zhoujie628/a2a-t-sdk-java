@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.testdata;
+package net.openan.a2at.sdk.corpus;
 
 import org.jspecify.annotations.Nullable;
 
@@ -52,7 +52,7 @@ public enum NegotiationApi {
 
     /**
      * {@code generateTaskPromptFromText}: workbench-side task prompt generation from free text, one LLM slot-extraction
-     * call (mirrors the {@code A2ATClient} facade through the prompt-module production services).
+     * call (runs through the real {@code A2ATClient} facade builder assembly with the scripted LLM injected).
      */
     GENERATE_TASK_PROMPT_FROM_TEXT("generateTaskPromptFromText", Family.TASK),
 

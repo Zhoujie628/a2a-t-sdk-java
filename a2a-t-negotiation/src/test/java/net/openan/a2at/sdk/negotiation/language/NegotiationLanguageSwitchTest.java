@@ -4,9 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Stream;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
@@ -14,8 +11,8 @@ import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs.GoldenCase;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGoldenCases;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGoldenCases.GoldenCase;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -41,25 +38,25 @@ class NegotiationLanguageSwitchTest {
     @ParameterizedTest(name = "the same input renders each language golden fixture [{0}]")
     @MethodSource("goldenCases")
     void sameInputRendersTheRespectiveGoldenFixturePerLanguage(GoldenCase goldenCase) {
-        NegotiationGenerationOrchestrator zhCnOrchestrator = orchestrator(GoldenInputs.ZH_CN);
-        NegotiationGenerationOrchestrator enUsOrchestrator = orchestrator(GoldenInputs.EN_US);
+        NegotiationGenerationOrchestrator zhCnOrchestrator = orchestrator(NegotiationGoldenCases.ZH_CN);
+        NegotiationGenerationOrchestrator enUsOrchestrator = orchestrator(NegotiationGoldenCases.EN_US);
 
-        MetadataContent zhCnResult = goldenCase.generate(zhCnOrchestrator, GoldenInputs.ZH_CN);
-        MetadataContent enUsResult = goldenCase.generate(enUsOrchestrator, GoldenInputs.EN_US);
+        MetadataContent zhCnResult = goldenCase.generate(zhCnOrchestrator, NegotiationGoldenCases.ZH_CN);
+        MetadataContent enUsResult = goldenCase.generate(enUsOrchestrator, NegotiationGoldenCases.EN_US);
 
-        assertEquals(readGoldenFixture(goldenCase, GoldenInputs.ZH_CN), zhCnResult.promptText());
-        assertEquals(readGoldenFixture(goldenCase, GoldenInputs.EN_US), enUsResult.promptText());
+        assertEquals(goldenCase.goldenText(NegotiationGoldenCases.ZH_CN), zhCnResult.promptText());
+        assertEquals(goldenCase.goldenText(NegotiationGoldenCases.EN_US), enUsResult.promptText());
         assertNotEquals(zhCnResult.promptText(), enUsResult.promptText());
         assertEquals(goldenCase.templateUri(), zhCnResult.templateUri());
         assertEquals(goldenCase.templateUri(), enUsResult.templateUri());
     }
 
     @ParameterizedTest(name = "the query methods list the templates of one language only [{0}]")
-    @ValueSource(strings = {GoldenInputs.ZH_CN, GoldenInputs.EN_US})
+    @ValueSource(strings = {NegotiationGoldenCases.ZH_CN, NegotiationGoldenCases.EN_US})
     void templateQueriesReturnTheTemplatesOfTheConfiguredLanguage(String language) {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(language);
-        String requirementLabel = GoldenInputs.ZH_CN.equals(language) ? "要求：" : "Requirement:";
-        String otherLanguageLabel = GoldenInputs.ZH_CN.equals(language) ? "Requirement:" : "要求：";
+        String requirementLabel = NegotiationGoldenCases.ZH_CN.equals(language) ? "要求：" : "Requirement:";
+        String otherLanguageLabel = NegotiationGoldenCases.ZH_CN.equals(language) ? "Requirement:" : "要求：";
 
         List<PromptTemplate> templates = orchestrator.getNegotiationPrompts();
 
@@ -80,10 +77,10 @@ class NegotiationLanguageSwitchTest {
 
     @Test
     void bothLanguagesAnswerQueriesWithDifferentTemplatesForTheSameUri() {
-        PromptTemplate zhCnTemplate = orchestrator(GoldenInputs.ZH_CN)
+        PromptTemplate zhCnTemplate = orchestrator(NegotiationGoldenCases.ZH_CN)
                 .getNegotiationPrompt(INFORMATION_PROPOSE_URI)
                 .orElseThrow();
-        PromptTemplate enUsTemplate = orchestrator(GoldenInputs.EN_US)
+        PromptTemplate enUsTemplate = orchestrator(NegotiationGoldenCases.EN_US)
                 .getNegotiationPrompt(INFORMATION_PROPOSE_URI)
                 .orElseThrow();
 
@@ -91,10 +88,10 @@ class NegotiationLanguageSwitchTest {
         assertEquals(INFORMATION_PROPOSE_URI, enUsTemplate.templateUri());
         assertNotEquals(zhCnTemplate.content(), enUsTemplate.content());
         assertEquals(
-                orchestrator(GoldenInputs.ZH_CN).getNegotiationPrompts().stream()
+                orchestrator(NegotiationGoldenCases.ZH_CN).getNegotiationPrompts().stream()
                         .map(PromptTemplate::templateUri)
                         .toList(),
-                orchestrator(GoldenInputs.EN_US).getNegotiationPrompts().stream()
+                orchestrator(NegotiationGoldenCases.EN_US).getNegotiationPrompts().stream()
                         .map(PromptTemplate::templateUri)
                         .toList());
     }
@@ -105,14 +102,4 @@ class NegotiationLanguageSwitchTest {
                 .build();
     }
 
-    private static String readGoldenFixture(GoldenCase goldenCase, String language) {
-        String resourcePath = goldenCase.goldenResourcePath(language);
-        InputStream stream = NegotiationLanguageSwitchTest.class.getResourceAsStream(resourcePath);
-        assertTrue(stream != null, "Golden fixture must exist on the test classpath: " + resourcePath);
-        try (stream) {
-            return new String(stream.readAllBytes(), StandardCharsets.UTF_8).replace("\r\n", "\n");
-        } catch (IOException exception) {
-            throw new AssertionError("Failed to read golden fixture " + resourcePath, exception);
-        }
-    }
 }

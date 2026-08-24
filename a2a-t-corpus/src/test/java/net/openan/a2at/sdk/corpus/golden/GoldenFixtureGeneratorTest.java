@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.golden;
+package net.openan.a2at.sdk.corpus.golden;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

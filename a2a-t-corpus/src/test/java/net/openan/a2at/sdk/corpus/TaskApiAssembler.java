@@ -1,69 +1,52 @@
-package net.openan.a2at.sdk.negotiation.testdata;
+package net.openan.a2at.sdk.corpus;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
-import java.util.stream.Collectors;
-import net.openan.a2at.sdk.core.exception.A2ATError;
-import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
-import net.openan.a2at.sdk.core.exception.PromptGenerationException;
-import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
+import java.util.concurrent.ConcurrentHashMap;
+import net.openan.a2at.sdk.client.prompt.assembly.DefaultA2ATClientBuilder;
+import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrchestrator;
+import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.core.model.PromptRuntimeConfig;
-import net.openan.a2at.sdk.core.model.SlotValidationError;
-import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ContentValidator;
 import net.openan.a2at.sdk.llm.LLMClient;
-import net.openan.a2at.sdk.prompt.analysis.impl.DefaultStructuredPromptSlotValueExtractor;
-import net.openan.a2at.sdk.prompt.analysis.model.StructuredSlotExtractionResult;
-import net.openan.a2at.sdk.prompt.resources.loader.PromptResourceAccess;
-import net.openan.a2at.sdk.prompt.resources.loader.PromptSlotSchemaLoader;
-import net.openan.a2at.sdk.prompt.resources.loader.PromptTemplateTextLoader;
-import net.openan.a2at.sdk.prompt.resources.model.PromptSlotDefinition;
-import net.openan.a2at.sdk.prompt.resources.model.PromptSlotSchema;
-import net.openan.a2at.sdk.prompt.taskrendering.TaskPromptRenderer;
-import net.openan.a2at.sdk.prompt.taskrendering.exception.TaskPromptRenderException;
-import net.openan.a2at.sdk.prompt.validation.DefaultContentValidator;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
+import net.openan.a2at.sdk.server.assembly.DefaultA2ATServerBuilder;
 
 /**
- * Test-domain assembly of the three closed-loop task APIs (Q21): everything except the LLM client is production
- * wiring, mirroring the two facade builders without touching production code.
+ * Real-builder assembly of the three closed-loop task APIs (Q21): the corpus harness drives exactly the production
+ * wiring the {@code A2ATClient} and {@code A2ATServer} facades drive internally, so a change of the production
+ * assembly cannot drift past the corpus.
  *
  * <ul>
- *   <li>{@code validateTaskPromptAndDataFilling} mirrors {@code DefaultA2ATServerBuilder.buildTaskContentValidator}
- *       exactly: the same {@link DefaultContentValidator} constructor the server builder calls, with the Task-T
- *       extension name, the language, the LLM retry limit, the LLM client and the classpath
- *       {@link PromptResourceAccess};</li>
- *   <li>{@code generateTaskPromptFromText} and {@code generateTaskPromptFromDataWithSchema} mirror the internals of
- *       {@code DefaultClientPromptGenerationOrchestrator}: the same production services the client builder wires
- *       ({@link PromptTemplateTextLoader}, {@link DefaultStructuredPromptSlotValueExtractor} — the exact class the
- *       client's {@code DefaultStructuredClientSlotValueExtractor} delegates to —, {@link PromptSlotSchemaLoader} and
- *       {@link TaskPromptRenderer}), with the same error-code mapping and required-slot validation the client
- *       orchestrator applies.</li>
+ *   <li>{@code generateTaskPromptFromText} and {@code generateTaskPromptFromDataWithSchema} run through the
+ *       {@link ClientPromptGenerationOrchestrator} built by {@link DefaultA2ATClientBuilder#buildPromptGenerationOrchestrator()}
+ *       — the same build method the client facade constructor calls;</li>
+ *   <li>{@code validateTaskPromptAndDataFilling} runs through the {@link ContentValidator} built by
+ *       {@link DefaultA2ATServerBuilder#buildTaskContentValidator()} — the same build method the server facade
+ *       constructor calls.</li>
  * </ul>
  *
- * <p>The negotiation module cannot see the client and server modules (they depend on it, not the other way round), so
- * the orchestrator logic is mirrored here line by line; a renamed facade method fails the {@link NegotiationApi}
- * dispatch compilation, and a behavior change of the mirrored pipeline shows up as a corpus red.
+ * <p>Both builders are driven exactly like the facades drive them: a minimal classpath-source {@code .env} (written once
+ * per language and retry limit into a temporary directory, following the facade test precedent) is loaded through
+ * {@link A2ATConfig#load(Path)} plus {@link NegotiationContentService#resolvePromptResourceLocalRootDir(A2ATConfig, Path)},
+ * and the {@link ScriptedNegotiationLlmClient} is injected through the builders' {@code llmClient(...)} seam — the same
+ * instance feeds the client-side and the server-side components, so the {@code llmCalls} expectation counts the whole
+ * closed loop. The facade constructors are locked to the {@code Path}-only signature by the API-surface guard tests, so
+ * the builders are the direct route to the identical assembly.
  *
  * @since 2026-08
  */
 final class TaskApiAssembler {
 
-    private static final String SLOT_EXTRACTION_PROMPT = "slot_extraction";
+    private static final Map<String, Path> ENV_FILES = new ConcurrentHashMap<>();
 
-    private final String language;
-
-    private final PromptTemplateTextLoader templateLoader;
-
-    private final PromptSlotSchemaLoader slotSchemaLoader;
-
-    private final DefaultStructuredPromptSlotValueExtractor slotValueExtractor;
-
-    private final TaskPromptRenderer renderer;
+    private final ClientPromptGenerationOrchestrator promptGeneration;
 
     private final ContentValidator taskValidator;
 
@@ -75,41 +58,36 @@ final class TaskApiAssembler {
      * @param llmClient scripted LLM client injected at the same seam the facade builders inject their real client
      */
     TaskApiAssembler(String language, int maxAttempts, LLMClient llmClient) {
-        this.language = language;
-        PromptResourceAccess resources = PromptResourceAccess.create(
-                new PromptRuntimeConfig(language, PromptResourceAccess.CLASSPATH_SOURCE_TYPE, null));
-        this.templateLoader = resources.templateLoader();
-        this.slotSchemaLoader = resources.slotSchemaLoader();
-        this.slotValueExtractor = new DefaultStructuredPromptSlotValueExtractor(
-                llmClient,
-                slotSchemaLoader,
-                resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "system.md"),
-                resources.loadPrompt(SLOT_EXTRACTION_PROMPT, language, "user.md"));
-        this.renderer = new TaskPromptRenderer();
-        this.taskValidator = new DefaultContentValidator(
-                StandardTemplates.TASK_EXTENSION_NAME, language, maxAttempts, llmClient, resources);
+        Path envPath = minimalEnvFor(language, maxAttempts);
+        A2ATConfig config =
+                NegotiationContentService.resolvePromptResourceLocalRootDir(A2ATConfig.load(envPath), envPath);
+        this.promptGeneration = DefaultA2ATClientBuilder.builder()
+                .config(config)
+                .envPath(envPath)
+                .llmClient(llmClient)
+                .buildPromptGenerationOrchestrator();
+        this.taskValidator = DefaultA2ATServerBuilder.builder()
+                .config(config)
+                .envPath(envPath)
+                .llmClient(llmClient)
+                .buildTaskContentValidator();
     }
 
     /**
-     * Generates a task prompt with metadata from natural-language input, mirroring
-     * {@code A2ATClient.generateTaskPromptFromText}.
+     * Generates a task prompt with metadata from natural-language input through the real client orchestrator, the
+     * pipeline behind {@code A2ATClient.generateTaskPromptFromText}.
      *
      * @param text natural-language task input
      * @param templateUri template URI identifying the target task template
      * @return metadata content carrying the resolved template URI, rendered prompt text and Task-T extension URI
      */
     MetadataContent generateTaskPromptFromText(String text, TemplateUri templateUri) {
-        String templateIdentifier = templateUri.uri();
-        String templateText = loadTemplate(templateIdentifier);
-        Map<String, String> slots = extractSlots(text, templateIdentifier, templateText);
-        validateRequiredSlots(slots, templateIdentifier);
-        return new MetadataContent(
-                templateIdentifier, render(templateText, slots), ExtensionUriConstants.TASK_T_EXTENSION_URI);
+        return promptGeneration.generateTaskPromptFromText(text, templateUri);
     }
 
     /**
-     * Generates a task prompt with metadata from structured input and a data schema, mirroring
-     * {@code A2ATClient.generateTaskPromptFromDataWithSchema}.
+     * Generates a task prompt with metadata from structured input and a data schema through the real client
+     * orchestrator, the pipeline behind {@code A2ATClient.generateTaskPromptFromDataWithSchema}.
      *
      * @param data structured task input as a string-to-object map
      * @param schema data schema map describing the meaning of each input field
@@ -118,23 +96,12 @@ final class TaskApiAssembler {
      */
     MetadataContent generateTaskPromptFromDataWithSchema(
             Map<String, Object> data, Map<String, Object> schema, TemplateUri templateUri) {
-        if (schema == null || schema.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Data schema must not be empty; it describes the meaning of each input field.");
-        }
-        String templateIdentifier = templateUri.uri();
-        String templateText = loadTemplate(templateIdentifier);
-        StructuredSlotExtractionResult result =
-                slotValueExtractor.extractSlots(data, templateIdentifier, language, schema);
-        Map<String, String> slots = result.slots();
-        validateRequiredSlots(slots, templateIdentifier);
-        return new MetadataContent(
-                templateIdentifier, render(templateText, slots), ExtensionUriConstants.TASK_T_EXTENSION_URI);
+        return promptGeneration.generateTaskPromptFromDataWithSchema(data, schema, templateUri);
     }
 
     /**
-     * Validates a task prompt and extracts its filled parameters, mirroring
-     * {@code A2ATServer.validateTaskPromptAndDataFilling}.
+     * Validates a task prompt and extracts its filled parameters through the real server-side task content validator,
+     * the pipeline behind {@code A2ATServer.validateTaskPromptAndDataFilling}.
      *
      * <p>A schema slot the prompt misses surfaces as a null-valued entry of the returned parameter data — that set of
      * null-valued keys is the missing-parameter set the negotiation loop then fills.
@@ -148,71 +115,39 @@ final class TaskApiAssembler {
         return taskValidator.validate(prompt, schema, templateUri);
     }
 
-    // ------------------------------------------------------------------ mirrored client pipeline
+    // ------------------------------------------------------------------ minimal facade env
 
-    private String loadTemplate(String templateIdentifier) {
-        try {
-            return templateLoader.loadTemplate(templateIdentifier, language);
-        } catch (ResourceNotFoundException error) {
-            throw new PromptGenerationException(A2ATErrorCodes.TEMPLATE_NOT_FOUND, error.getMessage(), error);
-        } catch (A2ATError error) {
-            throw new PromptGenerationException(A2ATErrorCodes.PROMPT_RESOURCE_LOAD_ERROR, error.getMessage(), error);
-        }
-    }
-
-    private Map<String, String> extractSlots(String userInput, String templateIdentifier, String templateText) {
-        try {
-            return slotValueExtractor.extractSlots(userInput, templateIdentifier, language).slots();
-        } catch (ResourceNotFoundException error) {
-            throw new PromptGenerationException(A2ATErrorCodes.SLOT_SCHEMA_NOT_FOUND, error.getMessage(), error);
-        } catch (A2ATError error) {
-            throw new PromptGenerationException(A2ATErrorCodes.LLM_INVOCATION_FAILED, error.getMessage(), error);
-        }
-    }
-
-    private String render(String templateText, Map<String, String> slots) {
-        try {
-            return renderer.render(templateText, slots);
-        } catch (TaskPromptRenderException error) {
-            throw new PromptGenerationException(A2ATErrorCodes.RENDER_FAILED, error.getMessage(), error);
-        }
-    }
-
-    private void validateRequiredSlots(Map<String, String> slots, String templateIdentifier) {
-        final PromptSlotSchema schema;
-        try {
-            schema = slotSchemaLoader.loadSlotSchema(templateIdentifier, language);
-        } catch (A2ATError error) {
-            throw new PromptGenerationException(A2ATErrorCodes.SLOT_SCHEMA_NOT_FOUND, error.getMessage(), error);
-        }
-        if (schema == null) {
-            throw new PromptGenerationException(
-                    A2ATErrorCodes.SLOT_SCHEMA_NOT_FOUND, "Slot schema not found for template: " + templateIdentifier);
-        }
-        List<PromptSlotDefinition> definitions = schema.slotDefinitions();
-        if (definitions == null) {
-            return;
-        }
-        List<SlotValidationError> failed = new ArrayList<>();
-        for (PromptSlotDefinition definition : definitions) {
-            if (definition == null || !definition.required()) {
-                continue;
+    /**
+     * Writes (once per language and retry limit) the minimal classpath-source {@code .env} the facades would be handed,
+     * following the {@code A2ATClientTest} minimal-env precedent; the LLM entries are inert because the scripted client
+     * is injected at the builders' LLM seam.
+     *
+     * @param language language of the corpus case
+     * @param maxAttempts retry limit of the LLM steps from the case's LLM script
+     * @return path of the written {@code .env} file
+     */
+    private static Path minimalEnvFor(String language, int maxAttempts) {
+        return ENV_FILES.computeIfAbsent(language + "/" + maxAttempts, key -> {
+            try {
+                Path envFile = Files.createTempDirectory("a2at-corpus-task-env").resolve("client.env");
+                Files.writeString(
+                        envFile,
+                        ("A2AT_LANGUAGE=%s%n"
+                                + "A2AT_PROMPT_SOURCE_TYPE=classpath%n"
+                                + "A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR=%n"
+                                + "A2AT_LLM_PROVIDER=openai%n"
+                                + "A2AT_LLM_MODEL=scripted-model%n"
+                                + "A2AT_LLM_BASE_URL=https://llm.example.test/v1%n"
+                                + "A2AT_LLM_API_KEY=corpus-scripted%n"
+                                + "A2AT_LLM_MAX_ATTEMPTS=%d%n"
+                                + "A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory%n")
+                                .formatted(language, maxAttempts),
+                        StandardCharsets.UTF_8);
+                return envFile;
+            } catch (IOException exception) {
+                throw new UncheckedIOException(
+                        "Failed to write the minimal corpus .env for language " + language, exception);
             }
-            String name = definition.name();
-            if (name == null) {
-                continue;
-            }
-            String value = slots.get(name);
-            if (value == null || value.trim().isEmpty()) {
-                failed.add(new SlotValidationError(name, "missing_required", "Required slot is missing or empty"));
-            }
-        }
-        if (!failed.isEmpty()) {
-            throw new PromptGenerationException(
-                    A2ATErrorCodes.SLOT_VALIDATION_ERROR,
-                    "Required slots are missing or empty: " + failed.stream()
-                            .map(SlotValidationError::slotName).collect(Collectors.joining(", ")),
-                    failed);
-        }
+        });
     }
 }

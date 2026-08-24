@@ -26,9 +26,8 @@ import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs.GoldenCase;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGoldenCases.GoldenCase;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationTemplateLoader;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import org.junit.jupiter.api.Test;
@@ -63,7 +62,7 @@ class TemplateUriEntryMatrixTest {
      */
     @Test
     void everyBuiltInUriRendersItsGoldenFixture() {
-        for (String language : GoldenInputs.LANGUAGES) {
+        for (String language : NegotiationGoldenCases.LANGUAGES) {
             NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
                     .language(language)
                     .build();
@@ -78,7 +77,7 @@ class TemplateUriEntryMatrixTest {
                 for (GoldenCase goldenCase : entry.getValue()) {
                     MetadataContent result = goldenCase.generate(orchestrator, language);
                     assertEquals(entry.getKey(), result.templateUri());
-                    assertEquals(readClasspathText(goldenCase.goldenResourcePath(language)), result.promptText());
+                    assertEquals(goldenCase.goldenText(language), result.promptText());
                 }
             }
         }
@@ -176,7 +175,7 @@ class TemplateUriEntryMatrixTest {
                 GoldenCase.INFORMATION_PROPOSE.generate(builtinOrchestrator, "zh-CN").promptText();
         assertFalse(builtinText.contains("CUSTOM-OVERRIDE-MARKER"));
         assertEquals(
-                readClasspathText(GoldenCase.INFORMATION_PROPOSE.goldenResourcePath("zh-CN")),
+                GoldenCase.INFORMATION_PROPOSE.goldenText("zh-CN"),
                 builtinText,
                 "without the local root the built-in golden output remains unchanged");
     }

@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.property;
+package net.openan.a2at.sdk.corpus.property;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,9 +14,9 @@ import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestra
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationTemplateLoader;
-import net.openan.a2at.sdk.negotiation.testdata.LlmFailMarker;
-import net.openan.a2at.sdk.negotiation.testdata.LlmScriptStep;
-import net.openan.a2at.sdk.negotiation.testdata.ScriptedNegotiationLlmClient;
+import net.openan.a2at.sdk.corpus.LlmFailMarker;
+import net.openan.a2at.sdk.corpus.LlmScriptStep;
+import net.openan.a2at.sdk.corpus.ScriptedNegotiationLlmClient;
 
 /**
  * Shared plumbing of the jqwik property layer: production-wired service assembly through the real builder, JSON

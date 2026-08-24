@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.testdata;
+package net.openan.a2at.sdk.corpus;
 
 /**
  * Negotiation context of one corpus record, inline in the corpus JSON.

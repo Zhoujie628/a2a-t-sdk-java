@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.property;
+package net.openan.a2at.sdk.corpus.property;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -20,7 +20,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
-import net.openan.a2at.sdk.negotiation.testdata.ScriptedNegotiationLlmClient;
+import net.openan.a2at.sdk.corpus.ScriptedNegotiationLlmClient;
 
 /**
  * Happy-path property layer (design §8.3): round-trip over arbitrary legal typed content.

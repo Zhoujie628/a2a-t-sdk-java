@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.testdata;
+package net.openan.a2at.sdk.corpus;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -13,7 +13,7 @@ import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
 import org.junit.jupiter.api.BeforeEach;
-import net.openan.a2at.sdk.negotiation.testdata.Expectation.Metadata;
+import net.openan.a2at.sdk.corpus.Expectation.Metadata;
 import org.junit.jupiter.api.Test;
 import org.jspecify.annotations.Nullable;
 

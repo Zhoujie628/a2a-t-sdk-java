@@ -10,8 +10,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -38,9 +36,8 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs.GoldenCase;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGoldenCases.GoldenCase;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationTemplateLoader;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import org.junit.jupiter.api.AfterEach;
@@ -62,9 +59,9 @@ import org.slf4j.LoggerFactory;
  */
 class FromTextLlmPipelineTest {
 
-    private static final String ZH_CN = GoldenInputs.ZH_CN;
+    private static final String ZH_CN = NegotiationGoldenCases.ZH_CN;
 
-    private static final String EN_US = GoldenInputs.EN_US;
+    private static final String EN_US = NegotiationGoldenCases.EN_US;
 
     private static final TemplateUri INFORMATION_PROPOSE_URI = GoldenCase.INFORMATION_PROPOSE.template();
 
@@ -120,7 +117,7 @@ class FromTextLlmPipelineTest {
         MetadataContent fromData = goldenCase.generate(orchestrator, ZH_CN);
         assertEquals(1, llm.calls, "the from-data variant must not add any LLM call");
         assertEquals(fromData.promptText(), fromText.promptText());
-        assertEquals(readGoldenFixture(goldenCase, ZH_CN), fromText.promptText());
+        assertEquals(goldenCase.goldenText(ZH_CN), fromText.promptText());
 
         Map<String, Object> metadata = fromText.buildMetadataContent();
         assertEquals(3, metadata.size());
@@ -165,7 +162,7 @@ class FromTextLlmPipelineTest {
 
         assertEquals(1, llm.calls);
         assertEquals(goldenCase.templateUri(), result.templateUri());
-        assertEquals(readGoldenFixture(goldenCase, ZH_CN), result.promptText());
+        assertEquals(goldenCase.goldenText(ZH_CN), result.promptText());
         String userPrompt = llm.lastMessages.get(1).get("content");
         if (goldenCase.phase() == NegotiationPhase.ABORT) {
             assertTrue(
@@ -224,7 +221,7 @@ class FromTextLlmPipelineTest {
                 orchestrator.generateProposeFromText("请提供接入端口名称。", goldenCase.context(), goldenCase.template());
 
         assertEquals(3, llm.calls, "two failures followed by one success must result in three calls");
-        assertEquals(readGoldenFixture(goldenCase, ZH_CN), result.promptText());
+        assertEquals(goldenCase.goldenText(ZH_CN), result.promptText());
 
         List<String> retries = warningMessages("negotiation_llm_retry ");
         assertEquals(2, retries.size());
@@ -462,7 +459,7 @@ class FromTextLlmPipelineTest {
                 "请提供接入端口名称。", goldenCase.context(), goldenCase.template());
 
         assertEquals(10, recovering.calls, "nine failed attempts plus one success must consume the clamped limit");
-        assertEquals(readGoldenFixture(goldenCase, ZH_CN), result.promptText());
+        assertEquals(goldenCase.goldenText(ZH_CN), result.promptText());
         assertEquals(9, warningMessages("negotiation_llm_retry ").size());
 
         LlmConfig small = LlmConfig.fromMap(Map.of("A2AT_LLM_MAX_ATTEMPTS", "0"));
@@ -525,7 +522,7 @@ class FromTextLlmPipelineTest {
                 orchestrator.generateProposeFromText(inputText, goldenCase.context(), goldenCase.template());
 
         assertEquals(1, llm.calls, "the en-US from-text chain needs exactly one extraction call");
-        assertEquals(readGoldenFixture(goldenCase, EN_US), message.promptText());
+        assertEquals(goldenCase.goldenText(EN_US), message.promptText());
         assertEquals(2, llm.lastMessages.size());
         assertFalse(llm.lastMessages.get(0).get("content").isBlank(), "the en-US system prompt must be loadable");
         assertTrue(llm.lastMessages.get(1).get("content").contains(inputText));
@@ -550,7 +547,7 @@ class FromTextLlmPipelineTest {
      */
     @Test
     void contextIsInjectedFromTheCallerWithoutAnyLlmInvolvement() {
-        NegotiationContext context = new NegotiationContext(GoldenInputs.SESSION_ID, 4, 7);
+        NegotiationContext context = new NegotiationContext(NegotiationGoldenCases.SESSION_ID, 4, 7);
         ScriptedExtractionClient llm = new ScriptedExtractionClient(
                 extractionJson(GoldenCase.INFORMATION_PROPOSE.content(ZH_CN), NegotiationPhase.PROPOSE));
         NegotiationGenerationOrchestrator orchestrator = orchestrator(ZH_CN, llm, 3);
@@ -564,7 +561,7 @@ class FromTextLlmPipelineTest {
         assertFalse(schemaProperties.containsKey("maxRounds"), "the extraction schema must not ask for the limit");
         assertEquals(context, result.negotiationContext(), "the caller context travels in the metadata");
         assertFalse(
-                result.promptText().contains("- id: " + GoldenInputs.SESSION_ID),
+                result.promptText().contains("- id: " + NegotiationGoldenCases.SESSION_ID),
                 "the context lines must not be rendered into the message");
     }
 
@@ -615,16 +612,6 @@ class FromTextLlmPipelineTest {
         return (Map<String, Object>) jsonSchema.get("properties");
     }
 
-    private static String readGoldenFixture(GoldenCase goldenCase, String language) {
-        String resourcePath = goldenCase.goldenResourcePath(language);
-        InputStream stream = FromTextLlmPipelineTest.class.getResourceAsStream(resourcePath);
-        assertTrue(stream != null, "Golden fixture must exist on the test classpath: " + resourcePath);
-        try (stream) {
-            return new String(stream.readAllBytes(), StandardCharsets.UTF_8).replace("\r\n", "\n");
-        } catch (IOException exception) {
-            throw new AssertionError("Failed to read golden fixture " + resourcePath, exception);
-        }
-    }
 
     private static List<String> logMessages(ListAppender<ILoggingEvent> appender, Level level) {
         List<String> messages = new ArrayList<>();

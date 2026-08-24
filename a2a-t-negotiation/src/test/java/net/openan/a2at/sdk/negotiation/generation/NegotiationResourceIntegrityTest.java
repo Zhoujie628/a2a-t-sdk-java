@@ -5,10 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -19,9 +17,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGoldenCases.GoldenCase;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs.GoldenCase;
 import net.openan.a2at.sdk.negotiation.resources.DefaultNegotiationTemplateLoader;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
@@ -62,7 +59,7 @@ class NegotiationResourceIntegrityTest {
     @Test
     void allTwelveTemplatesExistAndAreNonEmptyOnTheClasspath() {
         int templateCount = 0;
-        for (String language : GoldenInputs.LANGUAGES) {
+        for (String language : NegotiationGoldenCases.LANGUAGES) {
             DefaultNegotiationTemplateLoader loader = new DefaultNegotiationTemplateLoader(language, null);
             for (NegotiationType type : NegotiationType.values()) {
                 for (NegotiationPhase phase : List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT)) {
@@ -76,12 +73,12 @@ class NegotiationResourceIntegrityTest {
     }
 
     @ParameterizedTest(name = "slot markers resolve against the vocabulary and the marker script [{0}]")
-    @ValueSource(strings = {GoldenInputs.ZH_CN, GoldenInputs.EN_US})
+    @ValueSource(strings = {NegotiationGoldenCases.ZH_CN, NegotiationGoldenCases.EN_US})
     void everySlotMarkerResolvesAgainstTheVocabularyOfItsLanguage(String language) {
         Vocabulary vocabulary = Vocabulary.forLanguage(language);
         Map<String, String> valuesToKeys = valuesToKeys(vocabulary);
-        Pattern slotLinePattern = GoldenInputs.ZH_CN.equals(language) ? ZH_SLOT_LINE : EN_SLOT_LINE;
-        String requirementsMarker = GoldenInputs.ZH_CN.equals(language) ? "要求：" : "Requirement:";
+        Pattern slotLinePattern = NegotiationGoldenCases.ZH_CN.equals(language) ? ZH_SLOT_LINE : EN_SLOT_LINE;
+        String requirementsMarker = NegotiationGoldenCases.ZH_CN.equals(language) ? "要求：" : "Requirement:";
         List<String> allSlotNames = new ArrayList<>();
         List<String> slotsDifferingFromTheirTitle = new ArrayList<>();
 
@@ -120,7 +117,7 @@ class NegotiationResourceIntegrityTest {
                 slotsDifferingFromTheirTitle.stream().distinct().sorted().toList();
         List<String> expectedDifferingSlots;
         String invariantMessage;
-        if (GoldenInputs.ZH_CN.equals(language)) {
+        if (NegotiationGoldenCases.ZH_CN.equals(language)) {
             // zh-CN: the placeholder equals the section title except for the three summary/confirm exception slots.
             expectedDifferingSlots =
                     EXCEPTION_SLOT_KEYS.stream().map(vocabulary::get).sorted().toList();
@@ -139,7 +136,7 @@ class NegotiationResourceIntegrityTest {
     void promptResourcesExistAndAreNonEmptyForEveryCategoryAndLanguage() {
         NegotiationPromptResourceLoader loader = new NegotiationPromptResourceLoader();
         for (String category : PROMPT_CATEGORIES) {
-            for (String language : GoldenInputs.LANGUAGES) {
+            for (String language : NegotiationGoldenCases.LANGUAGES) {
                 assertFalse(loader.loadSystem(category, language).isBlank(), category + "/" + language + "/system.md");
                 assertFalse(loader.loadUser(category, language).isBlank(), category + "/" + language + "/user.md");
             }
@@ -173,7 +170,7 @@ class NegotiationResourceIntegrityTest {
     @ParameterizedTest(name = "golden outputs carry no requirements line and no placeholder [{0} {1}]")
     @MethodSource("goldenOutputCases")
     void goldenOutputsNeverContainRequirementsLinesOrPlaceholders(GoldenCase goldenCase, String language) {
-        String promptText = readGoldenFixture(goldenCase, language);
+        String promptText = goldenCase.goldenText(language);
 
         for (String line : promptText.split("\n")) {
             assertFalse(
@@ -186,7 +183,7 @@ class NegotiationResourceIntegrityTest {
 
     static List<Arguments> goldenOutputCases() {
         List<Arguments> cases = new ArrayList<>();
-        for (String language : GoldenInputs.LANGUAGES) {
+        for (String language : NegotiationGoldenCases.LANGUAGES) {
             for (GoldenCase goldenCase : GoldenCase.values()) {
                 cases.add(Arguments.of(goldenCase, language));
             }
@@ -222,16 +219,6 @@ class NegotiationResourceIntegrityTest {
         return sections;
     }
 
-    private static String readGoldenFixture(GoldenCase goldenCase, String language) {
-        String resourcePath = goldenCase.goldenResourcePath(language);
-        InputStream stream = NegotiationResourceIntegrityTest.class.getResourceAsStream(resourcePath);
-        assertNotNull(stream, "Golden fixture must exist on the test classpath: " + resourcePath);
-        try (stream) {
-            return new String(stream.readAllBytes(), StandardCharsets.UTF_8).replace("\r\n", "\n");
-        } catch (IOException exception) {
-            throw new AssertionError("Failed to read golden fixture " + resourcePath, exception);
-        }
-    }
 
     private static final class Section {
 

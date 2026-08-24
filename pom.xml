@@ -21,6 +21,7 @@
         <module>a2a-t-negotiation</module>
         <module>a2a-t-client</module>
         <module>a2a-t-server</module>
+        <module>a2a-t-corpus</module>
         <module>a2a-t-sample</module>
     </modules>
 

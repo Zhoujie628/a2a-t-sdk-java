@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.golden;
+package net.openan.a2at.sdk.corpus.golden;
 
 import java.util.List;
 import net.openan.a2at.sdk.core.model.StandardTemplates;

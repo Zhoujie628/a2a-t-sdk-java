@@ -14,8 +14,8 @@ import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs;
-import net.openan.a2at.sdk.negotiation.golden.GoldenInputs.GoldenCase;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGoldenCases;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationGoldenCases.GoldenCase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -38,16 +38,16 @@ class CustomRootVocabularyOverrideTest {
     void customRootVocabularyChangesTheRenderedRelationshipLine() throws IOException {
         writeCustomizedZhCnVocabulary();
 
-        String customized = GoldenCase.INFORMATION_PROPOSE.generate(orchestratorWithCustomRoot(), GoldenInputs.ZH_CN)
+        String customized = GoldenCase.INFORMATION_PROPOSE.generate(orchestratorWithCustomRoot(), NegotiationGoldenCases.ZH_CN)
                 .promptText();
         String builtin = GoldenCase.INFORMATION_PROPOSE
-                .generate(orchestrator(GoldenInputs.ZH_CN, null), GoldenInputs.ZH_CN)
+                .generate(orchestrator(NegotiationGoldenCases.ZH_CN, null), NegotiationGoldenCases.ZH_CN)
                 .promptText();
 
         assertTrue(customized.contains(CUSTOM_RELATIONSHIP_LABEL), "the custom label must enter the rendered message");
         assertFalse(builtin.contains(CUSTOM_RELATIONSHIP_LABEL), "the built-in output must keep the bundled label");
         assertEquals(
-                builtin.replace(Vocabulary.forLanguage(GoldenInputs.ZH_CN).get("label.relationship"), CUSTOM_RELATIONSHIP_LABEL),
+                builtin.replace(Vocabulary.forLanguage(NegotiationGoldenCases.ZH_CN).get("label.relationship"), CUSTOM_RELATIONSHIP_LABEL),
                 customized,
                 "only the vocabulary-driven relationship label may differ from the built-in output");
     }
@@ -58,21 +58,21 @@ class CustomRootVocabularyOverrideTest {
 
         MetadataContent withBlankRoot = GoldenCase.INFORMATION_PROPOSE.generate(
                 NegotiationGenerationOrchestratorBuilder.builder()
-                        .language(GoldenInputs.ZH_CN)
+                        .language(NegotiationGoldenCases.ZH_CN)
                         .localRootDir("   ")
                         .build(),
-                GoldenInputs.ZH_CN);
+                NegotiationGoldenCases.ZH_CN);
 
         assertEquals(
                 GoldenCase.INFORMATION_PROPOSE
-                        .generate(orchestrator(GoldenInputs.ZH_CN, null), GoldenInputs.ZH_CN)
+                        .generate(orchestrator(NegotiationGoldenCases.ZH_CN, null), NegotiationGoldenCases.ZH_CN)
                         .promptText(),
                 withBlankRoot.promptText(),
                 "a blank local root must fall back to the classpath vocabulary");
     }
 
     private void writeCustomizedZhCnVocabulary() throws IOException {
-        Vocabulary builtin = Vocabulary.forLanguage(GoldenInputs.ZH_CN);
+        Vocabulary builtin = Vocabulary.forLanguage(NegotiationGoldenCases.ZH_CN);
         Map<String, String> entries = new LinkedHashMap<>();
         for (String key : Vocabulary.CANONICAL_KEYS) {
             entries.put(key, builtin.get(key));
@@ -80,14 +80,14 @@ class CustomRootVocabularyOverrideTest {
         entries.put("label.relationship", CUSTOM_RELATIONSHIP_LABEL);
         Path file = customRoot
                 .resolve("negotiation-vocabulary")
-                .resolve(GoldenInputs.ZH_CN)
+                .resolve(NegotiationGoldenCases.ZH_CN)
                 .resolve("vocabulary.json");
         Files.createDirectories(file.getParent());
         new ObjectMapper().writeValue(file.toFile(), entries);
     }
 
     private NegotiationGenerationOrchestrator orchestratorWithCustomRoot() {
-        return orchestrator(GoldenInputs.ZH_CN, customRoot.toString());
+        return orchestrator(NegotiationGoldenCases.ZH_CN, customRoot.toString());
     }
 
     private static NegotiationGenerationOrchestrator orchestrator(String language, String localRootDir) {

@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.property;
+package net.openan.a2at.sdk.corpus.property;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,8 +18,8 @@ import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
-import net.openan.a2at.sdk.negotiation.testdata.LlmFailMarker;
-import net.openan.a2at.sdk.negotiation.testdata.ScriptedNegotiationLlmClient;
+import net.openan.a2at.sdk.corpus.LlmFailMarker;
+import net.openan.a2at.sdk.corpus.ScriptedNegotiationLlmClient;
 
 /**
  * Error-code partition property layer (design §8.3): the public error-code universe partitions into exactly the seven

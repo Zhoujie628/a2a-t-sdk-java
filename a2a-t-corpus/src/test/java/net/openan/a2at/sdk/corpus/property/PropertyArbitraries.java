@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.property;
+package net.openan.a2at.sdk.corpus.property;
 
 import java.util.List;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.property;
+package net.openan.a2at.sdk.corpus.property;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -21,7 +21,7 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
-import net.openan.a2at.sdk.negotiation.testdata.ScriptedNegotiationLlmClient;
+import net.openan.a2at.sdk.corpus.ScriptedNegotiationLlmClient;
 
 /**
  * Determinism property layer (design §8.3): the same from-data input produces fully equal output on repeated runs.

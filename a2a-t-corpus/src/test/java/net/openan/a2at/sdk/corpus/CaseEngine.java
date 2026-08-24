@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.testdata;
+package net.openan.a2at.sdk.corpus;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,7 +44,8 @@ import org.jspecify.annotations.Nullable;
  * the generation template-not-found matrix, {@code failingSemanticValidator} for the validate-family
  * prompt-resource-not-found mapping) and dispatches on the {@link NegotiationApi} enum at compile time, so a misspelled API
  * name fails at corpus load time and a renamed service method fails this compilation. The three task-family APIs run
- * through the {@link TaskApiAssembler}, the mirrored production wiring of the closed loop (Q21).
+ * through the {@link TaskApiAssembler}, the real facade builders' assembly of the closed loop (Q21) with the scripted LLM
+ * client injected at the builders' LLM seam.
  *
  * <p>Result normalization: a success run returns the produced {@link MetadataContent} or {@link FilledParamData}, a
  * failure run captures the thrown exception. The expectation comparison covers outcome, exception name, error code,
@@ -590,8 +591,8 @@ public final class CaseEngine {
     }
 
     /**
-     * Assembles the task API wiring of the closed loop for one case: the retry limit comes from the case's LLM script
-     * or falls back to the builder default of 3, mirroring the facade builders.
+     * Assembles the task API wiring of the closed loop for one case through the real facade builders: the retry limit
+     * comes from the case's LLM script or falls back to the builder default of 3.
      *
      * @param testCase expanded corpus case of the task family
      * @param llmClient scripted LLM client injected at the facade builders' LLM seam

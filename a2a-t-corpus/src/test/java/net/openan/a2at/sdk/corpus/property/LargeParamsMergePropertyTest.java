@@ -1,4 +1,4 @@
-package net.openan.a2at.sdk.negotiation.property;
+package net.openan.a2at.sdk.corpus.property;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -14,7 +14,7 @@ import net.jqwik.api.Provide;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
-import net.openan.a2at.sdk.negotiation.testdata.ScriptedNegotiationLlmClient;
+import net.openan.a2at.sdk.corpus.ScriptedNegotiationLlmClient;
 
 /**
  * Large-parameter-space property (design §8.3): extraction and merge correctness for parameter maps of 50+ keys in
