@@ -2,7 +2,7 @@
 请根据<所需信息项>补充相关内容。
 
 ## 所需信息项
-1. energy-saving area information：e.g. Songshan Lake
-2. energy-saving rate guarantee target：e.g. 20Mbps
-3. VLANId
+1. 接入端口名称：举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1
+2. 投诉分类：举例：专线质差
+3. 专线业务标识
 缺失项之间的关系：OR

@@ -2,4 +2,4 @@
 Reject
 
 ## 信息协商结果内容
-1. energy-saving area information：cannot be provided because the site inventory is unavailable
+1. 接入端口名称：无法提供，工作台侧端口资源台账暂不可查

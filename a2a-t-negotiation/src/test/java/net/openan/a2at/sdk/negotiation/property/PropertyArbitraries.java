@@ -54,36 +54,36 @@ final class PropertyArbitraries {
     private static final List<String> LANGUAGES = List.of("zh-CN", "en-US");
 
     private static final List<String> ITEM_NAMES = List.of(
-            "energy_saving_region",
-            "coverage_area",
-            "guaranteed_rate",
-            "spectrum_band",
-            "carrier_frequency",
-            "pdu_session_type",
-            "slice_sst",
-            "amf_region_id",
-            "handover_margin",
-            "qos_class_identifier",
-            "roaming_profile",
-            "interference_level");
+            "access_port",
+            "complaint_category",
+            "fault_time",
+            "event_serial_no",
+            "fault_detail",
+            "private_line_id",
+            "service_name",
+            "access_vlan_id",
+            "board_slot",
+            "port_bandwidth",
+            "latency_target",
+            "packet_loss_rate");
 
     private static final List<String> ITEM_VALUES = List.of(
-            "Songshan Lake",
-            "at least 20Mbps",
-            "QCI 9",
-            "3.5GHz n78",
-            "15kHz subcarrier spacing",
-            "session continuity mode 2",
-            "URLLC slice",
-            "centralized RAN",
-            "3dB",
-            "voice-optimized bearer");
+            "P533-Zhujiang Old Town-PTN3900-23-TPA1EG24-1",
+            "P781-前海-PTN7900-5-TPA1EG24-09(cvlan=100)",
+            "dedicated-line quality degradation",
+            "private line interruption",
+            "2026-05-11T08:21:46Z",
+            "event-id-20260511-09013",
+            "fault-id-1-017-20260516-11234",
+            "within 20ms",
+            "no higher than 1%",
+            "within 48 hours");
 
     private static final List<String> NON_BLANK_TEXTS = List.of(
-            "Energy-saving parameter negotiation for the Songshan Lake campus network",
-            "Coverage expansion toward the industrial park at the city border",
-            "Guaranteed-bitrate backhaul upgrade for the private-network slice",
-            "Load rebalancing between the two core-network pools");
+            "Private line complaint diagnosis negotiation for the Shenzhen-to-Guangzhou dedicated line",
+            "Latency repair target negotiation after the quality degradation complaint",
+            "Access port expansion feasibility assessment within the cutover window",
+            "Complaint information supplement negotiation between the workbench and the OMC");
 
     private PropertyArbitraries() {}
 

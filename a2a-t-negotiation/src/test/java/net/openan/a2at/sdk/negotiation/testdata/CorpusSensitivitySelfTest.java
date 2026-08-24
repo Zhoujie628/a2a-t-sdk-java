@@ -39,25 +39,65 @@ class CorpusSensitivitySelfTest {
     private static final String INFORMATION_ACCEPT_REJECT_URI =
             "Negotiation-T/information-negotiation/accept-reject/v1";
 
+    private static final String PRIVATE_LINE_COMPLAINT_URI =
+            "Task-T/network-layer/private-line-complaint/v1";
+
+    /** The workbench raw complaint of the closed loop (样例步骤1): no port name and no complaint category. */
+    private static final String COMPLAINT_TEXT =
+            "深圳访问广州的专线从5月11号早上8点半开始响应时延从平均12ms骤升至320ms，柜面和手机银行的交易接口频繁报"
+                    + "“连接超时”。OSS侧事件流水号：event-id-20260511-09013。";
+
+    /** Slot-extraction payload of the closed loop's step 1: the task object stays empty. */
+    private static final String TASK_SLOTS_OBJECT_EMPTY =
+            "{\"slots\": {\"任务对象\": \"\", \"任务上下文\": \"投诉分类：待补充；问题发生时间：2026-05-11T08:21:46Z；"
+                    + "OSS侧事件流水号：event-id-20260511-09013；投诉详情：深圳访问广州的响应时延从平均12ms骤升至320ms\"},"
+                    + " \"slot_errors\": []}";
+
+    /** Semantic payload of the closed loop's step 2: the port name and the complaint category are missing. */
+    private static final String TASK_SEMANTIC_MISSING_PARAMS =
+            "{\"semantic_verdict\":true,\"errors\":[],\"params\":{\"accessPort\":null,\"bizScenario\":null,"
+                    + "\"faultTime\":\"2026-05-11T08:21:46Z\",\"eventSerialNo\":\"event-id-20260511-09013\"}}";
+
+    /** The rendered task prompt the OMC receives (样例步骤1, shortened): the negotiation-causing message. */
+    private static final String TASK_PROMPT_MISSING_PARAMS = """
+            ## 任务类型(Task Type)
+            传输专线业务投诉诊断
+
+            ## 任务对象(Task Object)
+            接入端口名称：
+
+            ## 任务上下文(Task Context)
+            1. 投诉分类：
+            2. 问题发生时间： "2026-05-11T08:21:46Z"
+            3. OSS侧事件流水号："event-id-20260511-09013"
+            4. 投诉详情："深圳访问广州的响应时延从平均12ms骤升至320ms"
+            """;
+
+    /** The task parameter schema of the closed loop (server-side keys, dictionary §10). */
+    private static final String TASK_PARAM_SCHEMA =
+            "{\"type\":\"object\",\"properties\":{\"accessPort\":{\"type\":\"string\"},\"bizScenario\":"
+                    + "{\"type\":\"string\"},\"faultTime\":{\"type\":\"string\"},\"eventSerialNo\":"
+                    + "{\"type\":\"string\"}},\"required\":[\"accessPort\",\"bizScenario\"]}";
+
     /** Extraction payload mapping to the typed content of the information accept golden fixture. */
     private static final String ACCEPT_PAYLOAD =
-            "{\"conclusion\":\"Accept\",\"items\":[{\"name\":\"energy-saving area information\",\"value\":\"Songshan"
-                    + " Lake\"},{\"name\":\"energy-saving rate guarantee target\",\"value\":\"20Mbps\"}]}";
+            "{\"conclusion\":\"Accept\",\"items\":[{\"name\":\"接入端口名称\",\"value\":\"P533-珠江旧城"
+                    + "-PTN3900-23-TPA1EG24-1\"},{\"name\":\"投诉分类\",\"value\":\"专线质差\"}]}";
 
     /** Extraction payload whose mapped content lacks every required slot (fails with negotiation_slot_missing). */
     private static final String SLOTS_MISSING_PAYLOAD = "{\"relationship\":null}";
 
     /** Semantic verdict payload of a successful validation carrying one business parameter. */
     private static final String SEMANTIC_ACCEPT_PAYLOAD_WITH_PARAMS =
-            "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{\"region\":"
-                    + "\"Songshan Lake\"}}";
+            "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":"
+                    + "{\"accessPort\":\"P533-珠江旧城-PTN3900-23-TPA1EG24-1\"}}";
 
     /** Semantic verdict payload rejecting the message with two slot errors. */
     private static final String SEMANTIC_REJECT_PAYLOAD_TWO_ERRORS =
             "{\"semantic_verdict\":false,\"negotiation_type\":\"information\",\"errors\":[{\"slot_name\":"
-                    + "\"region\",\"code\":\"missing\",\"message\":\"The region parameter is missing.\"},{\"slot_name\":"
-                    + "\"rate\",\"code\":\"out_of_range\",\"message\":\"The rate parameter is out of range.\"}],"
-                    + "\"params\":{}}";
+                    + "\"accessPort\",\"code\":\"missing\",\"message\":\"The access port parameter is"
+                    + " missing.\"},{\"slot_name\":\"latency_target\",\"code\":\"out_of_range\",\"message\":"
+                    + "\"The latency target parameter is out of range.\"}],\"params\":{}}";
 
     private final CaseEngine engine = new CaseEngine();
 
@@ -67,7 +107,7 @@ class CorpusSensitivitySelfTest {
 
     @BeforeEach
     void readSchema() throws Exception {
-        schema = mapper.readTree("{\"type\":\"object\",\"properties\":{\"region\":{\"type\":\"string\"}}}");
+        schema = mapper.readTree("{\"type\":\"object\",\"properties\":{\"accessPort\":{\"type\":\"string\"}}}");
     }
 
     // ------------------------------------------------------------------ flipped expectations must be red
@@ -130,18 +170,18 @@ class CorpusSensitivitySelfTest {
     @Test
     void tamperedParamsMustFailTheEngine() {
         engine.run(validateCase(
-                "VAL-SENS-PARAMS", Map.of("id", SESSION_ID, "round", 2, "maxRounds", 5, "region", "Songshan Lake")));
+                "VAL-SENS-PARAMS", Map.of("id", SESSION_ID, "round", 2, "maxRounds", 5, "accessPort", "P533-珠江旧城-PTN3900-23-TPA1EG24-1")));
 
         NegotiationCase tampered = validateCase(
                 "VAL-SENS-PARAMS-FLIP",
-                Map.of("id", SESSION_ID, "round", 2, "maxRounds", 5, "region", "Another Lake"));
+                Map.of("id", SESSION_ID, "round", 2, "maxRounds", 5, "accessPort", "P781-珠江新城-PTN7900-23-TPA1EG24-17"));
 
         AssertionError failure = assertThrows(AssertionError.class, () -> engine.run(tampered));
 
         assertTrue(
                 failure.getMessage().contains("VAL-SENS-PARAMS-FLIP")
                         && failure.getMessage().contains("$.expect.params")
-                        && failure.getMessage().contains("Another Lake"),
+                        && failure.getMessage().contains("P781-珠江新城-PTN7900-23-TPA1EG24-17"),
                 "a tampered params value must fail but was: " + failure.getMessage());
     }
 
@@ -172,11 +212,12 @@ class CorpusSensitivitySelfTest {
     @Test
     void flippedSlotErrorsMustFailTheEngine() {
         List<Expectation.SlotError> both = List.of(
-                new Expectation.SlotError("region", "missing"), new Expectation.SlotError("rate", "out_of_range"));
+                new Expectation.SlotError("accessPort", "missing"),
+                new Expectation.SlotError("latency_target", "out_of_range"));
         engine.run(validateCase("VAL-SENS-SLOTS", null, both));
 
         NegotiationCase removed = validateCase(
-                "VAL-SENS-SLOTS-DEL", null, List.of(new Expectation.SlotError("region", "missing")));
+                "VAL-SENS-SLOTS-DEL", null, List.of(new Expectation.SlotError("accessPort", "missing")));
         AssertionError removalFailure = assertThrows(AssertionError.class, () -> engine.run(removed));
         assertTrue(
                 removalFailure.getMessage().contains("VAL-SENS-SLOTS-DEL")
@@ -184,8 +225,8 @@ class CorpusSensitivitySelfTest {
                 "a removed slot error must fail but was: " + removalFailure.getMessage());
 
         List<Expectation.SlotError> three = List.of(
-                new Expectation.SlotError("region", "missing"),
-                new Expectation.SlotError("rate", "out_of_range"),
+                new Expectation.SlotError("accessPort", "missing"),
+                new Expectation.SlotError("latency_target", "out_of_range"),
                 new Expectation.SlotError("round", "out_of_range"));
         NegotiationCase added = validateCase("VAL-SENS-SLOTS-ADD", null, three);
         AssertionError additionFailure = assertThrows(AssertionError.class, () -> engine.run(added));
@@ -193,6 +234,47 @@ class CorpusSensitivitySelfTest {
                 additionFailure.getMessage().contains("VAL-SENS-SLOTS-ADD")
                         && additionFailure.getMessage().contains("$.expect.slotErrors"),
                 "an added slot error must fail but was: " + additionFailure.getMessage());
+    }
+
+    // ------------------------------------------------------------------ task-family expectations must be sensitive
+
+    @Test
+    void flippedMissingParamsMustFailTheEngine() throws Exception {
+        NegotiationCase trueExpectation = taskValidateCase(
+                "VAL-SENS-MISSING",
+                taskOk(1, null, List.of("accessPort", "bizScenario"), Map.of("faultTime", "2026-05-11T08:21:46Z")),
+                TASK_SEMANTIC_MISSING_PARAMS);
+        engine.run(trueExpectation);
+
+        NegotiationCase flipped = taskValidateCase(
+                "VAL-SENS-MISSING-FLIP",
+                taskOk(1, null, List.of("accessPort"), Map.of("faultTime", "2026-05-11T08:21:46Z")),
+                TASK_SEMANTIC_MISSING_PARAMS);
+
+        AssertionError failure = assertThrows(AssertionError.class, () -> engine.run(flipped));
+
+        assertTrue(
+                failure.getMessage().contains("VAL-SENS-MISSING-FLIP")
+                        && failure.getMessage().contains("$.expect.missingParams")
+                        && failure.getMessage().contains("bizScenario"),
+                "a shrunken missing-parameter set must fail but was: " + failure.getMessage());
+    }
+
+    @Test
+    void flippedPromptTextContainsMustFailTheEngine() throws Exception {
+        NegotiationCase trueExpectation =
+                taskFromTextCase("VAL-SENS-HEADERS", taskOk(1, List.of("## 任务类型"), null, Map.of()));
+        engine.run(trueExpectation);
+
+        NegotiationCase flipped = taskFromTextCase(
+                "VAL-SENS-HEADERS-FLIP", taskOk(1, List.of("## 所需信息项"), null, Map.of()));
+
+        AssertionError failure = assertThrows(AssertionError.class, () -> engine.run(flipped));
+
+        assertTrue(
+                failure.getMessage().contains("VAL-SENS-HEADERS-FLIP")
+                        && failure.getMessage().contains("$.expect.promptTextContains"),
+                "a wrong structural fragment must fail but was: " + failure.getMessage());
     }
 
     // ------------------------------------------------------------------ engine crash guard
@@ -300,6 +382,72 @@ class CorpusSensitivitySelfTest {
         return new Expectation(
                 true, null, null, List.of(), List.of(), llmCalls, promptTextEqualsGolden, null, Map.of(), List.of(),
                 false);
+    }
+
+    /** Task-family success expectation with the prompt-text fragments and the missing-parameter set. */
+    private static Expectation taskOk(
+            @Nullable Integer llmCalls,
+            @Nullable List<String> promptTextContains,
+            @Nullable List<String> missingParams,
+            Map<String, Object> params) {
+        return new Expectation(
+                true,
+                null,
+                null,
+                List.of(),
+                List.of(),
+                llmCalls,
+                null,
+                null,
+                params,
+                List.of(),
+                false,
+                promptTextContains == null ? List.of() : promptTextContains,
+                missingParams,
+                null);
+    }
+
+    private NegotiationCase taskFromTextCase(String id, Expectation expect) {
+        return new NegotiationCase(
+                id + "/zh-CN",
+                id,
+                "task/sensitivity-probes.json",
+                NegotiationApi.GENERATE_TASK_PROMPT_FROM_TEXT,
+                ZH_CN,
+                null,
+                List.of(),
+                null,
+                null,
+                PRIVATE_LINE_COMPLAINT_URI,
+                COMPLAINT_TEXT,
+                null,
+                new LlmScript(null, List.of(new LlmScriptStep.Payload(TASK_SLOTS_OBJECT_EMPTY))),
+                null,
+                null,
+                null,
+                expect);
+    }
+
+    private NegotiationCase taskValidateCase(String id, Expectation expect, String semanticPayload)
+            throws Exception {
+        return new NegotiationCase(
+                id + "/zh-CN",
+                id,
+                "task/sensitivity-probes.json",
+                NegotiationApi.VALIDATE_TASK_PROMPT_AND_DATA_FILLING,
+                ZH_CN,
+                null,
+                List.of(),
+                null,
+                null,
+                PRIVATE_LINE_COMPLAINT_URI,
+                null,
+                null,
+                new LlmScript(null, List.of(new LlmScriptStep.Payload(semanticPayload))),
+                new PromptSource.Text(TASK_PROMPT_MISSING_PARAMS),
+                new ObjectMapper().readTree(TASK_PARAM_SCHEMA),
+                null,
+                expect);
     }
 
     private static Expectation failed(

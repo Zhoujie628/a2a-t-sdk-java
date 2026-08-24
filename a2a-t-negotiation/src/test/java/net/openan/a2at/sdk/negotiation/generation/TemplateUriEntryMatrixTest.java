@@ -76,7 +76,7 @@ class TemplateUriEntryMatrixTest {
             assertEquals(7, casesByUri.size(), "the built-in template set has exactly seven URIs");
             for (Map.Entry<String, List<GoldenCase>> entry : casesByUri.entrySet()) {
                 for (GoldenCase goldenCase : entry.getValue()) {
-                    MetadataContent result = goldenCase.generate(orchestrator);
+                    MetadataContent result = goldenCase.generate(orchestrator, language);
                     assertEquals(entry.getKey(), result.templateUri());
                     assertEquals(readClasspathText(goldenCase.goldenResourcePath(language)), result.promptText());
                 }
@@ -173,7 +173,7 @@ class TemplateUriEntryMatrixTest {
                 .language("zh-CN")
                 .build();
         String builtinText =
-                GoldenCase.INFORMATION_PROPOSE.generate(builtinOrchestrator).promptText();
+                GoldenCase.INFORMATION_PROPOSE.generate(builtinOrchestrator, "zh-CN").promptText();
         assertFalse(builtinText.contains("CUSTOM-OVERRIDE-MARKER"));
         assertEquals(
                 readClasspathText(GoldenCase.INFORMATION_PROPOSE.goldenResourcePath("zh-CN")),
@@ -184,7 +184,7 @@ class TemplateUriEntryMatrixTest {
     private static NegotiationProposeData informationProposeData() {
         return new NegotiationProposeData(
                 new NegotiationContext(UUID, 2, 5),
-                new InformationProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null));
+                new InformationProposeContent(List.of(new NegotiationItem("接入端口名称", "P533-珠江旧城-PTN3900-23-TPA1EG24-1")), null));
     }
 
     private static String readClasspathText(String resourcePath) {

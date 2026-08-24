@@ -38,7 +38,7 @@ class GoldenFixtureGeneratorTest {
                     .language(language)
                     .build();
             for (GoldenInputs.GoldenCase goldenCase : GoldenInputs.GoldenCase.values()) {
-                MetadataContent result = goldenCase.generate(orchestrator);
+                MetadataContent result = goldenCase.generate(orchestrator, language);
                 Path target = GOLDEN_ROOT.resolve(language).resolve(goldenCase.fileName());
                 Files.createDirectories(target.getParent());
                 Files.writeString(target, result.promptText(), StandardCharsets.UTF_8);

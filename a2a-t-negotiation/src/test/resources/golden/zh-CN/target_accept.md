@@ -2,4 +2,4 @@
 Accept
 
 ## 目标协商结果内容
-The finally confirmed intent: apply wireless energy-saving optimization to the Songshan Lake site during 08:00-18:00 with a guaranteed rate of at least 20Mbps.
+最终确认的意图：在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内，高峰时段丢包率不高于1%。

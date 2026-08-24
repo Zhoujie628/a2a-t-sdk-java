@@ -9,7 +9,7 @@
     "context": { "id": "3dbc13b5", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$fail": "assertion" } ] },
     "expect": {
       "outcome": "failure",
@@ -29,7 +29,7 @@
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d", "round": 1, "maxRounds": 3 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$fail": "assertion" } ] },
     "expect": {
       "outcome": "failure",
@@ -49,7 +49,7 @@
     "context": { "id": "gdbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 3, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$fail": "assertion" } ] },
     "expect": {
       "outcome": "failure",
@@ -64,12 +64,12 @@
     "api": "validateProposePromptAndDataFilling",
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
-    "tags": ["rule-gate", "round", "boundary", "happy"],
-    "summary": "当前轮次等于最大轮次预算（第 5 轮即最后一轮）时消息仍可通过规则校验并正常提取参数，只有超出预算才被拒绝",
+    "tags": ["rule-gate", "round", "boundary", "happy", "text-input"],
+    "summary": "当前轮次等于最大轮次预算（第 5 轮即最后一轮）时OMC要数提议报文仍可通过规则校验并正常提取投诉参数，只有超出预算才被拒绝",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 5, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
-    "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "prompt": { "text": "## 信息协商\n请根据<所需信息项>补充相关内容。\n\n## 所需信息项\n1. 接入端口名称：举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1\n2. 投诉分类：举例：专线质差\n3. 专线业务标识\n缺失项之间的关系：OR" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
     "expect": {
       "outcome": "success",
@@ -78,7 +78,8 @@
         "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
         "round": 5,
         "maxRounds": 5,
-        "region": "Songshan Lake"
+        "accessPort": "P533-珠江旧城-PTN3900-23-TPA1EG24-1",
+        "bizScenario": "专线质差"
       },
       "contracts": ["contextKeysInMergedParams"]
     }
@@ -93,7 +94,7 @@
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 6, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$fail": "assertion" } ] },
     "expect": {
       "outcome": "failure",
@@ -113,7 +114,7 @@
     "context": { "id": "negotiation-session-001", "round": 6, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$fail": "assertion" } ] },
     "expect": {
       "outcome": "failure",
@@ -131,12 +132,12 @@
     "api": "validateProposePromptAndDataFilling",
     "languages": ["zh-CN", "en-US"],
     "priority": "P1",
-    "tags": ["rule-gate", "round", "boundary", "single-round", "happy"],
-    "summary": "单轮预算（最大轮次为 1）的第 1 轮消息可通过规则校验并正常提取参数，轮次下限边界同样放行",
+    "tags": ["rule-gate", "round", "boundary", "single-round", "happy", "text-input"],
+    "summary": "单轮预算（最大轮次为 1）的第 1 轮要数提议报文可通过规则校验并正常提取投诉参数，轮次下限边界同样放行",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 1 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
-    "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "prompt": { "text": "## 信息协商\n请根据<所需信息项>补充相关内容。\n\n## 所需信息项\n1. 接入端口名称：举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1\n2. 投诉分类：举例：专线质差\n3. 专线业务标识\n缺失项之间的关系：OR" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
     "expect": {
       "outcome": "success",
@@ -145,7 +146,8 @@
         "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
         "round": 1,
         "maxRounds": 1,
-        "region": "Songshan Lake"
+        "accessPort": "P533-珠江旧城-PTN3900-23-TPA1EG24-1",
+        "bizScenario": "专线质差"
       },
       "contracts": ["contextKeysInMergedParams"]
     }
@@ -155,12 +157,12 @@
     "api": "validateProposePromptAndDataFilling",
     "languages": ["zh-CN", "en-US"],
     "priority": "P2",
-    "tags": ["rule-gate", "uuid", "uppercase-hex", "happy"],
-    "summary": "协商会话标识使用大写十六进制 UUID 时规则门同样放行，消息正常校验并提取参数，合并结果原样保留大写标识",
+    "tags": ["rule-gate", "uuid", "uppercase-hex", "happy", "text-input"],
+    "summary": "协商会话标识使用大写十六进制 UUID 时规则门同样放行，要数提议报文正常校验并提取投诉参数，合并结果原样保留大写标识",
     "context": { "id": "3DBC13B5-BD57-4C2B-B503-24E381B6C8D3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
-    "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "prompt": { "text": "## 信息协商\n请根据<所需信息项>补充相关内容。\n\n## 所需信息项\n1. 接入端口名称：举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1\n2. 投诉分类：举例：专线质差\n3. 专线业务标识\n缺失项之间的关系：OR" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
     "expect": {
       "outcome": "success",
@@ -169,7 +171,8 @@
         "id": "3DBC13B5-BD57-4C2B-B503-24E381B6C8D3",
         "round": 2,
         "maxRounds": 5,
-        "region": "Songshan Lake"
+        "accessPort": "P533-珠江旧城-PTN3900-23-TPA1EG24-1",
+        "bizScenario": "专线质差"
       },
       "contracts": ["contextKeysInMergedParams"]
     }

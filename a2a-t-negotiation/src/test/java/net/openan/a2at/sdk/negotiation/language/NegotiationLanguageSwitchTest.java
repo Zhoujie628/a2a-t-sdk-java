@@ -44,8 +44,8 @@ class NegotiationLanguageSwitchTest {
         NegotiationGenerationOrchestrator zhCnOrchestrator = orchestrator(GoldenInputs.ZH_CN);
         NegotiationGenerationOrchestrator enUsOrchestrator = orchestrator(GoldenInputs.EN_US);
 
-        MetadataContent zhCnResult = goldenCase.generate(zhCnOrchestrator);
-        MetadataContent enUsResult = goldenCase.generate(enUsOrchestrator);
+        MetadataContent zhCnResult = goldenCase.generate(zhCnOrchestrator, GoldenInputs.ZH_CN);
+        MetadataContent enUsResult = goldenCase.generate(enUsOrchestrator, GoldenInputs.EN_US);
 
         assertEquals(readGoldenFixture(goldenCase, GoldenInputs.ZH_CN), zhCnResult.promptText());
         assertEquals(readGoldenFixture(goldenCase, GoldenInputs.EN_US), enUsResult.promptText());

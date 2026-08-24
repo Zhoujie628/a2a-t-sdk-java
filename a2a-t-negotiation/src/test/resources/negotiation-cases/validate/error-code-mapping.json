@@ -9,7 +9,7 @@
     "context": null,
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$fail": "assertion" } ] },
     "expect": {
       "outcome": "failure",
@@ -29,7 +29,7 @@
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 6, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$fail": "assertion" } ] },
     "expect": {
       "outcome": "failure",
@@ -45,17 +45,17 @@
     "languages": ["zh-CN"],
     "priority": "P0",
     "tags": ["error-code-mapping", "map-code", "semantic-rejected"],
-    "summary": "大模型语义校验否决消息时内部语义拒绝错误码对外映射为协商语义拒绝错误码，并保留大模型报告的槽位错误",
+    "summary": "大模型语义校验否决要数提议消息时内部语义拒绝错误码对外映射为协商语义拒绝错误码，并保留大模型报告的接入端口缺失槽位错误",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$ref": "responses/semantic.information.reject" } ] },
     "expect": {
       "outcome": "failure",
       "exception": "NegotiationParamExtractionException",
       "code": "negotiation_semantic_rejected",
-      "slotErrors": [ { "slot": "region", "code": "missing" } ],
+      "slotErrors": [ { "slot": "accessPort", "code": "missing" } ],
       "llmCalls": 1
     }
   },
@@ -69,7 +69,7 @@
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "maxAttempts": 2, "script": [ { "$fail": "llm-error" }, { "$fail": "llm-error" } ] },
     "expect": {
       "outcome": "failure",
@@ -90,7 +90,7 @@
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$fail": "assertion" } ] },
     "inject": "failingSemanticValidator",
     "expect": {

@@ -3,7 +3,9 @@ package net.openan.a2at.sdk.negotiation.testdata;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The twelve {@code NegotiationContentService} APIs the corpus exercises.
+ * The fifteen APIs the corpus exercises: the twelve {@code NegotiationContentService} APIs plus the three task-API
+ * facade methods of the closed loop ({@code generateTaskPromptFromText}, {@code generateTaskPromptFromDataWithSchema}
+ * and {@code validateTaskPromptAndDataFilling}).
  *
  * <p>The corpus references APIs by their Java method name; the later case engine dispatches on this enum, so a
  * misspelled API name fails at corpus load time instead of silently skipping a case.
@@ -46,7 +48,25 @@ public enum NegotiationApi {
     VALIDATE_REJECT_PROMPT_AND_DATA_FILLING("validateRejectPromptAndDataFilling", Family.VALIDATE),
 
     /** {@code validateAbortPromptAndDataFilling}: rule gate plus semantic validation of an abort message. */
-    VALIDATE_ABORT_PROMPT_AND_DATA_FILLING("validateAbortPromptAndDataFilling", Family.VALIDATE);
+    VALIDATE_ABORT_PROMPT_AND_DATA_FILLING("validateAbortPromptAndDataFilling", Family.VALIDATE),
+
+    /**
+     * {@code generateTaskPromptFromText}: workbench-side task prompt generation from free text, one LLM slot-extraction
+     * call (mirrors the {@code A2ATClient} facade through the prompt-module production services).
+     */
+    GENERATE_TASK_PROMPT_FROM_TEXT("generateTaskPromptFromText", Family.TASK),
+
+    /**
+     * {@code generateTaskPromptFromDataWithSchema}: workbench-side task prompt generation from structured input plus a
+     * data schema, one LLM slot-extraction call.
+     */
+    GENERATE_TASK_PROMPT_FROM_DATA_WITH_SCHEMA("generateTaskPromptFromDataWithSchema", Family.TASK),
+
+    /**
+     * {@code validateTaskPromptAndDataFilling}: OMC-side validation of a received task prompt and extraction of its
+     * filled parameters; a schema slot the prompt misses surfaces as a null-valued parameter.
+     */
+    VALIDATE_TASK_PROMPT_AND_DATA_FILLING("validateTaskPromptAndDataFilling", Family.TASK);
 
     private final String jsonName;
 
@@ -79,7 +99,7 @@ public enum NegotiationApi {
      * Resolves a corpus JSON name into an API.
      *
      * @param jsonName corpus JSON name such as {@code generateAcceptFromText}
-     * @return the API, or null when the name matches none of the twelve methods
+     * @return the API, or null when the name matches none of the fifteen methods
      */
     public static @Nullable NegotiationApi fromJsonName(@Nullable String jsonName) {
         for (NegotiationApi api : values()) {
@@ -90,7 +110,7 @@ public enum NegotiationApi {
         return null;
     }
 
-    /** The three API families of the negotiation content service. */
+    /** The four API families of the negotiation content service plus the closed-loop task family. */
     public enum Family {
 
         /** The four from-text generation methods with exactly one LLM extraction call. */
@@ -100,6 +120,12 @@ public enum NegotiationApi {
         FROM_DATA,
 
         /** The four validation methods with a rule gate and one semantic LLM call. */
-        VALIDATE
+        VALIDATE,
+
+        /**
+         * The three closed-loop task APIs of the private-line complaint diagnosis: two task-prompt generation methods
+         * with one LLM slot-extraction call each, and one task-prompt validation method with one LLM semantic call.
+         */
+        TASK
     }
 }

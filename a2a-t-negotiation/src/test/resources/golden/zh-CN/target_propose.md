@@ -1,10 +1,10 @@
 ## 目标协商
-The intent understanding of the wireless energy-saving optimization task is listed in <Intent Understanding Statement>; open questions remain about the area and the time range, see <Content to Clarify>; please clarify and confirm.
+专线质差投诉的修复目标协商意图见<意图理解陈述>；时延目标与完成时限仍存在待澄清问题，见<待澄清内容>；请澄清并确认。
 
 ## 意图理解陈述
-1. task intent：apply wireless energy-saving optimization to the target site during 08:00-18:00
-2. rate guarantee target：at least 20Mbps during the energy-saving period
+1. 修复意图：在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内
+2. 修复目标：高峰时段丢包率不高于1%
 
 ## 待澄清内容
-1. area：which site is covered: Songshan Lake or another site
-2. time range：is the energy-saving period 08:00-18:00 or 00:00-06:00
+1. 时延目标：平均时延目标是恢复至20ms以内还是50ms以内
+2. 完成时限：修复完成时限是48小时内还是72小时内

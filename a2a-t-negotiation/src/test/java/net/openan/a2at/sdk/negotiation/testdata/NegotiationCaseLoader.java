@@ -280,6 +280,8 @@ public final class NegotiationCaseLoader {
         if (roles.stream().anyMatch(String::isBlank)) {
             throw error(file, id, path + ".roles", "role names must not be blank");
         }
+        Map<String, String> rolesDesc =
+                validateRolesDesc(raw.rolesDesc(), roles, file, id, path);
         if (raw.steps() == null || raw.steps().isEmpty()) {
             throw error(file, id, path + ".steps", "missing required field 'steps' (at least one step)");
         }
@@ -335,8 +337,44 @@ public final class NegotiationCaseLoader {
                         resolved.expect());
                 steps.add(new ScenarioCase.ScenarioStep(rawStep.step(), rawStep.role(), stepCase));
             }
-            scenarios.add(new ScenarioCase(expandedId, id, file, language, raw.summary(), roles, steps, expectFlow));
+            scenarios.add(new ScenarioCase(
+                    expandedId, id, file, language, raw.summary(), roles, steps, expectFlow, rolesDesc));
         }
+    }
+
+    /**
+     * Validates the role descriptions of the closed loop (Q23): every key and value must be non-blank, and every key
+     * must name a declared role, so a typo'd role fails at load time instead of silently never showing up in a
+     * failure message.
+     */
+    private static Map<String, String> validateRolesDesc(
+            @Nullable Map<String, String> rolesDesc, List<String> roles, String file, String id, String path) {
+        if (rolesDesc == null) {
+            return Map.of();
+        }
+        Map<String, String> validated = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : rolesDesc.entrySet()) {
+            if (entry.getKey() == null || entry.getKey().isBlank()) {
+                throw error(file, id, path + ".rolesDesc", "role names must not be blank");
+            }
+            if (entry.getValue() == null || entry.getValue().isBlank()) {
+                throw error(
+                        file,
+                        id,
+                        path + ".rolesDesc",
+                        "the description of role '" + entry.getKey() + "' must not be blank");
+            }
+            if (!roles.contains(entry.getKey())) {
+                throw error(
+                        file,
+                        id,
+                        path + ".rolesDesc",
+                        "the described role '" + entry.getKey() + "' is not one of the declared roles "
+                                + roles);
+            }
+            validated.put(entry.getKey(), entry.getValue());
+        }
+        return Map.copyOf(validated);
     }
 
     private record ResolvedFields(
@@ -559,13 +597,14 @@ public final class NegotiationCaseLoader {
                         "a failure expectation must name the expected exception or the expected error code");
             }
             if (expect.promptTextEqualsGolden() != null || expect.metadata() != null || expect.params() != null
-                    || expect.differential() != null) {
+                    || expect.differential() != null || expect.promptTextContains() != null
+                    || expect.missingParams() != null || expect.paramsFromStep() != null) {
                 throw error(
                         file,
                         id,
                         path + ".expect",
                         "a failure expectation must not carry success-only fields (promptTextEqualsGolden, metadata,"
-                                + " params, differential)");
+                                + " params, differential, promptTextContains, missingParams, paramsFromStep)");
             }
         }
         List<Expectation.SlotError> slotErrors = new ArrayList<>();
@@ -587,6 +626,17 @@ public final class NegotiationCaseLoader {
                 throw error(file, id, path + ".expect.params", "the expected params must be a JSON object");
             }
             params = MAPPER.convertValue(expect.params(), new TypeReference<Map<String, Object>>() {});
+            for (Map.Entry<String, Object> entry : params.entrySet()) {
+                if (entry.getValue() == null) {
+                    throw error(
+                            file,
+                            id,
+                            path + ".expect.params",
+                            "the expected param '" + entry.getKey()
+                                    + "' carries a JSON null; a missing parameter belongs into missingParams, not"
+                                    + " into params");
+                }
+            }
         }
         List<String> messageContains =
                 expect.messageContains() == null ? List.of() : List.copyOf(expect.messageContains());
@@ -596,6 +646,25 @@ public final class NegotiationCaseLoader {
         List<String> contracts = expect.contracts() == null ? List.of() : List.copyOf(expect.contracts());
         if (!contracts.isEmpty() && contracts.stream().anyMatch(String::isBlank)) {
             throw error(file, id, path + ".expect.contracts", "contract names must not be blank");
+        }
+        List<String> promptTextContains =
+                expect.promptTextContains() == null ? List.of() : List.copyOf(expect.promptTextContains());
+        if (!promptTextContains.isEmpty() && promptTextContains.stream().anyMatch(String::isBlank)) {
+            throw error(
+                    file,
+                    id,
+                    path + ".expect.promptTextContains",
+                    "promptTextContains entries must not be blank");
+        }
+        List<String> missingParams = expect.missingParams();
+        if (missingParams != null) {
+            if (missingParams.stream().anyMatch(String::isBlank)) {
+                throw error(file, id, path + ".expect.missingParams", "missingParams entries must not be blank");
+            }
+            missingParams = List.copyOf(missingParams);
+        }
+        if (expect.paramsFromStep() != null && expect.paramsFromStep() < 1) {
+            throw error(file, id, path + ".expect.paramsFromStep", "paramsFromStep must be at least 1");
         }
         Expectation.Metadata metadata = expect.metadata() == null
                 ? null
@@ -611,7 +680,10 @@ public final class NegotiationCaseLoader {
                 metadata,
                 params,
                 contracts,
-                Boolean.TRUE.equals(expect.differential()));
+                Boolean.TRUE.equals(expect.differential()),
+                promptTextContains,
+                missingParams,
+                expect.paramsFromStep());
     }
 
     private static ScenarioCase.@Nullable ExpectFlow buildExpectFlow(
@@ -631,8 +703,18 @@ public final class NegotiationCaseLoader {
         if (expectFlow.roundsUsed() != null && expectFlow.roundsUsed() < 1) {
             throw error(file, id, path + ".expectFlow.roundsUsed", "roundsUsed must be at least 1");
         }
+        if (expectFlow.missingParamsFilled() != null && expectFlow.missingParamsFilled() < 1) {
+            throw error(
+                    file,
+                    id,
+                    path + ".expectFlow.missingParamsFilled",
+                    "missingParamsFilled must be at least 1");
+        }
         return new ScenarioCase.ExpectFlow(
-                expectFlow.terminalCondition(), expectFlow.roundsUsed(), expectFlow.distinctMessages());
+                expectFlow.terminalCondition(),
+                expectFlow.roundsUsed(),
+                expectFlow.distinctMessages(),
+                expectFlow.missingParamsFilled());
     }
 
     // ------------------------------------------------------------------ $ref and $fail resolution
@@ -916,6 +998,7 @@ public final class NegotiationCaseLoader {
             @Nullable String summary,
             @Nullable List<String> languages,
             @Nullable List<String> roles,
+            @Nullable Map<String, String> rolesDesc,
             @Nullable List<RawStep> steps,
             @Nullable RawExpectFlow expectFlow) {}
 
@@ -951,12 +1034,18 @@ public final class NegotiationCaseLoader {
             @Nullable RawMetadata metadata,
             @Nullable JsonNode params,
             @Nullable List<String> contracts,
-            @Nullable Boolean differential) {}
+            @Nullable Boolean differential,
+            @Nullable List<String> promptTextContains,
+            @Nullable List<String> missingParams,
+            @Nullable Integer paramsFromStep) {}
 
     private record RawSlotError(String slot, String code) {}
 
     private record RawMetadata(@Nullable String templateUriEcho, @Nullable Boolean contextEcho) {}
 
     private record RawExpectFlow(
-            @Nullable String terminalCondition, @Nullable Integer roundsUsed, @Nullable Boolean distinctMessages) {}
+            @Nullable String terminalCondition,
+            @Nullable Integer roundsUsed,
+            @Nullable Boolean distinctMessages,
+            @Nullable Integer missingParamsFilled) {}
 }

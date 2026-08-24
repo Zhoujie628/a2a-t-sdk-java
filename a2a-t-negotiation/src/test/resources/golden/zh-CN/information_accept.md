@@ -2,5 +2,5 @@
 Accept
 
 ## 信息协商结果内容
-1. energy-saving area information：Songshan Lake
-2. energy-saving rate guarantee target：20Mbps
+1. 接入端口名称：P533-珠江旧城-PTN3900-23-TPA1EG24-1
+2. 投诉分类：专线质差

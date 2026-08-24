@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -436,6 +437,216 @@ class NegotiationCaseLoaderTest {
 
         assertTrue(exception.getMessage().contains("rol"), exception.getMessage());
         assertTrue(exception.getMessage().contains("SC-BAD-01"), exception.getMessage());
+    }
+
+    // ------------------------------------------------------------------ task family format (Q21–Q23)
+
+    @Test
+    void loadsTaskFamilyRecordsWithTheClosedLoopExpectationFields(@TempDir Path root) throws IOException {
+        write(root, "shared/llm-responses.json", SHARED_RESPONSES);
+        write(root, "task/happy.json", """
+                [
+                  {
+                    "id": "TASK-FT-01",
+                    "api": "generateTaskPromptFromText",
+                    "languages": ["zh-CN"],
+                    "summary": "工作台从原始投诉文本生成缺参任务报文",
+                    "templateUri": "Task-T/network-layer/private-line-complaint/v1",
+                    "input": {
+                      "text": {"zh-CN": "深圳访问广州的专线时延骤升，OSS侧事件流水号event-id-20260511-09013。"}
+                    },
+                    "llm": {"script": ["{\\"slots\\": {\\"任务对象\\": \\"\\", \\"任务上下文\\": \\"投诉分类：待补充\\"}, \\"slot_errors\\": []}"]},
+                    "expect": {
+                      "outcome": "success",
+                      "llmCalls": 1,
+                      "promptTextContains": ["## 任务类型", "## 任务对象"]
+                    }
+                  }
+                ]
+                """);
+        write(root, "scenarios/task-closed-loop.json", """
+                [
+                  {
+                    "id": "SC-TASK-01",
+                    "languages": ["zh-CN"],
+                    "summary": "任务缺参发现与补参提取的因果闭环",
+                    "roles": ["A", "B"],
+                    "rolesDesc": {
+                      "A": "工作台（client，任务发起/补数方）",
+                      "B": "OMC（server，执行/要数方，协商发起方）"
+                    },
+                    "steps": [
+                      {
+                        "step": 1,
+                        "role": "A",
+                        "api": "generateTaskPromptFromText",
+                        "context": null,
+                        "templateUri": "Task-T/network-layer/private-line-complaint/v1",
+                        "input": {
+                          "text": {"zh-CN": "深圳访问广州的专线时延骤升，OSS侧事件流水号event-id-20260511-09013。"}
+                        },
+                        "llm": {"script": ["{\\"slots\\": {\\"任务对象\\": \\"\\", \\"任务上下文\\": \\"投诉分类：待补充\\"}, \\"slot_errors\\": []}"]},
+                        "expect": {"outcome": "success", "llmCalls": 1}
+                      },
+                      {
+                        "step": 2,
+                        "role": "B",
+                        "api": "validateTaskPromptAndDataFilling",
+                        "context": null,
+                        "templateUri": "Task-T/network-layer/private-line-complaint/v1",
+                        "prompt": {"fromStep": 1},
+                        "schema": {"type": "object", "properties": {"accessPort": {"type": "string"}}},
+                        "llm": {"script": ["{\\"semantic_verdict\\":true,\\"errors\\":[],\\"params\\":{\\"accessPort\\":null}}"]},
+                        "expect": {
+                          "outcome": "success",
+                          "llmCalls": 1,
+                          "missingParams": ["accessPort"],
+                          "params": {"faultTime": "2026-05-11T08:21:46Z"}
+                        }
+                      },
+                      {
+                        "step": 3,
+                        "role": "B",
+                        "api": "validateAcceptPromptAndDataFilling",
+                        "context": {"id": "%s", "round": 2, "maxRounds": 5},
+                        "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
+                        "prompt": {"fromStep": 1},
+                        "schema": {"type": "object"},
+                        "llm": {"script": ["{\\"semantic_verdict\\":true,\\"errors\\":[],\\"params\\":{}}"]},
+                        "expect": {"outcome": "success", "llmCalls": 1, "paramsFromStep": 2}
+                      }
+                    ],
+                    "expectFlow": {"terminalCondition": "accept", "missingParamsFilled": 2}
+                  }
+                ]
+                """.formatted(SESSION_ID));
+
+        LoadedCorpus corpus = NegotiationCaseLoader.load(root);
+
+        NegotiationCase taskCase = caseById(corpus, "TASK-FT-01/zh-CN");
+        assertEquals(NegotiationApi.GENERATE_TASK_PROMPT_FROM_TEXT, taskCase.api());
+        assertEquals(List.of("## 任务类型", "## 任务对象"), taskCase.expect().promptTextContains());
+
+        ScenarioCase scenario = corpus.scenarios().get(0);
+        assertEquals(
+                Map.of("A", "工作台（client，任务发起/补数方）", "B", "OMC（server，执行/要数方，协商发起方）"),
+                scenario.rolesDesc());
+        assertEquals("A=工作台（client，任务发起/补数方）", scenario.describeRole("A"));
+        NegotiationCase validationStep = scenario.steps().get(1).caseData();
+        assertEquals(NegotiationApi.VALIDATE_TASK_PROMPT_AND_DATA_FILLING, validationStep.api());
+        assertEquals(List.of("accessPort"), validationStep.expect().missingParams());
+        assertEquals(Map.of("faultTime", "2026-05-11T08:21:46Z"), validationStep.expect().params());
+        assertEquals(2, scenario.steps().get(2).caseData().expect().paramsFromStep());
+        assertEquals(2, scenario.expectFlow().missingParamsFilled());
+    }
+
+    @Test
+    void failsFastOnTaskSuccessFieldsOnAFailureExpectation(@TempDir Path root) throws IOException {
+        write(root, "task/bad.json", """
+                [
+                  {
+                    "id": "TASK-BAD-01",
+                    "api": "validateTaskPromptAndDataFilling",
+                    "languages": ["zh-CN"],
+                    "templateUri": "Task-T/network-layer/private-line-complaint/v1",
+                    "prompt": {"text": "## 任务类型(Task Type)"},
+                    "schema": {"type": "object"},
+                    "llm": {"script": ["{}"]},
+                    "expect": {
+                      "outcome": "failure",
+                      "code": "validation_semantic_rejected",
+                      "missingParams": ["accessPort"]
+                    }
+                  }
+                ]
+                """);
+
+        CorpusLoadException exception = assertThrows(CorpusLoadException.class, () -> NegotiationCaseLoader.load(root));
+
+        assertTrue(exception.getMessage().contains("success-only fields"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("missingParams"), exception.getMessage());
+    }
+
+    @Test
+    void failsFastOnAJsonNullInsideParams(@TempDir Path root) throws IOException {
+        write(root, "task/bad.json", """
+                [
+                  {
+                    "id": "TASK-BAD-02",
+                    "api": "validateTaskPromptAndDataFilling",
+                    "languages": ["zh-CN"],
+                    "templateUri": "Task-T/network-layer/private-line-complaint/v1",
+                    "prompt": {"text": "## 任务类型(Task Type)"},
+                    "schema": {"type": "object"},
+                    "llm": {"script": ["{}"]},
+                    "expect": {
+                      "outcome": "success",
+                      "params": {"accessPort": null}
+                    }
+                  }
+                ]
+                """);
+
+        CorpusLoadException exception = assertThrows(CorpusLoadException.class, () -> NegotiationCaseLoader.load(root));
+
+        assertTrue(
+                exception.getMessage().contains("accessPort")
+                        && exception.getMessage().contains("missingParams"),
+                "a JSON null param must point at missingParams but was: " + exception.getMessage());
+    }
+
+    @Test
+    void failsFastOnParamsFromStepBelowOne(@TempDir Path root) throws IOException {
+        write(root, "task/bad.json", """
+                [
+                  {
+                    "id": "TASK-BAD-03",
+                    "api": "validateTaskPromptAndDataFilling",
+                    "languages": ["zh-CN"],
+                    "templateUri": "Task-T/network-layer/private-line-complaint/v1",
+                    "prompt": {"text": "## 任务类型(Task Type)"},
+                    "schema": {"type": "object"},
+                    "llm": {"script": ["{}"]},
+                    "expect": {
+                      "outcome": "success",
+                      "paramsFromStep": 0
+                    }
+                  }
+                ]
+                """);
+
+        CorpusLoadException exception = assertThrows(CorpusLoadException.class, () -> NegotiationCaseLoader.load(root));
+
+        assertTrue(exception.getMessage().contains("paramsFromStep"), exception.getMessage());
+    }
+
+    @Test
+    void failsFastOnARolesDescEntryOutsideTheDeclaredRoles(@TempDir Path root) throws IOException {
+        write(root, "scenarios/bad.json", """
+                [
+                  {
+                    "id": "SC-BAD-02",
+                    "languages": ["zh-CN"],
+                    "roles": ["A", "B"],
+                    "rolesDesc": {"C": "OSS（第三方）"},
+                    "steps": [
+                      {
+                        "step": 1,
+                        "api": "generateProposeFromText",
+                        "context": {"id": "%s", "round": 1, "maxRounds": 5},
+                        "expect": {"outcome": "success"}
+                      }
+                    ]
+                  }
+                ]
+                """.formatted(SESSION_ID));
+
+        CorpusLoadException exception = assertThrows(CorpusLoadException.class, () -> NegotiationCaseLoader.load(root));
+
+        assertTrue(
+                exception.getMessage().contains("rolesDesc")
+                        && exception.getMessage().contains("'C'"),
+                exception.getMessage());
     }
 
     // ------------------------------------------------------------------ helpers

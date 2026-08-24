@@ -2,4 +2,4 @@
 Accept
 
 ## Target Negotiation Result Content
-The finally confirmed intent: apply wireless energy-saving optimization to the Songshan Lake site during 08:00-18:00 with a guaranteed rate of at least 20Mbps.
+The finally confirmed intent: restore the average latency of the Shenzhen-to-Guangzhou dedicated line to within 20ms before 2026-05-15, with a peak-hour packet loss rate no higher than 1%.

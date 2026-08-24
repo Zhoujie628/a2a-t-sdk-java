@@ -44,9 +44,10 @@ class CustomRootTemplateOverrideTest {
     void customRootTemplateWinsWhilePresentAndTheRestOfTheOutputIsUntouched() throws IOException {
         writeCustomizedInformationProposeTemplate();
         NegotiationGenerationOrchestrator orchestrator = orchestratorWithCustomRoot();
-        MetadataContent builtinResult = GoldenCase.INFORMATION_PROPOSE.generate(orchestrator(GoldenInputs.ZH_CN, null));
+        MetadataContent builtinResult =
+                GoldenCase.INFORMATION_PROPOSE.generate(orchestrator(GoldenInputs.ZH_CN, null), GoldenInputs.ZH_CN);
 
-        MetadataContent result = GoldenCase.INFORMATION_PROPOSE.generate(orchestrator);
+        MetadataContent result = GoldenCase.INFORMATION_PROPOSE.generate(orchestrator, GoldenInputs.ZH_CN);
 
         assertEquals(
                 builtinResult.promptText() + "\n\n## " + MARKER_SECTION_TITLE + "\n" + MARKER_LINE,
@@ -61,7 +62,7 @@ class CustomRootTemplateOverrideTest {
         NegotiationGenerationOrchestrator orchestrator = orchestratorWithCustomRoot();
         assertTrue(
                 GoldenCase.INFORMATION_PROPOSE
-                        .generate(orchestrator)
+                        .generate(orchestrator, GoldenInputs.ZH_CN)
                         .promptText()
                         .contains(MARKER_LINE),
                 "precondition: the override is in effect");
@@ -70,7 +71,7 @@ class CustomRootTemplateOverrideTest {
 
         assertEquals(
                 readGoldenFixture(GoldenCase.INFORMATION_PROPOSE, GoldenInputs.ZH_CN),
-                GoldenCase.INFORMATION_PROPOSE.generate(orchestrator).promptText(),
+                GoldenCase.INFORMATION_PROPOSE.generate(orchestrator, GoldenInputs.ZH_CN).promptText(),
                 "after the removal the built-in template must reproduce the golden fixture byte for byte");
     }
 
@@ -83,7 +84,7 @@ class CustomRootTemplateOverrideTest {
         writeCustomizedInformationProposeTemplate();
         NegotiationGenerationOrchestrator orchestrator = orchestratorWithCustomRoot();
 
-        MetadataContent result = goldenCase.generate(orchestrator);
+        MetadataContent result = goldenCase.generate(orchestrator, GoldenInputs.ZH_CN);
 
         assertEquals(readGoldenFixture(goldenCase, GoldenInputs.ZH_CN), result.promptText());
         assertTrue(!result.promptText().contains(MARKER_LINE), "the marker must stay inside the overridden template");

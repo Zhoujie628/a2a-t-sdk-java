@@ -2,4 +2,4 @@
 Reject
 
 ## 可行性评估结果确认
-The energy-saving target cannot be achieved under the existing power supply constraint; this negotiation is confirmed as concluded.
+受汇聚机房板卡槽位不足限制，端口扩容无法在指定割接窗口内完成；本次可行性协商确认结束。

@@ -1,6 +1,6 @@
 ## Feasibility Negotiation
-Please assess whether the adjusted rate guarantee target of the site-level energy-saving task can be achieved, see <Under Evaluation Description>; please assess.
+Please assess whether the dedicated-line access port expansion can be completed within the cutover window, see <Under Evaluation Description>; please assess.
 
 ## Under Evaluation Description
-1. adjusted target: rate guarantee target lowered from 5Mbps to 2Mbps during 08:00-18:00
-2. existing constraint: at least 10 hours of power supply duration in outage scenarios
+1. expansion plan: expand the access port bandwidth from 100Mbps to 1000Mbps
+2. existing constraint: the cutover window is limited to 02:00-06:00 on 2026-05-30 with service interruption no longer than 30 minutes

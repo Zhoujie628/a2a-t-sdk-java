@@ -2,4 +2,4 @@
 Accept
 
 ## 可行性评估结果确认
-The adjusted rate guarantee target is achievable and satisfies the outage duration requirement; this negotiation is confirmed as concluded.
+端口扩容方案可在割接窗口内完成，业务中断时长满足不超过30分钟的约束；本次可行性协商确认结束。

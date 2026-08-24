@@ -2,4 +2,4 @@
 Reject
 
 ## Information Negotiation Result Content
-1. energy-saving area information: cannot be provided because the site inventory is unavailable
+1. Access Port Name: cannot be provided because the port inventory is temporarily unavailable on the workbench side

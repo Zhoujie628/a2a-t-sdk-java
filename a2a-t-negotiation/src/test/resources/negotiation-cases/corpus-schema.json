@@ -3,7 +3,7 @@
   "$id": "https://openan.net/a2a-t-sdk/negotiation-cases/corpus-schema.json",
   "title": "A2A-T negotiation test corpus format",
   "description": "First-hand definition of the data-driven negotiation test corpus consumed by the negotiation testdata harness (NegotiationCaseLoader and the later CaseEngine suites). Every corpus file is a JSON array of records: case files carry case records, scenario files carry scenario records, and the two shared files carry reusable LLM payloads and JSON Schema variants. The loader parses everything in strict mode, so an unknown key is an error, never a silently ignored typo.",
-  "formatVersion": 1,
+  "formatVersion": 2,
   "$defs": {
     "language": {
       "title": "Language tag of the bundled negotiation resources",
@@ -11,8 +11,8 @@
       "enum": ["zh-CN", "en-US"]
     },
     "api": {
-      "title": "NegotiationContentService API under test",
-      "description": "Exactly the twelve methods of the negotiation content service; the CaseEngine dispatches on this value.",
+      "title": "API under test",
+      "description": "Exactly the twelve methods of the negotiation content service plus the three closed-loop task APIs (the A2ATClient task generation methods and the A2ATServer task validation method, reached through the mirrored prompt-module production wiring); the CaseEngine dispatches on this value.",
       "type": "string",
       "enum": [
         "generateProposeFromText",
@@ -26,7 +26,10 @@
         "validateProposePromptAndDataFilling",
         "validateAcceptPromptAndDataFilling",
         "validateRejectPromptAndDataFilling",
-        "validateAbortPromptAndDataFilling"
+        "validateAbortPromptAndDataFilling",
+        "generateTaskPromptFromText",
+        "generateTaskPromptFromDataWithSchema",
+        "validateTaskPromptAndDataFilling"
       ]
     },
     "priority": {
@@ -42,8 +45,8 @@
       "enum": ["failingTemplateLoader", "failingSemanticValidator"]
     },
     "templateUri": {
-      "title": "Negotiation template URI",
-      "description": "Intentionally permissive: programming-error cases carry deliberately malformed URIs (wrong version segment, wrong extension name, misspelled type, unknown phase).",
+      "title": "Content template URI",
+      "description": "Intentionally permissive: programming-error cases carry deliberately malformed URIs (wrong version segment, wrong extension name, misspelled type, unknown phase). Task-family records address the Task-T templates, such as Task-T/network-layer/private-line-complaint/v1.",
       "type": "string",
       "minLength": 1
     },
@@ -254,7 +257,7 @@
         },
         "params": {
           "type": "object",
-          "description": "Expected merged FilledParamData map; always contains the context keys id, round and maxRounds."
+          "description": "Expected merged FilledParamData map; always contains the context keys id, round and maxRounds. When missingParams is present the entries are a subset check with exact values instead of full-map equality, and JSON null values are rejected — a missing parameter belongs into missingParams."
         },
         "contracts": {
           "type": "array",
@@ -265,6 +268,27 @@
         "differential": {
           "type": "boolean",
           "description": "Marks the from-text plus from-data double run asserting that both outputs equal each other and the golden fixture."
+        },
+        "promptTextContains": {
+          "type": "array",
+          "description": "Task family: structural fragments the generated task prompt text must contain, such as the ## 任务类型(Task Type) style section headers.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "missingParams": {
+          "type": "array",
+          "description": "Task validation: the exact set of schema parameter names expected to be missing — the null-valued entries of the filled parameter data, the causal starting point of the information negotiation. An empty array asserts that nothing is missing.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "paramsFromStep": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Scenario steps only: the number of the earlier task-validation step whose missing parameters this validation step must have filled with values (the 缺参 -> 补参 causal link); resolved by the ScenarioEngine."
         }
       }
     },
@@ -344,6 +368,11 @@
         },
         "distinctMessages": {
           "type": "boolean"
+        },
+        "missingParamsFilled": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The number of the task-validation step whose missing parameters must be filled with values by the later steps of the flow — the 缺参 -> 补参 causal chain asserted at flow level."
         }
       }
     },
@@ -497,6 +526,16 @@
           "type": "array",
           "minItems": 1,
           "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "rolesDesc": {
+          "title": "Role semantics of the closed loop",
+          "description": "Business meaning of each role, keyed by role name, such as {\"A\": \"工作台（client，任务发起/补数方）\", \"B\": \"OMC（server，执行/要数方，协商发起方）\"}. Every key must name a declared role; the descriptions travel into the engine failure messages and the run summary.",
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
             "type": "string",
             "minLength": 1
           }

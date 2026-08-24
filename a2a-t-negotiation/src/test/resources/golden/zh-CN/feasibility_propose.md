@@ -1,6 +1,6 @@
 ## 可行性协商
-Please assess whether the adjusted rate guarantee target of the site-level energy-saving task can be achieved, see <Under Evaluation Description>; please assess.
+请评估专线接入端口扩容方案能否在割接窗口内完成，见<待评估内容说明>；请评估。
 
 ## 待评估内容说明
-1. adjusted target：rate guarantee target lowered from 5Mbps to 2Mbps during 08:00-18:00
-2. existing constraint：at least 10 hours of power supply duration in outage scenarios
+1. 扩容方案：接入端口带宽由100Mbps扩容至1000Mbps
+2. 既有约束：割接窗口仅限2026年5月30日02:00-06:00，业务中断不超过30分钟

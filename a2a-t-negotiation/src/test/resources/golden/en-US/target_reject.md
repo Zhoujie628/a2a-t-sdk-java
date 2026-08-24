@@ -2,4 +2,4 @@
 Reject
 
 ## Target Negotiation Result Content
-The area information cannot be clarified in full because the site inventory is unavailable.
+The latency target cannot be clarified in full because the fiber cutover window is not confirmed yet.

@@ -4,12 +4,12 @@
     "api": "validateAcceptPromptAndDataFilling",
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
-    "tags": ["semantic-verdict", "information", "accept", "type-consistent"],
-    "summary": "语义判定通过且上报类型与信息协商模板一致时，接受消息校验成功并合并出区域参数",
+    "tags": ["semantic-verdict", "information", "accept", "type-consistent", "text-input"],
+    "summary": "工作台补数接受报文语义判定通过且上报类型与信息协商模板一致时，校验成功并合并出接入端口名称与投诉分类参数",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
-    "prompt": { "golden": "information_accept" },
-    "schema": { "$ref": "schemas/flat" },
+    "prompt": { "text": "## 信息协商结果\nAccept\n\n## 信息协商结果内容\n1. 接入端口名称：P533-珠江旧城-PTN3900-23-TPA1EG24-1\n2. 投诉分类：专线质差" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
     "expect": {
       "outcome": "success",
@@ -18,7 +18,8 @@
         "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
         "round": 2,
         "maxRounds": 5,
-        "region": "Songshan Lake"
+        "accessPort": "P533-珠江旧城-PTN3900-23-TPA1EG24-1",
+        "bizScenario": "专线质差"
       },
       "contracts": ["contextKeysInMergedParams"]
     }
@@ -28,12 +29,12 @@
     "api": "validateAcceptPromptAndDataFilling",
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
-    "tags": ["semantic-verdict", "target", "accept", "type-consistent"],
-    "summary": "语义判定通过且上报类型与目标协商模板一致时，接受消息校验成功并合并出站点与速率保障参数",
+    "tags": ["semantic-verdict", "target", "accept", "type-consistent", "text-input"],
+    "summary": "修复目标确认接受报文语义判定通过且上报类型与目标协商模板一致时，校验成功并合并出时延目标与修复时限参数",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 3 },
     "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
-    "prompt": { "golden": "target_accept" },
-    "schema": { "$ref": "schemas/flat" },
+    "prompt": { "text": "## 目标协商结果\nAccept\n\n## 目标协商结果内容\n最终确认的意图：在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内，高峰时段丢包率不高于1%。" },
+    "schema": { "$ref": "schemas/empty" },
     "llm": { "script": [ { "$ref": "responses/semantic.target.accept.full" } ] },
     "expect": {
       "outcome": "success",
@@ -42,8 +43,8 @@
         "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
         "round": 1,
         "maxRounds": 3,
-        "site": "Songshan Lake",
-        "guaranteed_rate": "at least 20Mbps"
+        "latency_target": "within 20ms",
+        "repair_deadline": "2026-05-15"
       },
       "contracts": ["contextKeysInMergedParams"]
     }
@@ -53,12 +54,12 @@
     "api": "validateProposePromptAndDataFilling",
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
-    "tags": ["semantic-verdict", "feasibility", "propose", "type-consistent"],
-    "summary": "语义判定通过且上报类型与可行性协商模板一致时，提议消息校验成功并合并出可行性结论参数",
+    "tags": ["semantic-verdict", "feasibility", "propose", "type-consistent", "text-input"],
+    "summary": "端口扩容可行性提议报文语义判定通过且上报类型与可行性协商模板一致时，校验成功并合并出扩容可行性结论参数",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 3, "maxRounds": 5 },
     "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
-    "prompt": { "golden": "feasibility_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "prompt": { "text": "## 可行性协商\n请评估专线接入端口扩容方案能否在割接窗口内完成，见<待评估内容说明>；请评估。\n\n## 待评估内容说明\n1. 扩容方案：接入端口带宽由100Mbps扩容至1000Mbps\n2. 既有约束：割接窗口仅限2026年5月30日02:00-06:00，业务中断不超过30分钟" },
+    "schema": { "$ref": "schemas/empty" },
     "llm": { "script": [ { "$ref": "responses/semantic.feasibility.accept.full" } ] },
     "expect": {
       "outcome": "success",
@@ -67,7 +68,7 @@
         "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
         "round": 3,
         "maxRounds": 5,
-        "feasibility_result": "achievable"
+        "port_expansion": "feasible"
       },
       "contracts": ["contextKeysInMergedParams"]
     }
@@ -77,11 +78,11 @@
     "api": "validateAbortPromptAndDataFilling",
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
-    "tags": ["semantic-verdict", "abort", "common", "type-consistent"],
-    "summary": "终止消息语义判定通过且未上报协商类型时校验成功，合并出终止原因参数",
+    "tags": ["semantic-verdict", "abort", "common", "type-consistent", "text-input"],
+    "summary": "轮次耗尽终止报文语义判定通过且未上报协商类型时校验成功，合并出终止原因参数",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 5, "maxRounds": 5 },
     "templateUri": "Negotiation-T/common/abort/v1",
-    "prompt": { "golden": "abort" },
+    "prompt": { "text": "## 协商结果\nAbort\n\n## 协商终止原因\n已达到协商轮次上限，本次协商确认终止。" },
     "schema": { "$ref": "schemas/empty" },
     "llm": { "script": [ { "$ref": "responses/semantic.common.abort.full" } ] },
     "expect": {
@@ -91,7 +92,7 @@
         "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
         "round": 5,
         "maxRounds": 5,
-        "termination_reason": "The negotiation round limit is reached."
+        "termination_reason": "已达到协商轮次上限"
       },
       "contracts": ["contextKeysInMergedParams"]
     }
@@ -101,12 +102,12 @@
     "api": "validateRejectPromptAndDataFilling",
     "languages": ["zh-CN", "en-US"],
     "priority": "P1",
-    "tags": ["semantic-verdict", "information", "reject", "type-consistent"],
-    "summary": "语义判定通过且类型一致时，拒绝侧消息同样校验成功，类型一致性不区分接受或拒绝动作",
+    "tags": ["semantic-verdict", "information", "reject", "type-consistent", "text-input"],
+    "summary": "工作台无法提供端口名的拒绝报文语义判定通过且类型一致时校验成功，类型一致性不区分接受或拒绝动作",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 4 },
     "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
-    "prompt": { "golden": "information_reject" },
-    "schema": { "$ref": "schemas/flat" },
+    "prompt": { "text": "## 信息协商结果\nReject\n\n## 信息协商结果内容\n1. 接入端口名称：无法提供，工作台侧端口资源台账暂不可查" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$ref": "responses/semantic.information.accept.full" } ] },
     "expect": {
       "outcome": "success",
@@ -115,7 +116,8 @@
         "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3",
         "round": 2,
         "maxRounds": 4,
-        "region": "Songshan Lake"
+        "accessPort": "P533-珠江旧城-PTN3900-23-TPA1EG24-1",
+        "bizScenario": "专线质差"
       },
       "contracts": ["contextKeysInMergedParams"]
     }
@@ -125,11 +127,11 @@
     "api": "validateAbortPromptAndDataFilling",
     "languages": ["zh-CN", "en-US"],
     "priority": "P2",
-    "tags": ["semantic-verdict", "abort", "common", "type-unchecked", "probe"],
+    "tags": ["semantic-verdict", "abort", "common", "type-unchecked", "probe", "text-input"],
     "summary": "公共终止模板未声明协商类型，判定通过时即使大模型上报了类型也照常校验成功",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 4, "maxRounds": 5 },
     "templateUri": "Negotiation-T/common/abort/v1",
-    "prompt": { "golden": "abort" },
+    "prompt": { "text": "## 协商结果\nAbort\n\n## 协商终止原因\n已达到协商轮次上限，本次协商确认终止。" },
     "schema": { "$ref": "schemas/empty" },
     "llm": { "script": [ "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}" ] },
     "expect": {
@@ -149,11 +151,11 @@
     "languages": ["zh-CN"],
     "priority": "P0",
     "tags": ["semantic-verdict", "information", "propose", "type-mismatch"],
-    "summary": "大模型判定通过但上报成目标协商类型时，信息协商提议被语义拒绝并指出类型不一致",
+    "summary": "大模型判定通过但上报成目标协商类型时，信息协商要数提议被语义拒绝并指出类型不一致",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$ref": "responses/semantic.information.type_mismatch" } ] },
     "expect": {
       "outcome": "failure",
@@ -169,11 +171,11 @@
     "languages": ["zh-CN"],
     "priority": "P0",
     "tags": ["semantic-verdict", "information", "propose", "null-type"],
-    "summary": "大模型判定通过但未上报协商类型时，信息协商提议被语义拒绝并按模板类型报类型不一致",
+    "summary": "大模型判定通过但未上报协商类型时，信息协商要数提议被语义拒绝并按模板类型报类型不一致",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$ref": "responses/semantic.information.null_type" } ] },
     "expect": {
       "outcome": "failure",
@@ -189,11 +191,11 @@
     "languages": ["zh-CN"],
     "priority": "P1",
     "tags": ["semantic-verdict", "information", "propose", "unknown-type", "probe"],
-    "summary": "大模型判定通过但上报未知协商类型字符串时，信息协商提议被语义拒绝",
+    "summary": "大模型判定通过但上报未知协商类型字符串时，信息协商要数提议被语义拒绝",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 3 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ "{\"semantic_verdict\":true,\"negotiation_type\":\"bogus\",\"errors\":[],\"params\":{}}" ] },
     "expect": {
       "outcome": "failure",
@@ -209,11 +211,11 @@
     "languages": ["zh-CN"],
     "priority": "P2",
     "tags": ["semantic-verdict", "information", "propose", "case-sensitivity", "probe"],
-    "summary": "大模型上报的协商类型仅大小写不同也被视为类型不一致，信息协商提议被语义拒绝",
+    "summary": "大模型上报的协商类型仅大小写不同也被视为类型不一致，信息协商要数提议被语义拒绝",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 3 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ "{\"semantic_verdict\":true,\"negotiation_type\":\"Information\",\"errors\":[],\"params\":{}}" ] },
     "expect": {
       "outcome": "failure",
@@ -229,17 +231,17 @@
     "languages": ["zh-CN"],
     "priority": "P0",
     "tags": ["semantic-verdict", "information", "propose", "verdict-false"],
-    "summary": "大模型语义判定不通过时，信息协商提议被拒绝并返回缺失的区域参数槽位错误",
+    "summary": "大模型语义判定不通过时，信息协商要数提议被拒绝并返回缺失的接入端口参数槽位错误",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ { "$ref": "responses/semantic.information.reject" } ] },
     "expect": {
       "outcome": "failure",
       "exception": "NegotiationParamExtractionException",
       "code": "negotiation_semantic_rejected",
-      "slotErrors": [ { "slot": "region", "code": "missing" } ],
+      "slotErrors": [ { "slot": "accessPort", "code": "missing" } ],
       "llmCalls": 1
     }
   },
@@ -253,13 +255,13 @@
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 4 },
     "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
     "prompt": { "golden": "information_reject" },
-    "schema": { "$ref": "schemas/flat" },
-    "llm": { "script": [ "{\"semantic_verdict\":false,\"negotiation_type\":\"target\",\"errors\":[{\"slot_name\":\"region\",\"code\":\"missing\",\"message\":\"The region parameter is missing.\"}],\"params\":{}}" ] },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
+    "llm": { "script": [ "{\"semantic_verdict\":false,\"negotiation_type\":\"target\",\"errors\":[{\"slot_name\":\"accessPort\",\"code\":\"missing\",\"message\":\"The access port parameter is missing.\"}],\"params\":{}}" ] },
     "expect": {
       "outcome": "failure",
       "exception": "NegotiationParamExtractionException",
       "code": "negotiation_semantic_rejected",
-      "slotErrors": [ { "slot": "region", "code": "missing" } ],
+      "slotErrors": [ { "slot": "accessPort", "code": "missing" } ],
       "llmCalls": 1
     }
   },
@@ -273,7 +275,7 @@
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 3 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": { "script": [ "{\"semantic_verdict\":false,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}" ] },
     "expect": {
       "outcome": "failure",
@@ -288,17 +290,17 @@
     "languages": ["zh-CN"],
     "priority": "P2",
     "tags": ["semantic-verdict", "information", "propose", "params-dropped", "probe"],
-    "summary": "语义判定不通过时已提取的参数被丢弃，校验以语义拒绝失败且不合并任何业务参数",
+    "summary": "语义判定不通过时已提取的投诉参数被丢弃，校验以语义拒绝失败且不合并任何业务参数",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
-    "llm": { "script": [ "{\"semantic_verdict\":false,\"negotiation_type\":\"information\",\"errors\":[{\"slot_name\":\"region\",\"code\":\"missing\",\"message\":\"The region parameter is missing.\"}],\"params\":{\"region\":\"Songshan Lake\"}}" ] },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
+    "llm": { "script": [ "{\"semantic_verdict\":false,\"negotiation_type\":\"information\",\"errors\":[{\"slot_name\":\"accessPort\",\"code\":\"missing\",\"message\":\"The access port parameter is missing.\"}],\"params\":{\"accessPort\":\"P533-珠江旧城-PTN3900-23-TPA1EG24-1\"}}" ] },
     "expect": {
       "outcome": "failure",
       "exception": "NegotiationParamExtractionException",
       "code": "negotiation_semantic_rejected",
-      "slotErrors": [ { "slot": "region", "code": "missing" } ],
+      "slotErrors": [ { "slot": "accessPort", "code": "missing" } ],
       "llmCalls": 1
     }
   },
@@ -332,7 +334,7 @@
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
     "llm": {
       "maxAttempts": 3,
       "script": [
@@ -344,7 +346,7 @@
       "outcome": "failure",
       "exception": "NegotiationParamExtractionException",
       "code": "negotiation_semantic_rejected",
-      "slotErrors": [ { "slot": "region", "code": "missing" } ],
+      "slotErrors": [ { "slot": "accessPort", "code": "missing" } ],
       "llmCalls": 1
     }
   },
@@ -353,13 +355,13 @@
     "api": "validateProposePromptAndDataFilling",
     "languages": ["zh-CN", "en-US"],
     "priority": "P2",
-    "tags": ["semantic-verdict", "information", "propose", "errors-ignored", "probe"],
-    "summary": "语义判定通过时大模型附带的槽位错误被忽略，校验成功且只合并上下文三键",
+    "tags": ["semantic-verdict", "information", "propose", "errors-ignored", "probe", "text-input"],
+    "summary": "语义判定通过时大模型附带的槽位错误被忽略，要数提议报文校验成功且只合并上下文三键",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 3, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
-    "prompt": { "golden": "information_propose" },
-    "schema": { "$ref": "schemas/flat" },
-    "llm": { "script": [ "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[{\"slot_name\":\"region\",\"code\":\"missing\",\"message\":\"The region parameter is missing.\"}],\"params\":{}}" ] },
+    "prompt": { "text": "## 信息协商\n请根据<所需信息项>补充相关内容。\n\n## 所需信息项\n1. 接入端口名称：举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1\n2. 投诉分类：举例：专线质差\n3. 专线业务标识\n缺失项之间的关系：OR" },
+    "schema": { "$ref": "schemas/biz.complaint.params" },
+    "llm": { "script": [ "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[{\"slot_name\":\"accessPort\",\"code\":\"missing\",\"message\":\"The access port parameter is missing.\"}],\"params\":{}}" ] },
     "expect": {
       "outcome": "success",
       "llmCalls": 1,

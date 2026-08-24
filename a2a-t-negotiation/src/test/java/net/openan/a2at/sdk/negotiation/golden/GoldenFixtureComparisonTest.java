@@ -55,7 +55,7 @@ class GoldenFixtureComparisonTest {
     /** Renders one fixture and returns its metadata content, asserting the URI and extension contract up front. */
     private static MetadataContent render(GoldenCase goldenCase, String language) {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(language);
-        MetadataContent result = goldenCase.generate(orchestrator);
+        MetadataContent result = goldenCase.generate(orchestrator, language);
         assertEquals(goldenCase.templateUri(), result.templateUri());
         assertEquals(EXTENSION_URI, result.extensionUri());
         return result;
@@ -113,8 +113,8 @@ class GoldenFixtureComparisonTest {
     void rendersTheSameInputDeterministically(GoldenCase goldenCase, String language) {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(language);
 
-        MetadataContent first = goldenCase.generate(orchestrator);
-        MetadataContent second = goldenCase.generate(orchestrator);
+        MetadataContent first = goldenCase.generate(orchestrator, language);
+        MetadataContent second = goldenCase.generate(orchestrator, language);
 
         assertEquals(first.promptText(), second.promptText());
         assertEquals(first, second);
@@ -158,7 +158,7 @@ class GoldenFixtureComparisonTest {
                 .build();
 
         for (GoldenCase goldenCase : GoldenCase.values()) {
-            MetadataContent result = goldenCase.generate(orchestrator);
+            MetadataContent result = goldenCase.generate(orchestrator, language);
             assertFalse(result.promptText().isBlank());
         }
 

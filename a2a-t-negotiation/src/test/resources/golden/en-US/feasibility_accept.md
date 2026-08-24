@@ -2,4 +2,4 @@
 Accept
 
 ## Feasibility Assessment Result Confirmation
-The adjusted rate guarantee target is achievable and satisfies the outage duration requirement; this negotiation is confirmed as concluded.
+The port expansion can be completed within the cutover window and satisfies the 30-minute interruption constraint; this negotiation is confirmed as concluded.

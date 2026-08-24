@@ -234,14 +234,14 @@ class NegotiationErrorPathPropertyTest {
 
     private static Map<String, Object> validInformationProposePayload() {
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("items", List.of(Map.of("name", "energy_saving_region", "value", "Songshan Lake")));
+        payload.put("items", List.of(Map.of("name", "access_port", "value", "P533-Zhujiang Old Town-PTN3900-23-TPA1EG24-1")));
         payload.put("relationship", null);
         return payload;
     }
 
     private static Map<String, Object> validTargetProposePayload() {
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("target_negotiation_description", "Coverage expansion of the industrial park");
+        payload.put("target_negotiation_description", "Latency repair target of the quality degradation complaint");
         payload.put("intent_understanding", List.of());
         payload.put("alignment_and_clarification", List.of());
         payload.put("request_for_clarification", List.of());
@@ -250,10 +250,10 @@ class NegotiationErrorPathPropertyTest {
 
     private static Map<String, Object> validFeasibilityProposePayload() {
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("feasibility_negotiation_description", "Backhaul upgrade feasibility");
+        payload.put("feasibility_negotiation_description", "Access port expansion feasibility within the cutover window");
         payload.put("action", "REQUEST_FEASIBILITY_EVALUATION");
         payload.put(
-                "contents_to_evaluate", List.of(Map.of("name", "guaranteed_rate", "value", "20Mbps")));
+                "contents_to_evaluate", List.of(Map.of("name", "latency_target", "value", "within 20ms")));
         payload.put("infeasibility_details_and_proposal", List.of());
         return payload;
     }
@@ -261,14 +261,14 @@ class NegotiationErrorPathPropertyTest {
     private static Map<String, Object> validInformationEndingPayload() {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("conclusion", "Accept");
-        payload.put("items", List.of(Map.of("name", "energy_saving_region", "value", "Songshan Lake")));
+        payload.put("items", List.of(Map.of("name", "access_port", "value", "P533-Zhujiang Old Town-PTN3900-23-TPA1EG24-1")));
         return payload;
     }
 
     private static Map<String, Object> validTargetEndingPayload() {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("conclusion", "Accept");
-        payload.put("confirmed_intent", "Confirmed coverage expansion intent");
+        payload.put("confirmed_intent", "Confirmed latency repair intent within 20ms");
         payload.put("failure_reason", null);
         return payload;
     }

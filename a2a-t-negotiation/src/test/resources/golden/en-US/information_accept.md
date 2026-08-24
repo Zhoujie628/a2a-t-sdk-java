@@ -2,5 +2,5 @@
 Accept
 
 ## Information Negotiation Result Content
-1. energy-saving area information: Songshan Lake
-2. energy-saving rate guarantee target: 20Mbps
+1. Access Port Name: P533-Zhujiang Old Town-PTN3900-23-TPA1EG24-1
+2. Complaint Category: dedicated-line quality degradation

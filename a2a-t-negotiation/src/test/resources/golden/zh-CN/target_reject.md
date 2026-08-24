@@ -2,4 +2,4 @@
 Reject
 
 ## 目标协商结果内容
-The area information cannot be clarified in full because the site inventory is unavailable.
+因光缆割接窗口尚未确认，时延目标未能完全澄清。

@@ -38,9 +38,10 @@ class CustomRootVocabularyOverrideTest {
     void customRootVocabularyChangesTheRenderedRelationshipLine() throws IOException {
         writeCustomizedZhCnVocabulary();
 
-        String customized = GoldenCase.INFORMATION_PROPOSE.generate(orchestratorWithCustomRoot())
+        String customized = GoldenCase.INFORMATION_PROPOSE.generate(orchestratorWithCustomRoot(), GoldenInputs.ZH_CN)
                 .promptText();
-        String builtin = GoldenCase.INFORMATION_PROPOSE.generate(orchestrator(GoldenInputs.ZH_CN, null))
+        String builtin = GoldenCase.INFORMATION_PROPOSE
+                .generate(orchestrator(GoldenInputs.ZH_CN, null), GoldenInputs.ZH_CN)
                 .promptText();
 
         assertTrue(customized.contains(CUSTOM_RELATIONSHIP_LABEL), "the custom label must enter the rendered message");
@@ -59,10 +60,13 @@ class CustomRootVocabularyOverrideTest {
                 NegotiationGenerationOrchestratorBuilder.builder()
                         .language(GoldenInputs.ZH_CN)
                         .localRootDir("   ")
-                        .build());
+                        .build(),
+                GoldenInputs.ZH_CN);
 
         assertEquals(
-                GoldenCase.INFORMATION_PROPOSE.generate(orchestrator(GoldenInputs.ZH_CN, null)).promptText(),
+                GoldenCase.INFORMATION_PROPOSE
+                        .generate(orchestrator(GoldenInputs.ZH_CN, null), GoldenInputs.ZH_CN)
+                        .promptText(),
                 withBlankRoot.promptText(),
                 "a blank local root must fall back to the classpath vocabulary");
     }

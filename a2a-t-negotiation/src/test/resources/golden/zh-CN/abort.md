@@ -2,4 +2,4 @@
 Abort
 
 ## 协商终止原因
-The negotiation round limit is reached; this negotiation is confirmed as terminated.
+已达到协商轮次上限，本次协商确认终止。

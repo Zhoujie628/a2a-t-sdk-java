@@ -2,4 +2,4 @@
 Reject
 
 ## Feasibility Assessment Result Confirmation
-The energy-saving target cannot be achieved under the existing power supply constraint; this negotiation is confirmed as concluded.
+The port expansion cannot be completed within the designated cutover window because of insufficient board slots in the aggregation room; this negotiation is confirmed as concluded.

@@ -8,7 +8,7 @@
     "summary": "最大尝试次数为1时大模型返回不可解析内容，不发起任何重试即以抽取失败错误码失败",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
-    "input": { "text": { "zh-CN": "请补充节能区域信息、节能速率保障目标与VLANId三项信息。" } },
+    "input": { "text": { "zh-CN": "请补充接入端口名称、投诉分类与专线业务标识三项信息。" } },
     "llm": { "maxAttempts": 1, "script": [ { "$fail": "non-json" } ] },
     "expect": {
       "outcome": "failure",
@@ -26,7 +26,7 @@
     "summary": "最大尝试次数为2时大模型连续返回空响应与空白内容，尝试耗尽后仍以原始的抽取失败错误码失败",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
-    "input": { "text": { "zh-CN": "我确认第一阶段的信息：节能区域为松山湖，节能速率保障目标为20Mbps。" } },
+    "input": { "text": { "zh-CN": "确认补充投诉诊断信息：接入端口名称为P533-珠江旧城-PTN3900-23-TPA1EG24-1，投诉分类为专线质差。" } },
     "llm": { "maxAttempts": 2, "script": [ { "$fail": "null-response" }, { "$fail": "blank-content" } ] },
     "expect": {
       "outcome": "failure",
@@ -44,7 +44,7 @@
     "summary": "最大尝试次数为3时三种不可解析形态依次出现，三次尝试耗尽后以抽取失败错误码失败",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
-    "input": { "text": { "zh-CN": "请补充节能区域信息、节能速率保障目标与VLANId三项信息。" } },
+    "input": { "text": { "zh-CN": "请补充接入端口名称、投诉分类与专线业务标识三项信息。" } },
     "llm": { "maxAttempts": 3, "script": [ { "$fail": "non-json" }, { "$fail": "blank-content" }, { "$fail": "null-response" } ] },
     "expect": {
       "outcome": "failure",
@@ -62,7 +62,7 @@
     "summary": "最大尝试次数为1时底层通道抛出运行时异常，不重试即以基础设施错误码失败且异常细节不外泄",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
-    "input": { "text": { "zh-CN": "我确认第一阶段的信息：节能区域为松山湖，节能速率保障目标为20Mbps。" } },
+    "input": { "text": { "zh-CN": "确认补充投诉诊断信息：接入端口名称为P533-珠江旧城-PTN3900-23-TPA1EG24-1，投诉分类为专线质差。" } },
     "llm": { "maxAttempts": 1, "script": [ { "$fail": "runtime-exception" } ] },
     "expect": {
       "outcome": "failure",
@@ -81,7 +81,7 @@
     "summary": "最大尝试次数为2时底层先后出现传输异常与错误响应，尝试耗尽后仍以基础设施错误码失败",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
-    "input": { "text": { "zh-CN": "请补充节能区域信息、节能速率保障目标与VLANId三项信息。" } },
+    "input": { "text": { "zh-CN": "请补充接入端口名称、投诉分类与专线业务标识三项信息。" } },
     "llm": { "maxAttempts": 2, "script": [ { "$fail": "runtime-exception" }, { "$fail": "llm-error" } ] },
     "expect": {
       "outcome": "failure",
@@ -100,7 +100,7 @@
     "summary": "最大尝试次数为3时基础设施错误持续出现，三次尝试耗尽后以基础设施错误码失败",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
-    "input": { "text": { "zh-CN": "无法提供节能区域信息：站点库存数据暂不可用，本轮协商拒绝。" } },
+    "input": { "text": { "zh-CN": "无法提供接入端口名称：工作台侧端口资源台账暂不可查，本轮协商拒绝。" } },
     "llm": { "maxAttempts": 3, "script": [ { "$fail": "llm-error" }, { "$fail": "runtime-exception" }, { "$fail": "llm-error" } ] },
     "expect": {
       "outcome": "failure",
@@ -115,21 +115,26 @@
     "api": "generateAcceptFromText",
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
-    "tags": ["retry", "recovery", "extract-failed", "accept-reject"],
-    "summary": "首次返回不可解析内容后第二次返回合法接受内容，重试后成功生成与 golden 一致的接受消息",
+    "tags": ["retry", "recovery", "extract-failed", "accept-reject", "golden-downgraded-contains"],
+    "summary": "首次返回不可解析内容后第二次返回合法补数接受内容，重试后成功生成携带接入端口名称与投诉分类的接受消息（共享应答单一语种，双语 golden 等值断言降级为内容包含）",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
     "input": {
       "text": {
-        "zh-CN": "我确认第一阶段的信息：节能区域为松山湖，节能速率保障目标为20Mbps。",
-        "en-US": "I confirm the first-stage information: the energy-saving area is Songshan Lake and the rate guarantee target is 20Mbps."
+        "zh-CN": "确认补充投诉诊断信息：接入端口名称为P533-珠江旧城-PTN3900-23-TPA1EG24-1，投诉分类为专线质差。",
+        "en-US": "I confirm the supplemented complaint diagnosis information: the access port name is P533-Zhujiang Old Town-PTN3900-23-TPA1EG24-1 and the complaint category is dedicated-line quality degradation."
       }
     },
     "llm": { "maxAttempts": 3, "script": [ { "$fail": "non-json" }, { "$ref": "responses/extract.information.accept.full" } ] },
     "expect": {
       "outcome": "success",
       "llmCalls": 2,
-      "promptTextEqualsGolden": "information_accept",
+      "promptTextContains": [
+        "接入端口名称",
+        "P533-珠江旧城-PTN3900-23-TPA1EG24-1",
+        "投诉分类",
+        "专线质差"
+      ],
       "metadata": {
         "templateUriEcho": "Negotiation-T/information-negotiation/accept-reject/v1",
         "contextEcho": true
@@ -142,21 +147,28 @@
     "api": "generateProposeFromText",
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
-    "tags": ["retry", "recovery", "infrastructure-error"],
-    "summary": "首次底层传输异常后第二次抽取成功，重试后生成与 golden 一致的信息提议消息且异常细节不外泄",
+    "tags": ["retry", "recovery", "infrastructure-error", "golden-downgraded-contains"],
+    "summary": "首次底层传输异常后第二次抽取成功，重试后生成向工作台补充三项缺失信息的要数提议消息且异常细节不外泄（共享应答单一语种，双语 golden 等值断言降级为内容包含）",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "input": {
       "text": {
-        "zh-CN": "请补充节能区域信息（如松山湖）、节能速率保障目标（如20Mbps）与VLANId三项信息，三项之间为或的关系。",
-        "en-US": "Please supplement the energy-saving area information (e.g. Songshan Lake), the energy-saving rate guarantee target (e.g. 20Mbps) and the VLANId; the three items are related by OR."
+        "zh-CN": "请补充接入端口名称（如P533-珠江旧城-PTN3900-23-TPA1EG24-1）、投诉分类（如专线质差）与专线业务标识三项信息，三项之间为或的关系。",
+        "en-US": "Please supplement the Access Port Name (e.g. P533-Zhujiang Old Town-PTN3900-23-TPA1EG24-1), the Complaint Category (e.g. dedicated-line quality degradation) and the Private Line Service Identifier; the three items are related by OR."
       }
     },
     "llm": { "maxAttempts": 2, "script": [ { "$fail": "runtime-exception" }, { "$ref": "responses/extract.information.propose.full" } ] },
     "expect": {
       "outcome": "success",
       "llmCalls": 2,
-      "promptTextEqualsGolden": "information_propose",
+      "promptTextContains": [
+        "接入端口名称",
+        "投诉分类",
+        "专线业务标识",
+        "P533-珠江旧城-PTN3900-23-TPA1EG24-1",
+        "专线质差",
+        "OR"
+      ],
       "metadata": {
         "templateUriEcho": "Negotiation-T/information-negotiation/propose/v1",
         "contextEcho": true
@@ -169,21 +181,23 @@
     "api": "generateAcceptFromText",
     "languages": ["zh-CN", "en-US"],
     "priority": "P1",
-    "tags": ["retry", "recovery", "final-attempt", "target"],
-    "summary": "前两次分别出现基础设施错误与不可解析内容，第三次抽取成功，在最后一次尝试额度内恢复生成接受消息",
+    "tags": ["retry", "recovery", "final-attempt", "target", "golden-downgraded-contains"],
+    "summary": "前两次分别出现基础设施错误与不可解析内容，第三次抽取成功，在最后一次尝试额度内恢复生成修复目标接受消息（共享应答单一语种，双语 golden 等值断言降级为内容包含）",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
     "input": {
       "text": {
-        "zh-CN": "最终确认的意图：对松山湖站点在08:00-18:00执行无线节能优化，节能期间速率保障不低于20Mbps。",
-        "en-US": "The finally confirmed intent: apply wireless energy-saving optimization to the Songshan Lake site during 08:00-18:00 with a guaranteed rate of at least 20Mbps."
+        "zh-CN": "最终确认的意图：在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内，高峰时段丢包率不高于1%。",
+        "en-US": "The finally confirmed intent: restore the average latency of the Shenzhen-to-Guangzhou dedicated line to within 20ms before 2026-05-15, with a peak-hour packet loss rate no higher than 1%."
       }
     },
     "llm": { "maxAttempts": 3, "script": [ { "$fail": "llm-error" }, { "$fail": "non-json" }, { "$ref": "responses/extract.target.accept.full" } ] },
     "expect": {
       "outcome": "success",
       "llmCalls": 3,
-      "promptTextEqualsGolden": "target_accept",
+      "promptTextContains": [
+        "最终确认的意图：在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内，高峰时段丢包率不高于1%。"
+      ],
       "metadata": {
         "templateUriEcho": "Negotiation-T/target-negotiation/accept-reject/v1",
         "contextEcho": true
@@ -196,13 +210,13 @@
     "api": "generateAbortFromText",
     "languages": ["zh-CN", "en-US"],
     "priority": "P1",
-    "tags": ["retry", "recovery", "abort", "common"],
-    "summary": "终止消息首次抽取到空白内容后第二次成功，重试后生成含终止原因的协商终止消息",
+    "tags": ["retry", "recovery", "abort", "common", "golden-downgraded-contains"],
+    "summary": "协商终止消息首次抽取到空白内容后第二次成功，重试后生成含终止原因的协商终止消息（共享应答单一语种，双语 golden 等值断言降级为内容包含）",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/common/abort/v1",
     "input": {
       "text": {
-        "zh-CN": "协商轮次已达上限，本次协商确认终止。",
+        "zh-CN": "已达到协商轮次上限，本次协商确认终止。",
         "en-US": "The negotiation round limit is reached; this negotiation is confirmed as terminated."
       }
     },
@@ -210,7 +224,9 @@
     "expect": {
       "outcome": "success",
       "llmCalls": 2,
-      "promptTextEqualsGolden": "abort",
+      "promptTextContains": [
+        "已达到协商轮次上限，本次协商确认终止。"
+      ],
       "metadata": {
         "templateUriEcho": "Negotiation-T/common/abort/v1",
         "contextEcho": true
@@ -227,7 +243,7 @@
     "summary": "抽取结果缺少结论字段属于不可重试错误，即使还有三次尝试额度也只调用一次大模型即失败",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
-    "input": { "text": { "zh-CN": "我确认第一阶段的信息：节能区域为松山湖，节能速率保障目标为20Mbps。" } },
+    "input": { "text": { "zh-CN": "确认补充投诉诊断信息：接入端口名称为P533-珠江旧城-PTN3900-23-TPA1EG24-1，投诉分类为专线质差。" } },
     "llm": { "maxAttempts": 3, "script": [ { "$ref": "responses/extract.information.accept.missing_conclusion" } ] },
     "expect": {
       "outcome": "failure",
@@ -245,7 +261,7 @@
     "summary": "结论与阶段矛盾属于不可重试错误，即使还有三次尝试额度也只调用一次大模型即失败",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
-    "input": { "text": { "zh-CN": "我确认第一阶段的信息：节能区域为松山湖，节能速率保障目标为20Mbps。" } },
+    "input": { "text": { "zh-CN": "确认补充投诉诊断信息：接入端口名称为P533-珠江旧城-PTN3900-23-TPA1EG24-1，投诉分类为专线质差。" } },
     "llm": { "maxAttempts": 3, "script": [ { "$ref": "responses/extract.information.accept.conclusion_swapped" } ] },
     "expect": {
       "outcome": "failure",
@@ -263,7 +279,7 @@
     "summary": "两次失败形态不同（基础设施错误后接不可解析内容）时，耗尽后重抛最后一次失败的原始错误码而非统一的耗尽错误码",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
-    "input": { "text": { "zh-CN": "请补充节能区域信息、节能速率保障目标与VLANId三项信息。" } },
+    "input": { "text": { "zh-CN": "请补充接入端口名称、投诉分类与专线业务标识三项信息。" } },
     "llm": { "maxAttempts": 2, "script": [ { "$fail": "runtime-exception" }, { "$fail": "non-json" } ] },
     "expect": {
       "outcome": "failure",

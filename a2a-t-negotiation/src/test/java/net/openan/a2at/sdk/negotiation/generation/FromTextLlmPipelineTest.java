@@ -106,16 +106,18 @@ class FromTextLlmPipelineTest {
     void fromTextMatchesFromDataAndTheGoldenFixtureAfterOneExtractionCall() {
         GoldenCase goldenCase = GoldenCase.INFORMATION_PROPOSE;
         ScriptedExtractionClient llm =
-                new ScriptedExtractionClient(extractionJson(goldenCase.content(), goldenCase.phase()));
+                new ScriptedExtractionClient(extractionJson(goldenCase.content(ZH_CN), goldenCase.phase()));
         NegotiationGenerationOrchestrator orchestrator = orchestrator(ZH_CN, llm, 3);
 
         MetadataContent fromText = orchestrator.generateProposeFromText(
-                "请补充节能区域、节能速率保障目标与VLANId信息。", goldenCase.context(), goldenCase.template());
+                "请补充接入端口名称（如P533-珠江旧城-PTN3900-23-TPA1EG24-1）、投诉分类（如专线质差）与专线业务标识信息。",
+                goldenCase.context(),
+                goldenCase.template());
 
         assertEquals(1, llm.calls, "from-text generation must run exactly one content extraction call");
         assertEquals(goldenCase.templateUri(), fromText.templateUri());
 
-        MetadataContent fromData = goldenCase.generate(orchestrator);
+        MetadataContent fromData = goldenCase.generate(orchestrator, ZH_CN);
         assertEquals(1, llm.calls, "the from-data variant must not add any LLM call");
         assertEquals(fromData.promptText(), fromText.promptText());
         assertEquals(readGoldenFixture(goldenCase, ZH_CN), fromText.promptText());
@@ -156,10 +158,10 @@ class FromTextLlmPipelineTest {
     @EnumSource(GoldenCase.class)
     void fromTextSucceedsForEveryMethodAndTypeCombination(GoldenCase goldenCase) {
         ScriptedExtractionClient llm =
-                new ScriptedExtractionClient(extractionJson(goldenCase.content(), goldenCase.phase()));
+                new ScriptedExtractionClient(extractionJson(goldenCase.content(ZH_CN), goldenCase.phase()));
         NegotiationGenerationOrchestrator orchestrator = orchestrator(ZH_CN, llm, 3);
 
-        MetadataContent result = generateFromText(orchestrator, goldenCase, "请根据以下文本生成协商报文。");
+        MetadataContent result = generateFromText(orchestrator, goldenCase, "请根据以下专线投诉诊断协商文本生成协商报文。");
 
         assertEquals(1, llm.calls);
         assertEquals(goldenCase.templateUri(), result.templateUri());
@@ -188,13 +190,14 @@ class FromTextLlmPipelineTest {
                 "accept and reject must address the same accept-reject template");
 
         ScriptedExtractionClient acceptLlm = new ScriptedExtractionClient(
-                extractionJson(GoldenCase.INFORMATION_ACCEPT.content(), NegotiationPhase.ACCEPT));
+                extractionJson(GoldenCase.INFORMATION_ACCEPT.content(ZH_CN), NegotiationPhase.ACCEPT));
         NegotiationGenerationOrchestrator orchestrator = orchestrator(ZH_CN, acceptLlm, 3);
-        MetadataContent acceptResult = generateFromText(orchestrator, GoldenCase.INFORMATION_ACCEPT, "请接受。");
+        MetadataContent acceptResult =
+                generateFromText(orchestrator, GoldenCase.INFORMATION_ACCEPT, "请确认补充接入端口名称与投诉分类。");
         assertEquals(1, acceptLlm.calls);
 
         ScriptedExtractionClient rejectLlm = new ScriptedExtractionClient(
-                extractionJson(GoldenCase.INFORMATION_REJECT.content(), NegotiationPhase.REJECT));
+                extractionJson(GoldenCase.INFORMATION_REJECT.content(ZH_CN), NegotiationPhase.REJECT));
         MetadataContent rejectResult =
                 generateFromText(orchestrator(ZH_CN, rejectLlm, 3), GoldenCase.INFORMATION_REJECT, "请拒绝。");
         assertEquals(1, rejectLlm.calls);
@@ -214,11 +217,11 @@ class FromTextLlmPipelineTest {
     void retriesContentExtractionUntilItSucceeds() {
         GoldenCase goldenCase = GoldenCase.INFORMATION_PROPOSE;
         ScriptedExtractionClient llm =
-                new ScriptedExtractionClient("", "", extractionJson(goldenCase.content(), goldenCase.phase()));
+                new ScriptedExtractionClient("", "", extractionJson(goldenCase.content(ZH_CN), goldenCase.phase()));
         NegotiationGenerationOrchestrator orchestrator = orchestrator(ZH_CN, llm, 3);
 
         MetadataContent result =
-                orchestrator.generateProposeFromText("请提供区域。", goldenCase.context(), goldenCase.template());
+                orchestrator.generateProposeFromText("请提供接入端口名称。", goldenCase.context(), goldenCase.template());
 
         assertEquals(3, llm.calls, "two failures followed by one success must result in three calls");
         assertEquals(readGoldenFixture(goldenCase, ZH_CN), result.promptText());
@@ -249,7 +252,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> orchestrator.generateProposeFromText(
-                        "请提供区域。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
+                        "请提供接入端口名称。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_CONTENT_EXTRACT_FAILED, failure.getCode());
         assertEquals(3, llm.calls);
@@ -281,7 +284,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> orchestrator.generateProposeFromText(
-                        "请提供区域。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
+                        "请提供接入端口名称。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, failure.getCode());
         assertEquals(2, llm.calls);
@@ -303,7 +306,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> orchestrator.generateProposeFromText(
-                        "请提供区域。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
+                        "请提供接入端口名称。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_CONTENT_EXTRACT_FAILED, failure.getCode());
         assertEquals(2, llm.calls);
@@ -318,7 +321,7 @@ class FromTextLlmPipelineTest {
     @Test
     void phaseContentMismatchFailsFastWithInvalidInput() {
         ScriptedExtractionClient llm = new ScriptedExtractionClient(
-                "{\"conclusion\":\"Reject\",\"items\":[{\"name\":\"区域\",\"value\":\"松山湖\"}]}");
+                "{\"conclusion\":\"Reject\",\"items\":[{\"name\":\"接入端口名称\",\"value\":\"P533-珠江旧城-PTN3900-23-TPA1EG24-1\"}]}");
         NegotiationGenerationOrchestrator orchestrator = orchestrator(ZH_CN, llm, 3);
 
         NegotiationGenerationException failure = assertThrows(
@@ -344,7 +347,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> orchestrator.generateProposeFromText(
-                        "请提供区域。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
+                        "请提供接入端口名称。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SLOT_MISSING, failure.getCode());
         assertEquals(1, llm.calls, "non-retryable failures must not be attempted again");
@@ -359,7 +362,7 @@ class FromTextLlmPipelineTest {
     @Test
     void missingTemplateFailsBeforeAnyLlmCall() {
         ScriptedExtractionClient llm = new ScriptedExtractionClient(
-                extractionJson(GoldenCase.INFORMATION_PROPOSE.content(), NegotiationPhase.PROPOSE));
+                extractionJson(GoldenCase.INFORMATION_PROPOSE.content(ZH_CN), NegotiationPhase.PROPOSE));
         NegotiationGenerationOrchestrator orchestrator = NegotiationGenerationOrchestratorBuilder.builder()
                 .language(ZH_CN)
                 .llmClient(llm)
@@ -369,7 +372,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> orchestrator.generateProposeFromText(
-                        "请提供区域。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
+                        "请提供接入端口名称。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.TEMPLATE_NOT_FOUND, failure.getCode());
         assertEquals(0, llm.calls, "the template must be loaded before the LLM step is started");
@@ -382,13 +385,13 @@ class FromTextLlmPipelineTest {
     @Test
     void phaseMismatchedTemplateUriFailsBeforeAnyLlmCall() {
         ScriptedExtractionClient llm = new ScriptedExtractionClient(
-                extractionJson(GoldenCase.INFORMATION_PROPOSE.content(), NegotiationPhase.PROPOSE));
+                extractionJson(GoldenCase.INFORMATION_PROPOSE.content(ZH_CN), NegotiationPhase.PROPOSE));
         NegotiationGenerationOrchestrator orchestrator = orchestrator(ZH_CN, llm, 3);
 
         IllegalArgumentException failure = assertThrows(
                 IllegalArgumentException.class,
                 () -> orchestrator.generateProposeFromText(
-                        "请提供区域。",
+                        "请提供接入端口名称。",
                         GoldenCase.INFORMATION_PROPOSE.context(),
                         GoldenCase.INFORMATION_ACCEPT.template()));
 
@@ -410,7 +413,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> orchestrator.generateProposeFromText(
-                        "请提供区域。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
+                        "请提供接入端口名称。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_CONTENT_EXTRACT_FAILED, failure.getCode());
         assertEquals(1, llm.calls);
@@ -427,7 +430,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> orchestrator.generateProposeFromText(
-                        "请提供区域。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
+                        "请提供接入端口名称。", GoldenCase.INFORMATION_PROPOSE.context(), INFORMATION_PROPOSE_URI));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_CONTENT_EXTRACT_FAILED, failure.getCode());
         assertEquals(2, llm.calls);
@@ -452,11 +455,11 @@ class FromTextLlmPipelineTest {
 
         GoldenCase goldenCase = GoldenCase.INFORMATION_PROPOSE;
         ScriptedExtractionClient recovering = new ScriptedExtractionClient(
-                "", "", "", "", "", "", "", "", "", extractionJson(goldenCase.content(), goldenCase.phase()));
+                "", "", "", "", "", "", "", "", "", extractionJson(goldenCase.content(ZH_CN), goldenCase.phase()));
         NegotiationGenerationOrchestrator recoveringOrchestrator = orchestrator(ZH_CN, recovering, large.maxAttempts());
 
         MetadataContent result = recoveringOrchestrator.generateProposeFromText(
-                "请提供区域。", goldenCase.context(), goldenCase.template());
+                "请提供接入端口名称。", goldenCase.context(), goldenCase.template());
 
         assertEquals(10, recovering.calls, "nine failed attempts plus one success must consume the clamped limit");
         assertEquals(readGoldenFixture(goldenCase, ZH_CN), result.promptText());
@@ -474,7 +477,7 @@ class FromTextLlmPipelineTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> failingOrchestrator.generateProposeFromText(
-                        "请提供区域。", goldenCase.context(), goldenCase.template()));
+                        "请提供接入端口名称。", goldenCase.context(), goldenCase.template()));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_CONTENT_EXTRACT_FAILED, failure.getCode());
         assertEquals(1, failing.calls);
@@ -501,11 +504,20 @@ class FromTextLlmPipelineTest {
         assertEquals(3, config.llm().maxAttempts(), "the default attempt limit is 3");
 
         GoldenCase goldenCase = GoldenCase.INFORMATION_PROPOSE;
-        String inputText = "Please provide the energy-saving area information and the rate guarantee target.";
+        String inputText = "Please provide the access port name and the complaint category of the private line.";
+        Map<String, Object> bizSchema = Map.of(
+                "type", "object",
+                "properties",
+                Map.of(
+                        "accessPort", Map.of("type", "string"),
+                        "bizScenario", Map.of("type", "string")),
+                "required",
+                List.of("accessPort", "bizScenario"));
         ScriptedExtractionClient llm = new ScriptedExtractionClient(
-                extractionJson(goldenCase.content(), goldenCase.phase()),
+                extractionJson(goldenCase.content(EN_US), goldenCase.phase()),
                 "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],"
-                        + "\"params\":{\"region\":\"Songshan Lake\"}}");
+                        + "\"params\":{\"accessPort\":\"P533-Zhujiang Old Town-PTN3900-23-TPA1EG24-1\","
+                        + "\"bizScenario\":\"dedicated-line quality degradation\"}}");
         NegotiationGenerationOrchestrator orchestrator =
                 orchestrator(config.prompt().language(), llm, config.llm().maxAttempts());
 
@@ -522,16 +534,14 @@ class FromTextLlmPipelineTest {
                 "the user prompt must carry the phase token");
 
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
-                message.promptText(),
-                goldenCase.context(),
-                Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
-                goldenCase.template());
+                message.promptText(), goldenCase.context(), bizSchema, goldenCase.template());
 
         assertEquals(2, llm.calls, "the validation pipeline adds exactly one semantic validation call");
         assertEquals(goldenCase.context().id(), filled.data().get("id"));
         assertEquals(goldenCase.context().round(), filled.data().get("round"));
         assertEquals(goldenCase.context().maxRounds(), filled.data().get("maxRounds"));
-        assertEquals("Songshan Lake", filled.data().get("region"));
+        assertEquals("P533-Zhujiang Old Town-PTN3900-23-TPA1EG24-1", filled.data().get("accessPort"));
+        assertEquals("dedicated-line quality degradation", filled.data().get("bizScenario"));
     }
 
     /**
@@ -542,10 +552,10 @@ class FromTextLlmPipelineTest {
     void contextIsInjectedFromTheCallerWithoutAnyLlmInvolvement() {
         NegotiationContext context = new NegotiationContext(GoldenInputs.SESSION_ID, 4, 7);
         ScriptedExtractionClient llm = new ScriptedExtractionClient(
-                extractionJson(GoldenCase.INFORMATION_PROPOSE.content(), NegotiationPhase.PROPOSE));
+                extractionJson(GoldenCase.INFORMATION_PROPOSE.content(ZH_CN), NegotiationPhase.PROPOSE));
         NegotiationGenerationOrchestrator orchestrator = orchestrator(ZH_CN, llm, 3);
 
-        MetadataContent result = orchestrator.generateProposeFromText("请提供区域。", context, INFORMATION_PROPOSE_URI);
+        MetadataContent result = orchestrator.generateProposeFromText("请提供接入端口名称。", context, INFORMATION_PROPOSE_URI);
 
         assertEquals(1, llm.calls);
         Map<String, Object> schemaProperties = schemaProperties(llm.lastSchema);

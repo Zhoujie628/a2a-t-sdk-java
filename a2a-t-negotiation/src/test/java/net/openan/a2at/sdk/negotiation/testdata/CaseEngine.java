@@ -5,9 +5,11 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,7 +43,8 @@ import org.jspecify.annotations.Nullable;
  * the case, wires the {@code inject} hooks onto their real builder injection points ({@code failingTemplateLoader} for
  * the generation template-not-found matrix, {@code failingSemanticValidator} for the validate-family
  * prompt-resource-not-found mapping) and dispatches on the {@link NegotiationApi} enum at compile time, so a misspelled API
- * name fails at corpus load time and a renamed service method fails this compilation.
+ * name fails at corpus load time and a renamed service method fails this compilation. The three task-family APIs run
+ * through the {@link TaskApiAssembler}, the mirrored production wiring of the closed loop (Q21).
  *
  * <p>Result normalization: a success run returns the produced {@link MetadataContent} or {@link FilledParamData}, a
  * failure run captures the thrown exception. The expectation comparison covers outcome, exception name, error code,
@@ -86,17 +89,38 @@ public final class CaseEngine {
      * @throws AssertionError when any expectation mismatches
      */
     public CaseOutcome run(NegotiationCase testCase, @Nullable String promptOverride) {
+        return run(testCase, promptOverride, false);
+    }
+
+    /**
+     * Runs one case, optionally overriding the prompt input of the validate family and optionally running as a
+     * scenario step.
+     *
+     * <p>The {@link ScenarioEngine} resolves {@code prompt.fromStep} references into prompt texts and hands them in
+     * through the prompt parameter; a standalone validate case resolves its golden or inline prompt itself. Scenario
+     * mode defers the {@code expect.paramsFromStep} check to the scenario engine, which resolves the cross-step
+     * reference after the step ran.
+     *
+     * @param testCase expanded corpus case
+     * @param promptOverride prompt text resolved from an earlier scenario step, or null
+     * @param inScenario true inside the ScenarioEngine, false for a standalone run
+     * @return the normalized outcome of the run
+     * @throws AssertionError when any expectation mismatches
+     */
+    CaseOutcome run(NegotiationCase testCase, @Nullable String promptOverride, boolean inScenario) {
         ScriptedNegotiationLlmClient llmClient = llmClientFor(testCase);
         NegotiationContentService service = new NegotiationContentService(orchestratorFor(testCase, llmClient));
+        TaskApiAssembler taskApi =
+                testCase.api().family() == NegotiationApi.Family.TASK ? taskApiFor(testCase, llmClient) : null;
         Object value = null;
         Throwable failure = null;
         try {
-            value = invoke(service, testCase, promptOverride);
+            value = invoke(service, taskApi, testCase, promptOverride);
         } catch (RuntimeException | AssertionError error) {
             failure = error;
         }
         CaseOutcome outcome = new CaseOutcome(testCase, value, failure, llmClient.callCount(), llmClient);
-        assertExpectations(outcome);
+        assertExpectations(outcome, inScenario);
         return outcome;
     }
 
@@ -139,14 +163,14 @@ public final class CaseEngine {
 
     // ------------------------------------------------------------------ expectation comparison
 
-    private void assertExpectations(CaseOutcome outcome) {
+    private void assertExpectations(CaseOutcome outcome, boolean inScenario) {
         NegotiationCase testCase = outcome.testCase();
         Expectation expect = testCase.expect();
         if (expect.success()) {
             if (outcome.failure() != null) {
                 fail(testCase, "$.expect.outcome", "success", "failure (" + outcome.failure() + ")");
             }
-            assertSuccessFields(outcome);
+            assertSuccessFields(outcome, inScenario);
         } else {
             if (outcome.failure() == null) {
                 fail(
@@ -238,7 +262,7 @@ public final class CaseEngine {
         }
     }
 
-    private void assertSuccessFields(CaseOutcome outcome) {
+    private void assertSuccessFields(CaseOutcome outcome, boolean inScenario) {
         NegotiationCase testCase = outcome.testCase();
         Expectation expect = testCase.expect();
         if (expect.promptTextEqualsGolden() != null) {
@@ -273,17 +297,63 @@ public final class CaseEngine {
                 }
             }
         }
-        if (!expect.params().isEmpty()) {
+        if (!expect.params().isEmpty() || expect.missingParams() != null) {
             if (!(outcome.value() instanceof FilledParamData filled)) {
                 throw fail(
                         testCase,
-                        "$.expect.params",
-                        render(expect.params()),
+                        expect.missingParams() != null && expect.params().isEmpty()
+                                ? "$.expect.missingParams"
+                                : "$.expect.params",
+                        expect.missingParams() != null
+                                ? "filled parameter data with the missing-parameter set " + expect.missingParams()
+                                : render(expect.params()),
                         "no filled parameter data (" + typeName(outcome.value()) + ")");
             }
-            if (!Objects.equals(expect.params(), filled.data())) {
+            if (expect.missingParams() != null) {
+                // Task semantics (Q21): the expected params are a subset check with exact values, and the missing
+                // parameter set — the null-valued entries of the filled data — is asserted exactly.
+                for (Map.Entry<String, Object> entry : expect.params().entrySet()) {
+                    if (!filled.data().containsKey(entry.getKey())
+                            || !Objects.equals(entry.getValue(), filled.data().get(entry.getKey()))) {
+                        fail(
+                                testCase,
+                                "$.expect.params",
+                                entry.getKey() + "=" + entry.getValue(),
+                                entry.getKey() + "=" + filled.data().get(entry.getKey()));
+                    }
+                }
+                List<String> actualMissing = filled.data().entrySet().stream()
+                        .filter(entry -> entry.getValue() == null)
+                        .map(Map.Entry::getKey)
+                        .toList();
+                Set<String> expectedMissing = new LinkedHashSet<>(expect.missingParams());
+                if (!expectedMissing.equals(new LinkedHashSet<>(actualMissing))) {
+                    fail(
+                            testCase,
+                            "$.expect.missingParams",
+                            String.join(", ", expectedMissing),
+                            actualMissing.isEmpty() ? "(none)" : String.join(", ", actualMissing));
+                }
+            } else if (!Objects.equals(expect.params(), filled.data())) {
                 fail(testCase, "$.expect.params", render(expect.params()), render(filled.data()));
             }
+        }
+        for (String fragment : expect.promptTextContains()) {
+            MetadataContent message = requireMessage(outcome, "$.expect.promptTextContains");
+            String promptText = message.promptText() == null ? "" : message.promptText();
+            if (!promptText.contains(fragment)) {
+                fail(
+                        testCase,
+                        "$.expect.promptTextContains",
+                        "a prompt text containing '" + fragment + "'",
+                        quoted(truncate(promptText)));
+            }
+        }
+        if (expect.paramsFromStep() != null && !inScenario) {
+            throw new IllegalStateException(
+                    testCase.errorPrefix() + " expect.paramsFromStep " + expect.paramsFromStep()
+                            + " is resolved by the ScenarioEngine; run the enclosing scenario through the"
+                            + " ScenarioEngine");
         }
     }
 
@@ -519,8 +589,22 @@ public final class CaseEngine {
         return builder.build();
     }
 
-    private static NegotiationTemplateLoader failingTemplateLoader() {
-        return new NegotiationTemplateLoader() {
+    /**
+     * Assembles the task API wiring of the closed loop for one case: the retry limit comes from the case's LLM script
+     * or falls back to the builder default of 3, mirroring the facade builders.
+     *
+     * @param testCase expanded corpus case of the task family
+     * @param llmClient scripted LLM client injected at the facade builders' LLM seam
+     * @return the task API assembly of the case's language
+     */
+    private static TaskApiAssembler taskApiFor(NegotiationCase testCase, ScriptedNegotiationLlmClient llmClient) {
+        int maxAttempts = testCase.llm() != null && testCase.llm().maxAttempts() != null
+                ? testCase.llm().maxAttempts()
+                : 3;
+        return new TaskApiAssembler(testCase.language(), maxAttempts, llmClient);
+    }
+
+    private static NegotiationTemplateLoader failingTemplateLoader() {        return new NegotiationTemplateLoader() {
             @Override
             public PromptTemplate load(NegotiationReference reference) {
                 throw new ResourceNotFoundException("Negotiation template does not exist.", reference.uri());
@@ -554,7 +638,10 @@ public final class CaseEngine {
     // ------------------------------------------------------------------ API dispatch
 
     private Object invoke(
-            NegotiationContentService service, NegotiationCase testCase, @Nullable String promptOverride) {
+            NegotiationContentService service,
+            @Nullable TaskApiAssembler taskApi,
+            NegotiationCase testCase,
+            @Nullable String promptOverride) {
         TemplateUri templateUri = parseTemplateUri(testCase);
         NegotiationContext context = toContext(testCase.context());
         return switch (testCase.api()) {
@@ -594,7 +681,52 @@ public final class CaseEngine {
                     promptOf(testCase, promptOverride), context, schemaOf(testCase), templateUri);
             case VALIDATE_ABORT_PROMPT_AND_DATA_FILLING -> service.validateAbortPromptAndDataFilling(
                     promptOf(testCase, promptOverride), context, schemaOf(testCase), templateUri);
+            case GENERATE_TASK_PROMPT_FROM_TEXT ->
+                requireTaskApi(taskApi, testCase).generateTaskPromptFromText(
+                        requireInputText(testCase), templateUri);
+            case GENERATE_TASK_PROMPT_FROM_DATA_WITH_SCHEMA ->
+                requireTaskApi(taskApi, testCase).generateTaskPromptFromDataWithSchema(
+                        dataOf(testCase), requireSchema(testCase), templateUri);
+            case VALIDATE_TASK_PROMPT_AND_DATA_FILLING ->
+                requireTaskApi(taskApi, testCase).validateTaskPromptAndDataFilling(
+                        promptOf(testCase, promptOverride), requireSchema(testCase), templateUri);
         };
+    }
+
+    private static TaskApiAssembler requireTaskApi(
+            @Nullable TaskApiAssembler taskApi, NegotiationCase testCase) {
+        if (taskApi == null) {
+            throw new IllegalStateException(
+                    testCase.errorPrefix() + " the task API assembly is only wired for the task family but got "
+                            + testCase.api().jsonName());
+        }
+        return taskApi;
+    }
+
+    private static String requireInputText(NegotiationCase testCase) {
+        String text = testCase.inputText();
+        if (text == null) {
+            throw new IllegalStateException(
+                    testCase.errorPrefix() + " input.text: the task from-text API requires a text input");
+        }
+        return text;
+    }
+
+    private static Map<String, Object> requireSchema(NegotiationCase testCase) {
+        Map<String, Object> schema = schemaOf(testCase);
+        if (schema == null) {
+            throw new IllegalStateException(testCase.errorPrefix() + " schema: the task APIs require a schema");
+        }
+        return schema;
+    }
+
+    private static Map<String, Object> dataOf(NegotiationCase testCase) {
+        JsonNode data = testCase.inputData();
+        if (data == null || !data.isObject()) {
+            throw new IllegalStateException(
+                    testCase.errorPrefix() + " input.data: the task from-data API requires typed input data");
+        }
+        return MAPPER.convertValue(data, new TypeReference<Map<String, Object>>() {});
     }
 
     private static TemplateUri parseTemplateUri(NegotiationCase testCase) {

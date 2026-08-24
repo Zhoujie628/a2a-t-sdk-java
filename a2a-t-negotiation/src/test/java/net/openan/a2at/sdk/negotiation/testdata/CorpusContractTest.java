@@ -30,9 +30,12 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>Checked today, in full strictness: global id uniqueness, expectation-block completeness, every expected error code
  * being one of the seven negotiation error codes, the seven-code failure coverage, the five mapCode mapping targets, the
- * four operational definitions of the bilingual parity (§7), and the per-record uniform language expansion. The Q19
- * business-review soft gate (§8.7) is opt-in: P0 cases must be 100% approved in review-status.json when
- * {@code -Dcorpus.review.gate=true} is set and the status file exists, and is skipped otherwise.
+ * four operational definitions of the bilingual parity (§7), and the per-record uniform language expansion. The
+ * business-alignment decisions add three more (design §10): the three closed-loop task APIs are exercised by scenario
+ * steps only and are role-bound (A=workbench generates, B=OMC validates), and every VAL-DRIFT drift probe is a
+ * compliant peer text expecting success. The Q19 business-review soft gate (§8.7) is opt-in: P0 cases must be 100%
+ * approved in review-status.json when {@code -Dcorpus.review.gate=true} is set and the status file exists, and is
+ * skipped otherwise.
  *
  * <p>The full corpus has landed (design §8.4): a missing error-code or mapCode dimension is a hard failure, not a TODO
  * line — a hole in the corpus silently narrows the suites, so it must block the build.
@@ -223,6 +226,97 @@ class CorpusContractTest {
         if (!missing.isEmpty()) {
             System.out.println("mapCode mappings not yet covered by any validate failure case: " + missing);
         }
+    }
+
+    // ------------------------------------------------------------------ closed-loop task APIs (Q20-Q23)
+
+    /**
+     * Q21 full strictness: every one of the three closed-loop task APIs must be exercised by at least one scenario
+     * step, and the task APIs must never appear as standalone case-file records — the closed loop (task prompt
+     * generation, peer validation, then negotiation) only has a business meaning inside a scenario, so a standalone
+     * task case would bypass the 缺参 → 协商 → 补参 → 提取 causal chain the corpus exists to model.
+     */
+    @Test
+    void everyTaskApiIsExercisedByScenarioStepsOnly() {
+        List<NegotiationApi> taskApis = new ArrayList<>();
+        for (ScenarioCase scenario : CORPUS.scenarios()) {
+            for (ScenarioCase.ScenarioStep step : scenario.steps()) {
+                NegotiationApi api = step.caseData().api();
+                if (api.family() == NegotiationApi.Family.TASK) {
+                    taskApis.add(api);
+                }
+            }
+        }
+        for (NegotiationApi api : NegotiationApi.values()) {
+            if (api.family() != NegotiationApi.Family.TASK) {
+                continue;
+            }
+            assertTrue(
+                    taskApis.contains(api),
+                    "no scenario step exercises the closed-loop task API '" + api.jsonName() + "' yet");
+        }
+        for (NegotiationCase testCase : CORPUS.cases()) {
+            assertTrue(
+                    testCase.api().family() != NegotiationApi.Family.TASK,
+                    testCase.errorPrefix()
+                            + ": a task API must not appear as a standalone case record, only as a scenario step"
+                            + " (the closed-loop causal chain lives in scenarios)");
+        }
+    }
+
+    /**
+     * Q21/Q23 role semantics: the workbench (A) generates the task prompt and the OMC (B) validates the peer message,
+     * so every task-generation step must be acted by role A and every task-validation step by role B (the dual-session
+     * scenario numbers its roles A1/A2/B1/B2 — the letter prefix decides).
+     */
+    @Test
+    void taskStepsAreBoundToTheirClosedLoopRoles() {
+        for (ScenarioCase scenario : CORPUS.scenarios()) {
+            for (ScenarioCase.ScenarioStep step : scenario.steps()) {
+                NegotiationApi api = step.caseData().api();
+                if (api.family() != NegotiationApi.Family.TASK) {
+                    continue;
+                }
+                String role = step.role() == null ? "" : step.role();
+                String expectedSide = api.jsonName().startsWith("generate") ? "A" : "B";
+                assertTrue(
+                        role.startsWith(expectedSide),
+                        scenario.id() + " step " + step.step() + " (" + api.jsonName()
+                                + ") must be acted by the " + (expectedSide.equals("A") ? "workbench (A)" : "OMC (B)")
+                                + " side, but the role is '" + step.role() + "'");
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ drift probes (Q22)
+
+    /**
+     * Q22 full strictness: a drift probe is a compliant-but-reworded peer message, so it must (a) live in the validate
+     * family, (b) expect success — a drift probe that fails would reward exact-wording coupling instead of semantic
+     * compliance — and (c) take the peer message as inline text, never a golden fixture (golden is the regression
+     * equality anchor, not the validate mainline input).
+     */
+    @Test
+    void driftProbesAreCompliantPeerTextExpectingSuccess() {
+        boolean seen = false;
+        for (NegotiationCase testCase : CORPUS.cases()) {
+            if (!testCase.baseId().startsWith("VAL-DRIFT-")) {
+                continue;
+            }
+            seen = true;
+            assertTrue(
+                    testCase.api().family() == NegotiationApi.Family.VALIDATE,
+                    testCase.errorPrefix() + ": a drift probe must be a validate-family case");
+            assertTrue(
+                    testCase.expect().success(),
+                    testCase.errorPrefix() + ": a compliant-but-reworded peer message must pass validation");
+            assertTrue(
+                    testCase.prompt() instanceof PromptSource.Text,
+                    testCase.errorPrefix()
+                            + ": a drift probe must carry the peer message as inline text (prompt.text),"
+                            + " not a golden fixture or a fromStep reference");
+        }
+        assertTrue(seen, "the corpus must carry at least one VAL-DRIFT drift probe");
     }
 
     // ------------------------------------------------------------------ bilingual parity (§7, four definitions)

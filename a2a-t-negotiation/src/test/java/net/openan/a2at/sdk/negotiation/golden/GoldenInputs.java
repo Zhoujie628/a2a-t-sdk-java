@@ -28,9 +28,12 @@ import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestra
  * Fixed inputs of the golden fixture set of the negotiation content layer.
  *
  * <p>Every golden fixture is rendered from exactly one {@link GoldenCase} carrying a fixed negotiation context, fixed
- * typed content and the built-in template URI of its negotiation type and phase. The same content data is used for
- * every language: only the vocabulary rendering (section titles, labels, list punctuation) differs between zh-CN and
- * en-US.
+ * typed content and the built-in template URI of its negotiation type and phase. The fixture data lives in the
+ * private-line complaint diagnosis business domain (see {@code docs-local/business-facts-dictionary.md}): the
+ * information fixtures carry the access port name and complaint category of the OMC workbench complaint loop, the
+ * target fixtures negotiate the latency repair target, and the feasibility fixtures assess the port expansion.
+ * The typed content is language-dependent — zh-CN fixtures carry Chinese business data, en-US fixtures the English
+ * business form — so each language renders its own golden fixture with real business data in that language.
  *
  * <p>The fixture data deliberately exercises the known rendering pitfalls: a non-null relationship with an appended
  * line and a null-value item (information propose), the round-driven conditional sections with a non-empty
@@ -76,7 +79,10 @@ public final class GoldenInputs {
     /** One golden fixture case: one negotiation type, phase, fixed context, fixed content and its template URI. */
     public enum GoldenCase {
 
-        /** Information propose fixture with three items, one null-value item and a non-null relationship. */
+        /**
+         * Information propose fixture of the complaint diagnosis loop: the OMC asks the workbench for the missing
+         * access port name and complaint category, plus an optional null-value private line service identifier.
+         */
         INFORMATION_PROPOSE(NegotiationPhase.PROPOSE, "information-negotiation", "information_propose") {
             @Override
             public NegotiationContext context() {
@@ -84,17 +90,31 @@ public final class GoldenInputs {
             }
 
             @Override
-            public NegotiationContent content() {
+            public NegotiationContent content(String language) {
+                if (GoldenInputs.EN_US.equals(language)) {
+                    return new InformationProposeContent(
+                            List.of(
+                                    new NegotiationItem(
+                                            "Access Port Name",
+                                            "e.g. P533-Zhujiang Old Town-PTN3900-23-TPA1EG24-1"),
+                                    new NegotiationItem(
+                                            "Complaint Category", "e.g. dedicated-line quality degradation"),
+                                    new NegotiationItem("Private Line Service Identifier", null)),
+                            "OR");
+                }
                 return new InformationProposeContent(
                         List.of(
-                                new NegotiationItem("energy-saving area information", "e.g. Songshan Lake"),
-                                new NegotiationItem("energy-saving rate guarantee target", "e.g. 20Mbps"),
-                                new NegotiationItem("VLANId", null)),
+                                new NegotiationItem("接入端口名称", "举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1"),
+                                new NegotiationItem("投诉分类", "举例：专线质差"),
+                                new NegotiationItem("专线业务标识", null)),
                         "OR");
             }
         },
 
-        /** Target propose fixture of round 1 with intent understanding and a non-empty clarification request. */
+        /**
+         * Target propose fixture of round 1: the workbench and the OMC clarify the latency repair target and the
+         * completion deadline of the quality degradation complaint.
+         */
         TARGET_PROPOSE(NegotiationPhase.PROPOSE, "target-negotiation", "target_propose") {
             @Override
             public NegotiationContext context() {
@@ -102,27 +122,46 @@ public final class GoldenInputs {
             }
 
             @Override
-            public NegotiationContent content() {
+            public NegotiationContent content(String language) {
+                if (GoldenInputs.EN_US.equals(language)) {
+                    return new TargetProposeContent(
+                            "The intent understanding of the dedicated-line quality degradation repair target is"
+                                    + " listed in <Intent Understanding Statement>; open questions remain about the"
+                                    + " latency target and the completion deadline, see <Content to Clarify>; please"
+                                    + " clarify and confirm.",
+                            List.of(
+                                    new NegotiationItem(
+                                            "repair intent",
+                                            "restore the average latency of the Shenzhen-to-Guangzhou dedicated"
+                                                    + " line to within 20ms before 2026-05-15"),
+                                    new NegotiationItem(
+                                            "repair target", "peak-hour packet loss rate no higher than 1%")),
+                            null,
+                            List.of(
+                                    new NegotiationItem(
+                                            "latency target",
+                                            "is the average latency target within 20ms or within 50ms"),
+                                    new NegotiationItem(
+                                            "completion deadline",
+                                            "is the repair deadline 48 hours or 72 hours")));
+                }
                 return new TargetProposeContent(
-                        "The intent understanding of the wireless energy-saving optimization task is listed in"
-                                + " <Intent Understanding Statement>; open questions remain about the area and the"
-                                + " time range, see <Content to Clarify>; please clarify and confirm.",
+                        "专线质差投诉的修复目标协商意图见<意图理解陈述>；时延目标与完成时限仍存在待澄清问题，见<待澄清内容>；请澄清并确认。",
                         List.of(
                                 new NegotiationItem(
-                                        "task intent",
-                                        "apply wireless energy-saving optimization to the target site during"
-                                                + " 08:00-18:00"),
-                                new NegotiationItem(
-                                        "rate guarantee target", "at least 20Mbps during the energy-saving period")),
+                                        "修复意图", "在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内"),
+                                new NegotiationItem("修复目标", "高峰时段丢包率不高于1%")),
                         null,
                         List.of(
-                                new NegotiationItem("area", "which site is covered: Songshan Lake or another site"),
-                                new NegotiationItem(
-                                        "time range", "is the energy-saving period 08:00-18:00 or 00:00-06:00")));
+                                new NegotiationItem("时延目标", "平均时延目标是恢复至20ms以内还是50ms以内"),
+                                new NegotiationItem("完成时限", "修复完成时限是48小时内还是72小时内")));
             }
         },
 
-        /** Feasibility propose fixture requesting a feasibility evaluation of an adjusted rate target. */
+        /**
+         * Feasibility propose fixture requesting a feasibility evaluation of the access port bandwidth expansion
+         * against the cutover window constraint.
+         */
         FEASIBILITY_PROPOSE(NegotiationPhase.PROPOSE, "feasibility-negotiation", "feasibility_propose") {
             @Override
             public NegotiationContext context() {
@@ -130,98 +169,150 @@ public final class GoldenInputs {
             }
 
             @Override
-            public NegotiationContent content() {
+            public NegotiationContent content(String language) {
+                if (GoldenInputs.EN_US.equals(language)) {
+                    return new FeasibilityProposeContent(
+                            "Please assess whether the dedicated-line access port expansion can be completed within"
+                                    + " the cutover window, see <Under Evaluation Description>; please assess.",
+                            NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
+                            List.of(
+                                    new NegotiationItem(
+                                            "expansion plan",
+                                            "expand the access port bandwidth from 100Mbps to 1000Mbps"),
+                                    new NegotiationItem(
+                                            "existing constraint",
+                                            "the cutover window is limited to 02:00-06:00 on 2026-05-30 with"
+                                                    + " service interruption no longer than 30 minutes")),
+                            null);
+                }
                 return new FeasibilityProposeContent(
-                        "Please assess whether the adjusted rate guarantee target of the site-level energy-saving"
-                                + " task can be achieved, see <Under Evaluation Description>; please assess.",
+                        "请评估专线接入端口扩容方案能否在割接窗口内完成，见<待评估内容说明>；请评估。",
                         NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
                         List.of(
+                                new NegotiationItem("扩容方案", "接入端口带宽由100Mbps扩容至1000Mbps"),
                                 new NegotiationItem(
-                                        "adjusted target",
-                                        "rate guarantee target lowered from 5Mbps to 2Mbps during 08:00-18:00"),
-                                new NegotiationItem(
-                                        "existing constraint",
-                                        "at least 10 hours of power supply duration in outage scenarios")),
+                                        "既有约束", "割接窗口仅限2026年5月30日02:00-06:00，业务中断不超过30分钟")),
                         null);
             }
         },
 
-        /** Information accept fixture delivering the requested information items. */
+        /** Information accept fixture delivering the access port name and the complaint category. */
         INFORMATION_ACCEPT(NegotiationPhase.ACCEPT, "information-negotiation", "information_accept") {
             @Override
-            public NegotiationContent content() {
+            public NegotiationContent content(String language) {
+                if (GoldenInputs.EN_US.equals(language)) {
+                    return new InformationEndingContent(
+                            NegotiationConclusion.ACCEPT,
+                            List.of(
+                                    new NegotiationItem(
+                                            "Access Port Name", "P533-Zhujiang Old Town-PTN3900-23-TPA1EG24-1"),
+                                    new NegotiationItem(
+                                            "Complaint Category", "dedicated-line quality degradation")));
+                }
                 return new InformationEndingContent(
                         NegotiationConclusion.ACCEPT,
                         List.of(
-                                new NegotiationItem("energy-saving area information", "Songshan Lake"),
-                                new NegotiationItem("energy-saving rate guarantee target", "20Mbps")));
+                                new NegotiationItem("接入端口名称", "P533-珠江旧城-PTN3900-23-TPA1EG24-1"),
+                                new NegotiationItem("投诉分类", "专线质差")));
             }
         },
 
-        /** Target accept fixture carrying the finally confirmed intent. */
+        /** Target accept fixture carrying the finally confirmed latency repair target. */
         TARGET_ACCEPT(NegotiationPhase.ACCEPT, "target-negotiation", "target_accept") {
             @Override
-            public NegotiationContent content() {
+            public NegotiationContent content(String language) {
+                if (GoldenInputs.EN_US.equals(language)) {
+                    return new TargetEndingContent(
+                            NegotiationConclusion.ACCEPT,
+                            "The finally confirmed intent: restore the average latency of the"
+                                    + " Shenzhen-to-Guangzhou dedicated line to within 20ms before 2026-05-15, with a"
+                                    + " peak-hour packet loss rate no higher than 1%.",
+                            null);
+                }
                 return new TargetEndingContent(
                         NegotiationConclusion.ACCEPT,
-                        "The finally confirmed intent: apply wireless energy-saving optimization to the Songshan"
-                                + " Lake site during 08:00-18:00 with a guaranteed rate of at least 20Mbps.",
+                        "最终确认的意图：在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内，高峰时段丢包率不高于1%。",
                         null);
             }
         },
 
-        /** Feasibility accept fixture confirming a positive evaluation result in the exception slot. */
+        /** Feasibility accept fixture confirming a positive port expansion assessment in the exception slot. */
         FEASIBILITY_ACCEPT(NegotiationPhase.ACCEPT, "feasibility-negotiation", "feasibility_accept") {
             @Override
-            public NegotiationContent content() {
+            public NegotiationContent content(String language) {
+                if (GoldenInputs.EN_US.equals(language)) {
+                    return new FeasibilityEndingContent(
+                            NegotiationConclusion.ACCEPT,
+                            "The port expansion can be completed within the cutover window and satisfies the"
+                                    + " 30-minute interruption constraint; this negotiation is confirmed as"
+                                    + " concluded.");
+                }
                 return new FeasibilityEndingContent(
                         NegotiationConclusion.ACCEPT,
-                        "The adjusted rate guarantee target is achievable and satisfies the outage duration"
-                                + " requirement; this negotiation is confirmed as concluded.");
+                        "端口扩容方案可在割接窗口内完成，业务中断时长满足不超过30分钟的约束；本次可行性协商确认结束。");
             }
         },
 
-        /** Information reject fixture stating that an item cannot be provided. */
+        /** Information reject fixture stating that the access port name cannot be provided. */
         INFORMATION_REJECT(NegotiationPhase.REJECT, "information-negotiation", "information_reject") {
             @Override
-            public NegotiationContent content() {
+            public NegotiationContent content(String language) {
+                if (GoldenInputs.EN_US.equals(language)) {
+                    return new InformationEndingContent(
+                            NegotiationConclusion.REJECT,
+                            List.of(new NegotiationItem(
+                                    "Access Port Name",
+                                    "cannot be provided because the port inventory is temporarily unavailable on"
+                                            + " the workbench side")));
+                }
                 return new InformationEndingContent(
                         NegotiationConclusion.REJECT,
-                        List.of(new NegotiationItem(
-                                "energy-saving area information",
-                                "cannot be provided because the site inventory is unavailable")));
+                        List.of(new NegotiationItem("接入端口名称", "无法提供，工作台侧端口资源台账暂不可查")));
             }
         },
 
-        /** Target reject fixture carrying the failure reason. */
+        /** Target reject fixture carrying the failure reason of the unclarified latency target. */
         TARGET_REJECT(NegotiationPhase.REJECT, "target-negotiation", "target_reject") {
             @Override
-            public NegotiationContent content() {
+            public NegotiationContent content(String language) {
+                if (GoldenInputs.EN_US.equals(language)) {
+                    return new TargetEndingContent(
+                            NegotiationConclusion.REJECT,
+                            null,
+                            "The latency target cannot be clarified in full because the fiber cutover window is"
+                                    + " not confirmed yet.");
+                }
                 return new TargetEndingContent(
-                        NegotiationConclusion.REJECT,
-                        null,
-                        "The area information cannot be clarified in full because the site inventory is"
-                                + " unavailable.");
+                        NegotiationConclusion.REJECT, null, "因光缆割接窗口尚未确认，时延目标未能完全澄清。");
             }
         },
 
-        /** Feasibility reject fixture confirming a negative evaluation result in the exception slot. */
+        /** Feasibility reject fixture confirming a negative port expansion assessment in the exception slot. */
         FEASIBILITY_REJECT(NegotiationPhase.REJECT, "feasibility-negotiation", "feasibility_reject") {
             @Override
-            public NegotiationContent content() {
+            public NegotiationContent content(String language) {
+                if (GoldenInputs.EN_US.equals(language)) {
+                    return new FeasibilityEndingContent(
+                            NegotiationConclusion.REJECT,
+                            "The port expansion cannot be completed within the designated cutover window because"
+                                    + " of insufficient board slots in the aggregation room; this negotiation is"
+                                    + " confirmed as concluded.");
+                }
                 return new FeasibilityEndingContent(
                         NegotiationConclusion.REJECT,
-                        "The energy-saving target cannot be achieved under the existing power supply constraint;"
-                                + " this negotiation is confirmed as concluded.");
+                        "受汇聚机房板卡槽位不足限制，端口扩容无法在指定割接窗口内完成；本次可行性协商确认结束。");
             }
         },
 
         /** Common abort fixture terminating the negotiation at the round limit. */
         ABORT(NegotiationPhase.ABORT, "common", "abort") {
             @Override
-            public NegotiationContent content() {
-                return new NegotiationAbortContent(
-                        "The negotiation round limit is reached; this negotiation is confirmed as terminated.");
+            public NegotiationContent content(String language) {
+                if (GoldenInputs.EN_US.equals(language)) {
+                    return new NegotiationAbortContent(
+                            "The negotiation round limit is reached; this negotiation is confirmed as terminated.");
+                }
+                return new NegotiationAbortContent("已达到协商轮次上限，本次协商确认终止。");
             }
         };
 
@@ -294,28 +385,31 @@ public final class GoldenInputs {
         }
 
         /**
-         * Returns the fixed typed content of this fixture.
+         * Returns the fixed typed content of this fixture in the given language.
          *
-         * @return fixed propose or ending content
+         * @param language locale identifier such as {@code zh-CN}; selects the business data language
+         * @return fixed propose or ending content carrying that language's business data
          */
-        public abstract NegotiationContent content();
+        public abstract NegotiationContent content(String language);
 
         /**
          * Generates this fixture through one orchestrator, using the from-data method of the fixture phase.
          *
          * @param orchestrator orchestrator wired with the resources of the fixture language
+         * @param language locale identifier such as {@code zh-CN}; selects the business data language
          * @return generated metadata content of this fixture
          */
-        public MetadataContent generate(NegotiationGenerationOrchestrator orchestrator) {
+        public MetadataContent generate(NegotiationGenerationOrchestrator orchestrator, String language) {
             return switch (phase) {
                 case PROPOSE -> orchestrator.generateProposeFromData(
-                        new NegotiationProposeData(context(), (NegotiationProposeContent) content()), template());
+                        new NegotiationProposeData(context(), (NegotiationProposeContent) content(language)),
+                        template());
                 case ACCEPT -> orchestrator.generateAcceptFromData(
-                        new NegotiationEndingData(context(), (NegotiationEndingContent) content()), template());
+                        new NegotiationEndingData(context(), (NegotiationEndingContent) content(language)), template());
                 case REJECT -> orchestrator.generateRejectFromData(
-                        new NegotiationEndingData(context(), (NegotiationEndingContent) content()), template());
+                        new NegotiationEndingData(context(), (NegotiationEndingContent) content(language)), template());
                 case ABORT -> orchestrator.generateAbortFromData(
-                        new NegotiationAbortData(context(), (NegotiationAbortContent) content()), template());
+                        new NegotiationAbortData(context(), (NegotiationAbortContent) content(language)), template());
             };
         }
     }

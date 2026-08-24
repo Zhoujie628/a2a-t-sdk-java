@@ -1,10 +1,10 @@
 ## Target Negotiation
-The intent understanding of the wireless energy-saving optimization task is listed in <Intent Understanding Statement>; open questions remain about the area and the time range, see <Content to Clarify>; please clarify and confirm.
+The intent understanding of the dedicated-line quality degradation repair target is listed in <Intent Understanding Statement>; open questions remain about the latency target and the completion deadline, see <Content to Clarify>; please clarify and confirm.
 
 ## Intent Understanding Statement
-1. task intent: apply wireless energy-saving optimization to the target site during 08:00-18:00
-2. rate guarantee target: at least 20Mbps during the energy-saving period
+1. repair intent: restore the average latency of the Shenzhen-to-Guangzhou dedicated line to within 20ms before 2026-05-15
+2. repair target: peak-hour packet loss rate no higher than 1%
 
 ## Content to Clarify
-1. area: which site is covered: Songshan Lake or another site
-2. time range: is the energy-saving period 08:00-18:00 or 00:00-06:00
+1. latency target: is the average latency target within 20ms or within 50ms
+2. completion deadline: is the repair deadline 48 hours or 72 hours

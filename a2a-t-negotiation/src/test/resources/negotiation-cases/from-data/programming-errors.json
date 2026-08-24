@@ -11,7 +11,7 @@
     "input": {
       "data": {
         "items": [
-          { "name": "energy-saving area information", "value": "e.g. Songshan Lake" }
+          { "name": "接入端口名称", "value": "举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1" }
         ],
         "relationship": "OR"
       }
@@ -36,7 +36,7 @@
       "data": {
         "conclusion": "Reject",
         "items": [
-          { "name": "energy-saving area information", "value": "Songshan Lake" }
+          { "name": "接入端口名称", "value": "P533-珠江旧城-PTN3900-23-TPA1EG24-1" }
         ]
       }
     },
@@ -60,7 +60,7 @@
       "data": {
         "conclusion": "Accept",
         "items": [
-          { "name": "energy-saving area information", "value": "Songshan Lake" }
+          { "name": "接入端口名称", "value": "P533-珠江旧城-PTN3900-23-TPA1EG24-1" }
         ]
       }
     },
@@ -84,7 +84,7 @@
       "data": {
         "conclusion": "Abort",
         "items": [
-          { "name": "energy-saving area information", "value": "Songshan Lake" }
+          { "name": "接入端口名称", "value": "P533-珠江旧城-PTN3900-23-TPA1EG24-1" }
         ]
       }
     },
@@ -175,7 +175,7 @@
     "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
     "input": {
       "data": {
-        "feasibility_negotiation_description": "Please assess whether the adjusted rate guarantee target of the site-level energy-saving task can be achieved; please assess.",
+        "feasibility_negotiation_description": "请评估专线接入端口扩容方案能否在割接窗口内完成；请评估。",
         "action": "REQUEST_FEASIBILITY_EVALUATION",
         "contents_to_evaluate": null,
         "infeasibility_details_and_proposal": null
@@ -199,7 +199,7 @@
     "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
     "input": {
       "data": {
-        "feasibility_negotiation_description": "The energy-saving target is infeasible under the existing power supply constraint; an alternative proposal is listed in <Infeasibility Details and Proposal>.",
+        "feasibility_negotiation_description": "受汇聚机房板卡槽位不足限制，端口扩容无法在指定割接窗口内完成；替代方案见<不可行细节与方案>。",
         "action": "PROPOSE_ALTERNATIVE_ON_FAILURE",
         "contents_to_evaluate": null,
         "infeasibility_details_and_proposal": null
@@ -226,7 +226,7 @@
     "input": {
       "data": {
         "items": [
-          { "name": "energy-saving area information", "value": "e.g. Songshan Lake" }
+          { "name": "接入端口名称", "value": "举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1" }
         ],
         "relationship": "OR"
       }
@@ -252,7 +252,7 @@
     "input": {
       "data": {
         "items": [
-          { "name": "energy-saving area information", "value": "e.g. Songshan Lake" }
+          { "name": "接入端口名称", "value": "举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1" }
         ],
         "relationship": "OR"
       }
@@ -278,7 +278,7 @@
     "input": {
       "data": {
         "items": [
-          { "name": "energy-saving area information", "value": "e.g. Songshan Lake" }
+          { "name": "接入端口名称", "value": "举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1" }
         ],
         "relationship": "OR"
       }
@@ -304,7 +304,7 @@
     "input": {
       "data": {
         "items": [
-          { "name": "energy-saving area information", "value": "e.g. Songshan Lake" }
+          { "name": "接入端口名称", "value": "举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1" }
         ],
         "relationship": "OR"
       }
@@ -330,7 +330,7 @@
     "input": {
       "data": {
         "items": [
-          { "name": "energy-saving area information", "value": "e.g. Songshan Lake" }
+          { "name": "接入端口名称", "value": "举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1" }
         ],
         "relationship": "OR"
       }

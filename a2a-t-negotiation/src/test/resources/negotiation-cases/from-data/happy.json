@@ -5,15 +5,15 @@
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
     "tags": ["happy", "information", "propose", "deterministic"],
-    "summary": "结构化数据直接生成信息协商提议消息，双语渲染均与 golden 一致，全程零 LLM 调用",
+    "summary": "OMC 以结构化数据直接生成信息协商提议消息，向工作台索要接入端口名称与投诉分类等缺失信息项，全程零 LLM 调用",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/propose/v1",
     "input": {
       "data": {
         "items": [
-          { "name": "energy-saving area information", "value": "e.g. Songshan Lake" },
-          { "name": "energy-saving rate guarantee target", "value": "e.g. 20Mbps" },
-          { "name": "VLANId", "value": null }
+          { "name": "接入端口名称", "value": "举例：P533-珠江旧城-PTN3900-23-TPA1EG24-1" },
+          { "name": "投诉分类", "value": "举例：专线质差" },
+          { "name": "专线业务标识", "value": null }
         ],
         "relationship": "OR"
       }
@@ -21,7 +21,7 @@
     "expect": {
       "outcome": "success",
       "llmCalls": 0,
-      "promptTextEqualsGolden": "information_propose",
+      "promptTextContains": ["接入端口名称", "投诉分类", "专线业务标识", "P533-珠江旧城-PTN3900-23-TPA1EG24-1", "专线质差", "OR"],
       "metadata": {
         "templateUriEcho": "Negotiation-T/information-negotiation/propose/v1",
         "contextEcho": true
@@ -35,22 +35,22 @@
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
     "tags": ["happy", "information", "accept", "deterministic"],
-    "summary": "结构化数据直接生成信息协商接受消息，消息含 Accept 结论字面量，双语渲染均与 golden 一致，全程零 LLM 调用",
+    "summary": "工作台以结构化数据直接生成信息协商接受消息，补齐接入端口名称与投诉分类并携带 Accept 结论字面量，全程零 LLM 调用",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
     "input": {
       "data": {
         "conclusion": "Accept",
         "items": [
-          { "name": "energy-saving area information", "value": "Songshan Lake" },
-          { "name": "energy-saving rate guarantee target", "value": "20Mbps" }
+          { "name": "接入端口名称", "value": "P533-珠江旧城-PTN3900-23-TPA1EG24-1" },
+          { "name": "投诉分类", "value": "专线质差" }
         ]
       }
     },
     "expect": {
       "outcome": "success",
       "llmCalls": 0,
-      "promptTextEqualsGolden": "information_accept",
+      "promptTextContains": ["Accept", "接入端口名称", "P533-珠江旧城-PTN3900-23-TPA1EG24-1", "专线质差"],
       "metadata": {
         "templateUriEcho": "Negotiation-T/information-negotiation/accept-reject/v1",
         "contextEcho": true
@@ -64,21 +64,21 @@
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
     "tags": ["happy", "information", "reject", "deterministic"],
-    "summary": "结构化数据直接生成信息协商拒绝消息，消息含 Reject 结论字面量，双语渲染均与 golden 一致，全程零 LLM 调用",
+    "summary": "工作台以结构化数据直接生成信息协商拒绝消息，以端口资源台账暂不可查为由无法提供接入端口名称并携带 Reject 结论字面量，全程零 LLM 调用",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/information-negotiation/accept-reject/v1",
     "input": {
       "data": {
         "conclusion": "Reject",
         "items": [
-          { "name": "energy-saving area information", "value": "cannot be provided because the site inventory is unavailable" }
+          { "name": "接入端口名称", "value": "无法提供，工作台侧端口资源台账暂不可查" }
         ]
       }
     },
     "expect": {
       "outcome": "success",
       "llmCalls": 0,
-      "promptTextEqualsGolden": "information_reject",
+      "promptTextContains": ["Reject", "接入端口名称", "无法提供，工作台侧端口资源台账暂不可查"],
       "metadata": {
         "templateUriEcho": "Negotiation-T/information-negotiation/accept-reject/v1",
         "contextEcho": true
@@ -92,27 +92,34 @@
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
     "tags": ["happy", "target", "propose", "first-round", "deterministic"],
-    "summary": "首轮目标协商从结构化数据直接生成提议消息，首轮渲染意图理解与待澄清内容两个板块，全程零 LLM 调用",
+    "summary": "首轮目标协商从结构化数据直接生成提议消息，围绕专线质差的时延恢复目标与修复完成时限向对端澄清，全程零 LLM 调用",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
     "templateUri": "Negotiation-T/target-negotiation/propose/v1",
     "input": {
       "data": {
-        "target_negotiation_description": "The intent understanding of the wireless energy-saving optimization task is listed in <Intent Understanding Statement>; open questions remain about the area and the time range, see <Content to Clarify>; please clarify and confirm.",
+        "target_negotiation_description": "专线质差投诉的修复目标协商意图见<意图理解陈述>；时延目标与完成时限仍存在待澄清问题，见<待澄清内容>；请澄清并确认。",
         "intent_understanding": [
-          { "name": "task intent", "value": "apply wireless energy-saving optimization to the target site during 08:00-18:00" },
-          { "name": "rate guarantee target", "value": "at least 20Mbps during the energy-saving period" }
+          { "name": "修复意图", "value": "在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内" },
+          { "name": "修复目标", "value": "高峰时段丢包率不高于1%" }
         ],
         "alignment_and_clarification": null,
         "request_for_clarification": [
-          { "name": "area", "value": "which site is covered: Songshan Lake or another site" },
-          { "name": "time range", "value": "is the energy-saving period 08:00-18:00 or 00:00-06:00" }
+          { "name": "时延目标", "value": "平均时延目标是恢复至20ms以内还是50ms以内" },
+          { "name": "完成时限", "value": "修复完成时限是48小时内还是72小时内" }
         ]
       }
     },
     "expect": {
       "outcome": "success",
       "llmCalls": 0,
-      "promptTextEqualsGolden": "target_propose",
+      "promptTextContains": [
+        "修复目标协商意图",
+        "修复意图",
+        "在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内",
+        "高峰时段丢包率不高于1%",
+        "时延目标",
+        "完成时限"
+      ],
       "metadata": {
         "templateUriEcho": "Negotiation-T/target-negotiation/propose/v1",
         "contextEcho": true
@@ -126,20 +133,20 @@
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
     "tags": ["happy", "target", "accept", "deterministic"],
-    "summary": "结构化数据直接生成目标协商接受消息，消息携带最终确认意图并含 Accept 结论字面量，全程零 LLM 调用",
+    "summary": "以结构化数据直接生成目标协商接受消息，最终确认专线时延恢复至20ms以内与高峰丢包率目标并携带 Accept 结论字面量，全程零 LLM 调用",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
     "input": {
       "data": {
         "conclusion": "Accept",
-        "confirmed_intent": "The finally confirmed intent: apply wireless energy-saving optimization to the Songshan Lake site during 08:00-18:00 with a guaranteed rate of at least 20Mbps.",
+        "confirmed_intent": "最终确认的意图：在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内，高峰时段丢包率不高于1%。",
         "failure_reason": null
       }
     },
     "expect": {
       "outcome": "success",
       "llmCalls": 0,
-      "promptTextEqualsGolden": "target_accept",
+      "promptTextContains": ["Accept", "最终确认的意图", "20ms以内", "高峰时段丢包率不高于1%"],
       "metadata": {
         "templateUriEcho": "Negotiation-T/target-negotiation/accept-reject/v1",
         "contextEcho": true
@@ -153,20 +160,20 @@
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
     "tags": ["happy", "target", "reject", "deterministic"],
-    "summary": "结构化数据直接生成目标协商拒绝消息，消息携带拒绝原因并含 Reject 结论字面量，全程零 LLM 调用",
+    "summary": "以结构化数据直接生成目标协商拒绝消息，以光缆割接窗口尚未确认为由拒绝时延目标并携带 Reject 结论字面量，全程零 LLM 调用",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/target-negotiation/accept-reject/v1",
     "input": {
       "data": {
         "conclusion": "Reject",
         "confirmed_intent": null,
-        "failure_reason": "The area information cannot be clarified in full because the site inventory is unavailable."
+        "failure_reason": "因光缆割接窗口尚未确认，时延目标未能完全澄清。"
       }
     },
     "expect": {
       "outcome": "success",
       "llmCalls": 0,
-      "promptTextEqualsGolden": "target_reject",
+      "promptTextContains": ["Reject", "光缆割接窗口尚未确认", "时延目标未能完全澄清"],
       "metadata": {
         "templateUriEcho": "Negotiation-T/target-negotiation/accept-reject/v1",
         "contextEcho": true
@@ -180,16 +187,16 @@
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
     "tags": ["happy", "feasibility", "propose", "evaluation-request", "deterministic"],
-    "summary": "结构化数据直接生成可行性协商提议消息，请求对方评估调整后的速率保障目标，全程零 LLM 调用",
+    "summary": "以结构化数据直接生成可行性协商提议消息，请求对端评估接入端口带宽扩容能否在割接窗口内完成，全程零 LLM 调用",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
     "input": {
       "data": {
-        "feasibility_negotiation_description": "Please assess whether the adjusted rate guarantee target of the site-level energy-saving task can be achieved, see <Under Evaluation Description>; please assess.",
+        "feasibility_negotiation_description": "请评估专线接入端口扩容方案能否在割接窗口内完成，见<待评估内容说明>；请评估。",
         "action": "REQUEST_FEASIBILITY_EVALUATION",
         "contents_to_evaluate": [
-          { "name": "adjusted target", "value": "rate guarantee target lowered from 5Mbps to 2Mbps during 08:00-18:00" },
-          { "name": "existing constraint", "value": "at least 10 hours of power supply duration in outage scenarios" }
+          { "name": "扩容方案", "value": "接入端口带宽由100Mbps扩容至1000Mbps" },
+          { "name": "既有约束", "value": "割接窗口仅限2026年5月30日02:00-06:00，业务中断不超过30分钟" }
         ],
         "infeasibility_details_and_proposal": null
       }
@@ -197,7 +204,12 @@
     "expect": {
       "outcome": "success",
       "llmCalls": 0,
-      "promptTextEqualsGolden": "feasibility_propose",
+      "promptTextContains": [
+        "扩容方案",
+        "接入端口带宽由100Mbps扩容至1000Mbps",
+        "既有约束",
+        "割接窗口仅限2026年5月30日02:00-06:00"
+      ],
       "metadata": {
         "templateUriEcho": "Negotiation-T/feasibility-negotiation/propose/v1",
         "contextEcho": true
@@ -211,19 +223,19 @@
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
     "tags": ["happy", "feasibility", "accept", "deterministic"],
-    "summary": "结构化数据直接生成可行性协商接受消息，消息携带可行性结论并含 Accept 结论字面量，全程零 LLM 调用",
+    "summary": "以结构化数据直接生成可行性协商接受消息，确认端口扩容可在割接窗口内完成且满足业务中断约束并携带 Accept 结论字面量，全程零 LLM 调用",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
     "input": {
       "data": {
         "conclusion": "Accept",
-        "feasibility_summary": "The adjusted rate guarantee target is achievable and satisfies the outage duration requirement; this negotiation is confirmed as concluded."
+        "feasibility_summary": "端口扩容方案可在割接窗口内完成，业务中断时长满足不超过30分钟的约束；本次可行性协商确认结束。"
       }
     },
     "expect": {
       "outcome": "success",
       "llmCalls": 0,
-      "promptTextEqualsGolden": "feasibility_accept",
+      "promptTextContains": ["Accept", "端口扩容方案可在割接窗口内完成", "不超过30分钟的约束"],
       "metadata": {
         "templateUriEcho": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
         "contextEcho": true
@@ -237,19 +249,19 @@
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
     "tags": ["happy", "feasibility", "reject", "deterministic"],
-    "summary": "结构化数据直接生成可行性协商拒绝消息，消息携带不可行结论并含 Reject 结论字面量，全程零 LLM 调用",
+    "summary": "以结构化数据直接生成可行性协商拒绝消息，以汇聚机房板卡槽位不足为由判定扩容不可行并携带 Reject 结论字面量，全程零 LLM 调用",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
     "input": {
       "data": {
         "conclusion": "Reject",
-        "feasibility_summary": "The energy-saving target cannot be achieved under the existing power supply constraint; this negotiation is confirmed as concluded."
+        "feasibility_summary": "受汇聚机房板卡槽位不足限制，端口扩容无法在指定割接窗口内完成；本次可行性协商确认结束。"
       }
     },
     "expect": {
       "outcome": "success",
       "llmCalls": 0,
-      "promptTextEqualsGolden": "feasibility_reject",
+      "promptTextContains": ["Reject", "汇聚机房板卡槽位不足", "无法在指定割接窗口内完成"],
       "metadata": {
         "templateUriEcho": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
         "contextEcho": true
@@ -263,23 +275,52 @@
     "languages": ["zh-CN", "en-US"],
     "priority": "P0",
     "tags": ["happy", "abort", "common", "deterministic"],
-    "summary": "结构化数据直接生成协商终止消息，走通用 abort 模板并含终止原因，双语渲染均与 golden 一致，全程零 LLM 调用",
+    "summary": "以结构化数据直接生成协商终止消息，以达到协商轮次上限为由终止本次专线投诉诊断协商并携带 Abort 结论字面量，全程零 LLM 调用",
     "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
     "templateUri": "Negotiation-T/common/abort/v1",
     "input": {
       "data": {
-        "termination_reason": "The negotiation round limit is reached; this negotiation is confirmed as terminated."
+        "termination_reason": "已达到协商轮次上限，本次协商确认终止。"
       }
     },
     "expect": {
       "outcome": "success",
       "llmCalls": 0,
-      "promptTextEqualsGolden": "abort",
+      "promptTextContains": ["Abort", "已达到协商轮次上限"],
       "metadata": {
         "templateUriEcho": "Negotiation-T/common/abort/v1",
         "contextEcho": true
       },
       "contracts": ["conclusionLiteralPresent", "metadataTripleShape"]
+    }
+  },
+  {
+    "id": "FD-HAPPY-11",
+    "api": "generateProposeFromData",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "information", "propose", "and-relationship", "deterministic"],
+    "summary": "接入端口名称与投诉分类两项缺失信息均为必填时以与关系生成信息协商提议消息，两项同时列为缺失项，全程零 LLM 调用",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/information-negotiation/propose/v1",
+    "input": {
+      "data": {
+        "items": [
+          { "name": "接入端口名称", "value": "举例：P781-珠江新城-PTN7900-23-TPA1EG24-17" },
+          { "name": "投诉分类", "value": "举例：专线中断" }
+        ],
+        "relationship": "AND"
+      }
+    },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 0,
+      "promptTextContains": ["接入端口名称", "投诉分类", "P781-珠江新城-PTN7900-23-TPA1EG24-17", "专线中断", "AND"],
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/information-negotiation/propose/v1",
+        "contextEcho": true
+      },
+      "contracts": ["metadataTripleShape"]
     }
   }
 ]
