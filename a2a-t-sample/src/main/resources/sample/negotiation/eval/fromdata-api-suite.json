@@ -1,0 +1,172 @@
+{
+  "suite": "negotiation-fromdata-api-eval",
+  "description": "Focused capability verification of the three Negotiation-T fromData generation interfaces: generateNegotiationProposePromptFromData, generateNegotiationAcceptPromptFromData and generateNegotiationRejectPromptFromData. Inputs are pure structured JSON - each item is one key (the slot name) with its value (the field content); no natural-language passages, no non-negotiation interfaces involved. Generation is deterministic rendering (no LLM call), so assertions are exact: the generated prompt must carry every item name and value, the propose relationship sentence, and the matching template URI; negative cases feed an empty item set or a phase-mismatched template and expect a failure. The information negotiation type is exercised; target/feasibility variants are covered by the fromData sample demo.",
+  "scenario": "private-line-complaint",
+  "cases": [
+    {
+      "id": "FD-P01",
+      "api": "propose",
+      "intent": "propose 正例：双槽位请求（任务对象+投诉分类）+ 关系说明，报文应包含全部槽位名、值与关系句",
+      "input": {
+        "items": {
+          "任务对象": "接入端口名称或接入端口资源ID",
+          "投诉分类": "专线中断或专线质差"
+        },
+        "relationship": "以上参数均为必选，缺少无法启动诊断"
+      },
+      "expect": {
+        "succeeds": true,
+        "template": "Negotiation-T/information-negotiation/propose/v1"
+      }
+    },
+    {
+      "id": "FD-P02",
+      "api": "propose",
+      "intent": "propose 正例：单槽位请求（OSS侧事件流水号），报文应包含该槽位名与值",
+      "input": {
+        "items": {
+          "OSS侧事件流水号": "event-id-开头的事件标识"
+        },
+        "relationship": "以上参数均为必选，缺少无法启动诊断"
+      },
+      "expect": {
+        "succeeds": true,
+        "template": "Negotiation-T/information-negotiation/propose/v1"
+      }
+    },
+    {
+      "id": "FD-P03",
+      "api": "propose",
+      "intent": "propose 正例：三槽位请求（任务对象+投诉分类+问题发生时间），报文应包含全部三个槽位",
+      "input": {
+        "items": {
+          "任务对象": "接入端口名称或接入端口资源ID",
+          "投诉分类": "专线中断或专线质差",
+          "问题发生时间": "ISO 8601 格式时间"
+        },
+        "relationship": "以上参数均为必选，缺少无法启动诊断"
+      },
+      "expect": {
+        "succeeds": true,
+        "template": "Negotiation-T/information-negotiation/propose/v1"
+      }
+    },
+    {
+      "id": "FD-P04",
+      "api": "propose",
+      "intent": "propose 负例：items 为空对象，生成应失败（无请求槽位）",
+      "input": {
+        "items": {},
+        "relationship": "以上参数均为必选，缺少无法启动诊断"
+      },
+      "expect": {
+        "succeeds": false
+      }
+    },
+    {
+      "id": "FD-P05",
+      "api": "propose",
+      "intent": "propose 负例：模板阶段错配（accept-reject 模板传入 propose 接口），应失败",
+      "input": {
+        "items": {
+          "任务对象": "接入端口名称或接入端口资源ID"
+        },
+        "relationship": "以上参数均为必选，缺少无法启动诊断",
+        "template": "Negotiation-T/information-negotiation/accept-reject/v1"
+      },
+      "expect": {
+        "succeeds": false
+      }
+    },
+    {
+      "id": "FD-A01",
+      "api": "accept",
+      "intent": "accept 正例：双槽位补齐（端口名+投诉分类实值），报文应包含全部补齐值与 Accept 结论模板",
+      "input": {
+        "items": {
+          "任务对象": "接入端口名称：P781-珠江新城-PTN7900-23-TPA1EG24-17",
+          "投诉分类": "专线中断"
+        }
+      },
+      "expect": {
+        "succeeds": true,
+        "template": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "contains": ["Accept"]
+      }
+    },
+    {
+      "id": "FD-A02",
+      "api": "accept",
+      "intent": "accept 正例：单槽位补齐（OSS侧事件流水号实值）",
+      "input": {
+        "items": {
+          "OSS侧事件流水号": "event-id-20260602-08841"
+        }
+      },
+      "expect": {
+        "succeeds": true,
+        "template": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "contains": ["Accept"]
+      }
+    },
+    {
+      "id": "FD-A03",
+      "api": "accept",
+      "intent": "accept 负例：模板阶段错配（propose 模板传入 accept 接口），应失败",
+      "input": {
+        "items": {
+          "任务对象": "接入端口名称：P781-珠江新城-PTN7900-23-TPA1EG24-17"
+        },
+        "template": "Negotiation-T/information-negotiation/propose/v1"
+      },
+      "expect": {
+        "succeeds": false
+      }
+    },
+    {
+      "id": "FD-R01",
+      "api": "reject",
+      "intent": "reject 正例：单理由（站点清单不可用），报文应包含理由内容与 Reject 结论模板",
+      "input": {
+        "items": {
+          "任务对象": "站点清单不可用，无法提供"
+        }
+      },
+      "expect": {
+        "succeeds": true,
+        "template": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "contains": ["Reject"]
+      }
+    },
+    {
+      "id": "FD-R02",
+      "api": "reject",
+      "intent": "reject 正例：双理由（对象无法提供+分类无法确认）",
+      "input": {
+        "items": {
+          "任务对象": "站点清单不可用，无法提供",
+          "投诉分类": "无法确认具体分类"
+        }
+      },
+      "expect": {
+        "succeeds": true,
+        "template": "Negotiation-T/information-negotiation/accept-reject/v1",
+        "contains": ["Reject"]
+      }
+    },
+    {
+      "id": "FD-R03",
+      "api": "reject",
+      "intent": "reject 负例：模板阶段错配（propose 模板传入 reject 接口），应失败",
+      "input": {
+        "items": {
+          "任务对象": "站点清单不可用，无法提供"
+        },
+        "template": "Negotiation-T/information-negotiation/propose/v1"
+      },
+      "expect": {
+        "succeeds": false
+      }
+    }
+  ]
+}

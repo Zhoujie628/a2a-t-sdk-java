@@ -192,6 +192,35 @@ A2AT_LLM_MAX_TOKENS=8192                     # 推理型模型建议调大（默
 
 用例集：`sample/negotiation/eval/eval-suite.json`（**20 条用例，fromData（PLC-D01~D10）与 fromText（PLC-T01~T10）两条轨各 10 条**，覆盖同一场景矩阵：完整输入不触发 / 必选字段缺失（生成期拦截或触发协商）/ 双必选子字段缺失 / 可选字段缺失不触发 / 值无效（对象形态、分类枚举、流水号格式）/ 字段错位归位 / 口语化与推断 / 负例补槽被拒）。报告中每个 case 输出逐步证据（`api_calls`、`llm_calls`、生成 prompt 原文、校验判定与抽取参数、耗时），`metrics` 汇总通过率。
 
+## 协商 fromData 生成接口专项评测（Negotiation FromData API Eval）
+
+`NegotiationFromDataApiEvalApp` 是**聚焦协商接口本身**的专项验证入口，只调三个协商生成接口，不涉及 Task-T 等非协商接口：
+
+- `A2ATServer.generateNegotiationProposePromptFromData`（propose，server 角色）
+- `A2ATClient.generateNegotiationAcceptPromptFromData`（accept，client 角色）
+- `A2ATClient.generateNegotiationRejectPromptFromData`（reject，client 角色）
+
+**输入为纯结构化 JSON**：每个条目就是一个 key-value——key 是槽位名称，value 是该字段的内容，不含自然语言段落。fromData 协商生成是确定性模板渲染（零 LLM 调用，`llm_calls` 证据可证），因此断言是**精确的**：
+
+| 断言 | 说明 |
+|---|---|
+| 条目名/值包含 | 生成的报文必须逐字携带每个 item 的名称与值 |
+| 关系句包含 | propose 的 relationship 原文出现在报文中 |
+| 结论标记 | accept 报文含 `Accept`、reject 报文含 `Reject` |
+| 模板 URI 匹配 | 返回的 templateUri 与预期一致 |
+| 负例 | 空 items / 模板阶段错配应失败（实测：**空 items 目前不会失败**——语义上"零请求项"的 propose 未被接口防护，属接口层发现） |
+
+用例集：`sample/negotiation/eval/fromdata-api-suite.json`（11 条：propose×5 / accept×3 / reject×3，含正例、边界与负例）。
+
+运行命令（**无需真实 LLM**——确定性渲染不调模型，env 只需非空 `A2AT_LLM_API_KEY` 即可构造门面）：
+
+```bash
+mvn -pl a2a-t-sample -am -DskipTests package
+java @a2a-t-sample/target/fromdata-eval.javaargs.txt --out fromdata-eval-report.json /path/to/.env
+```
+
+秒级跑完（11 用例 < 2s），报告含每个 case 的 `api_calls`（方法+完整入参）、生成的报文原文、逐条断言结果与错误详情。
+
 ## 授权策略（Authorization-T）演示 Demo
 
 授权策略 Demo 是单进程直调 SDK 示例：客户端生成 Authorization-T prompt → 服务端校验合规性并提取参数。覆盖 3 个预置场景：
