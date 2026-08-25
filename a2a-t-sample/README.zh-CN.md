@@ -138,6 +138,8 @@ java @a2a-t-sample/target/fromtext.javaargs.txt /path/to/.env
 
 **API 调用证据**：报告的每个步骤都记录 `api_calls`（SDK 方法名 + 完整输入参数，含传入的 JSON schema 全文），可从报告直接核对每次调用是否携带 schema、用了哪个模板 URI 和协商上下文。
 
+**LLM 调用证据**：每个步骤还记录 `llm_calls`——该步骤内每次大模型调用的完整请求（system + user prompt 全文、JSON schema、temperature、max_tokens）与响应（content、model、usage、耗时），调用失败时也记录请求与错误。用例失败时可直接从报告看到模型实际收到的 prompt（含槽位描述、值约束、schema 注入后的最终形态），据此反向定位是哪段提示词/约束导致了误判并调优。
+
 **协议约定**（两条常见问题）：
 
 1. **服务端发起协商后，客户端是否还需调用 validate？** 是。SDK 在 client/server 两个门面上提供对称的 `validate*PromptAndDataFilling` API：发送方出站自检（步骤 4），接收方入站校验（步骤 5/7）。客户端收到 propose 后应调 `validateProposePromptAndDataFilling` 提取需要补充的槽位清单，再据此补槽。

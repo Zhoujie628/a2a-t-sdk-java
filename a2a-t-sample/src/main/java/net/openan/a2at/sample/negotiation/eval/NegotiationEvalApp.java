@@ -18,7 +18,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.Consumer;
-import net.openan.a2at.sample.subscribe_incident.shared.mock.SampleMockLlmInstaller;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
@@ -118,7 +117,7 @@ public final class NegotiationEvalApp {
             System.exit(1);
         }
 
-        SampleMockLlmInstaller.installLlmLogger(false, "eval");
+        EvalLlmCaptureClient.install();
         Map<String, Object> suite = loadSuite();
         if (negotiationChannelOverride != null) {
             // run the whole suite with one negotiation generation channel without duplicating cases
@@ -174,6 +173,7 @@ public final class NegotiationEvalApp {
 
     /** Runs one case end to end and returns its replayable trace record. */
     private static Map<String, Object> runCase(Path envPath, Map<String, Object> suite, Map<String, Object> testCase) {
+        EvalLlmCaptureClient.reset();
         String caseId = String.valueOf(testCase.get("id"));
         String channel = String.valueOf(testCase.get("channel"));
         boolean fromText = "fromText".equals(channel);
@@ -734,7 +734,21 @@ public final class NegotiationEvalApp {
         Map<String, Object> step = new LinkedHashMap<>();
         step.put("step", name);
         step.put("role", role);
+        attachLlmCalls(step);
         return step;
+    }
+
+    /**
+     * Attaches the LLM calls recorded since the previous step was built: the exact messages (system + user
+     * prompt) and JSON schema fed to the model, plus the response or the failure. When a case fails, this is
+     * what makes the cause traceable — the recorded prompt shows which slot description, constraint or
+     * system instruction the model actually saw, so the prompt resources can be tuned in reverse.
+     */
+    private static void attachLlmCalls(Map<String, Object> step) {
+        List<Map<String, Object>> calls = EvalLlmCaptureClient.drain();
+        if (!calls.isEmpty()) {
+            step.put("llm_calls", calls);
+        }
     }
 
     /** Attaches the SDK API call evidence (method name + input parameters) to a step; one step may make several calls. */
@@ -815,7 +829,6 @@ public final class NegotiationEvalApp {
         }
         return step;
     }
-
     private static List<Map<String, Object>> itemsJson(List<NegotiationItem> items) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (NegotiationItem item : items) {
