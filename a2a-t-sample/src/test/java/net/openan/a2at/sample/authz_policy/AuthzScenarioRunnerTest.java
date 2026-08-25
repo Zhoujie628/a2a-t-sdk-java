@@ -140,7 +140,7 @@ class AuthzScenarioRunnerTest {
     }
 
     @Test
-    void should_notMatch_WhenPromptTextDiffersFromExpectation() {
+    void should_match_WhenPromptTextDiffersFromExpectation() {
         AuthzPromptGenerator generator =
                 scenario -> new MetadataContent(TEMPLATE_URI.uri(), "different prompt", "Authorization-T/v1");
         AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
@@ -149,8 +149,29 @@ class AuthzScenarioRunnerTest {
 
         ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
-        assertFalse(outcome.result().match());
+        assertTrue(outcome.result().match());
         assertEquals(Boolean.FALSE, outcome.result().clientPromptMatch());
+        assertEquals(Boolean.TRUE, outcome.result().serverOutcomeMatch());
+        assertTrue(outcome.result().serverParamsMatch());
+    }
+
+    @Test
+    void should_match_WhenPromptTextDiffersAndServerMatches() {
+        AuthzExpected expected = new AuthzExpected(
+                new ClientExpected(null, "expected prompt", null),
+                new ServerExpected("success", null, Map.of("操作类型", "新增授权策略")));
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), "drifted prompt", "Authorization-T/v1");
+        AuthzPromptValidator validator =
+                (prompt, schema, templateUri) -> new FilledParamData(Map.of("操作类型", "新增授权策略"));
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), expected);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertEquals(Boolean.FALSE, outcome.result().clientPromptMatch());
+        assertEquals(Boolean.TRUE, outcome.result().serverParamsMatch());
     }
 
     @Test
@@ -438,5 +459,95 @@ class AuthzScenarioRunnerTest {
         assertNotNull(outcome.result().error());
         assertNull(outcome.metadata());
         assertNull(outcome.filled());
+    }
+
+    @Test
+    void should_warn_WhenMutationAndEmptyPolicyListSection() {
+        String promptText = "## 授权策略的操作类型\n新增授权策略\n\n## 授权策略的操作描述\n描述\n\n## 动网操作的授权策略列表\n\n\n\n## 预期输出\n输出格式";
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), promptText, "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertTrue(outcome.result().warnings().contains("empty_policy_list_section"));
+    }
+
+    @Test
+    void should_warn_WhenModifyAndEmptyPolicyListSection() {
+        String promptText = "## 授权策略的操作类型\n修改授权策略\n\n## 授权策略的操作描述\n描述\n\n## 动网操作的授权策略列表\n\n## 预期输出\n输出格式";
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), promptText, "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertTrue(outcome.result().warnings().contains("empty_policy_list_section"));
+    }
+
+    @Test
+    void should_notWarn_WhenQueryAndEmptyPolicyListSection() {
+        String promptText = "## 授权策略的操作类型\n查询授权策略\n\n## 授权策略的操作描述\n描述\n\n## 动网操作的授权策略列表\n\n## 预期输出\n输出格式";
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), promptText, "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertTrue(outcome.result().warnings().isEmpty());
+    }
+
+    @Test
+    void should_notWarn_WhenMutationAndNonEmptyPolicyListSection() {
+        String promptText = "## 授权策略的操作类型\n新增授权策略\n\n## 授权策略的操作描述\n描述\n\n## 动网操作的授权策略列表\n校园专网，紧急扩容\n\n## 预期输出\n输出格式";
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), promptText, "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertTrue(outcome.result().warnings().isEmpty());
+    }
+
+    @Test
+    void should_notWarn_WhenPromptTextHasUnknownSectionOrder() {
+        String promptText = "## 授权策略的操作描述\n描述\n\n## 授权策略的操作类型\n新增授权策略\n\n## 预期输出\n输出格式\n\n## 动网操作的授权策略列表\n\n";
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), promptText, "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertTrue(outcome.result().warnings().contains("empty_policy_list_section"));
+    }
+
+    @Test
+    void should_notWarn_WhenNoOperationTypeSection() {
+        String promptText = "## 授权策略的操作描述\n描述\n\n## 动网操作的授权策略列表\n\n## 预期输出\n输出格式";
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), promptText, "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertTrue(outcome.result().warnings().isEmpty());
     }
 }

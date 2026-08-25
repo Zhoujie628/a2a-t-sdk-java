@@ -13,16 +13,20 @@ class AuthzScenarioLoaderTest {
     void should_loadAndValidateAllScenarios() {
         List<AuthzScenario> scenarios = AuthzScenarioLoader.load("sample/authz-policy/scenarios.json");
 
-        assertEquals(8, scenarios.size());
-        assertEquals("c1-nl-add-01", scenarios.get(0).label());
+        assertEquals(12, scenarios.size());
+        assertEquals("a-nl-unsupported-01", scenarios.get(0).label());
         assertEquals("from_text", scenarios.get(0).entry());
-        assertEquals("success", scenarios.get(0).expected().server().outcome());
-        assertEquals("c1-data-add-02", scenarios.get(1).label());
-        assertEquals("from_data_with_schema", scenarios.get(1).entry());
-        assertEquals("success", scenarios.get(1).expected().server().outcome());
-        assertEquals("a1-nl-01", scenarios.get(5).label());
-        assertEquals("slot_validation_error", scenarios.get(5).expected().client().outcome());
-        assertEquals(null, scenarios.get(5).expected().server());
+        assertEquals("slot_validation_error", scenarios.get(0).expected().client().outcome());
+        assertEquals(null, scenarios.get(0).expected().server());
+        assertEquals("c1-nl-add-01", scenarios.get(6).label());
+        assertEquals("from_text", scenarios.get(6).entry());
+        assertEquals("success", scenarios.get(6).expected().server().outcome());
+        assertEquals("c1-data-add-02", scenarios.get(7).label());
+        assertEquals("from_data_with_schema", scenarios.get(7).entry());
+        assertEquals("success", scenarios.get(7).expected().server().outcome());
+        assertEquals("c6-nl-mixed-01", scenarios.get(11).label());
+        assertEquals("from_text", scenarios.get(11).entry());
+        assertEquals("success", scenarios.get(11).expected().server().outcome());
     }
 
     @Test

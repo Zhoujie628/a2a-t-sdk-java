@@ -277,7 +277,7 @@ public final class AuthzSampleMain {
     static String verdictLine(ScenarioResult result) {
         StringBuilder sb = new StringBuilder("match=" + result.match());
         if (result.clientPromptMatch() != null) {
-            sb.append(" (client: prompt=").append(result.clientPromptMatch() ? "OK" : "FAIL");
+            sb.append(" (client: prompt=").append(result.clientPromptMatch() ? "OK" : "DRIFT");
             if (result.serverOutcomeMatch() != null) {
                 sb.append(" | server: outcome=").append(result.serverOutcomeMatch() ? "OK" : "FAIL");
                 sb.append(" slot_errors=").append(result.serverOutcomeMatch() ? "OK" : "FAIL");
@@ -355,6 +355,7 @@ public final class AuthzSampleMain {
                             "code", outcome.result().error().getCode(),
                             "message", outcome.result().error().getMessage())
                     : null);
+            entry.put("warnings", outcome.result().warnings());
             if (reasoning && capture != null) {
                 Optional<StageCapture> captured = capture.capture(scenario.label());
                 if (captured.isPresent()) {

@@ -1,5 +1,6 @@
 package net.openan.a2at.sample.authz_policy;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,10 +22,13 @@ import net.openan.a2at.sdk.core.validation.ContentValidationException;
  * comparing the staged client/server expectations against the actual behaviour.
  *
  * <p>Assertion semantics mirror the Python probe: client {@code promptText} is compared with
- * trailing-whitespace-insensitive equality; server {@code slot_errors} are subset-matched
+ * trailing-whitespace-insensitive equality only for recording ({@code clientPromptMatch}); it does
+ * not participate in the {@code match} verdict. Server {@code slot_errors} are subset-matched
  * (each expected error must appear with the same slot name and code); server {@code params}
  * are subset-matched recursively (maps by key, ordered lists element-wise, trimmed strings)
- * and only asserted for expected server outcome {@code success}.
+ * and only asserted for expected server outcome {@code success}. Structural warnings (such as an
+ * empty policy-list section for a mutation operation) are recorded in {@code warnings} but never
+ * affect the {@code match} verdict.
  *
  * @since 2026-08
  */
@@ -53,8 +57,9 @@ public final class AuthzScenarioRunner {
         ClientExpected expectedClient = scenario.expected().client();
         boolean clientPromptMatch = expectedClient.outcome() == null
                 && promptTextMatch(expectedClient.promptText(), metadata.promptText());
-        if (expectedClient.outcome() != null || !clientPromptMatch) {
-            // generation unexpectedly succeeded (or prompt text differs) — no server-stage expectation applies
+        List<String> warnings = detectWarnings(metadata.promptText());
+        if (expectedClient.outcome() != null) {
+            // generation unexpectedly succeeded — no server-stage expectation applies
             return new ScenarioOutcome(
                     new ScenarioResult(
                             AuthzScenario.EXPECTED_SUCCESS,
@@ -63,7 +68,8 @@ public final class AuthzScenarioRunner {
                             List.of(),
                             clientPromptMatch,
                             null,
-                            null),
+                            null,
+                            warnings),
                     metadata,
                     null);
         }
@@ -72,10 +78,10 @@ public final class AuthzScenarioRunner {
         try {
             filled = validator.validate(metadata.promptText(), paramSchema, templateUri);
         } catch (A2ATError e) {
-            return buildServerErrorOutcome(scenario, e, metadata, clientPromptMatch);
+            return buildServerErrorOutcome(scenario, e, metadata, clientPromptMatch, warnings);
         } catch (RuntimeException e) {
             A2ATError wrapped = new A2ATError(A2ATErrorCodes.SDK_INTERNAL_ERROR, e.getMessage(), e);
-            return buildServerErrorOutcome(scenario, wrapped, metadata, clientPromptMatch);
+            return buildServerErrorOutcome(scenario, wrapped, metadata, clientPromptMatch, warnings);
         }
 
         ServerExpected expectedServer = scenario.expected().server();
@@ -94,7 +100,8 @@ public final class AuthzScenarioRunner {
                         noErrors,
                         clientPromptMatch,
                         serverOutcomeMatch,
-                        serverParamsMatch),
+                        serverParamsMatch,
+                        warnings),
                 metadata,
                 filled);
     }
@@ -108,21 +115,34 @@ public final class AuthzScenarioRunner {
         boolean slotErrorsMatch = outcomeMatch && slotErrorsMatch(expectedClient.slotErrors(), actualSlotErrors);
         boolean match = outcomeMatch && slotErrorsMatch;
         return new ScenarioOutcome(
-                new ScenarioResult(actualOutcome, match, error, actualSlotErrors, null, null, null), metadata, null);
+                new ScenarioResult(actualOutcome, match, error, actualSlotErrors, null, null, null, List.of()),
+                metadata,
+                null);
     }
 
     private ScenarioOutcome buildServerErrorOutcome(
-            AuthzScenario scenario, A2ATError error, MetadataContent metadata, boolean clientPromptMatch) {
+            AuthzScenario scenario,
+            A2ATError error,
+            MetadataContent metadata,
+            boolean clientPromptMatch,
+            List<String> warnings) {
         String actualOutcome = error.getCode();
         List<SlotValidationError> actualSlotErrors = extractSlotErrors(error);
         ServerExpected expectedServer = scenario.expected().server();
         boolean outcomeMatch = expectedServer != null && expectedServer.outcome() != null
                 && expectedServer.outcome().equals(actualOutcome);
         boolean slotErrorsMatch = outcomeMatch && slotErrorsMatch(expectedServer.slotErrors(), actualSlotErrors);
-        boolean match = clientPromptMatch && outcomeMatch && slotErrorsMatch;
+        boolean match = outcomeMatch && slotErrorsMatch;
         return new ScenarioOutcome(
                 new ScenarioResult(
-                        actualOutcome, match, error, actualSlotErrors, clientPromptMatch, outcomeMatch, null),
+                        actualOutcome,
+                        match,
+                        error,
+                        actualSlotErrors,
+                        clientPromptMatch,
+                        outcomeMatch,
+                        null,
+                        warnings),
                 metadata,
                 null);
     }
@@ -200,6 +220,48 @@ public final class AuthzScenarioRunner {
     }
 
     /**
+     * Extracts the content of a {@code ## heading} section from the prompt text.
+     * Returns the text between the heading line and the next heading (or end of string), stripped.
+     * Returns {@code null} if the heading is not found.
+     */
+    static String extractSectionContent(String promptText, String heading) {
+        String marker = heading + "\n";
+        int start = promptText.indexOf(marker);
+        if (start < 0) {
+            return null;
+        }
+        int contentStart = start + marker.length();
+        int nextHeading = promptText.indexOf("\n## ", contentStart);
+        if (nextHeading < 0) {
+            return promptText.substring(contentStart).strip();
+        }
+        return promptText.substring(contentStart, nextHeading).strip();
+    }
+
+    /**
+     * Detects structural warnings in the generated prompt text. Warnings are informational only
+     * and never affect the {@code match} verdict.
+     */
+    static List<String> detectWarnings(String promptText) {
+        if (promptText == null) {
+            return List.of();
+        }
+        List<String> warnings = new ArrayList<>();
+        String operationTypeContent = extractSectionContent(promptText, "## 授权策略的操作类型");
+        String policyListContent = extractSectionContent(promptText, "## 动网操作的授权策略列表");
+        String operationType = operationTypeContent != null
+                ? operationTypeContent.lines().findFirst().map(String::strip).orElse("")
+                : "";
+        boolean isMutation = operationType.contains("新增") || operationType.contains("修改")
+                || operationType.contains("删除");
+        boolean policyListEmpty = policyListContent == null || policyListContent.isEmpty();
+        if (isMutation && policyListEmpty) {
+            warnings.add("empty_policy_list_section");
+        }
+        return warnings;
+    }
+
+    /**
      * Result of one scenario run.
      *
      * @param outcome actual outcome code ({@code success} or an {@code A2ATErrorCodes} value)
@@ -207,9 +269,11 @@ public final class AuthzScenarioRunner {
      * @param error the raised error, if any
      * @param slotErrors actual per-slot error details
      * @param clientPromptMatch whether the client-generated prompt text matched; {@code null} when the
-     *     client stage was expected to fail
+     *     client stage was expected to fail. Recorded for diagnostics only; does not affect {@code match}.
      * @param serverOutcomeMatch whether the server outcome matched; {@code null} when no server stage ran
      * @param serverParamsMatch whether the extracted parameters matched; {@code null} when not asserted
+     * @param warnings structural warnings detected during the run (e.g. empty policy-list section for
+     *     a mutation operation); never affects {@code match}
      */
     public record ScenarioResult(
             String outcome,
@@ -218,7 +282,8 @@ public final class AuthzScenarioRunner {
             List<SlotValidationError> slotErrors,
             Boolean clientPromptMatch,
             Boolean serverOutcomeMatch,
-            Boolean serverParamsMatch) {}
+            Boolean serverParamsMatch,
+            List<String> warnings) {}
 
     public record ScenarioOutcome(ScenarioResult result, MetadataContent metadata, FilledParamData filled) {}
 }

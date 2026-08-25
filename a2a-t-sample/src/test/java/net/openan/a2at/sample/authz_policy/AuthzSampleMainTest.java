@@ -28,9 +28,9 @@ class AuthzSampleMainTest {
     private static final AuthzExpected SUCCESS = new AuthzExpected(
             new ClientExpected(null, "## rendered prompt", null), new ServerExpected("success", null, null));
     private static final ScenarioResult MATCH_RESULT =
-            new ScenarioResult("success", true, null, List.of(), true, true, true);
+            new ScenarioResult("success", true, null, List.of(), true, true, true, List.of());
     private static final ScenarioResult MISMATCH_RESULT =
-            new ScenarioResult("slot_validation_error", false, null, List.of(), null, null, null);
+            new ScenarioResult("slot_validation_error", false, null, List.of(), null, null, null, List.of());
 
     private PrintStream originalOut;
     private ByteArrayOutputStream outContent;
@@ -136,7 +136,7 @@ class AuthzSampleMainTest {
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
         MetadataContent metadata = new MetadataContent("template-uri", "prompt text", "extension-uri");
         ScenarioResult result = new ScenarioResult(
-                "validation_semantic_rejected", false, null, List.of(), true, false, null);
+                "validation_semantic_rejected", false, null, List.of(), true, false, null, List.of());
         ScenarioOutcome outcome = new ScenarioOutcome(result, metadata, null);
         AuthzSampleMain.printScenarioReport(scenario, outcome);
         String output = outContent.toString();
@@ -208,7 +208,8 @@ class AuthzSampleMainTest {
                         "授权策略的操作类型", "missing_required", "Required slot is missing or empty")),
                 null,
                 null,
-                null);
+                null,
+                List.of());
         ScenarioOutcome outcome = new ScenarioOutcome(result, null, null);
 
         Path reportPath = AuthzSampleMain.writeReport(

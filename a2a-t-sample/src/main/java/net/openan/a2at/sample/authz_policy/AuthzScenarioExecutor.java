@@ -210,7 +210,8 @@ public final class AuthzScenarioExecutor {
                                 "_llm", A2ATErrorCodes.SDK_INTERNAL_ERROR, t.getMessage())),
                         null,
                         null,
-                        null),
+                        null,
+                        List.of()),
                 null,
                 null);
     }

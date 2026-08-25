@@ -73,7 +73,7 @@ class AuthzSampleMainConcurrencyTest {
     private static ScenarioOutcome successOutcome() {
         MetadataContent metadata = new MetadataContent("template-uri", "prompt text", "extension-uri");
         return new ScenarioOutcome(
-                new ScenarioResult("success", true, null, List.of(), true, true, null),
+                new ScenarioResult("success", true, null, List.of(), true, true, null, List.of()),
                 metadata,
                 new FilledParamData(Map.of()));
     }
@@ -173,7 +173,7 @@ class AuthzSampleMainConcurrencyTest {
                         new ClientExpected("slot_validation_error", null, null),
                         null));
         ScenarioOutcome outcome = new ScenarioOutcome(
-                new ScenarioResult("slot_validation_error", false, null, List.of(), null, null, null),
+                new ScenarioResult("slot_validation_error", false, null, List.of(), null, null, null, List.of()),
                 null,
                 null);
 
