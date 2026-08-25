@@ -21,7 +21,7 @@ class LlmBackedPromptSemanticValidatorTest {
 
     private static final PromptSlotSchemaLoader SLOT_SCHEMA_LOADER = (scenarioCode, language) -> new PromptSlotSchema(
             scenarioCode,
-            List.of(new PromptSlotDefinition(SLOT_NAME, true, "string", null, null, null, null, null, null)));
+            List.of(new PromptSlotDefinition(SLOT_NAME, true, "string", null, null, null, null, null, null, null)));
 
     @Test
     void validatePassesWhenSemanticValidatorApprovesSlots() {

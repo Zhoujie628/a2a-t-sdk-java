@@ -1,1 +1,1 @@
-{"scenarios": [{"label": "bad-scenario", "entry": "invalid_entry", "input": {}, "expected": {"outcome": "success"}}]}
+{"scenarios": [{"label": "bad-scenario", "entry": "invalid_entry", "input": {"text": "test"}, "expected": {"client": {"promptText": "## rendered prompt"}, "server": {"outcome": "success"}}}]}

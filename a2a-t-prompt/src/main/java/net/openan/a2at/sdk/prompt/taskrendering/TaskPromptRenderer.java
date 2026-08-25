@@ -51,7 +51,7 @@ public final class TaskPromptRenderer implements SectionedTemplateRenderer {
             throw new TaskPromptRenderException("Template text has unbalanced braces.");
         }
 
-        Matcher matcher = PLACEHOLDER_PATTERN.matcher(collapseSlotDrivenSections(templateText));
+        Matcher matcher = PLACEHOLDER_PATTERN.matcher(collapseSlotDrivenSections(templateText, safeSlots));
         StringBuffer rendered = new StringBuffer();
         while (matcher.find()) {
             String slotName = matcher.group(1).trim();
@@ -70,7 +70,7 @@ public final class TaskPromptRenderer implements SectionedTemplateRenderer {
         return rendered.toString();
     }
 
-    private static String collapseSlotDrivenSections(String templateText) {
+    private static String collapseSlotDrivenSections(String templateText, Map<String, String> slots) {
         String[] lines = normalizeLineEndings(templateText).split("\n", -1);
         StringBuilder collapsed = new StringBuilder();
         int index = 0;
@@ -86,7 +86,7 @@ public final class TaskPromptRenderer implements SectionedTemplateRenderer {
                 nextSectionIndex++;
             }
 
-            appendCollapsedSection(collapsed, lines, index, nextSectionIndex, nextSectionIndex < lines.length);
+            appendCollapsedSection(collapsed, lines, index, nextSectionIndex, nextSectionIndex < lines.length, slots);
             index = nextSectionIndex;
         }
         return collapsed.toString();
@@ -101,13 +101,25 @@ public final class TaskPromptRenderer implements SectionedTemplateRenderer {
             String[] lines,
             int sectionStart,
             int nextSectionStart,
-            boolean appendTrailingNewline) {
+            boolean appendTrailingNewline,
+            Map<String, String> slots) {
         appendLine(collapsed, lines[sectionStart], true);
 
         Optional<Matcher> standaloneSlotMatcher = firstStandaloneSlotMatcher(lines, sectionStart + 1, nextSectionStart);
         if (!standaloneSlotMatcher.isPresent()) {
             for (int index = sectionStart + 1; index < nextSectionStart; index++) {
                 appendLine(collapsed, lines[index], index < lines.length - 1);
+            }
+            return;
+        }
+
+        String slotName = standaloneSlotMatcher.get().group(2).trim();
+        String slotValue = slots.get(slotName);
+        if (slotValue == null || slotValue.isBlank()) {
+            // Blank slot: keep only the section title followed by a single blank separator line;
+            // no placeholder line and no doubled separator.
+            if (appendTrailingNewline) {
+                collapsed.append('\n');
             }
             return;
         }

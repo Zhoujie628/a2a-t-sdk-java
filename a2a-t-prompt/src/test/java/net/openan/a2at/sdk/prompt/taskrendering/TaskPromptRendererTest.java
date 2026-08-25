@@ -20,6 +20,32 @@ class TaskPromptRendererTest {
     }
 
     @Test
+    void renderKeepsOnlyTitleAndSingleBlankSeparatorForBlankSlotSection() {
+        String prompt = renderer.render(
+                "## Task Type\n"
+                        + "{{task_type}} (Required)\n\n"
+                        + "Requirement: provide the task type.\n\n"
+                        + "## Condition\n"
+                        + "{{condition}} (Optional)\n\n"
+                        + "Requirement: describe the condition.\n\n"
+                        + "## Expected Output\n"
+                        + "{{expected_output}} (Optional)\n",
+                Map.of(
+                        "task_type", "Diagnosis",
+                        "condition", "",
+                        "expected_output", "Return a structured diagnosis result."));
+
+        assertEquals(
+                "## Task Type\n"
+                        + "Diagnosis\n\n"
+                        + "## Condition\n"
+                        + "\n"
+                        + "## Expected Output\n"
+                        + "Return a structured diagnosis result.\n",
+                prompt);
+    }
+
+    @Test
     void renderSupportsDoubleBracedPlaceholders() {
         String prompt = renderer.render(
                 "Topic: {{topic}}\nCondition: {{condition}}",

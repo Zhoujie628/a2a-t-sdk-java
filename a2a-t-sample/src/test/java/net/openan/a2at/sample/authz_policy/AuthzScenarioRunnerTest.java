@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import net.openan.a2at.sample.authz_policy.AuthzScenario.AuthzExpected;
+import net.openan.a2at.sample.authz_policy.AuthzScenario.ClientExpected;
+import net.openan.a2at.sample.authz_policy.AuthzScenario.ServerExpected;
 import net.openan.a2at.sample.authz_policy.AuthzScenario.SlotErrorExpectation;
 import net.openan.a2at.sample.authz_policy.AuthzScenarioRunner.ScenarioOutcome;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
@@ -25,12 +27,14 @@ import org.junit.jupiter.api.Test;
 class AuthzScenarioRunnerTest {
 
     private static final TemplateUri TEMPLATE_URI = StandardTemplates.AUTHORIZATION_POLICY_MANAGEMENT;
-    private static final Map<String, Object> SLOT_SCHEMA = Map.of("properties", Map.of(), "required", Map.of());
-    private static final AuthzExpected SUCCESS = new AuthzExpected("success", null, null, null);
-    private static final AuthzExpected EXPECTED_SLOT_ERROR =
-            new AuthzExpected("slot_validation_error", null, null, null);
-    private static final AuthzExpected EXPECTED_SEMANTIC_REJECTED =
-            new AuthzExpected("validation_semantic_rejected", null, null, null);
+    private static final Map<String, Object> PARAM_SCHEMA = Map.of("properties", Map.of(), "required", Map.of());
+    private static final AuthzExpected SUCCESS = new AuthzExpected(
+            new ClientExpected(null, "generated prompt", null), new ServerExpected("success", null, null));
+    private static final AuthzExpected EXPECTED_SLOT_ERROR = new AuthzExpected(
+            new ClientExpected("slot_validation_error", null, null), null);
+    private static final AuthzExpected EXPECTED_SEMANTIC_REJECTED = new AuthzExpected(
+            new ClientExpected(null, "generated prompt", null),
+            new ServerExpected("validation_semantic_rejected", null, null));
 
     @Test
     void should_dispatchToFromTextGenerator() {
@@ -43,7 +47,7 @@ class AuthzScenarioRunnerTest {
         AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
 
-        runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertEquals("from_text", calledEntry.get());
     }
@@ -60,7 +64,7 @@ class AuthzScenarioRunnerTest {
         AuthzScenario scenario = new AuthzScenario(
                 "test", "from_data_with_schema", Map.of("data", Map.of("k", "v"), "schema", Map.of("k", "d")), SUCCESS);
 
-        runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertEquals("from_data_with_schema", calledEntry.get());
     }
@@ -73,7 +77,7 @@ class AuthzScenarioRunnerTest {
         AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertTrue(outcome.result().match());
         assertEquals("success", outcome.result().outcome());
@@ -92,7 +96,7 @@ class AuthzScenarioRunnerTest {
         AuthzScenario scenario =
                 new AuthzScenario("test", "from_text", Map.of("text", "hello"), EXPECTED_SEMANTIC_REJECTED);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertTrue(outcome.result().match());
         assertEquals("validation_semantic_rejected", outcome.result().outcome());
@@ -110,7 +114,7 @@ class AuthzScenarioRunnerTest {
         AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertFalse(outcome.result().match());
         assertEquals("validation_semantic_rejected", outcome.result().outcome());
@@ -127,12 +131,63 @@ class AuthzScenarioRunnerTest {
         AuthzScenario scenario =
                 new AuthzScenario("test", "from_text", Map.of("text", "hello"), EXPECTED_SEMANTIC_REJECTED);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertFalse(outcome.result().match());
         assertEquals("success", outcome.result().outcome());
         assertNotNull(outcome.metadata());
         assertNotNull(outcome.filled());
+    }
+
+    @Test
+    void should_match_WhenPromptTextDiffersFromExpectation() {
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), "different prompt", "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertEquals(Boolean.FALSE, outcome.result().clientPromptMatch());
+        assertEquals(Boolean.TRUE, outcome.result().serverOutcomeMatch());
+        assertTrue(outcome.result().serverParamsMatch());
+    }
+
+    @Test
+    void should_match_WhenPromptTextDiffersAndServerMatches() {
+        AuthzExpected expected = new AuthzExpected(
+                new ClientExpected(null, "expected prompt", null),
+                new ServerExpected("success", null, Map.of("操作类型", "新增授权策略")));
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), "drifted prompt", "Authorization-T/v1");
+        AuthzPromptValidator validator =
+                (prompt, schema, templateUri) -> new FilledParamData(Map.of("操作类型", "新增授权策略"));
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), expected);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertEquals(Boolean.FALSE, outcome.result().clientPromptMatch());
+        assertEquals(Boolean.TRUE, outcome.result().serverParamsMatch());
+    }
+
+    @Test
+    void should_match_WhenPromptTextDiffersOnlyInTrailingWhitespace() {
+        AuthzExpected expected = new AuthzExpected(
+                new ClientExpected(null, "generated prompt  \n", null),
+                new ServerExpected("success", null, null));
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), "  generated prompt\n", "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), expected);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
     }
 
     @Test
@@ -144,7 +199,7 @@ class AuthzScenarioRunnerTest {
         AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertFalse(outcome.result().match());
         assertEquals("slot_schema_not_found", outcome.result().outcome());
@@ -164,7 +219,7 @@ class AuthzScenarioRunnerTest {
         AuthzScenario scenario =
                 new AuthzScenario("test", "from_text", Map.of("text", "hello"), EXPECTED_SLOT_ERROR);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertTrue(outcome.result().match());
         assertEquals("slot_validation_error", outcome.result().outcome());
@@ -184,7 +239,7 @@ class AuthzScenarioRunnerTest {
         AuthzScenario scenario =
                 new AuthzScenario("test", "from_text", Map.of("text", "hello"), EXPECTED_SLOT_ERROR);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertFalse(outcome.result().match());
         assertEquals("llm_invocation_failed", outcome.result().outcome());
@@ -204,7 +259,7 @@ class AuthzScenarioRunnerTest {
         AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertFalse(outcome.result().match());
         assertEquals("validation_llm_infrastructure_error", outcome.result().outcome());
@@ -224,7 +279,7 @@ class AuthzScenarioRunnerTest {
         AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertFalse(outcome.result().match());
         assertEquals("validation_prompt_resource_not_found", outcome.result().outcome());
@@ -243,7 +298,7 @@ class AuthzScenarioRunnerTest {
         AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertFalse(outcome.result().match());
         assertEquals("unknown_code", outcome.result().outcome());
@@ -263,13 +318,14 @@ class AuthzScenarioRunnerTest {
         AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
         AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
         AuthzExpected expected = new AuthzExpected(
-                "slot_validation_error",
-                null,
-                null,
-                List.of(new SlotErrorExpectation("授权策略的操作类型", "missing_required")));
+                new ClientExpected(
+                        "slot_validation_error",
+                        null,
+                        List.of(new SlotErrorExpectation("授权策略的操作类型", "missing_required"))),
+                null);
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), expected);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertTrue(outcome.result().match());
         assertEquals(1, outcome.result().slotErrors().size());
@@ -288,13 +344,14 @@ class AuthzScenarioRunnerTest {
         AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
         AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
         AuthzExpected expected = new AuthzExpected(
-                "slot_validation_error",
-                null,
-                null,
-                List.of(new SlotErrorExpectation("动网操作的授权策略列表", "missing_required")));
+                new ClientExpected(
+                        "slot_validation_error",
+                        null,
+                        List.of(new SlotErrorExpectation("动网操作的授权策略列表", "missing_required"))),
+                null);
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), expected);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertFalse(outcome.result().match());
         assertEquals("slot_validation_error", outcome.result().outcome());
@@ -311,15 +368,79 @@ class AuthzScenarioRunnerTest {
         AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
         AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
         AuthzExpected expected = new AuthzExpected(
-                "slot_validation_error",
-                null,
-                null,
-                List.of(new SlotErrorExpectation("授权策略的操作类型", "invalid_value")));
+                new ClientExpected(
+                        "slot_validation_error",
+                        null,
+                        List.of(new SlotErrorExpectation("授权策略的操作类型", "invalid_value"))),
+                null);
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), expected);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertFalse(outcome.result().match());
+    }
+
+    @Test
+    void should_matchParams_WhenActualIsSupersetOfExpected() {
+        AuthzExpected expected = new AuthzExpected(
+                new ClientExpected(null, "generated prompt", null),
+                new ServerExpected(
+                        "success",
+                        null,
+                        Map.of("操作类型", "新增授权策略", "策略列表", List.of(Map.of("业务场景", "校园专网")))));
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), "generated prompt", "Authorization-T/v1");
+        Map<String, Object> actualEntry = new java.util.LinkedHashMap<>();
+        actualEntry.put("策略标识", null);
+        actualEntry.put("业务场景", "校园专网");
+        actualEntry.put("处置类型", "紧急扩容");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of(
+                "操作类型", "新增授权策略",
+                "策略列表", List.of(actualEntry)));
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), expected);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertEquals(Boolean.TRUE, outcome.result().serverParamsMatch());
+    }
+
+    @Test
+    void should_notMatchParams_WhenListItemValueDiffers() {
+        AuthzExpected expected = new AuthzExpected(
+                new ClientExpected(null, "generated prompt", null),
+                new ServerExpected("success", null, Map.of("策略列表", List.of(Map.of("业务场景", "校园专网")))));
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), "generated prompt", "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of(
+                "策略列表", List.of(Map.of("业务场景", "医疗专线"))));
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), expected);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertFalse(outcome.result().match());
+        assertEquals(Boolean.FALSE, outcome.result().serverParamsMatch());
+    }
+
+    @Test
+    void should_notMatchParams_WhenListLengthDiffers() {
+        AuthzExpected expected = new AuthzExpected(
+                new ClientExpected(null, "generated prompt", null),
+                new ServerExpected(
+                        "success", null, Map.of("策略列表", List.of(Map.of("业务场景", "校园专网")))));
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), "generated prompt", "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of(
+                "策略列表", List.of(Map.of("业务场景", "校园专网"), Map.of("业务场景", "医疗专线"))));
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), expected);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertFalse(outcome.result().match());
+        assertEquals(Boolean.FALSE, outcome.result().serverParamsMatch());
     }
 
     @Test
@@ -331,12 +452,102 @@ class AuthzScenarioRunnerTest {
         AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
 
-        ScenarioOutcome outcome = runner.run(scenario, SLOT_SCHEMA, TEMPLATE_URI);
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
 
         assertFalse(outcome.result().match());
         assertEquals("sdk_internal_error", outcome.result().outcome());
         assertNotNull(outcome.result().error());
         assertNull(outcome.metadata());
         assertNull(outcome.filled());
+    }
+
+    @Test
+    void should_warn_WhenMutationAndEmptyPolicyListSection() {
+        String promptText = "## 授权策略的操作类型\n新增授权策略\n\n## 授权策略的操作描述\n描述\n\n## 动网操作的授权策略列表\n\n\n\n## 预期输出\n输出格式";
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), promptText, "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertTrue(outcome.result().warnings().contains("empty_policy_list_section"));
+    }
+
+    @Test
+    void should_warn_WhenModifyAndEmptyPolicyListSection() {
+        String promptText = "## 授权策略的操作类型\n修改授权策略\n\n## 授权策略的操作描述\n描述\n\n## 动网操作的授权策略列表\n\n## 预期输出\n输出格式";
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), promptText, "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertTrue(outcome.result().warnings().contains("empty_policy_list_section"));
+    }
+
+    @Test
+    void should_notWarn_WhenQueryAndEmptyPolicyListSection() {
+        String promptText = "## 授权策略的操作类型\n查询授权策略\n\n## 授权策略的操作描述\n描述\n\n## 动网操作的授权策略列表\n\n## 预期输出\n输出格式";
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), promptText, "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertTrue(outcome.result().warnings().isEmpty());
+    }
+
+    @Test
+    void should_notWarn_WhenMutationAndNonEmptyPolicyListSection() {
+        String promptText = "## 授权策略的操作类型\n新增授权策略\n\n## 授权策略的操作描述\n描述\n\n## 动网操作的授权策略列表\n校园专网，紧急扩容\n\n## 预期输出\n输出格式";
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), promptText, "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertTrue(outcome.result().warnings().isEmpty());
+    }
+
+    @Test
+    void should_notWarn_WhenPromptTextHasUnknownSectionOrder() {
+        String promptText = "## 授权策略的操作描述\n描述\n\n## 授权策略的操作类型\n新增授权策略\n\n## 预期输出\n输出格式\n\n## 动网操作的授权策略列表\n\n";
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), promptText, "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertTrue(outcome.result().warnings().contains("empty_policy_list_section"));
+    }
+
+    @Test
+    void should_notWarn_WhenNoOperationTypeSection() {
+        String promptText = "## 授权策略的操作描述\n描述\n\n## 动网操作的授权策略列表\n\n## 预期输出\n输出格式";
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), promptText, "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> new FilledParamData(Map.of());
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        ScenarioOutcome outcome = runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertTrue(outcome.result().match());
+        assertTrue(outcome.result().warnings().isEmpty());
     }
 }

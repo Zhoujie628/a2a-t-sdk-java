@@ -3,15 +3,20 @@ package net.openan.a2at.sample.authz_policy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 import net.openan.a2at.sample.authz_policy.AuthzScenario.AuthzExpected;
+import net.openan.a2at.sample.authz_policy.AuthzScenario.ClientExpected;
+import net.openan.a2at.sample.authz_policy.AuthzScenario.ServerExpected;
 import org.junit.jupiter.api.Test;
 
 class AuthzScenarioTest {
 
     private static AuthzExpected success() {
-        return new AuthzExpected("success", null, null, null);
+        return new AuthzExpected(
+                new ClientExpected(null, "## rendered prompt", null),
+                new ServerExpected("success", null, null));
     }
 
     @Test
@@ -42,39 +47,79 @@ class AuthzScenarioTest {
     }
 
     @Test
-    void should_rejectInvalidExpectedOutcome() {
+    void should_rejectInvalidClientOutcome() {
         AuthzScenario scenario = new AuthzScenario(
-                "bad", "from_text", Map.of("text", "test"), new AuthzExpected("invalid_outcome", null, null, null));
+                "bad",
+                "from_text",
+                Map.of("text", "test"),
+                new AuthzExpected(new ClientExpected("invalid_outcome", null, null), null));
 
         IllegalArgumentException ex =
                 assertThrows(IllegalArgumentException.class, () -> AuthzScenario.validate(scenario));
-        assertEquals("Invalid expected outcome: invalid_outcome", ex.getMessage());
+        assertEquals("Invalid expected client outcome: invalid_outcome", ex.getMessage());
     }
 
     @Test
-    void should_rejectNullExpectedOutcome() {
+    void should_rejectClientOutcomeWithServerExpectation() {
         AuthzScenario scenario = new AuthzScenario(
-                "bad", "from_text", Map.of("text", "test"), new AuthzExpected(null, null, null, null));
+                "bad",
+                "from_text",
+                Map.of("text", "test"),
+                new AuthzExpected(
+                        new ClientExpected("slot_validation_error", null, null),
+                        new ServerExpected("success", null, null)));
 
         IllegalArgumentException ex =
                 assertThrows(IllegalArgumentException.class, () -> AuthzScenario.validate(scenario));
-        assertEquals("Invalid expected outcome: null", ex.getMessage());
+        assertEquals("expected.server must be null when expected.client.outcome is set", ex.getMessage());
+    }
+
+    @Test
+    void should_rejectClientSuccessWithoutPromptText() {
+        AuthzScenario scenario = new AuthzScenario(
+                "bad",
+                "from_text",
+                Map.of("text", "test"),
+                new AuthzExpected(new ClientExpected(null, " ", null), new ServerExpected("success", null, null)));
+
+        IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> AuthzScenario.validate(scenario));
+        assertEquals(
+                "expected.client.promptText must be non-blank when client outcome is not set", ex.getMessage());
+    }
+
+    @Test
+    void should_rejectClientSuccessWithoutServerExpectation() {
+        AuthzScenario scenario = new AuthzScenario(
+                "bad", "from_text", Map.of("text", "test"),
+                new AuthzExpected(new ClientExpected(null, "prompt", null), null));
+
+        IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> AuthzScenario.validate(scenario));
+        assertTrue(ex.getMessage().startsWith("expected.server.outcome must be one of"));
+        assertTrue(ex.getMessage().contains("when client succeeds"));
     }
 
     @Test
     void should_acceptSlotValidationErrorOutcome() {
         AuthzScenario scenario = new AuthzScenario(
-                "reject", "from_text", Map.of("text", "test"),
-                new AuthzExpected("slot_validation_error", null, null, null));
+                "reject",
+                "from_text",
+                Map.of("text", "test"),
+                new AuthzExpected(new ClientExpected("slot_validation_error", null, null), null));
 
         assertDoesNotThrow(() -> AuthzScenario.validate(scenario));
     }
 
     @Test
-    void should_acceptSemanticRejectedOutcome() {
+    void should_acceptSemanticRejectedServerOutcome() {
         AuthzScenario scenario = new AuthzScenario(
-                "reject", "from_text", Map.of("text", "test"),
-                new AuthzExpected("validation_semantic_rejected", null, null, null));
+                "reject",
+                "from_text",
+                Map.of("text", "test"),
+                new AuthzExpected(
+                        new ClientExpected(null, "prompt", null),
+                        new ServerExpected("validation_semantic_rejected", null, null)));
 
         assertDoesNotThrow(() -> AuthzScenario.validate(scenario));
     }
@@ -85,7 +130,7 @@ class AuthzScenarioTest {
 
         IllegalArgumentException ex =
                 assertThrows(IllegalArgumentException.class, () -> AuthzScenario.validate(scenario));
-        assertEquals("expected must not be null", ex.getMessage());
+        assertEquals("expected.client must not be null", ex.getMessage());
     }
 
     @Test

@@ -14,9 +14,12 @@
  *   <li>{@code AuthzScenario} - immutable scenario configuration record;
  *   <li>{@code AuthzScenarioLoader} - JSON scenario file parser and validator;
  *   <li>{@code AuthzScenarioRunner} - scenario execution engine with injectable generator/validator;
+ *   <li>{@code AuthzScenarioExecutor} - concurrent scenario executor with progress callback;
+ *   <li>{@code AuthzReasoningCapture} - LLM reasoning capture apparatus;
  *   <li>{@code AuthzSampleMain} - entry point that wires everything together.
  * </ul>
  *
  * @since 2026-08
  */
+@org.jspecify.annotations.NullUnmarked
 package net.openan.a2at.sample.authz_policy;

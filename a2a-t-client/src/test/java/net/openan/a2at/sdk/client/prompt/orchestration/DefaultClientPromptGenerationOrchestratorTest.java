@@ -620,7 +620,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void validateRequiredSlotsThrowsSlotValidationErrorWhenRequiredSlotsMissing() {
         PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
                 scenarioCode,
-                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null)));
+                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, "Site name", null)));
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
@@ -647,8 +647,8 @@ class DefaultClientPromptGenerationOrchestratorTest {
         PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
                 scenarioCode,
                 List.of(
-                        new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null),
-                        new PromptSlotDefinition("target", true, "string", null, null, null, null, "Target", null)));
+                        new PromptSlotDefinition("site", true, "string", null, null, null, null, null, "Site name", null),
+                        new PromptSlotDefinition("target", true, "string", null, null, null, null, null, "Target", null)));
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
@@ -756,7 +756,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void validateRequiredSlotsThrowsSlotValidationErrorWhenSlotValueIsEmptyString() {
         PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
                 scenarioCode,
-                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null)));
+                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, "Site name", null)));
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
@@ -781,7 +781,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void validateRequiredSlotsThrowsSlotValidationErrorWhenSlotValueIsBlankString() {
         PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
                 scenarioCode,
-                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null)));
+                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, "Site name", null)));
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
@@ -805,7 +805,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void validateRequiredSlotsSucceedsWhenSchemaHasNoRequiredSlotsAndAllSlotsAreEmpty() {
         PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
                 scenarioCode,
-                List.of(new PromptSlotDefinition("site", false, "string", null, null, null, null, "Site name", null)));
+                List.of(new PromptSlotDefinition("site", false, "string", null, null, null, null, null, "Site name", null)));
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
@@ -939,7 +939,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void generateFromTemplateUriWithMetadataEmptyInputProducesSlotValidationError() {
         PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
                 scenarioCode,
-                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null)));
+                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, "Site name", null)));
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
@@ -963,7 +963,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void validateRequiredSlotsTreatsNullSlotValueAsMissing() {
         PromptSlotSchemaLoader schemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
                 scenarioCode,
-                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, "Site name", null)));
+                List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, "Site name", null)));
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 new RecordingScenarioRecognizer(),
                 List.of(new ScenarioDefinition("energy_saving", "Energy Saving", "Energy analysis", "Analyze")),
