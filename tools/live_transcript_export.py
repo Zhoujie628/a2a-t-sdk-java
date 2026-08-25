@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
-"""Exports a live-corpus transcript into a review-friendly report with replayable LLM requests.
+"""Exports a live-corpus transcript into a review-friendly report with inline replayable requests.
 
-Reads target/live-corpus/<run>/transcript.json (+ summary.json when present) and writes:
-
-  export/report.md                 -- one section per case: input, parsed params, every LLM
-                                      call's full request messages / schema / raw response,
-                                      plus a copy-paste curl command per call
-  export/replay/<n>-<case>-call<m>.json
-                                   -- the exact OpenAI-compatible /v1/chat/completions request
-                                      body, byte-faithful to what OpenAIClient sent: the JSON-mode
-                                      system instruction, the schema system message, response_format
-                                      json_object, and the recorded messages
-
-The replay files exist for prompt tuning: point curl at any OpenAI-compatible endpoint with the
-same model and you reproduce the production request exactly, so an edited prompt can be iterated
-on outside the test suite.
+Reads target/live-corpus/<run>/transcript.json (+ summary.json when present) and writes a single
+export/report.md: one section per case -- input, parsed params, every LLM call's full request
+messages / schema / raw response -- and, per call, the exact OpenAI-compatible
+/v1/chat/completions request body OpenAIClient sent (the JSON-mode system instruction, the schema
+system message, response_format json_object, and the recorded messages), pretty-printed inline so
+it can be copied straight into Postman for prompt tuning outside the test suite.
 
 Usage:
   python tools/live_transcript_export.py <run-dir-or-transcript.json> [--out DIR]
@@ -83,11 +75,6 @@ def build_replay_request(call: dict) -> dict:
     return request
 
 
-def safe_name(text: str) -> str:
-    """Filesystem-safe fragment for replay file names."""
-    return "".join(c if c.isalnum() or c in "-_" else "-" for c in text).strip("-")
-
-
 def render_messages(messages: list[dict]) -> str:
     """Renders one call's pipeline messages as role-labeled fenced blocks.
 
@@ -112,7 +99,7 @@ def render_params(params: dict | None) -> str:
     return "\n".join(rows)
 
 
-def render_report(cases: list[dict], summary: dict | None, replay_files: list[tuple[str, str]]) -> str:
+def render_report(cases: list[dict], summary: dict | None) -> str:
     """Renders the whole run into one markdown document."""
     lines = ["# Live corpus run transcript", ""]
     if summary:
@@ -127,6 +114,10 @@ def render_report(cases: list[dict], summary: dict | None, replay_files: list[tu
             f" completion tokens {summary.get('totalCompletionTokens')})",
             f"- schema parse failures: {summary.get('schemaParseFailureCount')}",
             "",
+            "_Replay a request in Postman: POST `$A2AT_TEST_LLM_BASE_URL/chat/completions`,"
+            " header `Authorization: Bearer $A2AT_TEST_LLM_API_KEY`,"
+            " body = the JSON of the call's replay section._",
+            "",
         ]
     for index, case in enumerate(cases):
         outcome = case.get("outcome", "?")
@@ -139,9 +130,9 @@ def render_report(cases: list[dict], summary: dict | None, replay_files: list[tu
             "",
             "### Input",
             "",
-            "```",
+            "````",
             case.get("inputSummary") or "_(not recorded)_",
-            "```",
+            "````",
             "",
             "### Extracted params",
             "",
@@ -175,22 +166,15 @@ def render_report(cases: list[dict], summary: dict | None, replay_files: list[tu
                 call.get("content") or "_(no content)_",
                 "````",
                 "",
+                "#### Replay request (copy into Postman)",
+                "",
+                "````json",
+                json.dumps(build_replay_request(call), ensure_ascii=False, indent=2),
+                "````",
+                "",
             ]
-        replay_names = [name for case_id, name in replay_files if case_id == case.get("caseId")]
-        if replay_names:
-            lines += ["### Replay", ""]
-            for name in replay_names:
-                lines += [
-                    f"```bash",
-                    f"curl \"$A2AT_TEST_LLM_BASE_URL/chat/completions\" \\",
-                    f"  -H \"Authorization: Bearer $A2AT_TEST_LLM_API_KEY\" \\",
-                    f"  -H \"Content-Type: application/json\" \\",
-                    f"  -d @export/replay/{name}",
-                    "```",
-                    "",
-                ]
         if case.get("failureDiff"):
-            lines += ["### Failure diff", "", "```", case["failureDiff"], "```", ""]
+            lines += ["### Failure diff", "", "````", case["failureDiff"], "````", ""]
     return "\n".join(lines)
 
 
@@ -202,25 +186,14 @@ def main() -> int:
 
     run_dir, cases, summary = load_run(Path(args.run))
     out_dir = Path(args.out) if args.out else run_dir / "export"
-    replay_dir = out_dir / "replay"
-    replay_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    replay_files: list[tuple[str, str]] = []
-    for case in cases:
-        for call_number, call in enumerate(case.get("llmCalls") or [], start=1):
-            name = f"{safe_name(case.get('caseId', 'case'))}-call{call_number}.json"
-            request = build_replay_request(call)
-            (replay_dir / name).write_text(
-                json.dumps(request, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-            replay_files.append((case.get("caseId", ""), name))
-
-    report = render_report(cases, summary, replay_files)
+    report = render_report(cases, summary)
     report_path = out_dir / "report.md"
     report_path.write_text(report, encoding="utf-8")
 
-    print(f"{len(cases)} cases, {len(replay_files)} replayable requests")
+    print(f"{len(cases)} cases, {sum(len(case.get('llmCalls') or []) for case in cases)} inline replay requests")
     print(f"report: {report_path}")
-    print(f"replay: {replay_dir}")
     return 0
 
 

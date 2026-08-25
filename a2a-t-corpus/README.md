@@ -104,7 +104,7 @@ step 5  OMC(B)     validateAcceptPromptAndDataFilling   提取补充参数
 - **接缝**：真实 `OpenAIClient` 经 `LiveLlmConfig` 从测试变量构造，`RecordingLLMClient` 装饰后注入与离线家族相同的 builder `llmClient(...)` 接缝——装配路径与生产完全一致；`.env` 桥（`LiveLlmEnvWriter`）显式钉住 `A2AT_LLM_TEMPERATURE=0` / `TIMEOUT_SECONDS=60` / `MAX_ATTEMPTS=3`。
 - **抖动策略**：仅基础设施错误（`LLMRuntimeError`/超时/连接失败）测试层重试（`-Dcorpus.live.infraRetries`，默认 2），耗尽记 ERROR 保持红灯；**断言失败不重试**——那是 prompt 质量信号。
 - **transcript**：每次运行写 `a2a-t-corpus/target/live-corpus/<时间戳>/`——`transcript.json`（逐用例输入、每次 LLM 调用的完整请求/响应、解析结果、判定、token 统计）+ `summary.json`（含 **schema 解析失败率**，即模型对 json_object + prompt 注入 schema 的遵从度，是评估是否需要原生 json_schema 的依据）。
-- **评审导出**：`python tools/live_transcript_export.py <live运行目录>` 把 transcript 渲染成 `export/report.md`（逐用例的输入、完整请求消息、schema、原始响应、解析参数、判定）并为每次 LLM 调用生成**可拷贝重放的请求**——`export/replay/<用例>-call<N>.json` 是与生产 `OpenAIClient` 完全一致的 `/v1/chat/completions` 请求体（含 JSON-mode 系统消息与 schema 注入），报告内附 curl 命令，改 prompt 后可在套件外直接对真实端点迭代调优。
+- **评审导出**：`python tools/live_transcript_export.py <live运行目录>` 把 transcript 渲染成单文件 `export/report.md`（逐用例的输入、完整请求消息、schema、原始响应、解析参数、判定，以及每次 LLM 调用**内联的可重放请求体**——与生产 `OpenAIClient` 完全一致的 `/v1/chat/completions` JSON，含 JSON-mode 系统消息与 schema 注入）。请求体可直接拷贝进 Postman（`POST $A2AT_TEST_LLM_BASE_URL/chat/completions`，Bearer 鉴权），改 prompt 后在套件外对真实端点迭代调优。
 
 按裁决 live 运行**仅本地，不入 CI**。
 
