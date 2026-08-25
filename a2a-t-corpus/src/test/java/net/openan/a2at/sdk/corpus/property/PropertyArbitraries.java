@@ -203,7 +203,7 @@ final class PropertyArbitraries {
      */
     static Arbitrary<NegotiationEndingContent> endingContents(NegotiationConclusion conclusion) {
         Arbitrary<InformationEndingContent> information =
-                itemLists(0, 4).map(items -> new InformationEndingContent(conclusion, items));
+                itemLists(1, 4).map(items -> new InformationEndingContent(conclusion, items));
         Arbitrary<TargetEndingContent> target = Arbitraries.of(NON_BLANK_TEXTS)
                 .map(text -> conclusion == NegotiationConclusion.ACCEPT
                         ? new TargetEndingContent(conclusion, text, null)
