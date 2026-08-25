@@ -46,6 +46,7 @@ class NegotiationJsonSchemaBuilderTest {
         assertEquals(List.of("conclusion", "items"), List.copyOf(properties.keySet()));
         assertEquals(List.of("conclusion", "items"), schema.get("required"));
         assertEquals(List.of("Accept", "Reject"), ((Map<?, ?>) properties.get("conclusion")).get("enum"));
+        assertEquals(1, ((Map<?, ?>) properties.get("items")).get("minItems"));
     }
 
     @Test

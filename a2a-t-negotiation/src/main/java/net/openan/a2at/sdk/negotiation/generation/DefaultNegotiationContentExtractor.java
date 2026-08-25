@@ -205,7 +205,9 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
         NegotiationConclusion conclusion = requiredConclusion(payload);
         requireConclusionMatchesPhase(conclusion, phase);
         return switch (type) {
-            case INFORMATION -> new InformationEndingContent(conclusion, requiredItems(payload, "items"));
+            case INFORMATION -> new InformationEndingContent(
+                    conclusion,
+                    requiredNonEmptyItems(payload, "items", "information negotiation result content"));
             case TARGET -> mapTargetEndingContent(payload, conclusion);
             case FEASIBILITY -> new FeasibilityEndingContent(
                     conclusion, requiredString(payload, "feasibility_summary"));
@@ -294,6 +296,15 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
             throw slotMissing(field);
         }
         return itemsOf(value, field);
+    }
+
+    private static List<NegotiationItem> requiredNonEmptyItems(
+            Map<String, Object> payload, String field, String description) {
+        List<NegotiationItem> items = requiredItems(payload, field);
+        if (items.isEmpty()) {
+            throw slotMissing(description);
+        }
+        return items;
     }
 
     private static List<NegotiationItem> optionalItems(Map<String, Object> payload, String field) {

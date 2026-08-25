@@ -232,6 +232,17 @@ class NegotiationContentExtractorTest {
     }
 
     @Test
+    void rejectsEmptyInformationEndingItemsBeforeTemplateRendering() {
+        NegotiationGenerationException exception = assertThrows(
+                NegotiationGenerationException.class,
+                () -> new DefaultNegotiationContentExtractor(new RecordingClient("{\"conclusion\":\"Reject\",\"items\":[]}"))
+                        .extract("拒绝，资源查询服务正在检修。", reference(NegotiationType.INFORMATION, NegotiationPhase.REJECT, "zh-CN")));
+
+        assertEquals(A2ATErrorCodes.NEGOTIATION_SLOT_MISSING, exception.getCode());
+        assertTrue(exception.getMessage().contains("result content"));
+    }
+
+    @Test
     void mapsFeasibilityActionProblemsToTheInvalidInputCode() {
         NegotiationGenerationException missingAction = assertThrows(
                 NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(new RecordingClient(

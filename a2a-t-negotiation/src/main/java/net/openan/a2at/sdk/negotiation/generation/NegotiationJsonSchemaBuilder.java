@@ -70,7 +70,7 @@ final class NegotiationJsonSchemaBuilder {
     private static Map<String, Object> informationEndingSchema() {
         Map<String, Object> properties = new LinkedHashMap<>();
         properties.put("conclusion", conclusionSchema());
-        properties.put("items", itemArraySchema());
+        properties.put("items", nonEmptyItemArraySchema());
         return objectSchema(properties, List.of("conclusion", "items"));
     }
 
@@ -114,6 +114,12 @@ final class NegotiationJsonSchemaBuilder {
         Map<String, Object> schema = new LinkedHashMap<>();
         schema.put("type", "array");
         schema.put("items", itemSchema());
+        return schema;
+    }
+
+    private static Map<String, Object> nonEmptyItemArraySchema() {
+        Map<String, Object> schema = new LinkedHashMap<>(itemArraySchema());
+        schema.put("minItems", 1);
         return schema;
     }
 
