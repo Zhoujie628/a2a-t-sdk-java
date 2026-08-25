@@ -200,7 +200,7 @@ A2AT_LLM_MAX_TOKENS=8192                     # 推理型模型建议调大（默
 - `A2ATClient.generateNegotiationAcceptPromptFromData`（accept，client 角色）
 - `A2ATClient.generateNegotiationRejectPromptFromData`（reject，client 角色）
 
-**输入为纯结构化 JSON**：每个条目就是一个 key-value——key 是槽位名称，value 是该字段的内容，不含自然语言段落。fromData 协商生成是确定性模板渲染（零 LLM 调用，`llm_calls` 证据可证），因此断言是**精确的**：
+**输入为传统结构化数据**：每个条目就是一个 key-value——key 是 Task-T 模板的槽位名称（必选：任务对象/投诉分类/OSS侧事件流水号；可选：问题发生时间/投诉详情），value 是原子数据值（如 `"投诉分类": "专线中断"`、`"OSS侧事件流水号": "event-id-20260602-08841"`），不含自然语言段落，不构造模板传错场景。fromData 协商生成是确定性模板渲染（零 LLM 调用），因此断言是**精确的**：
 
 | 断言 | 说明 |
 |---|---|
@@ -208,9 +208,9 @@ A2AT_LLM_MAX_TOKENS=8192                     # 推理型模型建议调大（默
 | 关系句包含 | propose 的 relationship 原文出现在报文中 |
 | 结论标记 | accept 报文含 `Accept`、reject 报文含 `Reject` |
 | 模板 URI 匹配 | 返回的 templateUri 与预期一致 |
-| 负例 | 空 items / 模板阶段错配应失败（实测：**空 items 目前不会失败**——语义上"零请求项"的 propose 未被接口防护，属接口层发现） |
+| 数据边界 | 空 items 应失败（实测：**当前未防护**，零请求项照样渲染——接口层发现） |
 
-用例集：`sample/negotiation/eval/fromdata-api-suite.json`（11 条：propose×5 / accept×3 / reject×3，含正例、边界与负例）。
+**用例矩阵**（按 Task-T 字段模型的组合）：propose 覆盖全部必选缺失/单必选缺失×3/双必选缺失/必选+可选/仅可选/空边界共 8 条；accept 覆盖全必选补齐/单必选补齐/全 5 字段补齐/可选补齐共 4 条；reject 覆盖单字段/双字段无法提供共 2 条。用例集：`sample/negotiation/eval/fromdata-api-suite.json`。
 
 运行命令（**无需真实 LLM**——确定性渲染不调模型，env 只需非空 `A2AT_LLM_API_KEY` 即可构造门面）：
 
