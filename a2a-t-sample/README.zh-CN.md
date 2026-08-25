@@ -147,7 +147,7 @@ java @a2a-t-sample/target/fromtext.javaargs.txt /path/to/.env
 
 **槽位契约**：评测直接使用 SDK 内置的 private-line-complaint 模板（不做任何资源改动）。模板将"任务上下文"定义为一个组合槽，其内部要求 4 个子项（投诉分类[必选]、问题发生时间[可选]、OSS侧事件流水号[必选]、投诉详情[可选]）。评测的 `task_schema`（eval-suite.json 内）把该组合槽细化为 4 个独立子槽位用于**校验**。**生成门**（内置 slot.json 的 required）要求任务对象与任务上下文非空：任一为空即在生成期 fail-fast，协商不触发；**校验门**（调用方 schema 的 required）检出非空上下文内缺失或非法的必选子字段并触发协商。fromData 用例输入为结构化 JSON——每个 key 对应一个明确的子项值（如 `"OSS侧事件流水号": "event-id-20260511-09013"`）；fromText 用例若走到补槽环节则携带 `client_data`（客户端自身掌握的结构化知识，即其文本引用过的字段），补槽重渲染基于该知识而非服务端提取结果。
 
-通道语义：`fromData` 传结构化 JSON + schema；`fromText` 传自然语言由 LLM 抽取。所有生成/校验接口均走 SDK 管线（规则门 + 语义 LLM 调用）。**需要真实 LLM API key**（env 文件参考根目录 `env.example`，至少配置 `A2AT_LLM_PROVIDER` / `A2AT_LLM_MODEL` / `A2AT_LLM_API_KEY` / `A2AT_LLM_BASE_URL`）。
+通道语义：fromData 与 fromText 走**同一条 LLM 槽位抽取管线**（`llm_calls` 证据可见）——fromData 的抽取做归一化映射（把结构化子字段组合为模板槽值），fromText 的抽取从自然语言中提取槽位；抽取完成后模板渲染均为确定性规则。协商报文的 fromData 生成则是纯确定性渲染（类型化数据 → 模板，零 LLM 调用），fromText 协商生成才走 LLM 抽取。所有校验接口均走 SDK 完整管线（规则门 + 语义 LLM 调用）。**需要真实 LLM API key**（env 文件参考根目录 `env.example`，至少配置 `A2AT_LLM_PROVIDER` / `A2AT_LLM_MODEL` / `A2AT_LLM_API_KEY` / `A2AT_LLM_BASE_URL`）。
 
 运行命令：
 
