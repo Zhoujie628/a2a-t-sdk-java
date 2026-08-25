@@ -138,12 +138,14 @@ java @a2a-t-sample/target/fromtext.javaargs.txt /path/to/.env
 
 **API 调用证据**：报告的每个步骤都记录 `api_calls`（SDK 方法名 + 完整输入参数，含传入的 JSON schema 全文），可从报告直接核对每次调用是否携带 schema、用了哪个模板 URI 和协商上下文。
 
+**LLM 调用证据**：每个步骤还记录 `llm_calls`——该步骤内每次大模型调用的完整请求（system + user prompt 全文、JSON schema、temperature、max_tokens）与响应（content、model、usage、耗时），调用失败时也记录请求与错误。用例失败时可直接从报告看到模型实际收到的 prompt（含槽位描述、值约束、schema 注入后的最终形态），据此反向定位是哪段提示词/约束导致了误判并调优。
+
 **协议约定**（两条常见问题）：
 
 1. **服务端发起协商后，客户端是否还需调用 validate？** 是。SDK 在 client/server 两个门面上提供对称的 `validate*PromptAndDataFilling` API：发送方出站自检（步骤 4），接收方入站校验（步骤 5/7）。客户端收到 propose 后应调 `validateProposePromptAndDataFilling` 提取需要补充的槽位清单，再据此补槽。
 2. **客户端接受协商并补充报文后，服务端如何合并原始模板与协商补充内容？** 无增量合并 API。合并发生在客户端：客户端持有完整参数集（round-1 提取参数 + 补槽值），用 `generateTaskPromptFromDataWithSchema` **重新渲染整份 Task-T**（步骤 6），随 accept 一并发送；服务端对完整报文做 `validateTaskPromptAndDataFilling`（步骤 8）提参，不做"原始模板+增量"拼接。
 
-**槽位契约**：评测直接使用 SDK 内置的 private-line-complaint 模板（不做任何资源改动）。模板将"任务上下文"定义为一个组合槽，其内部要求 4 个子项（投诉分类[必选]、问题发生时间[可选]、OSS侧事件流水号[必选]、投诉详情[可选]）。评测的 `task_schema`（eval-suite.json 内）把该组合槽细化为 4 个独立子槽位用于**校验**：子项缺失在非空"任务上下文"内被校验检出并触发协商；"任务上下文"整体为空则在生成期被拦截（内置 required 槽，fail-fast）。fromData 用例输入为结构化 JSON——每个 key 对应一个明确的子项值（如 `"OSS侧事件流水号": "event-id-20260511-09013"`），生成时由 SDK 抽取管线组合进模板。
+**槽位契约**：评测直接使用 SDK 内置的 private-line-complaint 模板（不做任何资源改动）。模板将"任务上下文"定义为一个组合槽，其内部要求 4 个子项（投诉分类[必选]、问题发生时间[可选]、OSS侧事件流水号[必选]、投诉详情[可选]）。评测的 `task_schema`（eval-suite.json 内）把该组合槽细化为 4 个独立子槽位用于**校验**。**生成门**（内置 slot.json 的 required）要求任务对象与任务上下文非空：任一为空即在生成期 fail-fast，协商不触发；**校验门**（调用方 schema 的 required）检出非空上下文内缺失或非法的必选子字段并触发协商。fromData 用例输入为结构化 JSON——每个 key 对应一个明确的子项值（如 `"OSS侧事件流水号": "event-id-20260511-09013"`）；fromText 用例若走到补槽环节则携带 `client_data`（客户端自身掌握的结构化知识，即其文本引用过的字段），补槽重渲染基于该知识而非服务端提取结果。
 
 通道语义：`fromData` 传结构化 JSON + schema；`fromText` 传自然语言由 LLM 抽取。所有生成/校验接口均走 SDK 管线（规则门 + 语义 LLM 调用）。**需要真实 LLM API key**（env 文件参考根目录 `env.example`，至少配置 `A2AT_LLM_PROVIDER` / `A2AT_LLM_MODEL` / `A2AT_LLM_API_KEY` / `A2AT_LLM_BASE_URL`）。
 
@@ -153,16 +155,20 @@ java @a2a-t-sample/target/fromtext.javaargs.txt /path/to/.env
 # 1. 打包（首次，生成 target/eval.javaargs.txt）
 mvn -pl a2a-t-sample -am -DskipTests package
 
-# 2. 跑全量用例（每个 case 按各自 channel 配置执行）
+# 2. 跑全量用例（fromData 和 fromText 两条用例轨，每个 case 按各自 channel 配置执行）
 java @a2a-t-sample/target/eval.javaargs.txt /path/to/.env
 
 # 3. 只跑指定 case（可重复传 --case）
-java @a2a-t-sample/target/eval.javaargs.txt --case PLC-04 /path/to/.env
+java @a2a-t-sample/target/eval.javaargs.txt --case PLC-D03 /path/to/.env
 
-# 4. 强制全量走 fromText 协商通道（不改用例文件）
+# 4. 只跑其中一条用例轨：fromData 或 fromText 分开测评，报告可分别输出后横向对比
+java @a2a-t-sample/target/eval.javaargs.txt --channel fromData --out eval-report-fromdata.json /path/to/.env
+java @a2a-t-sample/target/eval.javaargs.txt --channel fromText --out eval-report-fromtext.json /path/to/.env
+
+# 5. 强制全量走 fromText 协商生成通道（不改用例文件）
 java @a2a-t-sample/target/eval.javaargs.txt --negotiation-channel fromText /path/to/.env
 
-# 5. 指定报告输出路径（默认 ./eval-report.json）
+# 6. 指定报告输出路径（默认 ./eval-report.json）
 java @a2a-t-sample/target/eval.javaargs.txt --out eval-report-my-model.json /path/to/.env
 ```
 
@@ -184,7 +190,7 @@ A2AT_LLM_MAX_TOKENS=8192                     # 推理型模型建议调大（默
 
 `*.env` 已被 .gitignore 忽略，携带真实 key 的 env 文件不会被提交。
 
-用例集：`sample/negotiation/eval/eval-suite.json`（15 条用例：fromData/fromText × 完整输入/任务对象缺失/投诉分类缺失/OSS流水号缺失/可选槽缺失/双槽缺失/负例补槽约束违反，含正反两类断言）。报告中每个 case 输出逐步证据（`api_calls`、生成 prompt 原文、校验判定与抽取参数、耗时），`metrics` 汇总通过率。
+用例集：`sample/negotiation/eval/eval-suite.json`（**20 条用例，fromData（PLC-D01~D10）与 fromText（PLC-T01~T10）两条轨各 10 条**，覆盖同一场景矩阵：完整输入不触发 / 必选字段缺失（生成期拦截或触发协商）/ 双必选子字段缺失 / 可选字段缺失不触发 / 值无效（对象形态、分类枚举、流水号格式）/ 字段错位归位 / 口语化与推断 / 负例补槽被拒）。报告中每个 case 输出逐步证据（`api_calls`、`llm_calls`、生成 prompt 原文、校验判定与抽取参数、耗时），`metrics` 汇总通过率。
 
 ## 授权策略（Authorization-T）演示 Demo
 

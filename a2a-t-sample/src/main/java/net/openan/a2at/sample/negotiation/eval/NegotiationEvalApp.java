@@ -18,7 +18,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.Consumer;
-import net.openan.a2at.sample.subscribe_incident.shared.mock.SampleMockLlmInstaller;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
@@ -99,6 +98,7 @@ public final class NegotiationEvalApp {
         Path outPath = Path.of("eval-report.json");
         List<String> caseFilter = new ArrayList<>();
         String negotiationChannelOverride = null;
+        String channelFilter = null;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
             if ("--out".equals(arg) && i + 1 < args.length) {
@@ -107,6 +107,8 @@ public final class NegotiationEvalApp {
                 caseFilter.add(args[++i]);
             } else if ("--negotiation-channel".equals(arg) && i + 1 < args.length) {
                 negotiationChannelOverride = args[++i];
+            } else if ("--channel".equals(arg) && i + 1 < args.length) {
+                channelFilter = args[++i];
             } else if (!arg.startsWith("--")) {
                 envPath = Path.of(arg);
             }
@@ -114,11 +116,12 @@ public final class NegotiationEvalApp {
         if (envPath == null) {
             System.err.println(
                     "Usage: java @a2a-t-sample/target/eval.javaargs.txt [--out eval-report.json] [--case PLC-04]"
-                            + " [--negotiation-channel fromData|fromText] /path/to/.env");
+                            + " [--channel fromData|fromText] [--negotiation-channel fromData|fromText]"
+                            + " /path/to/.env");
             System.exit(1);
         }
 
-        SampleMockLlmInstaller.installLlmLogger(false, "eval");
+        EvalLlmCaptureClient.install();
         Map<String, Object> suite = loadSuite();
         if (negotiationChannelOverride != null) {
             // run the whole suite with one negotiation generation channel without duplicating cases
@@ -134,6 +137,7 @@ public final class NegotiationEvalApp {
         report.put("generated_at", LocalDateTime.now().format(TIMESTAMP));
         report.put("llm", llmInfo(envPath));
         report.put("case_filter", caseFilter);
+        report.put("channel_filter", channelFilter == null ? "all" : channelFilter);
         report.put("negotiation_channel", negotiationChannelOverride == null
                 ? "per-case"
                 : negotiationChannelOverride);
@@ -141,10 +145,15 @@ public final class NegotiationEvalApp {
         List<Map<String, Object>> cases = new ArrayList<>();
         report.put("cases", cases);
         int index = 0;
-        int total = countCases(suite, caseFilter);
+        int total = countCases(suite, caseFilter, channelFilter);
         for (Map<String, Object> testCase : cases(suite)) {
             String caseId = String.valueOf(testCase.get("id"));
             if (!caseFilter.isEmpty() && !caseFilter.contains(caseId)) {
+                continue;
+            }
+            // evaluate one task-generation channel in isolation: only its cases run, so fromData and
+            // fromText can be measured (and reported) separately
+            if (channelFilter != null && !channelFilter.equals(String.valueOf(testCase.get("channel")))) {
                 continue;
             }
             index++;
@@ -174,6 +183,7 @@ public final class NegotiationEvalApp {
 
     /** Runs one case end to end and returns its replayable trace record. */
     private static Map<String, Object> runCase(Path envPath, Map<String, Object> suite, Map<String, Object> testCase) {
+        EvalLlmCaptureClient.reset();
         String caseId = String.valueOf(testCase.get("id"));
         String channel = String.valueOf(testCase.get("channel"));
         boolean fromText = "fromText".equals(channel);
@@ -465,8 +475,13 @@ public final class NegotiationEvalApp {
         // extracted in round 1), completed with the fill values for everything still missing, and re-renders the
         // whole Task-T prompt from that map.
         Map<String, String> fills = fills(slotsToFill, fillValues);
-        Map<String, Object> baseData = fromText ? extractedRound1 : inputData;
-        Map<String, Object> filledData = mergeInputData(baseData, taskSchema, mergeFills(fillValues, fills));
+        // the fill round re-renders from the CLIENT's own knowledge: for fromData the structured input, for
+        // fromText the client_data the case carries (what its text quoted) — falling back to the server's
+        // round-1 extraction, which is only available when that validation passed
+        Map<String, Object> baseData = fromText ? clientBaseData(testCase, extractedRound1) : inputData;
+        // only the negotiated slots' fill values enter the merge: round-1 base values are preserved verbatim,
+        // so the re-rendered prompt carries exactly what the client knew plus what it supplemented
+        Map<String, Object> filledData = mergeInputData(baseData, taskSchema, fills);
         String filledPrompt;
         Map<String, Object> filledGenerationInput = Map.of(
                 "data", filledData,
@@ -734,7 +749,21 @@ public final class NegotiationEvalApp {
         Map<String, Object> step = new LinkedHashMap<>();
         step.put("step", name);
         step.put("role", role);
+        attachLlmCalls(step);
         return step;
+    }
+
+    /**
+     * Attaches the LLM calls recorded since the previous step was built: the exact messages (system + user
+     * prompt) and JSON schema fed to the model, plus the response or the failure. When a case fails, this is
+     * what makes the cause traceable — the recorded prompt shows which slot description, constraint or
+     * system instruction the model actually saw, so the prompt resources can be tuned in reverse.
+     */
+    private static void attachLlmCalls(Map<String, Object> step) {
+        List<Map<String, Object>> calls = EvalLlmCaptureClient.drain();
+        if (!calls.isEmpty()) {
+            step.put("llm_calls", calls);
+        }
     }
 
     /** Attaches the SDK API call evidence (method name + input parameters) to a step; one step may make several calls. */
@@ -815,7 +844,6 @@ public final class NegotiationEvalApp {
         }
         return step;
     }
-
     private static List<Map<String, Object>> itemsJson(List<NegotiationItem> items) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (NegotiationItem item : items) {
@@ -874,6 +902,17 @@ public final class NegotiationEvalApp {
             }
             text.append("；");
         }
+    }
+
+    /**
+     * The client's own structured knowledge for the fill round of a fromText case: the fields its input text
+     * quoted. The server's round-1 extraction is the fallback when the case carries no client data — a lossy
+     * fallback, because those params are only produced when round-1 validation passed.
+     */
+    private static Map<String, Object> clientBaseData(
+            Map<String, Object> testCase, Map<String, Object> extractedRound1) {
+        Map<String, Object> clientData = asMap(testCase.get("client_data"));
+        return clientData.isEmpty() ? extractedRound1 : clientData;
     }
 
     /** The supplement values the simulated client supplies, keyed by slot. */
@@ -1131,13 +1170,12 @@ public final class NegotiationEvalApp {
         }
     }
 
-    private static int countCases(Map<String, Object> suite, List<String> filter) {
-        if (filter.isEmpty()) {
-            return cases(suite).size();
-        }
+    private static int countCases(Map<String, Object> suite, List<String> filter, String channelFilter) {
         return (int) cases(suite).stream()
-                .map(testCase -> String.valueOf(testCase.get("id")))
-                .filter(filter::contains)
+                .filter(testCase -> filter.isEmpty()
+                        || filter.contains(String.valueOf(testCase.get("id"))))
+                .filter(testCase -> channelFilter == null
+                        || channelFilter.equals(String.valueOf(testCase.get("channel"))))
                 .count();
     }
 
