@@ -42,6 +42,7 @@ public record PromptSlotJsonSchema(
                         null,
                         null,
                         null,
+                        null,
                         null));
                 continue;
             }
@@ -53,6 +54,7 @@ public record PromptSlotJsonSchema(
                     property.minimum(),
                     property.maximum(),
                     property.allowedValues(),
+                    property.examples(),
                     property.description(),
                     property.valueConstraint()));
         }

@@ -42,7 +42,8 @@ public final class AuthzSampleMain {
                     "a2a-t-sample", "src", "main", "resources", "sample", "authz-policy", "authz.env")
             .toString();
 
-    private static final String SCENARIOS_RESOURCE = "sample/authz-policy/scenarios.json";
+    private static final String SCENARIOS_RESOURCE =
+            System.getProperty("authz.scenarios", "sample/authz-policy/scenarios.json");
 
     private static final String SLOT_SCHEMA_PATH_TEMPLATE =
             "/prompt_resources/slots/Authorization-T/authorization-policy-management/v1/%s/slot.json";

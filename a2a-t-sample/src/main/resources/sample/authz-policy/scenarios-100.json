@@ -1,0 +1,1565 @@
+{
+  "scenarios": [
+    {
+      "label": "a1-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "暂停所有已生效的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a1-text-02",
+      "entry": "from_text",
+      "input": {
+        "text": "审批所有已生效的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a1-text-03",
+      "entry": "from_text",
+      "input": {
+        "text": "导出所有已生效的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a1-text-04",
+      "entry": "from_text",
+      "input": {
+        "text": "导入所有已生效的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a1-text-05",
+      "entry": "from_text",
+      "input": {
+        "text": "同步所有已生效的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a1-text-06",
+      "entry": "from_text",
+      "input": {
+        "text": "迁移所有已生效的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a1-text-07",
+      "entry": "from_text",
+      "input": {
+        "text": "复制所有已生效的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a1-text-08",
+      "entry": "from_text",
+      "input": {
+        "text": "归档所有已生效的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a1-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "暂停授权策略",
+          "策略列表": "业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a1-data-02",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "审批授权策略",
+          "策略列表": "业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a1-data-03",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "导出授权策略",
+          "策略列表": "业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a1-data-04",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "导入授权策略",
+          "策略列表": "业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a2-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "今天天气怎么样"
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a2-text-02",
+      "entry": "from_text",
+      "input": {
+        "text": "请帮我写一首关于春天的诗"
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a2-text-03",
+      "entry": "from_text",
+      "input": {
+        "text": "最近的科技新闻有哪些"
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a2-text-04",
+      "entry": "from_text",
+      "input": {
+        "text": "如何制作巧克力蛋糕"
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a3-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "策略列表": "业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a3-data-02",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "策略列表": "载波调度/业务抢通/载波调度/永久生效"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a3-data-03",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "策略列表": "信号覆盖优化/业务抢通/频段调整/2026-08-01~2026-12-31"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "a3-data-04",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "策略列表": "网络扩容/业务抢通/信号增强/2026-01-01~2028-12-31"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "slot_validation_error",
+        "slot_errors": [
+          {
+            "slot_name": "授权策略的操作类型",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b1-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "新增动网操作授权策略：业务投诉诊断/业务抢通/隧道调优"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b1-text-02",
+      "entry": "from_text",
+      "input": {
+        "text": "新增动网操作授权策略：业务投诉诊断/业务抢通/2026-06-01~2030-06-18"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b1-text-03",
+      "entry": "from_text",
+      "input": {
+        "text": "新增动网操作授权策略：业务投诉诊断/隧道调优/2026-06-01~2030-06-18"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b1-text-04",
+      "entry": "from_text",
+      "input": {
+        "text": "新增动网操作授权策略：业务抢通/隧道调优/2026-06-01~2030-06-18"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b1-text-05",
+      "entry": "from_text",
+      "input": {
+        "text": "新增动网操作授权策略：载波调度/2026-06-01~2030-06-18"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b1-text-06",
+      "entry": "from_text",
+      "input": {
+        "text": "新增动网操作授权策略：载波调度/永久生效"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b1-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "业务投诉诊断/业务抢通/隧道调优"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b1-data-02",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "载波调度/载波调度/2026-06-01~2030-06-18"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b1-data-03",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "业务抢通/隧道调优/2026-06-01~2030-06-18"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b1-data-04",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "信号覆盖优化/永久生效"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "missing_required"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b2-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "新增动网操作授权策略：业务投诉诊断/业务抢通/隧道调优"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "format_error"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b2-text-02",
+      "entry": "from_text",
+      "input": {
+        "text": "新增动网操作授权策略：业务投诉诊断/业务抢通/隧道调优/2026-13-45~2030-06-18"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "format_error"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b2-text-03",
+      "entry": "from_text",
+      "input": {
+        "text": "新增动网操作授权策略：xxx/yyy/zzz/aaa"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "format_error"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b2-text-04",
+      "entry": "from_text",
+      "input": {
+        "text": "新增动网操作授权策略：业务投诉诊断/业务抢通/隧道调优/2026-06-01"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "format_error"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b2-text-05",
+      "entry": "from_text",
+      "input": {
+        "text": "新增动网操作授权策略：业务投诉诊断/业务抢通/隧道调优/2026年6月1日至2030年13月18日"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "format_error"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b2-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "业务投诉诊断/业务抢通/隧道调优/2026-13-45~2030-06-18"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "format_error"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b2-data-02",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "xxx/yyy/zzz/aaa"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "format_error"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b2-data-03",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "###%%%&&&"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "format_error"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b3-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "修改动网操作授权策略7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c3，将业务场景从业务投诉诊断改为信号覆盖优化"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "invalid_value"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b3-text-02",
+      "entry": "from_text",
+      "input": {
+        "text": "修改动网操作授权策略，将操作名称从隧道调优改为频段调整"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "invalid_value"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b3-text-03",
+      "entry": "from_text",
+      "input": {
+        "text": "修改动网操作授权策略，将处置类型从业务抢通改为业务优化"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "invalid_value"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b3-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "修改授权策略",
+          "策略列表": "7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c3/将业务场景改为信号覆盖优化"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "invalid_value"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b4-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "删除动网操作授权策略，策略标识：invalid-uuid"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "not_found"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b4-text-02",
+      "entry": "from_text",
+      "input": {
+        "text": "删除动网操作授权策略，策略标识：12345"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "not_found"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b4-text-03",
+      "entry": "from_text",
+      "input": {
+        "text": "删除动网操作授权策略，策略标识："
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "not_found"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b4-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "删除授权策略",
+          "策略列表": "invalid-uuid"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "not_found"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b5-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "查询动网操作授权策略，业务场景为：不存在的场景XYZ"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "invalid_value"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b5-text-02",
+      "entry": "from_text",
+      "input": {
+        "text": "查询动网操作授权策略，处置类型为：不存在的处置ABC"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "invalid_value"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b5-text-03",
+      "entry": "from_text",
+      "input": {
+        "text": "查询动网操作授权策略，操作名称为：不存在的操作123"
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "invalid_value"
+          }
+        ]
+      }
+    },
+    {
+      "label": "b5-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "查询授权策略",
+          "策略列表": "业务场景为：不存在的场景XYZ"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "validation_semantic_rejected",
+        "slot_errors": [
+          {
+            "slot_name": "动网操作的授权策略列表",
+            "code": "invalid_value"
+          }
+        ]
+      }
+    },
+    {
+      "label": "c1-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "新增一条动网操作授权策略：业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-text-02",
+      "entry": "from_text",
+      "input": {
+        "text": "新增一条动网操作授权策略：载波调度/业务恢复/载波调度/永久生效"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-text-03",
+      "entry": "from_text",
+      "input": {
+        "text": "新增一条动网操作授权策略：信号覆盖优化/业务优化/频段调整/2026-08-01~2026-12-31"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-text-04",
+      "entry": "from_text",
+      "input": {
+        "text": "新增一条动网操作授权策略：网络扩容/业务调整/信号增强/2026-01-01~2028-12-31"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-text-05",
+      "entry": "from_text",
+      "input": {
+        "text": "新增一条动网操作授权策略：故障恢复/业务抢通/带宽扩容/2026-06-01T12:00:00Z~2030-06-18T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-text-06",
+      "entry": "from_text",
+      "input": {
+        "text": "新增一条动网操作授权策略：带宽调配/业务恢复/网络优化/2026/06/01-2030/06/18"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-text-07",
+      "entry": "from_text",
+      "input": {
+        "text": "新增一条动网操作授权策略：链路监控/业务优化/路由调整/2026年6月1日至2030年6月18日"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-text-08",
+      "entry": "from_text",
+      "input": {
+        "text": "新增一条动网操作授权策略：容量规划/业务调整/链路切换/2026-03-01~2027-09-30"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "信号覆盖优化/业务恢复/频段调整/2026-08-01~2026-12-31"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-data-02",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "网络扩容/业务优化/信号增强/2026-01-01~2028-12-31"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-data-03",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "故障恢复/业务调整/带宽扩容/2026-06-01T12:00:00Z~2030-06-18T12:00:00Z"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-data-04",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "带宽调配/业务抢通/网络优化/2026/06/01-2030/06/18"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-data-05",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "链路监控/业务恢复/路由调整/2026年6月1日至2030年6月18日"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c1-data-06",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "容量规划/业务优化/链路切换/2026-03-01~2027-09-30"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c2-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "新增两条动网操作授权策略：业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18；载波调度/业务恢复/载波调度/永久生效"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c2-text-02",
+      "entry": "from_text",
+      "input": {
+        "text": "新增三条动网操作授权策略：业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18；载波调度/业务恢复/载波调度/永久生效；信号覆盖优化/业务优化/频段调整/2026-08-01~2026-12-31"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c2-text-03",
+      "entry": "from_text",
+      "input": {
+        "text": "新增两条动网操作授权策略：网络扩容/业务调整/信号增强/2026-01-01~2028-12-31；故障恢复/业务抢通/带宽扩容/2026-06-01T12:00:00Z~2030-06-18T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c2-text-04",
+      "entry": "from_text",
+      "input": {
+        "text": "新增四条动网操作授权策略：业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18；载波调度/业务恢复/载波调度/永久生效；信号覆盖优化/业务优化/频段调整/2026-08-01~2026-12-31；网络扩容/业务调整/信号增强/2026-01-01~2028-12-31"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c2-text-05",
+      "entry": "from_text",
+      "input": {
+        "text": "新增两条动网操作授权策略：带宽调配/业务恢复/网络优化/2026/06/01-2030/06/18；链路监控/业务优化/路由调整/2026年6月1日至2030年6月18日"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c2-text-06",
+      "entry": "from_text",
+      "input": {
+        "text": "新增五条动网操作授权策略：业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18；载波调度/业务恢复/载波调度/永久生效；信号覆盖优化/业务优化/频段调整/2026-08-01~2026-12-31；网络扩容/业务调整/信号增强/2026-01-01~2028-12-31；故障恢复/业务抢通/带宽扩容/2026-06-01T12:00:00Z~2030-06-18T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c2-text-07",
+      "entry": "from_text",
+      "input": {
+        "text": "新增两条动网操作授权策略：容量规划/业务调整/链路切换/2026-03-01~2027-09-30；业务投诉诊断/业务抢通/隧道调优/永久生效"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c2-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18；载波调度/业务恢复/载波调度/永久生效"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c2-data-02",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "信号覆盖优化/业务优化/频段调整/2026-08-01~2026-12-31；网络扩容/业务调整/信号增强/2026-01-01~2028-12-31；故障恢复/业务抢通/带宽扩容/2026-06-01T12:00:00Z~2030-06-18T12:00:00Z"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c2-data-03",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "新增授权策略",
+          "策略列表": "带宽调配/业务恢复/网络优化/2026/06/01-2030/06/18；链路监控/业务优化/路由调整/2026年6月1日至2030年6月18日；容量规划/业务调整/链路切换/2026-03-01~2027-09-30；业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c3-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "修改动网操作授权策略7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c3的有效期至2030-12-31"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c3-text-02",
+      "entry": "from_text",
+      "input": {
+        "text": "修改动网操作授权策略的有效期从2026-06-01~2030-06-18改为永久生效"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c3-text-03",
+      "entry": "from_text",
+      "input": {
+        "text": "修改动网操作授权策略7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c3，将有效期从2026-08-01~2026-12-31延长至2026-06-01~2030-06-18"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c3-text-04",
+      "entry": "from_text",
+      "input": {
+        "text": "将动网操作授权策略的有效期修改为2026-01-01~2028-12-31"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c3-text-05",
+      "entry": "from_text",
+      "input": {
+        "text": "修改动网操作授权策略，有效期变更为2026-06-01T12:00:00Z~2030-06-18T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c3-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "修改授权策略",
+          "策略列表": "7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c3/2026-06-01~2030-06-18"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c3-data-02",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "修改授权策略",
+          "策略列表": "7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c3/永久生效"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c3-data-03",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "修改授权策略",
+          "策略列表": "7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c3/2026-01-01~2028-12-31"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c4-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "删除动网操作授权策略，策略标识：7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c3"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c4-text-02",
+      "entry": "from_text",
+      "input": {
+        "text": "删除业务投诉诊断相关的所有动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c4-text-03",
+      "entry": "from_text",
+      "input": {
+        "text": "删除处置类型为业务抢通的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c4-text-04",
+      "entry": "from_text",
+      "input": {
+        "text": "批量删除动网操作授权策略：7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c3；7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c4"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c4-text-05",
+      "entry": "from_text",
+      "input": {
+        "text": "删除有效期已过期的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c4-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "删除授权策略",
+          "策略列表": "7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c3"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c4-data-02",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "删除授权策略",
+          "策略列表": "业务投诉诊断"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c4-data-03",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "删除授权策略",
+          "策略列表": "7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c3；7d8c7b00-3c8c-4f8e-9b1e-9b17b6a3e5c4"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c5-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "查询业务投诉诊断的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c5-text-02",
+      "entry": "from_text",
+      "input": {
+        "text": "查询处置类型为业务抢通的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c5-text-03",
+      "entry": "from_text",
+      "input": {
+        "text": "查询操作名称为隧道调优的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c5-text-04",
+      "entry": "from_text",
+      "input": {
+        "text": "查询载波调度且处置类型为业务恢复的动网操作授权策略"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c5-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "查询授权策略",
+          "策略列表": "业务投诉诊断"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c5-data-02",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "查询授权策略",
+          "策略列表": "业务抢通"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c5-data-03",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "查询授权策略",
+          "策略列表": "隧道调优"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c5-data-04",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "查询授权策略",
+          "策略列表": "载波调度/业务恢复"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c6-text-01",
+      "entry": "from_text",
+      "input": {
+        "text": "新增动网操作授权策略：业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18；载波调度/业务恢复/载波调度/永久生效；信号覆盖优化/业务优化/频段调整/2026-08-01~2026-12-31；网络扩容/业务调整/信号增强/2026-01-01~2028-12-31；故障恢复/业务抢通/带宽扩容/2026-06-01T12:00:00Z~2030-06-18T12:00:00Z；带宽调配/业务恢复/网络优化/2026/06/01-2030/06/18；链路监控/业务优化/路由调整/2026年6月1日至2030年6月18日；容量规划/业务调整/链路切换/2026-03-01~2027-09-30；业务投诉诊断/业务抢通/隧道调优/2026-06-01~2030-06-18；载波调度/业务恢复/载波调度/永久生效"
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    },
+    {
+      "label": "c6-data-01",
+      "entry": "from_data_with_schema",
+      "input": {
+        "data": {
+          "操作类型": "查询授权策略"
+        },
+        "schema": {
+          "操作类型": "授权策略操作类型，取值范围：新增/修改/删除/查询授权策略",
+          "策略列表": "动网操作授权策略列表，格式：业务场景/处置类型/操作名称/有效期，多条用分号分隔"
+        }
+      },
+      "expected": {
+        "outcome": "success"
+      }
+    }
+  ]
+}

@@ -34,11 +34,11 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
                         List.of(
-                                new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null),
+                                new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null, null),
                                 new PromptSlotDefinition(
-                                        "additional_notes", false, "string", null, null, null, null, null, null),
+                                        "additional_notes", false, "string", null, null, null, null, null, null, null),
                                 new PromptSlotDefinition(
-                                        "limit", false, "integer", null, 1.0d, 10.0d, null, null, null),
+                                        "limit", false, "integer", null, 1.0d, 10.0d, null, null, null, null),
                                 new PromptSlotDefinition(
                                         "severity",
                                         false,
@@ -47,6 +47,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                                         null,
                                         null,
                                         List.of("low", "medium", "high"),
+                                        null,
                                         null,
                                         null))),
                 "Extract slots from the input.",
@@ -82,9 +83,9 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
                         List.of(
-                                new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null),
+                                new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null, null),
                                 new PromptSlotDefinition(
-                                        "additional_notes", false, "string", null, null, null, null, null, null))),
+                                        "additional_notes", false, "string", null, null, null, null, null, null, null))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
@@ -110,7 +111,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 llmClient,
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
-                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null))),
+                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null, null))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
@@ -145,7 +146,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 llmClient,
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
-                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null))),
+                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null, null))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
@@ -170,7 +171,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 llmClient,
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
-                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null))),
+                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null, null))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
@@ -203,6 +204,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                                 null,
                                 null,
                                 List.of("Site A", "Site B"),
+                                null,
                                 "The target site name",
                                 "The site must be a physical location"))),
                 "Extract slots from the input.",
@@ -241,7 +243,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 llmClient,
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
-                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null))),
+                        List.of(new PromptSlotDefinition("site", true, "string", null, null, null, null, null, null, null))),
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 

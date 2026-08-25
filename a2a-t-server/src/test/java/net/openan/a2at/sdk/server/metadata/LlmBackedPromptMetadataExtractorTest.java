@@ -33,7 +33,7 @@ class LlmBackedPromptMetadataExtractorTest {
                 (scenarioCode, language) -> "## notification_topic\n{{notification_topic}}\n";
         PromptSlotSchemaLoader slotSchemaLoader = (scenarioCode, language) -> new PromptSlotSchema(
                 scenarioCode,
-                List.of(new PromptSlotDefinition(SLOT_NAME, true, "string", null, null, null, null, null, null)));
+                List.of(new PromptSlotDefinition(SLOT_NAME, true, "string", null, null, null, null, null, null, null)));
         PromptSlotValueExtractor slotValueExtractor = (userInput, scenarioCode, language) ->
                 new StructuredSlotExtractionResult(Map.of(SLOT_NAME, "Incident"), List.of());
         LlmBackedPromptMetadataExtractor extractor = new LlmBackedPromptMetadataExtractor(
@@ -92,7 +92,7 @@ class LlmBackedPromptMetadataExtractorTest {
                 (scenarioCode, language) -> new PromptSlotSchema(
                         scenarioCode,
                         List.of(new PromptSlotDefinition(
-                                SLOT_NAME, true, "string", null, null, null, null, null, null))),
+                                SLOT_NAME, true, "string", null, null, null, null, null, null, null))),
                 (userInput, scenarioCode, language) -> new StructuredSlotExtractionResult(
                         Map.of(SLOT_NAME, ""),
                         List.of(new StructuredSlotValidationError(SLOT_NAME, "missing_input", "topic is missing"))));

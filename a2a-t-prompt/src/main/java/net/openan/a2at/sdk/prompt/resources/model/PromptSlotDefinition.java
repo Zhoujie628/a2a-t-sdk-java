@@ -13,6 +13,7 @@ import java.util.List;
  * @param minimum optional numeric minimum
  * @param maximum optional numeric maximum
  * @param allowedValues optional enum constraint
+ * @param examples optional example values
  * @param description slot description
  * @param valueConstraint human-readable value constraint description
  * @since 2026-06
@@ -25,5 +26,6 @@ public record PromptSlotDefinition(
         @JsonProperty("minimum") Double minimum,
         @JsonProperty("maximum") Double maximum,
         @JsonProperty("enum") List<String> allowedValues,
+        @JsonProperty("examples") List<Object> examples,
         @JsonProperty("description") String description,
         @JsonProperty("x-a2at-value-constraint") String valueConstraint) {}
