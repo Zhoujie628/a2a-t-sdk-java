@@ -87,11 +87,13 @@ final class CorpusSuites {
         return tests.stream();
     }
 
-    private static String displayName(String id, @Nullable String summary) {
+    /** Builds the display name of one dynamic test from the corpus id and the record summary; shared with the live suite. */
+    static String displayName(String id, @Nullable String summary) {
         return summary == null ? id : id + " — " + summary;
     }
 
-    private static void noteEmpty(String directory, int size) {
+    /** Notes an empty family contribution on stdout; shared with the live suite. */
+    static void noteEmpty(String directory, int size) {
         if (size == 0) {
             System.out.println(
                     "[corpus] no record under '" + directory + "/' matched (directory missing, empty, or filtered by"
@@ -101,7 +103,15 @@ final class CorpusSuites {
 
     // ------------------------------------------------------------------ case filter
 
-    private static boolean selected(String id, String baseId) {
+    /**
+     * Returns whether one corpus record is selected by the {@code -Dcase.filter} glob; shared with the live suite,
+     * whose records live in their own list but select by the same id-or-base-id rule.
+     *
+     * @param id expanded id of the record, such as {@code LIVE-GEN-01/zh-CN}
+     * @param baseId base record id, such as {@code LIVE-GEN-01}
+     * @return true when the record is selected (an empty filter selects everything)
+     */
+    static boolean selected(String id, String baseId) {
         if (CASE_FILTER.isEmpty()) {
             return true;
         }

@@ -626,7 +626,7 @@ public final class CaseEngine {
      * @return semantic validator failing every call with a resource-not-found exception
      */
     private static NegotiationSemanticValidator failingSemanticValidator() {
-        return (prompt, callerSchema, reference) -> {
+        return (prompt, callerSchema, reference, templateContent) -> {
             throw new ResourceNotFoundException(
                     "Negotiation semantic validation prompt resource does not exist for language "
                             + reference.language()
