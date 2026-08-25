@@ -155,16 +155,20 @@ java @a2a-t-sample/target/fromtext.javaargs.txt /path/to/.env
 # 1. 打包（首次，生成 target/eval.javaargs.txt）
 mvn -pl a2a-t-sample -am -DskipTests package
 
-# 2. 跑全量用例（每个 case 按各自 channel 配置执行）
+# 2. 跑全量用例（fromData 和 fromText 两条用例轨，每个 case 按各自 channel 配置执行）
 java @a2a-t-sample/target/eval.javaargs.txt /path/to/.env
 
 # 3. 只跑指定 case（可重复传 --case）
-java @a2a-t-sample/target/eval.javaargs.txt --case PLC-04 /path/to/.env
+java @a2a-t-sample/target/eval.javaargs.txt --case PLC-D03 /path/to/.env
 
-# 4. 强制全量走 fromText 协商通道（不改用例文件）
+# 4. 只跑其中一条用例轨：fromData 或 fromText 分开测评，报告可分别输出后横向对比
+java @a2a-t-sample/target/eval.javaargs.txt --channel fromData --out eval-report-fromdata.json /path/to/.env
+java @a2a-t-sample/target/eval.javaargs.txt --channel fromText --out eval-report-fromtext.json /path/to/.env
+
+# 5. 强制全量走 fromText 协商生成通道（不改用例文件）
 java @a2a-t-sample/target/eval.javaargs.txt --negotiation-channel fromText /path/to/.env
 
-# 5. 指定报告输出路径（默认 ./eval-report.json）
+# 6. 指定报告输出路径（默认 ./eval-report.json）
 java @a2a-t-sample/target/eval.javaargs.txt --out eval-report-my-model.json /path/to/.env
 ```
 
@@ -186,7 +190,7 @@ A2AT_LLM_MAX_TOKENS=8192                     # 推理型模型建议调大（默
 
 `*.env` 已被 .gitignore 忽略，携带真实 key 的 env 文件不会被提交。
 
-用例集：`sample/negotiation/eval/eval-suite.json`（15 条用例：fromData/fromText × 完整输入/任务对象缺失/投诉分类缺失/OSS流水号缺失/可选槽缺失/双槽缺失/负例补槽约束违反，含正反两类断言）。报告中每个 case 输出逐步证据（`api_calls`、生成 prompt 原文、校验判定与抽取参数、耗时），`metrics` 汇总通过率。
+用例集：`sample/negotiation/eval/eval-suite.json`（**20 条用例，fromData（PLC-D01~D10）与 fromText（PLC-T01~T10）两条轨各 10 条**，覆盖同一场景矩阵：完整输入不触发 / 三个必选字段逐一缺失 / 双必选缺失 / 可选字段缺失不触发 / 值无效（对象形态、分类枚举、流水号格式）/ 字段错位归位 / 口语化与推断 / 生成期拦截 / 负例补槽被拒）。报告中每个 case 输出逐步证据（`api_calls`、`llm_calls`、生成 prompt 原文、校验判定与抽取参数、耗时），`metrics` 汇总通过率。
 
 ## 授权策略（Authorization-T）演示 Demo
 

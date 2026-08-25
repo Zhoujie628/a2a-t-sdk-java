@@ -98,6 +98,7 @@ public final class NegotiationEvalApp {
         Path outPath = Path.of("eval-report.json");
         List<String> caseFilter = new ArrayList<>();
         String negotiationChannelOverride = null;
+        String channelFilter = null;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
             if ("--out".equals(arg) && i + 1 < args.length) {
@@ -106,6 +107,8 @@ public final class NegotiationEvalApp {
                 caseFilter.add(args[++i]);
             } else if ("--negotiation-channel".equals(arg) && i + 1 < args.length) {
                 negotiationChannelOverride = args[++i];
+            } else if ("--channel".equals(arg) && i + 1 < args.length) {
+                channelFilter = args[++i];
             } else if (!arg.startsWith("--")) {
                 envPath = Path.of(arg);
             }
@@ -113,7 +116,8 @@ public final class NegotiationEvalApp {
         if (envPath == null) {
             System.err.println(
                     "Usage: java @a2a-t-sample/target/eval.javaargs.txt [--out eval-report.json] [--case PLC-04]"
-                            + " [--negotiation-channel fromData|fromText] /path/to/.env");
+                            + " [--channel fromData|fromText] [--negotiation-channel fromData|fromText]"
+                            + " /path/to/.env");
             System.exit(1);
         }
 
@@ -133,6 +137,7 @@ public final class NegotiationEvalApp {
         report.put("generated_at", LocalDateTime.now().format(TIMESTAMP));
         report.put("llm", llmInfo(envPath));
         report.put("case_filter", caseFilter);
+        report.put("channel_filter", channelFilter == null ? "all" : channelFilter);
         report.put("negotiation_channel", negotiationChannelOverride == null
                 ? "per-case"
                 : negotiationChannelOverride);
@@ -140,10 +145,15 @@ public final class NegotiationEvalApp {
         List<Map<String, Object>> cases = new ArrayList<>();
         report.put("cases", cases);
         int index = 0;
-        int total = countCases(suite, caseFilter);
+        int total = countCases(suite, caseFilter, channelFilter);
         for (Map<String, Object> testCase : cases(suite)) {
             String caseId = String.valueOf(testCase.get("id"));
             if (!caseFilter.isEmpty() && !caseFilter.contains(caseId)) {
+                continue;
+            }
+            // evaluate one task-generation channel in isolation: only its cases run, so fromData and
+            // fromText can be measured (and reported) separately
+            if (channelFilter != null && !channelFilter.equals(String.valueOf(testCase.get("channel")))) {
                 continue;
             }
             index++;
@@ -466,7 +476,9 @@ public final class NegotiationEvalApp {
         // whole Task-T prompt from that map.
         Map<String, String> fills = fills(slotsToFill, fillValues);
         Map<String, Object> baseData = fromText ? extractedRound1 : inputData;
-        Map<String, Object> filledData = mergeInputData(baseData, taskSchema, mergeFills(fillValues, fills));
+        // only the negotiated slots' fill values enter the merge: round-1 base values are preserved verbatim,
+        // so the re-rendered prompt carries exactly what the client knew plus what it supplemented
+        Map<String, Object> filledData = mergeInputData(baseData, taskSchema, fills);
         String filledPrompt;
         Map<String, Object> filledGenerationInput = Map.of(
                 "data", filledData,
@@ -1144,13 +1156,12 @@ public final class NegotiationEvalApp {
         }
     }
 
-    private static int countCases(Map<String, Object> suite, List<String> filter) {
-        if (filter.isEmpty()) {
-            return cases(suite).size();
-        }
+    private static int countCases(Map<String, Object> suite, List<String> filter, String channelFilter) {
         return (int) cases(suite).stream()
-                .map(testCase -> String.valueOf(testCase.get("id")))
-                .filter(filter::contains)
+                .filter(testCase -> filter.isEmpty()
+                        || filter.contains(String.valueOf(testCase.get("id"))))
+                .filter(testCase -> channelFilter == null
+                        || channelFilter.equals(String.valueOf(testCase.get("channel"))))
                 .count();
     }
 
