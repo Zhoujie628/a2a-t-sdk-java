@@ -475,7 +475,10 @@ public final class NegotiationEvalApp {
         // extracted in round 1), completed with the fill values for everything still missing, and re-renders the
         // whole Task-T prompt from that map.
         Map<String, String> fills = fills(slotsToFill, fillValues);
-        Map<String, Object> baseData = fromText ? extractedRound1 : inputData;
+        // the fill round re-renders from the CLIENT's own knowledge: for fromData the structured input, for
+        // fromText the client_data the case carries (what its text quoted) — falling back to the server's
+        // round-1 extraction, which is only available when that validation passed
+        Map<String, Object> baseData = fromText ? clientBaseData(testCase, extractedRound1) : inputData;
         // only the negotiated slots' fill values enter the merge: round-1 base values are preserved verbatim,
         // so the re-rendered prompt carries exactly what the client knew plus what it supplemented
         Map<String, Object> filledData = mergeInputData(baseData, taskSchema, fills);
@@ -899,6 +902,17 @@ public final class NegotiationEvalApp {
             }
             text.append("；");
         }
+    }
+
+    /**
+     * The client's own structured knowledge for the fill round of a fromText case: the fields its input text
+     * quoted. The server's round-1 extraction is the fallback when the case carries no client data — a lossy
+     * fallback, because those params are only produced when round-1 validation passed.
+     */
+    private static Map<String, Object> clientBaseData(
+            Map<String, Object> testCase, Map<String, Object> extractedRound1) {
+        Map<String, Object> clientData = asMap(testCase.get("client_data"));
+        return clientData.isEmpty() ? extractedRound1 : clientData;
     }
 
     /** The supplement values the simulated client supplies, keyed by slot. */

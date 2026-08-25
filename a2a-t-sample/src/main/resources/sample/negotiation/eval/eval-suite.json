@@ -1,6 +1,6 @@
 {
   "suite": "negotiation-interface-eval",
-  "description": "Private-line complaint negotiation closed-loop evaluation against the bundled private-line-complaint template. Two tracks of ten cases each: fromData feeds structured JSON (every key maps to one field value) and fromText feeds natural language; run one track in isolation with --channel fromData|fromText. Each case drives the negotiation prompt interfaces in message order: Task-T generation -> server validation (missing-slot detection) -> Negotiation-T propose generation -> server outbound propose validation -> client inbound propose validation -> client fill + accept generation -> server inbound accept validation -> second Task-T validation. The suite's task schema refines the template's coarse 任务上下文 into four sub-fields (投诉分类/问题发生时间/OSS侧事件流水号/投诉详情, per the template's own requirement list): a missing or invalid sub-field inside a non-blank 任务上下文 is detected at validation and negotiated, while a completely empty 任务上下文 fails fast at generation (bundled required slot). Coverage matrix per track: complete input (no negotiation), each required field missing, dual required fields missing, optional fields missing (no negotiation), invalid values (object form, category enum, sequence-number format), field misplacement, colloquial/inferable input, generation-time fail-fast, and a negative fill whose value violates the constraint. Slot extraction and all validation interfaces run the SDK pipeline (rule gate + semantic LLM call), with the JSON schema passed on every generate/validate call.",
+  "description": "Private-line complaint negotiation closed-loop evaluation against the bundled private-line-complaint template. Two tracks of ten cases each: fromData feeds structured JSON (every key maps to one field value) and fromText feeds natural language; run one track in isolation with --channel fromData|fromText. Each case drives the negotiation prompt interfaces in message order: Task-T generation -> server validation (missing-slot detection) -> Negotiation-T propose generation -> server outbound propose validation -> client inbound propose validation -> client fill + accept generation -> server inbound accept validation -> second Task-T validation. The suite's task schema refines the template's coarse 任务上下文 into four sub-fields (投诉分类/问题发生时间/OSS侧事件流水号/投诉详情, per the template's own requirement list). Generation gate: the bundled slot schema requires 任务对象 and 任务上下文, so an input missing either fails fast at generation; a required sub-field that is missing or invalid inside a non-blank context is detected at validation and negotiated. Coverage matrix per track: complete input (no negotiation), required fields missing (fail-fast or negotiated), dual sub-fields missing, optional fields missing (no negotiation), invalid values (object form, category enum, sequence-number format), field misplacement, colloquial/inferable input, and a negative fill whose value violates the constraint. fromText cases that reach the fill round carry client_data: the structured knowledge the client itself holds (what its input text quoted), which is what the fill round re-renders from. Slot extraction and all validation interfaces run the SDK pipeline (rule gate + semantic LLM call), with the JSON schema passed on every generate/validate call.",
   "scenario": "private-line-complaint",
   "template_uri": "Task-T/network-layer/private-line-complaint/v1",
   "task_schema": {
@@ -69,7 +69,7 @@
     {
       "id": "PLC-D02",
       "channel": "fromData",
-      "intent": "缺任务对象（必选），触发任务对象协商并补齐闭环",
+      "intent": "缺任务对象（bundled required 槽）：生成期 fail-fast，任务无法生成，协商不触发",
       "input_data": {
         "任务对象": "",
         "投诉分类": "专线中断",
@@ -78,9 +78,9 @@
         "投诉详情": "客户业务全部不通，柜面交易无法办理。"
       },
       "expect": {
-        "negotiation_needed": true,
-        "missing_slots": ["任务对象"],
-        "fill_completes": true
+        "negotiation_needed": false,
+        "missing_slots": [],
+        "generation_fails": true
       }
     },
     {
@@ -120,17 +120,17 @@
     {
       "id": "PLC-D05",
       "channel": "fromData",
-      "intent": "双必选字段缺失（任务对象+投诉分类），协商应同时请求两个字段并补齐闭环",
+      "intent": "双必选子字段缺失（投诉分类+OSS流水号），协商应同时请求两个字段并补齐闭环",
       "input_data": {
-        "任务对象": "",
+        "任务对象": "接入端口名称：P311-会展中心-ATN910C-05-TPA2EG8-03",
         "投诉分类": "",
         "问题发生时间": "2026-06-18T09:00:00Z",
-        "OSS侧事件流水号": "event-id-20260618-07721",
+        "OSS侧事件流水号": "",
         "投诉详情": "客户已在客服渠道催单，请尽快处理。"
       },
       "expect": {
         "negotiation_needed": true,
-        "missing_slots": ["任务对象", "投诉分类"],
+        "missing_slots": ["投诉分类", "OSS侧事件流水号"],
         "fill_completes": true
       }
     },
@@ -234,12 +234,12 @@
     {
       "id": "PLC-T02",
       "channel": "fromText",
-      "intent": "口语化缺专线标识（业务全断可推断投诉分类为中断），触发任务对象协商并补齐闭环",
+      "intent": "口语化完全缺专线标识（bundled required 槽）：生成期 fail-fast，任务无法生成，协商不触发",
       "input_text": "我们的专线出问题了，业务全部都断了，完全用不了。问题发生时间：2026-06-02T14:30:00Z。OSS侧事件流水号：event-id-20260602-08841。",
       "expect": {
-        "negotiation_needed": true,
-        "missing_slots": ["任务对象"],
-        "fill_completes": true
+        "negotiation_needed": false,
+        "missing_slots": [],
+        "generation_fails": true
       }
     },
     {
@@ -247,6 +247,10 @@
       "channel": "fromText",
       "intent": "未描述任何故障现象（投诉分类无从判定为中断或质差），触发投诉分类协商并补齐闭环",
       "input_text": "接入端口：P311-会展中心-ATN910C-05-TPA2EG8-03。OSS侧事件流水号：event-id-20260618-07721。",
+      "client_data": {
+        "任务对象": "接入端口名称：P311-会展中心-ATN910C-05-TPA2EG8-03",
+        "OSS侧事件流水号": "event-id-20260618-07721"
+      },
       "expect": {
         "negotiation_needed": true,
         "missing_slots": ["投诉分类"],
@@ -258,6 +262,11 @@
       "channel": "fromText",
       "intent": "缺OSS侧事件流水号，触发流水号协商并补齐闭环",
       "input_text": "接入端口：P311-会展中心-ATN910C-05-TPA2EG8-03。故障现象：专线中断，业务完全不可用，柜面交易无法办理。问题发生时间：2026-06-18T09:00:00Z。",
+      "client_data": {
+        "任务对象": "接入端口名称：P311-会展中心-ATN910C-05-TPA2EG8-03",
+        "投诉分类": "专线中断",
+        "问题发生时间": "2026-06-18T09:00:00Z"
+      },
       "expect": {
         "negotiation_needed": true,
         "missing_slots": ["OSS侧事件流水号"],
@@ -277,8 +286,13 @@
     {
       "id": "PLC-T06",
       "channel": "fromText",
-      "intent": "任务对象模糊（未指明端口/ID/名称形态），触发任务对象协商并补齐闭环",
-      "input_text": "故障现象：专线质量差，网页打开缓慢，视频卡顿。问题发生时间：2026-06-18T09:00:00Z。OSS侧事件流水号：event-id-20260618-07721。",
+      "intent": "任务对象指代模糊（'我们金融客户的那条专线'，非端口/ID/名称形态），触发任务对象协商并补齐闭环",
+      "input_text": "我们金融客户的那条专线出问题了，专线质差，网页打开缓慢，视频卡顿。问题发生时间：2026-06-18T09:00:00Z。OSS侧事件流水号：event-id-20260618-07721。",
+      "client_data": {
+        "投诉分类": "专线质差",
+        "问题发生时间": "2026-06-18T09:00:00Z",
+        "OSS侧事件流水号": "event-id-20260618-07721"
+      },
       "expect": {
         "negotiation_needed": true,
         "missing_slots": ["任务对象"],
@@ -319,14 +333,18 @@
     {
       "id": "PLC-T10",
       "channel": "fromText",
-      "intent": "负例补槽：缺任务对象，补入非端口/ID/名称形态的值，二次校验应拒绝（测校验器对补槽值的把关）",
-      "input_text": "我们的专线出问题了，业务全部都断了，完全用不了。问题发生时间：2026-06-02T14:30:00Z。OSS侧事件流水号：event-id-20260602-08841。",
+      "intent": "负例补槽：缺投诉分类，补入违反枚举约束的值，二次校验应拒绝（测校验器对补槽值的把关）",
+      "input_text": "接入端口：P311-会展中心-ATN910C-05-TPA2EG8-03。OSS侧事件流水号：event-id-20260618-07721。",
+      "client_data": {
+        "任务对象": "接入端口名称：P311-会展中心-ATN910C-05-TPA2EG8-03",
+        "OSS侧事件流水号": "event-id-20260618-07721"
+      },
       "fill_override": {
-        "任务对象": "就是那条线"
+        "投诉分类": "搞不清楚什么问题"
       },
       "expect": {
         "negotiation_needed": true,
-        "missing_slots": ["任务对象"],
+        "missing_slots": ["投诉分类"],
         "fill_completes": false
       }
     }
