@@ -24,33 +24,36 @@ a2a-t-corpus/
 ├── pom.xml
 └── src/test/
     ├── java/net/openan/a2at/sdk/corpus/
-    │   ├── NegotiationCaseLoader.java           语料加载（严格解析 + fail-fast 校验）
-    │   ├── ScriptedNegotiationLlmClient.java    脚本化 LLM 桩（唯一测试接缝）
+    │   ├── NegotiationCaseLoader.java           语料加载（严格解析 + fail-fast 校验，含 live 家族独立绑定）
+    │   ├── ScriptedNegotiationLlmClient.java    脚本化 LLM 桩（离线家族的唯一测试接缝）
     │   ├── CaseEngine.java                      单用例引擎（API 分发 + 期望比对 + 契约断言）
     │   ├── ScenarioEngine.java                  多步场景引擎（跨步引用 + 流级断言）
     │   ├── TaskApiAssembler.java                task API 真实装配（builder 委托）
     │   ├── Contract.java                        行为契约注册表（12 个，P0/P1 分级）
-    │   ├── *CorpusSuiteTest.java                四个 @TestFactory 套件（from-text / from-data / validate / scenario）
-    │   ├── CorpusContractTest.java              元测试：覆盖完整性、双语 parity、评审门禁
+    │   ├── Live*.java / RecordingLLMClient.java live 家族：真实 LLM 配置门禁、.env 桥、录制客户端、
+    │   │                                        引擎与 transcript（见下文"live 家族"）
+    │   ├── *CorpusSuiteTest.java                五个 @TestFactory 套件（from-text / from-data / validate / scenario / live）
+    │   ├── CorpusContractTest.java              元测试：覆盖完整性、双语 parity、评审门禁、live 契约
     │   ├── CorpusSensitivitySelfTest.java       元元测试：翻转期望断言引擎必红（防橡皮图章）
     │   ├── property/                            jqwik 属性测试层（round-trip / 幂等 / 错误码分区 / 大参数合并）
     │   └── golden/                              golden fixture 生成器与一致性守卫
     └── resources/
         ├── negotiation-cases/
-        │   ├── corpus-schema.json               语料格式的一手定义（JSON Schema）
+        │   ├── corpus-schema.json               语料格式的一手定义（JSON Schema，含 live 记录定义）
         │   ├── INDEX.md                         自动生成的覆盖矩阵与用例索引（勿手编）
         │   ├── shared/                          共享 LLM payload（llm-responses.json）与 JSON Schema 变体（schemas.json）
         │   ├── from-text/                       fromText 家族用例（happy / 编程错误 / 模板解析 / 抽取失败 / 重试）
         │   ├── from-data/                       fromData 家族用例（happy / 编程错误）
         │   ├── validate/                        validate 家族用例（happy / 规则门 / 语义判定 / LLM 形态与重试 /
         │   │                                    合并与 schema / 错误码映射 / 对端报文漂移探针 / 编程错误）
+        │   ├── live/                            live 家族用例（真实 LLM，zh-CN，TASK 生成 + 验证，门禁控制启停）
         │   └── scenarios/                       E2E 场景（信息/目标/可行性协商流 + 边界流）
         └── golden/{zh-CN,en-US}/                golden fixture（模板渲染的基准输出，含 abort）
 ```
 
 ## 语料速览
 
-当前规模：**151 个用例 + 18 个场景 = 238 条基记录**（双语展开后 226 个执行单元），业务域统一为**专线业务投诉诊断**（工作台智能体 ↔ SPN OMC 智能体的缺参协商闭环）。
+当前规模：**151 个用例 + 18 个场景 = 238 条基记录**（双语展开后 226 个执行单元），业务域统一为**专线业务投诉诊断**（工作台智能体 ↔ SPN OMC 智能体的缺参协商闭环）。另有 **live 家族 7 条 zh-CN 记录**（真实 LLM 验证，见下节）。
 
 ### 单用例（case 记录）
 
@@ -91,6 +94,20 @@ step 5  OMC(B)     validateAcceptPromptAndDataFilling   提取补充参数
 
 场景级因果断言：`expectFlow.missingParamsFilled` 保证**提取到的补参 == 发现的缺参**；另有 `terminalCondition`（accept/reject/abort/exhausted）、`roundsUsed`、`distinctMessages`。角色语义固定：**A = 工作台（客户端，任务发起/补数方），B = OMC（服务端，执行/要数方，协商发起方）**。
 
+## live 家族：真实 LLM 验证
+
+上面四个家族用脚本化 LLM 保证离线确定性；live 家族回答另一个问题——**我们的 prompt 在客户量级的真实模型（如 qwen3-27b）上到底好不好用**。配置了测试 LLM 端点时，用真实 OpenAI 兼容 `/v1/chat/completions` 接口端到端跑任务 prompt 生成与校验；未配置时套件自动跳过，`mvn test` / CI 始终离线确定。
+
+- **门禁**（与生产 `A2AT_LLM_*` 完全解耦）：环境变量 `A2AT_TEST_LLM_BASE_URL` / `A2AT_TEST_LLM_API_KEY` / `A2AT_TEST_LLM_MODEL` 三项齐备才启用；系统属性 `-Da2at.test.llm.base.url` 等优先于环境变量，空值视为未配置。缺失 → assumeTrue 跳过并打印配置提示；配了但非法 → 红灯。
+- **用例形态**：`live/` 目录独立记录（`LIVE-` 前缀，zh-CN，仅 `generateTaskPromptFromText` / `validateTaskPromptAndDataFilling` 两个 TASK API），加载进独立的 `LoadedCorpus.liveCases` 列表，不影响离线家族与契约。
+- **宽松期望块**（针对小模型输出抖动）：`expect.success` + `scenarioCode` + `paramsContains`（关键槽位**子集**断言）+ `paramsAbsent` + `promptTextContains` + `maxLlmCalls`（**上限**而非精确值，缺省 4）。
+- **接缝**：真实 `OpenAIClient` 经 `LiveLlmConfig` 从测试变量构造，`RecordingLLMClient` 装饰后注入与离线家族相同的 builder `llmClient(...)` 接缝——装配路径与生产完全一致；`.env` 桥（`LiveLlmEnvWriter`）显式钉住 `A2AT_LLM_TEMPERATURE=0` / `TIMEOUT_SECONDS=60` / `MAX_ATTEMPTS=3`。
+- **抖动策略**：仅基础设施错误（`LLMRuntimeError`/超时/连接失败）测试层重试（`-Dcorpus.live.infraRetries`，默认 2），耗尽记 ERROR 保持红灯；**断言失败不重试**——那是 prompt 质量信号。
+- **transcript**：每次运行写 `a2a-t-corpus/target/live-corpus/<时间戳>/`——`transcript.json`（逐用例输入、每次 LLM 调用的完整请求/响应、解析结果、判定、token 统计）+ `summary.json`（含 **schema 解析失败率**，即模型对 json_object + prompt 注入 schema 的遵从度，是评估是否需要原生 json_schema 的依据）。
+- **评审导出**：`python tools/live_transcript_export.py <live运行目录>` 把 transcript 渲染成 `export/report.md`（逐用例的输入、完整请求消息、schema、原始响应、解析参数、判定）并为每次 LLM 调用生成**可拷贝重放的请求**——`export/replay/<用例>-call<N>.json` 是与生产 `OpenAIClient` 完全一致的 `/v1/chat/completions` 请求体（含 JSON-mode 系统消息与 schema 注入），报告内附 curl 命令，改 prompt 后可在套件外直接对真实端点迭代调优。
+
+按裁决 live 运行**仅本地，不入 CI**。
+
 ## 测试接缝设计（为什么测试可信）
 
 - **单一脚本化接缝**：除 LLM 客户端外全部为**生产装配**——真实 builder、真实模板加载、真实规则门、真实渲染器。task API 经 `TaskApiAssembler` 走 `DefaultA2ATClientBuilder` / `DefaultA2ATServerBuilder`（与 `A2ATClient` / `A2ATServer` facade 内部同一条装配路径），脚本 LLM 通过 builder 的 `llmClient(...)` 注入口贯穿闭环，因此 `expect.llmCalls` 对全链路精确校准。
@@ -103,12 +120,21 @@ step 5  OMC(B)     validateAcceptPromptAndDataFilling   提取补充参数
 ## 如何运行
 
 ```bash
-mvn -pl a2a-t-corpus -am test                     # 本模块及其依赖（CI 会随 mvn clean verify 全量跑）
+mvn -pl a2a-t-corpus -am test                     # 本模块及其依赖（CI 会随 mvn clean verify 全量跑；live 未配置自动跳过）
 mvn -pl a2a-t-corpus test -Dtest=ValidateCorpusSuiteTest    # 单个套件
 mvn -pl a2a-t-corpus test -Dcase.filter='FT-RETRY-*'        # glob 过滤用例 id
 ```
 
-四个套件：`FromTextCorpusSuiteTest` / `FromDataCorpusSuiteTest` / `ValidateCorpusSuiteTest` / `ScenarioCorpusSuiteTest`。每条用例一个 DynamicTest，display name 带用例 id——CI 红色报告名即主键，`grep <id>` 直达唯一 JSON 文件。
+五个套件：`FromTextCorpusSuiteTest` / `FromDataCorpusSuiteTest` / `ValidateCorpusSuiteTest` / `ScenarioCorpusSuiteTest` / `LiveCorpusSuiteTest`。每条用例一个 DynamicTest，display name 带用例 id——CI 红色报告名即主键，`grep <id>` 直达唯一 JSON 文件。
+
+live 套件对接真实模型（本地）：
+
+```bash
+mvn -pl a2a-t-corpus -am test -Dtest=LiveCorpusSuiteTest \
+  -Da2at.test.llm.base.url=https://<端点>/v1 \
+  -Da2at.test.llm.api.key=<密钥> \
+  -Da2at.test.llm.model=<模型名>                # 也可用 A2AT_TEST_LLM_* 环境变量
+```
 
 配套工具（仓库根目录）：
 
@@ -117,6 +143,7 @@ python tools/corpus_index.py            # 重新生成 INDEX.md（语料变更�
 python tools/corpus_index.py --check    # 校验 INDEX 新鲜度
 python tools/corpus_review.py export    # 生成业务评审材料（HTML 仪表盘 + 可批注 xlsx，技术字段翻译为业务中文）
 python tools/corpus_review.py collect --marked <批注后的文件>   # 回读评审标记 → findings + review-status.json
+python tools/live_transcript_export.py <live运行目录>           # 导出 live transcript 为评审报告 + 可重放请求
 ```
 
 ## 如何扩展
