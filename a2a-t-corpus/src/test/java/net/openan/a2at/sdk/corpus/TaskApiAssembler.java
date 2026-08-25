@@ -58,7 +58,18 @@ final class TaskApiAssembler {
      * @param llmClient scripted LLM client injected at the same seam the facade builders inject their real client
      */
     TaskApiAssembler(String language, int maxAttempts, LLMClient llmClient) {
-        Path envPath = minimalEnvFor(language, maxAttempts);
+        this(minimalEnvFor(language, maxAttempts), llmClient);
+    }
+
+    /**
+     * Assembles the task API wiring around an explicit {@code .env} file — the seam of the live family, whose harness
+     * hands in the {@code LiveLlmEnvWriter} bridge (real test-endpoint values plus the explicit stability knobs and the
+     * pipeline retry limit) instead of the scripted minimal env.
+     *
+     * @param envPath the {@code .env} file the config is loaded from, carrying the language and retry limit
+     * @param llmClient LLM client injected at the same seam the facade builders inject their real client
+     */
+    TaskApiAssembler(Path envPath, LLMClient llmClient) {
         A2ATConfig config =
                 NegotiationContentService.resolvePromptResourceLocalRootDir(A2ATConfig.load(envPath), envPath);
         this.promptGeneration = DefaultA2ATClientBuilder.builder()

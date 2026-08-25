@@ -649,6 +649,229 @@ class NegotiationCaseLoaderTest {
                 exception.getMessage());
     }
 
+    // ------------------------------------------------------------------ live family (live LLM phase 1)
+
+    @Test
+    void loadsLiveRecordsIntoTheDedicatedLiveCasesList(@TempDir Path root) throws IOException {
+        write(root, "live/generate.json", """
+                [
+                  {
+                    "id": "LIVE-GEN-01",
+                    "api": "generateTaskPromptFromText",
+                    "languages": ["zh-CN"],
+                    "priority": "P0",
+                    "tags": ["live", "scenario-recognition"],
+                    "summary": "明确场景的典型投诉文本",
+                    "templateUri": "Task-T/network-layer/private-line-complaint/v1",
+                    "input": {"text": {"zh-CN": "深圳访问广州的专线时延骤升，OSS侧事件流水号event-id-20260511-09013。"}},
+                    "expect": {
+                      "success": true,
+                      "scenarioCode": "private-line-complaint",
+                      "paramsContains": {"accessPort": "P533-01"},
+                      "paramsAbsent": ["faultTime"],
+                      "promptTextContains": ["## instruction", "event-id-20260511-09013"],
+                      "maxLlmCalls": 4
+                    }
+                  }
+                ]
+                """);
+
+        LoadedCorpus corpus = NegotiationCaseLoader.load(root);
+
+        assertEquals(1, corpus.liveCases().size(), "the live record expands once and lands in liveCases");
+        assertTrue(corpus.cases().isEmpty(), "a live record never mixes into the offline cases list");
+        LiveCase live = corpus.liveCases().get(0);
+        assertEquals("LIVE-GEN-01/zh-CN", live.id());
+        assertEquals("LIVE-GEN-01", live.baseId());
+        assertEquals("live/generate.json", live.sourceFile());
+        assertEquals(NegotiationApi.GENERATE_TASK_PROMPT_FROM_TEXT, live.api());
+        assertEquals("zh-CN", live.language());
+        assertEquals("P0", live.priority());
+        assertEquals(List.of("live", "scenario-recognition"), live.tags());
+        assertEquals("深圳访问广州的专线时延骤升，OSS侧事件流水号event-id-20260511-09013。", live.inputText());
+        assertTrue(live.liveExpect().success());
+        assertEquals("private-line-complaint", live.liveExpect().scenarioCode());
+        assertEquals(Map.of("accessPort", "P533-01"), live.liveExpect().paramsContains());
+        assertEquals(List.of("faultTime"), live.liveExpect().paramsAbsent());
+        assertEquals(List.of("## instruction", "event-id-20260511-09013"), live.liveExpect().promptTextContains());
+        assertEquals(4, live.liveExpect().maxLlmCalls());
+        assertEquals("live/generate.json [LIVE-GEN-01/zh-CN]", live.errorPrefix());
+    }
+
+    @Test
+    void failsFastOnALiveRecordWithoutTheLiveIdPrefix(@TempDir Path root) throws IOException {
+        write(root, "live/bad.json", """
+                [
+                  {
+                    "id": "TASK-LIVE-01",
+                    "api": "generateTaskPromptFromText",
+                    "languages": ["zh-CN"],
+                    "expect": {"success": true}
+                  }
+                ]
+                """);
+
+        CorpusLoadException exception = assertThrows(CorpusLoadException.class, () -> NegotiationCaseLoader.load(root));
+
+        assertTrue(exception.getMessage().contains("LIVE-"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("TASK-LIVE-01"), exception.getMessage());
+    }
+
+    @Test
+    void failsFastOnALiveRecordOutsideThePhaseOneLanguages(@TempDir Path root) throws IOException {
+        write(root, "live/bad.json", """
+                [
+                  {
+                    "id": "LIVE-BAD-01",
+                    "api": "generateTaskPromptFromText",
+                    "languages": ["zh-CN", "en-US"],
+                    "expect": {"success": true}
+                  }
+                ]
+                """);
+
+        CorpusLoadException exception = assertThrows(CorpusLoadException.class, () -> NegotiationCaseLoader.load(root));
+
+        assertTrue(exception.getMessage().contains("exactly the languages [zh-CN]"), exception.getMessage());
+    }
+
+    @Test
+    void failsFastOnALiveRecordOutsideTheTaskFamily(@TempDir Path root) throws IOException {
+        write(root, "live/bad.json", """
+                [
+                  {
+                    "id": "LIVE-BAD-01",
+                    "api": "generateAcceptFromText",
+                    "languages": ["zh-CN"],
+                    "expect": {"success": true}
+                  }
+                ]
+                """);
+
+        CorpusLoadException exception = assertThrows(CorpusLoadException.class, () -> NegotiationCaseLoader.load(root));
+
+        assertTrue(exception.getMessage().contains("live phase 1 supports only"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("generateTaskPromptFromText"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("validateTaskPromptAndDataFilling"), exception.getMessage());
+    }
+
+    @Test
+    void failsFastOnALiveExpectationWithoutSuccess(@TempDir Path root) throws IOException {
+        write(root, "live/bad.json", """
+                [
+                  {
+                    "id": "LIVE-BAD-01",
+                    "api": "generateTaskPromptFromText",
+                    "languages": ["zh-CN"],
+                    "input": {"text": {"zh-CN": "深圳访问广州的专线时延骤升。"}},
+                    "expect": {"scenarioCode": "private-line-complaint"}
+                  }
+                ]
+                """);
+
+        CorpusLoadException exception = assertThrows(CorpusLoadException.class, () -> NegotiationCaseLoader.load(root));
+
+        assertTrue(exception.getMessage().contains("missing required field 'success'"), exception.getMessage());
+    }
+
+    @Test
+    void failsFastOnALiveGenerateRecordWithoutInputText(@TempDir Path root) throws IOException {
+        write(root, "live/bad.json", """
+                [
+                  {
+                    "id": "LIVE-BAD-01",
+                    "api": "generateTaskPromptFromText",
+                    "languages": ["zh-CN"],
+                    "expect": {"success": true}
+                  }
+                ]
+                """);
+
+        CorpusLoadException exception = assertThrows(CorpusLoadException.class, () -> NegotiationCaseLoader.load(root));
+
+        assertTrue(exception.getMessage().contains("input.text"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("generateTaskPromptFromText"), exception.getMessage());
+    }
+
+    @Test
+    void failsFastOnALiveRecordWithAGoldenOrFromStepPrompt(@TempDir Path root) throws IOException {
+        write(root, "live/bad.json", """
+                [
+                  {
+                    "id": "LIVE-BAD-01",
+                    "api": "validateTaskPromptAndDataFilling",
+                    "languages": ["zh-CN"],
+                    "prompt": {"golden": "task-happy-zh-CN"},
+                    "expect": {"success": true}
+                  }
+                ]
+                """);
+
+        CorpusLoadException exception = assertThrows(CorpusLoadException.class, () -> NegotiationCaseLoader.load(root));
+
+        assertTrue(exception.getMessage().contains("only the inline prompt.text"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("golden"), exception.getMessage());
+    }
+
+    @Test
+    void failsFastOnALiveValidateRecordDeclaringPromptTextContains(@TempDir Path root) throws IOException {
+        write(root, "live/bad.json", """
+                [
+                  {
+                    "id": "LIVE-BAD-01",
+                    "api": "validateTaskPromptAndDataFilling",
+                    "languages": ["zh-CN"],
+                    "prompt": {"text": "## 任务类型(Task Type)"},
+                    "expect": {"success": true, "promptTextContains": ["## 任务类型"]}
+                  }
+                ]
+                """);
+
+        CorpusLoadException exception = assertThrows(CorpusLoadException.class, () -> NegotiationCaseLoader.load(root));
+
+        assertTrue(exception.getMessage().contains("promptTextContains"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("no generated prompt"), exception.getMessage());
+    }
+
+    @Test
+    void defaultsTheLiveMaxLlmCallsToFourWhenTheRecordOmitsIt(@TempDir Path root) throws IOException {
+        write(root, "live/generate.json", """
+                [
+                  {
+                    "id": "LIVE-GEN-01",
+                    "api": "generateTaskPromptFromText",
+                    "languages": ["zh-CN"],
+                    "input": {"text": {"zh-CN": "深圳访问广州的专线时延骤升。"}},
+                    "expect": {"success": true}
+                  }
+                ]
+                """);
+
+        LoadedCorpus corpus = NegotiationCaseLoader.load(root);
+
+        assertEquals(4, corpus.liveCases().get(0).liveExpect().maxLlmCalls(), "maxLlmCalls defaults to 4");
+    }
+
+    @Test
+    void failsFastOnALiveIdCollidingWithAnOfflineCase(@TempDir Path root) throws IOException {
+        write(root, "from-text/dup.json", minimalCase("LIVE-DUP-01"));
+        write(root, "live/dup.json", """
+                [
+                  {
+                    "id": "LIVE-DUP-01",
+                    "api": "generateTaskPromptFromText",
+                    "languages": ["zh-CN"],
+                    "expect": {"success": true}
+                  }
+                ]
+                """);
+
+        CorpusLoadException exception = assertThrows(CorpusLoadException.class, () -> NegotiationCaseLoader.load(root));
+
+        assertTrue(exception.getMessage().contains("duplicate id 'LIVE-DUP-01'"), exception.getMessage());
+        assertTrue(exception.getMessage().contains("from-text/dup.json"), exception.getMessage());
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private static void write(Path root, String relative, String content) throws IOException {

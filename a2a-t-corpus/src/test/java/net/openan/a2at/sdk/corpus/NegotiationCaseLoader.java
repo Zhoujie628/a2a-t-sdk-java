@@ -29,7 +29,10 @@ import org.jspecify.annotations.Nullable;
  * files and scenario files are JSON arrays of records, and the {@code shared/} directory carries the two shared
  * reference files {@code llm-responses.json} (named payload texts, addressed through the {@code responses/} prefix)
  * and {@code schemas.json} (named JSON Schema variants, addressed through the {@code schemas/} prefix). The
- * {@code corpus-schema.json} format definition sits next to the records and is skipped by the loader.
+ * {@code corpus-schema.json} format definition sits next to the records and is skipped by the loader. The
+ * {@code live/} subdirectory carries the live-LLM family: records bound as {@link LiveCase} with the dedicated
+ * {@code RawLiveCase}/{@code RawLiveExpect} bindings, so the live-only expectation keys never collide with the
+ * offline ones; live records land in {@link LoadedCorpus#liveCases()}, never in the offline {@code cases} list.
  *
  * <p>Loading fails fast — before any case runs — on every format violation, and every error names the corpus file,
  * the offending record id and the JSON path of the defect:
@@ -40,7 +43,9 @@ import org.jspecify.annotations.Nullable;
  * <li>duplicate record ids (before and after the language expansion),
  * <li>incomplete expectation blocks (a failure expectation must name the exception or the error code),
  * <li>unknown API names, {@code $fail} markers, languages, priorities, terminal conditions or inject hooks,
- * <li>scenario steps that are not numbered consecutively from 1.
+ * <li>scenario steps that are not numbered consecutively from 1,
+ * <li>live records without the {@code LIVE-} id prefix, with a language other than zh-CN (phase 1), outside the two
+ *     task APIs, or with an incomplete live expectation block (a missing {@code success}).
  * </ul>
  *
  * <p>On success every record is expanded once per entry of its {@code languages} array (Q3), the expanded id appending
@@ -64,6 +69,22 @@ public final class NegotiationCaseLoader {
     private static final String RESPONSES_FILE = "shared/llm-responses.json";
 
     private static final String SCHEMAS_FILE = "shared/schemas.json";
+
+    /** Source-file prefix that routes a record file into the live-LLM family bindings. */
+    private static final String LIVE_DIR_PREFIX = "live/";
+
+    /** The id prefix every live record must carry, so the two families cannot collide on ids. */
+    private static final String LIVE_ID_PREFIX = "LIVE-";
+
+    /** Live phase 1 covers zh-CN only (Q6); the language expansion itself stays generic. */
+    private static final List<String> LIVE_LANGUAGES = List.of("zh-CN");
+
+    /** Live phase 1 covers the two TASK APIs (Q5). */
+    private static final Set<NegotiationApi> LIVE_APIS =
+            Set.of(NegotiationApi.GENERATE_TASK_PROMPT_FROM_TEXT, NegotiationApi.VALIDATE_TASK_PROMPT_AND_DATA_FILLING);
+
+    /** Default of the live LLM call upper bound (live design document §3: 默认如 4) when the record omits it. */
+    private static final int LIVE_DEFAULT_MAX_LLM_CALLS = 4;
 
     private static final ObjectMapper MAPPER =
             new ObjectMapper().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
@@ -89,14 +110,16 @@ public final class NegotiationCaseLoader {
         Map<String, String> seenExpandedIds = new LinkedHashMap<>();
         List<NegotiationCase> cases = new ArrayList<>();
         List<ScenarioCase> scenarios = new ArrayList<>();
+        List<LiveCase> liveCases = new ArrayList<>();
         for (Path file : listCorpusFiles(normalizedRoot)) {
             String relative = normalizedRoot.relativize(file.normalize()).toString().replace('\\', '/');
-            parseFile(relative, file, shared, seenBaseIds, seenExpandedIds, cases, scenarios);
+            parseFile(relative, file, shared, seenBaseIds, seenExpandedIds, cases, scenarios, liveCases);
         }
         return new LoadedCorpus(
                 normalizedRoot,
                 cases,
                 scenarios,
+                liveCases,
                 toStringMap(shared.responses()),
                 toNodeMap(shared.schemas()));
     }
@@ -181,7 +204,8 @@ public final class NegotiationCaseLoader {
             Map<String, String> seenBaseIds,
             Map<String, String> seenExpandedIds,
             List<NegotiationCase> cases,
-            List<ScenarioCase> scenarios) {
+            List<ScenarioCase> scenarios,
+            List<LiveCase> liveCases) {
         JsonNode root;
         try {
             root = MAPPER.readTree(path.toFile());
@@ -201,7 +225,9 @@ public final class NegotiationCaseLoader {
                 throw error(file, null, recordPath + ".id", "missing required field 'id'");
             }
             String id = node.get("id").asText();
-            if (node.has("steps")) {
+            if (file.startsWith(LIVE_DIR_PREFIX)) {
+                parseLiveCase(file, id, recordPath, node, shared, seenBaseIds, seenExpandedIds, liveCases);
+            } else if (node.has("steps")) {
                 parseScenario(file, id, recordPath, node, shared, seenBaseIds, seenExpandedIds, scenarios);
             } else {
                 parseCase(file, id, recordPath, node, shared, seenBaseIds, seenExpandedIds, cases);
@@ -339,6 +365,124 @@ public final class NegotiationCaseLoader {
             }
             scenarios.add(new ScenarioCase(
                     expandedId, id, file, language, raw.summary(), roles, steps, expectFlow, rolesDesc));
+        }
+    }
+
+    /**
+     * Parses one live-LLM record: the dedicated {@code RawLiveCase} binding (no llm, no inject, no input.data), the
+     * phase-1 restrictions (LIVE- id prefix, exactly zh-CN, one of the two task APIs) and the same id bookkeeping as
+     * the offline families, so live ids are globally unique against cases and scenarios.
+     */
+    private static void parseLiveCase(
+            String file,
+            String id,
+            String path,
+            JsonNode node,
+            SharedRefs shared,
+            Map<String, String> seenBaseIds,
+            Map<String, String> seenExpandedIds,
+            List<LiveCase> liveCases) {
+        if (!id.startsWith(LIVE_ID_PREFIX)) {
+            throw error(
+                    file,
+                    id,
+                    path + ".id",
+                    "a live record id must carry the '" + LIVE_ID_PREFIX + "' prefix but is '" + id + "'");
+        }
+        RawLiveCase raw = bind(node, RawLiveCase.class, file, id, path);
+        List<String> languages = validateLanguages(raw.languages(), file, id, path);
+        if (!languages.equals(LIVE_LANGUAGES)) {
+            throw error(
+                    file,
+                    id,
+                    path + ".languages",
+                    "live phase 1 records must declare exactly the languages " + LIVE_LANGUAGES + " but declare "
+                            + languages);
+        }
+        claimBaseId(id, file, path, seenBaseIds);
+        String priority = validatePriority(raw.priority(), file, id, path);
+        List<String> tags = raw.tags() == null ? List.of() : List.copyOf(raw.tags());
+        NegotiationApi api = NegotiationApi.fromJsonName(raw.api());
+        if (api == null) {
+            throw error(
+                    file,
+                    id,
+                    path + ".api",
+                    "unknown api '" + raw.api() + "' (known apis: " + knownApiNames() + ")");
+        }
+        if (!LIVE_APIS.contains(api)) {
+            throw error(
+                    file,
+                    id,
+                    path + ".api",
+                    "live phase 1 supports only " + liveApiNames() + " but the record declares '" + raw.api() + "'");
+        }
+        ContextSpec contextSpec = validateContext(raw.context(), file, id, path);
+        if (raw.templateUri() != null && raw.templateUri().isBlank()) {
+            throw error(file, id, path + ".templateUri", "the template URI must not be blank");
+        }
+        Map<String, String> inputText = Map.of();
+        if (raw.input() != null && raw.input().text() != null) {
+            inputText = raw.input().text();
+            for (String language : languages) {
+                if (!inputText.containsKey(language)) {
+                    throw error(
+                            file,
+                            id,
+                            path + ".input.text",
+                            "missing the '" + language
+                                    + "' text entry (the input must cover every language of the record)");
+                }
+            }
+        }
+        if (api == NegotiationApi.GENERATE_TASK_PROMPT_FROM_TEXT && inputText.isEmpty()) {
+            throw error(
+                    file,
+                    id,
+                    path + ".input.text",
+                    "a live generateTaskPromptFromText record requires an input.text (the engine has no other source"
+                            + " of the natural-language input)");
+        }
+        PromptSource promptSource = buildPromptSource(raw.prompt(), file, id, path);
+        if (promptSource != null && !(promptSource instanceof PromptSource.Text)) {
+            // The live engine only reads an inline prompt text; a golden or fromStep source would load fine and then
+            // misfire at run time, so the loader rejects it up front, mirroring the offline fail-fast philosophy.
+            throw error(
+                    file,
+                    id,
+                    path + ".prompt",
+                    "a live record supports only the inline prompt.text but declares "
+                            + (promptSource instanceof PromptSource.Golden ? "golden" : "fromStep"));
+        }
+        JsonNode schemaNode = resolveSchema(raw.schema(), file, id, path, shared);
+        LiveExpectation liveExpect = buildLiveExpectation(raw.expect(), file, id, path);
+        if (api == NegotiationApi.VALIDATE_TASK_PROMPT_AND_DATA_FILLING
+                && !liveExpect.promptTextContains().isEmpty()) {
+            throw error(
+                    file,
+                    id,
+                    path + ".expect.promptTextContains",
+                    "promptTextContains judges the generated prompt of the generate API; a validate record has no"
+                            + " generated prompt to assert fragments of");
+        }
+        for (String language : languages) {
+            String expandedId = id + "/" + language;
+            claimExpandedId(expandedId, file, id, path, seenExpandedIds);
+            liveCases.add(new LiveCase(
+                    expandedId,
+                    id,
+                    file,
+                    api,
+                    language,
+                    priority,
+                    tags,
+                    raw.summary(),
+                    contextSpec,
+                    raw.templateUri(),
+                    inputText.get(language),
+                    promptSource,
+                    schemaNode,
+                    liveExpect));
         }
     }
 
@@ -686,6 +830,55 @@ public final class NegotiationCaseLoader {
                 expect.paramsFromStep());
     }
 
+    private static LiveExpectation buildLiveExpectation(
+            @Nullable RawLiveExpect expect, String file, String id, String path) {
+        if (expect == null) {
+            throw error(file, id, path + ".expect", "missing required field 'expect'");
+        }
+        if (expect.success() == null) {
+            throw error(file, id, path + ".expect.success", "missing required field 'success'");
+        }
+        Map<String, Object> paramsContains = Map.of();
+        if (expect.paramsContains() != null && !expect.paramsContains().isNull()) {
+            if (!expect.paramsContains().isObject()) {
+                throw error(file, id, path + ".expect.paramsContains", "paramsContains must be a JSON object");
+            }
+            paramsContains = MAPPER.convertValue(expect.paramsContains(), new TypeReference<Map<String, Object>>() {});
+            for (Map.Entry<String, Object> entry : paramsContains.entrySet()) {
+                if (entry.getValue() == null) {
+                    throw error(
+                            file,
+                            id,
+                            path + ".expect.paramsContains",
+                            "the expected param '" + entry.getKey()
+                                    + "' carries a JSON null; a missing parameter belongs into paramsAbsent, not"
+                                    + " into paramsContains");
+                }
+            }
+        }
+        List<String> paramsAbsent =
+                expect.paramsAbsent() == null ? List.of() : List.copyOf(expect.paramsAbsent());
+        if (!paramsAbsent.isEmpty() && paramsAbsent.stream().anyMatch(String::isBlank)) {
+            throw error(file, id, path + ".expect.paramsAbsent", "paramsAbsent entries must not be blank");
+        }
+        List<String> promptTextContains =
+                expect.promptTextContains() == null ? List.of() : List.copyOf(expect.promptTextContains());
+        if (!promptTextContains.isEmpty() && promptTextContains.stream().anyMatch(String::isBlank)) {
+            throw error(
+                    file, id, path + ".expect.promptTextContains", "promptTextContains entries must not be blank");
+        }
+        if (expect.maxLlmCalls() != null && expect.maxLlmCalls() < 1) {
+            throw error(file, id, path + ".expect.maxLlmCalls", "maxLlmCalls must be at least 1");
+        }
+        return new LiveExpectation(
+                expect.success(),
+                expect.scenarioCode(),
+                paramsContains,
+                paramsAbsent,
+                promptTextContains,
+                expect.maxLlmCalls() == null ? LIVE_DEFAULT_MAX_LLM_CALLS : expect.maxLlmCalls());
+    }
+
     private static ScenarioCase.@Nullable ExpectFlow buildExpectFlow(
             @Nullable RawExpectFlow expectFlow, String file, String id, String path) {
         if (expectFlow == null) {
@@ -955,6 +1148,14 @@ public final class NegotiationCaseLoader {
         return String.join(", ", names);
     }
 
+    private static String liveApiNames() {
+        List<String> names = new ArrayList<>();
+        for (NegotiationApi api : LIVE_APIS.stream().sorted().toList()) {
+            names.add(api.jsonName());
+        }
+        return String.join(" and ", names);
+    }
+
     private static String knownFailMarkerNames() {
         List<String> names = new ArrayList<>();
         for (LlmFailMarker marker : LlmFailMarker.values()) {
@@ -992,6 +1193,35 @@ public final class NegotiationCaseLoader {
             @Nullable JsonNode schema,
             @Nullable String inject,
             @Nullable RawExpect expect) {}
+
+    /**
+     * The live-family case binding: the shared base fields minus {@code llm}, {@code inject} and the typed input
+     * data, plus the live-only expectation block — a strict-binding sibling of {@link RawCase} so the two families'
+     * keys never collide.
+     */
+    private record RawLiveCase(
+            String id,
+            @Nullable String api,
+            @Nullable List<String> languages,
+            @Nullable String priority,
+            @Nullable List<String> tags,
+            @Nullable String summary,
+            @Nullable RawContext context,
+            @Nullable String templateUri,
+            @Nullable RawLiveInput input,
+            @Nullable RawPrompt prompt,
+            @Nullable JsonNode schema,
+            @Nullable RawLiveExpect expect) {}
+
+    private record RawLiveInput(@Nullable Map<String, String> text) {}
+
+    private record RawLiveExpect(
+            @Nullable Boolean success,
+            @Nullable String scenarioCode,
+            @Nullable JsonNode paramsContains,
+            @Nullable List<String> paramsAbsent,
+            @Nullable List<String> promptTextContains,
+            @Nullable Integer maxLlmCalls) {}
 
     private record RawScenario(
             String id,

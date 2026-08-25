@@ -54,6 +54,16 @@ class CaseEngineTest {
                     + "OSS侧事件流水号：event-id-20260511-09013；投诉详情：深圳访问广州的响应时延从平均12ms骤升至320ms\"},"
                     + " \"slot_errors\": []}";
 
+    /**
+     * Slot-extraction payload of the from-text success path since the task_object slot became required upstream: the
+     * task object carries what the raw text names (the circuit) but no port name, so the rendered prompt stays
+     * portless.
+     */
+    private static final String TASK_SLOTS_OBJECT_PORTLESS =
+            "{\"slots\": {\"任务对象\": \"深圳访问广州的专线\", \"任务上下文\": \"投诉分类：待补充；问题发生时间：2026-05-11T08:21:46Z；"
+                    + "OSS侧事件流水号：event-id-20260511-09013；投诉详情：深圳访问广州的响应时延从平均12ms骤升至320ms\"},"
+                    + " \"slot_errors\": []}";
+
     /** Slot-extraction payload of the filled variant: the port name and the complaint category are present. */
     private static final String TASK_SLOTS_FILLED =
             "{\"slots\": {\"任务对象\": \"接入端口名称：P533-珠江旧城-PTN3900-23-TPA1EG24-1\", \"任务上下文\":"
@@ -787,7 +797,7 @@ class CaseEngineTest {
                 PRIVATE_LINE_COMPLAINT_URI,
                 COMPLAINT_TEXT,
                 null,
-                new LlmScript(null, List.of(new LlmScriptStep.Payload(TASK_SLOTS_OBJECT_EMPTY))),
+                new LlmScript(null, List.of(new LlmScriptStep.Payload(TASK_SLOTS_OBJECT_PORTLESS))),
                 null,
                 null,
                 null,

@@ -101,6 +101,10 @@ class CorpusContractTest {
             assertTrue(expandedIds.add(scenario.id()), "duplicate expanded id " + scenario.id());
             expectedCount++;
         }
+        for (LiveCase liveCase : CORPUS.liveCases()) {
+            assertTrue(expandedIds.add(liveCase.id()), "duplicate expanded id " + liveCase.id());
+            expectedCount++;
+        }
         assertEquals(expectedCount, expandedIds.size(), "the id is the primary key of the whole corpus");
 
         // One base id belongs to exactly one record: all its language expansions come from the same file, and every
@@ -135,6 +139,21 @@ class CorpusContractTest {
             Set<String> languages = new LinkedHashSet<>();
             String sourceFile = group.get(0).sourceFile();
             for (ScenarioCase expansion : group) {
+                assertEquals(
+                        sourceFile,
+                        expansion.sourceFile(),
+                        "the base id " + expansion.baseId() + " must belong to exactly one corpus file");
+                assertTrue(languages.add(expansion.language()), "duplicate language expansion " + expansion.id());
+            }
+        }
+        Map<String, List<LiveCase>> liveGroups = new LinkedHashMap<>();
+        for (LiveCase liveCase : CORPUS.liveCases()) {
+            liveGroups.computeIfAbsent(liveCase.baseId(), key -> new ArrayList<>()).add(liveCase);
+        }
+        for (List<LiveCase> group : liveGroups.values()) {
+            Set<String> languages = new LinkedHashSet<>();
+            String sourceFile = group.get(0).sourceFile();
+            for (LiveCase expansion : group) {
                 assertEquals(
                         sourceFile,
                         expansion.sourceFile(),
@@ -317,6 +336,62 @@ class CorpusContractTest {
                             + " not a golden fixture or a fromStep reference");
         }
         assertTrue(seen, "the corpus must carry at least one VAL-DRIFT drift probe");
+    }
+
+    // ------------------------------------------------------------------ live family (live design §2.2)
+
+    /**
+     * The live records live in their own {@code liveCases} list and are invisible to the six offline contracts above;
+     * this contract pins their phase-1 scope (Q5/Q6): the {@code LIVE-} id prefix, zh-CN only, and the two task APIs —
+     * a record outside the scope could never run through the live engine's dispatch.
+     */
+    @Test
+    void liveRecordsStayInThePhase1Scope() {
+        assertFalse(CORPUS.liveCases().isEmpty(), "the corpus must carry at least one live record");
+        for (LiveCase liveCase : CORPUS.liveCases()) {
+            assertTrue(
+                    liveCase.baseId().startsWith("LIVE-"),
+                    liveCase.errorPrefix() + ": the live family ids carry the 'LIVE-' prefix");
+            assertEquals(
+                    "zh-CN",
+                    liveCase.language(),
+                    liveCase.errorPrefix() + ": live phase 1 covers zh-CN only (Q6)");
+            assertTrue(
+                    liveCase.api() == NegotiationApi.GENERATE_TASK_PROMPT_FROM_TEXT
+                            || liveCase.api() == NegotiationApi.VALIDATE_TASK_PROMPT_AND_DATA_FILLING,
+                    liveCase.errorPrefix() + ": live phase 1 covers the two task APIs (Q5) but the record declares "
+                            + liveCase.api().jsonName());
+        }
+    }
+
+    /**
+     * Live expectation completeness: the loose block still has to pin something checkable — {@code paramsContains}
+     * values non-null (a null expected value would never match, the engine asserts non-null extraction), non-blank
+     * {@code paramsAbsent} slots and {@code promptTextContains} fragments, and a positive {@code maxLlmCalls} bound.
+     */
+    @Test
+    void liveExpectationBlocksAreComplete() {
+        for (LiveCase liveCase : CORPUS.liveCases()) {
+            LiveExpectation expect = liveCase.liveExpect();
+            for (Map.Entry<String, Object> entry : expect.paramsContains().entrySet()) {
+                assertTrue(
+                        entry.getValue() != null,
+                        liveCase.errorPrefix() + ": paramsContains." + entry.getKey()
+                                + " must pin a non-null value");
+            }
+            for (String slot : expect.paramsAbsent()) {
+                assertFalse(slot.isBlank(), liveCase.errorPrefix() + ": paramsAbsent entries must not be blank");
+            }
+            for (String fragment : expect.promptTextContains()) {
+                assertFalse(
+                        fragment.isBlank(), liveCase.errorPrefix() + ": promptTextContains fragments must not be blank");
+            }
+            if (expect.maxLlmCalls() != null) {
+                assertTrue(
+                        expect.maxLlmCalls() > 0,
+                        liveCase.errorPrefix() + ": maxLlmCalls must be a positive upper bound");
+            }
+        }
     }
 
     // ------------------------------------------------------------------ bilingual parity (§7, four definitions)

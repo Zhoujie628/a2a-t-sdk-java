@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openan.net/a2a-t-sdk/negotiation-cases/corpus-schema.json",
   "title": "A2A-T negotiation test corpus format",
-  "description": "First-hand definition of the data-driven negotiation test corpus consumed by the negotiation testdata harness (NegotiationCaseLoader and the later CaseEngine suites). Every corpus file is a JSON array of records: case files carry case records, scenario files carry scenario records, and the two shared files carry reusable LLM payloads and JSON Schema variants. The loader parses everything in strict mode, so an unknown key is an error, never a silently ignored typo.",
+  "description": "First-hand definition of the data-driven negotiation test corpus consumed by the negotiation testdata harness (NegotiationCaseLoader and the later CaseEngine suites). Every corpus file is a JSON array of records: case files carry case records, scenario files carry scenario records, live files carry live-LLM case records, and the two shared files carry reusable LLM payloads and JSON Schema variants. The loader parses everything in strict mode, so an unknown key is an error, never a silently ignored typo.",
   "formatVersion": 2,
   "$defs": {
     "language": {
@@ -552,6 +552,148 @@
         }
       }
     },
+    "liveExpectation": {
+      "title": "Live expectation block",
+      "description": "The looser expectation of the live family: subset parameter assertions and an LLM call upper bound instead of the offline exact equivalence; no golden fixture and no differential. Live phase 1 expects the success path only, so success false carries no failure details.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["success"],
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Expected operation outcome: true expects the operation to succeed, false expects it to fail."
+        },
+        "scenarioCode": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Expected recognized scenario code, judged as the scenario segment of the echoed template URI."
+        },
+        "paramsContains": {
+          "type": "object",
+          "description": "Subset check: the named slots must be filled with exactly these values (other slots are not asserted). JSON null values are rejected — a missing parameter belongs into paramsAbsent."
+        },
+        "paramsAbsent": {
+          "type": "array",
+          "description": "Slots that must be null or missing.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "promptTextContains": {
+          "type": "array",
+          "description": "Generate API only: structural fragments the generated task prompt text must contain; the loader rejects the key on validate records.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "maxLlmCalls": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Upper bound of LLM calls the case may trigger (a real model may trigger pipeline-internal retries); the loader defaults it to 4 when omitted."
+        }
+      }
+    },
+    "liveCase": {
+      "title": "Live-LLM case record",
+      "description": "One live family record under live/: no llm script, no inject hook and no typed input data — the behavior under test comes from the real model — with the looser live expectation block instead of the offline one. Ids carry the LIVE- prefix; phase 1 covers zh-CN and the two task APIs only.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "api", "languages", "expect"],
+      "properties": {
+        "id": {
+          "title": "Live case id",
+          "description": "Naming syntax with the mandatory LIVE- prefix, such as LIVE-GEN-01; expanded per language like the offline ids.",
+          "type": "string",
+          "pattern": "^LIVE(-[A-Z0-9]+)*-[0-9]+$"
+        },
+        "api": {
+          "type": "string",
+          "enum": ["generateTaskPromptFromText", "validateTaskPromptAndDataFilling"]
+        },
+        "languages": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "const": "zh-CN"
+          }
+        },
+        "priority": {
+          "$ref": "#/$defs/priority"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context": {
+          "$ref": "#/$defs/context"
+        },
+        "templateUri": {
+          "$ref": "#/$defs/templateUri"
+        },
+        "input": {
+          "title": "Live input",
+          "description": "The natural-language input of the generate API; required for generateTaskPromptFromText records, rejected for validate records.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["text"],
+          "properties": {
+            "text": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/language"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "prompt": {
+          "title": "Live prompt input",
+          "description": "The validate API's prompt: an inline text only — golden and fromStep are offline-only in the live family.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["text"],
+          "properties": {
+            "text": {
+              "type": "string"
+            }
+          }
+        },
+        "schema": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/schemaReference"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        },
+        "expect": {
+          "$ref": "#/$defs/liveExpectation"
+        }
+      }
+    },
+    "liveCaseFile": {
+      "title": "Live case corpus file",
+      "description": "A file under live/ of the corpus root; its records land in the dedicated liveCases list, never in the offline cases list.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/liveCase"
+      }
+    },
     "caseFile": {
       "title": "Case corpus file",
       "type": "array",
@@ -601,6 +743,9 @@
     },
     {
       "$ref": "#/$defs/scenarioFile"
+    },
+    {
+      "$ref": "#/$defs/liveCaseFile"
     },
     {
       "$ref": "#/$defs/sharedResponsesFile"

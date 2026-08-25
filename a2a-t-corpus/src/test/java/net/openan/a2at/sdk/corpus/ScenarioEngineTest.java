@@ -51,9 +51,13 @@ class ScenarioEngineTest {
             "深圳访问广州的专线从5月11号早上8点半开始响应时延从平均12ms骤升至320ms，柜面和手机银行的交易接口频繁报"
                     + "“连接超时”。OSS侧事件流水号：event-id-20260511-09013。";
 
-    /** Slot-extraction payload of the closed loop's step 1: the task object stays empty. */
-    private static final String TASK_SLOTS_OBJECT_EMPTY =
-            "{\"slots\": {\"任务对象\": \"\", \"任务上下文\": \"投诉分类：待补充；问题发生时间：2026-05-11T08:21:46Z；"
+    /**
+     * Slot-extraction payload of the closed loop's step 1 since the task_object slot became required upstream: the
+     * task object carries what the raw text names (the circuit) but no port name, so the rendered prompt stays
+     * portless and the two schema parameters stay missing for the negotiation to fill.
+     */
+    private static final String TASK_SLOTS_OBJECT_PORTLESS =
+            "{\"slots\": {\"任务对象\": \"深圳访问广州的专线\", \"任务上下文\": \"投诉分类：待补充；问题发生时间：2026-05-11T08:21:46Z；"
                     + "OSS侧事件流水号：event-id-20260511-09013；投诉详情：深圳访问广州的响应时延从平均12ms骤升至320ms\"},"
                     + " \"slot_errors\": []}";
 
@@ -308,7 +312,7 @@ class ScenarioEngineTest {
                 null,
                 PRIVATE_LINE_COMPLAINT_URI,
                 COMPLAINT_TEXT,
-                script(TASK_SLOTS_OBJECT_EMPTY),
+                script(TASK_SLOTS_OBJECT_PORTLESS),
                 null,
                 null,
                 ok(1, null));
