@@ -169,7 +169,8 @@ class AuthzSampleMainTest {
                 metadata,
                 new net.openan.a2at.sdk.core.model.FilledParamData(Map.of("slot1", "actual_value")));
 
-        Path reportPath = AuthzSampleMain.writeReport(List.of(scenario), List.of(outcome), tempDir);
+        Path reportPath = AuthzSampleMain.writeReport(
+                List.of(scenario), List.of(outcome), tempDir, 8, 12.5, "sample/authz-policy/scenarios.json", false, null);
 
         assertTrue(Files.exists(reportPath));
         String content = Files.readString(reportPath);
@@ -210,7 +211,8 @@ class AuthzSampleMainTest {
                 null);
         ScenarioOutcome outcome = new ScenarioOutcome(result, null, null);
 
-        Path reportPath = AuthzSampleMain.writeReport(List.of(scenario), List.of(outcome), tempDir);
+        Path reportPath = AuthzSampleMain.writeReport(
+                List.of(scenario), List.of(outcome), tempDir, 8, 12.5, "sample/authz-policy/scenarios.json", false, null);
 
         String content = Files.readString(reportPath);
         assertTrue(content.contains("授权策略的操作类型"));

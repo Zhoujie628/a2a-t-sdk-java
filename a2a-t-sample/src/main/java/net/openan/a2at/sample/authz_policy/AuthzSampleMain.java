@@ -6,16 +6,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import net.openan.a2at.sample.authz_policy.AuthzReasoningCapture.StageCapture;
 import net.openan.a2at.sample.authz_policy.AuthzScenario.AuthzExpected;
 import net.openan.a2at.sample.authz_policy.AuthzScenario.SlotErrorExpectation;
 import net.openan.a2at.sample.authz_policy.AuthzScenarioRunner.ScenarioOutcome;
 import net.openan.a2at.sample.authz_policy.AuthzScenarioRunner.ScenarioResult;
 import net.openan.a2at.sdk.client.A2ATClient;
+import net.openan.a2at.sdk.client.prompt.assembly.DefaultA2ATClientBuilder;
+import net.openan.a2at.sdk.client.prompt.orchestration.ClientPromptGenerationOrchestrator;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
 import net.openan.a2at.sdk.core.model.FilledParamData;
@@ -23,7 +29,13 @@ import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
+import net.openan.a2at.sdk.core.validation.ContentValidator;
+import net.openan.a2at.sdk.llm.LLMClient;
+import net.openan.a2at.sdk.llm.LLMClientConfig;
+import net.openan.a2at.sdk.llm.LLMClientFactory;
+import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
 import net.openan.a2at.sdk.server.A2ATServer;
+import net.openan.a2at.sdk.server.assembly.DefaultA2ATServerBuilder;
 
 /**
  * Entry point for the Authorization-T demo.
@@ -49,6 +61,13 @@ public final class AuthzSampleMain {
 
     private static final String PARAM_SCHEMA_RESOURCE = "sample/authz-policy/param-schema.json";
 
+    private static final String DEFAULT_OUTPUT_DIR = "eval-results/authz-demo";
+
+    private static final String OUTDIR_PROPERTY = "authz.outdir";
+
+    private static final DateTimeFormatter REPORT_TIMESTAMP =
+            DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+
     private static final List<String> REQUIRED_LLM_KEYS =
             List.of("A2AT_LLM_PROVIDER", "A2AT_LLM_MODEL", "A2AT_LLM_API_KEY");
 
@@ -63,41 +82,64 @@ public final class AuthzSampleMain {
             System.exit(1);
         }
 
-        A2ATClient client = new A2ATClient(envPath);
-        A2ATServer server = new A2ATServer(envPath);
+        int workers;
+        try {
+            workers = AuthzScenarioExecutor.resolveWorkers();
+        } catch (IllegalArgumentException e) {
+            System.err.println(
+                    "Usage: -Dauthz.workers=<N> (integer >= 1, default 8). " + e.getMessage());
+            System.exit(1);
+            return;
+        }
+
+        boolean reasoning;
+        try {
+            reasoning = AuthzReasoningCapture.resolveReasoningFlag();
+        } catch (IllegalArgumentException e) {
+            System.err.println(
+                    "Usage: -Dauthz.reasoning=true|false (default false). " + e.getMessage());
+            System.exit(1);
+            return;
+        }
+
+        AuthzReasoningCapture capture = reasoning ? new AuthzReasoningCapture() : null;
 
         Map<String, Object> paramSchema = loadParamSchema();
 
         List<AuthzScenario> scenarios = AuthzScenarioLoader.load(SCENARIOS_RESOURCE);
         TemplateUri templateUri = StandardTemplates.AUTHORIZATION_POLICY_MANAGEMENT;
 
-        AuthzPromptGenerator generator = scenario -> {
-            if (AuthzScenario.FROM_TEXT.equals(scenario.entry())) {
-                String text = (String) scenario.input().get("text");
-                return client.generateAuthPromptFromText(text, templateUri);
-            }
-            @SuppressWarnings("unchecked")
-            Map<String, Object> data = (Map<String, Object>) scenario.input().get("data");
-            @SuppressWarnings("unchecked")
-            Map<String, Object> schema = (Map<String, Object>) scenario.input().get("schema");
-            return client.generateAuthPromptFromDataWithSchema(data, schema, templateUri);
-        };
-
-        AuthzPromptValidator validator = server::validateAuthPromptAndDataFilling;
+        AuthzPromptGenerator generator = buildGenerator(envPath, templateUri, capture);
+        AuthzPromptValidator validator = buildValidator(envPath, capture);
         AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenarioExecutor executor = new AuthzScenarioExecutor(runner);
 
-        List<ScenarioResult> results = new ArrayList<>();
-        List<ScenarioOutcome> outcomes = new ArrayList<>();
-        for (AuthzScenario scenario : scenarios) {
-            ScenarioOutcome outcome = runner.run(scenario, paramSchema, templateUri);
-            printScenarioReport(scenario, outcome);
-            outcomes.add(outcome);
-            results.add(outcome.result());
+        long startMillis = System.currentTimeMillis();
+
+        List<ScenarioOutcome> outcomes = executor.executeAll(
+                scenarios, paramSchema, templateUri, workers,
+                (completedIndex, outcome, elapsedSeconds) -> {
+                    String matchStr = outcome.result().match() ? "PASS" : "FAIL";
+                    System.out.printf("[%d/%d] %s %s (%s, %.1fs)%n",
+                            completedIndex, scenarios.size(), matchStr,
+                            scenarios.get(completedIndex - 1).label(),
+                            outcome.result().outcome(), elapsedSeconds);
+                },
+                capture);
+
+        double wallTimeSeconds = (System.currentTimeMillis() - startMillis) / 1000.0;
+
+        for (int i = 0; i < scenarios.size(); i++) {
+            printScenarioReport(scenarios.get(i), outcomes.get(i));
         }
 
-        Path reportPath = writeReport(scenarios, outcomes, Path.of("a2a-t-sample", "target"));
+        Path outDir = Path.of(System.getProperty(OUTDIR_PROPERTY, DEFAULT_OUTPUT_DIR));
+        Path reportPath = writeReport(scenarios, outcomes, outDir, workers, wallTimeSeconds,
+                SCENARIOS_RESOURCE, reasoning, capture);
         System.out.println("Report written to: " + reportPath.toAbsolutePath().normalize());
         System.out.println();
+
+        List<ScenarioResult> results = outcomes.stream().map(ScenarioOutcome::result).toList();
         printSummary(scenarios, results);
         System.exit(exitCode(results));
     }
@@ -149,6 +191,59 @@ public final class AuthzSampleMain {
         } catch (IOException e) {
             throw new IllegalStateException("Failed to load param schema: " + PARAM_SCHEMA_RESOURCE, e);
         }
+    }
+
+    static AuthzPromptGenerator buildGenerator(
+            Path envPath, TemplateUri templateUri, AuthzReasoningCapture capture) {
+        if (capture == null) {
+            A2ATClient client = new A2ATClient(envPath);
+            return scenario -> {
+                if (AuthzScenario.FROM_TEXT.equals(scenario.entry())) {
+                    String text = (String) scenario.input().get("text");
+                    return client.generateAuthPromptFromText(text, templateUri);
+                }
+                @SuppressWarnings("unchecked")
+                Map<String, Object> data = (Map<String, Object>) scenario.input().get("data");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> schema = (Map<String, Object>) scenario.input().get("schema");
+                return client.generateAuthPromptFromDataWithSchema(data, schema, templateUri);
+            };
+        }
+        A2ATConfig config = NegotiationContentService.resolvePromptResourceLocalRootDir(
+                A2ATConfig.load(envPath), envPath);
+        LLMClient real = LLMClientFactory.create(
+                config.llm().provider(), LLMClientConfig.from(config.llm()));
+        LLMClient decorated = capture.wrap(real);
+        DefaultA2ATClientBuilder builder = DefaultA2ATClientBuilder.builder()
+                .envPath(envPath).config(config).llmClient(decorated);
+        ClientPromptGenerationOrchestrator orchestrator = builder.buildPromptGenerationOrchestrator();
+        return scenario -> {
+            if (AuthzScenario.FROM_TEXT.equals(scenario.entry())) {
+                String text = (String) scenario.input().get("text");
+                return orchestrator.generateAuthPromptFromText(text, templateUri);
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = (Map<String, Object>) scenario.input().get("data");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> schema = (Map<String, Object>) scenario.input().get("schema");
+            return orchestrator.generateAuthPromptFromDataWithSchema(data, schema, templateUri);
+        };
+    }
+
+    static AuthzPromptValidator buildValidator(Path envPath, AuthzReasoningCapture capture) {
+        if (capture == null) {
+            A2ATServer server = new A2ATServer(envPath);
+            return server::validateAuthPromptAndDataFilling;
+        }
+        A2ATConfig config = NegotiationContentService.resolvePromptResourceLocalRootDir(
+                A2ATConfig.load(envPath), envPath);
+        LLMClient real = LLMClientFactory.create(
+                config.llm().provider(), LLMClientConfig.from(config.llm()));
+        LLMClient decorated = capture.wrap(real);
+        DefaultA2ATServerBuilder builder = DefaultA2ATServerBuilder.builder()
+                .envPath(envPath).config(config).llmClient(decorated);
+        ContentValidator contentValidator = builder.buildAuthContentValidator();
+        return contentValidator::validate;
     }
 
     static void printScenarioReport(AuthzScenario scenario, ScenarioOutcome outcome) {
@@ -215,8 +310,21 @@ public final class AuthzSampleMain {
         return allMatch ? 0 : 1;
     }
 
-    static Path writeReport(List<AuthzScenario> scenarios, List<ScenarioOutcome> outcomes, Path reportDir) {
+    static Path writeReport(
+            List<AuthzScenario> scenarios,
+            List<ScenarioOutcome> outcomes,
+            Path reportDir,
+            int workers,
+            double wallTimeSeconds,
+            String scenariosResource,
+            boolean reasoning,
+            AuthzReasoningCapture capture) {
         Map<String, Object> report = new LinkedHashMap<>();
+        report.put("meta", Map.of(
+                "workers", workers,
+                "wallTimeSeconds", wallTimeSeconds,
+                "scenariosResource", scenariosResource,
+                "reasoning", reasoning));
         long matchCount = outcomes.stream().filter(o -> o.result().match()).count();
         long mismatchCount = outcomes.size() - matchCount;
         report.put("summary", Map.of(
@@ -247,12 +355,25 @@ public final class AuthzSampleMain {
                             "code", outcome.result().error().getCode(),
                             "message", outcome.result().error().getMessage())
                     : null);
+            if (reasoning && capture != null) {
+                Optional<StageCapture> captured = capture.capture(scenario.label());
+                if (captured.isPresent()) {
+                    StageCapture sc = captured.get();
+                    if (sc.clientReasoning() != null) {
+                        entry.put("client_reasoning", sc.clientReasoning());
+                    }
+                    if (sc.serverReasoning() != null) {
+                        entry.put("server_reasoning", sc.serverReasoning());
+                    }
+                }
+            }
             scenarioEntries.add(entry);
         }
         report.put("scenarios", scenarioEntries);
         try {
             Files.createDirectories(reportDir);
-            Path reportFile = reportDir.resolve("authz-report.json");
+            String timestamp = LocalDateTime.now().format(REPORT_TIMESTAMP);
+            Path reportFile = reportDir.resolve("authz-report-" + timestamp + ".json");
             MAPPER.writerWithDefaultPrettyPrinter().writeValue(reportFile.toFile(), report);
             return reportFile;
         } catch (IOException e) {
