@@ -7,12 +7,17 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.openan.a2at.sample.authz_policy.AuthzScenario.AuthzExpected;
+import net.openan.a2at.sample.authz_policy.AuthzScenario.ClientExpected;
+import net.openan.a2at.sample.authz_policy.AuthzScenario.ServerExpected;
 
 /**
  * Loads and validates demo scenarios from a JSON resource file.
  *
- * <p>The JSON file must contain a top-level {@code scenarios} array. Each scenario entry is parsed into an
- * {@link AuthzScenario} record and then validated via {@link AuthzScenario#validate(AuthzScenario)}.
+ * <p>The JSON file must contain a top-level {@code scenarios} array. Each scenario entry carries a staged
+ * {@code expected} object: {@code expected.client} with {@code outcome} (generation failure) or
+ * {@code promptText} (successful generation), and {@code expected.server} with {@code outcome},
+ * {@code slot_errors} and {@code params}.
  *
  * @since 2026-08
  */
@@ -43,50 +48,7 @@ public final class AuthzScenarioLoader {
         }
 
         List<AuthzScenario> scenarios = rawList.stream()
-                .map(item -> {
-                    if (!(item instanceof Map<?, ?> raw)) {
-                        throw new IllegalStateException("Scenario entry must be an object in: " + resourcePath);
-                    }
-                    Object labelObj = raw.get("label");
-                    if (!(labelObj instanceof String label)) {
-                        throw new IllegalStateException("Scenario 'label' must be a string in: " + resourcePath);
-                    }
-                    Object entryObj = raw.get("entry");
-                    if (!(entryObj instanceof String entry)) {
-                        throw new IllegalStateException("Scenario 'entry' must be a string in: " + resourcePath);
-                    }
-                    Object inputObj = raw.get("input");
-                    if (!(inputObj instanceof Map<?, ?> input)) {
-                        throw new IllegalStateException("Scenario 'input' must be an object in: " + resourcePath);
-                    }
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> inputMap = (Map<String, Object>) input;
-                    Object expectedObj = raw.get("expected");
-                    if (!(expectedObj instanceof Map<?, ?> expectedRaw)) {
-                        throw new IllegalStateException("Scenario 'expected' must be an object in: " + resourcePath);
-                    }
-                    Object outcomeObj = expectedRaw.get("outcome");
-                    if (!(outcomeObj instanceof String outcome)) {
-                        throw new IllegalStateException(
-                                "Scenario 'expected.outcome' must be a string in: " + resourcePath);
-                    }
-                    Map<String, Object> filledParams = null;
-                    Object filledParamsObj = expectedRaw.get("filled_params");
-                    if (filledParamsObj instanceof Map<?, ?> filledRaw) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> filledMap = (Map<String, Object>) filledRaw;
-                        filledParams = filledMap;
-                    }
-                    String promptText = null;
-                    Object promptTextObj = expectedRaw.get("prompt_text");
-                    if (promptTextObj instanceof String pt) {
-                        promptText = pt;
-                    }
-                    List<AuthzScenario.SlotErrorExpectation> slotErrors = parseSlotErrors(expectedRaw.get("slot_errors"));
-                    AuthzScenario.AuthzExpected expected =
-                            new AuthzScenario.AuthzExpected(outcome, filledParams, promptText, slotErrors);
-                    return new AuthzScenario(label, entry, inputMap, expected);
-                })
+                .map(item -> parseScenario(item, resourcePath))
                 .toList();
 
         for (AuthzScenario scenario : scenarios) {
@@ -98,6 +60,56 @@ public final class AuthzScenarioLoader {
         }
 
         return scenarios;
+    }
+
+    private static AuthzScenario parseScenario(Object item, String resourcePath) {
+        if (!(item instanceof Map<?, ?> raw)) {
+            throw new IllegalStateException("Scenario entry must be an object in: " + resourcePath);
+        }
+        Object labelObj = raw.get("label");
+        if (!(labelObj instanceof String label)) {
+            throw new IllegalStateException("Scenario 'label' must be a string in: " + resourcePath);
+        }
+        Object entryObj = raw.get("entry");
+        if (!(entryObj instanceof String entry)) {
+            throw new IllegalStateException("Scenario 'entry' must be a string in: " + resourcePath);
+        }
+        Object inputObj = raw.get("input");
+        if (!(inputObj instanceof Map<?, ?> input)) {
+            throw new IllegalStateException("Scenario 'input' must be an object in: " + resourcePath);
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, Object> inputMap = (Map<String, Object>) input;
+        Object expectedObj = raw.get("expected");
+        if (!(expectedObj instanceof Map<?, ?> expectedRaw)) {
+            throw new IllegalStateException("Scenario 'expected' must be an object in: " + resourcePath);
+        }
+        Object clientObj = expectedRaw.get("client");
+        if (!(clientObj instanceof Map<?, ?> clientRaw)) {
+            throw new IllegalStateException("Scenario 'expected.client' must be an object in: " + resourcePath);
+        }
+        ClientExpected client = new ClientExpected(
+                asNullableString(clientRaw.get("outcome")),
+                asNullableString(clientRaw.get("promptText")),
+                parseSlotErrors(clientRaw.get("slot_errors")));
+        ServerExpected server = null;
+        Object serverObj = expectedRaw.get("server");
+        if (serverObj instanceof Map<?, ?> serverRaw) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> params = serverRaw.get("params") instanceof Map<?, ?> paramsRaw
+                    ? (Map<String, Object>) paramsRaw
+                    : null;
+            server = new ServerExpected(
+                    asNullableString(serverRaw.get("outcome")),
+                    parseSlotErrors(serverRaw.get("slot_errors")),
+                    params);
+        }
+        AuthzExpected expected = new AuthzExpected(client, server);
+        return new AuthzScenario(label, entry, inputMap, expected);
+    }
+
+    private static String asNullableString(Object raw) {
+        return raw instanceof String text ? text : null;
     }
 
     private static List<AuthzScenario.SlotErrorExpectation> parseSlotErrors(Object raw) {

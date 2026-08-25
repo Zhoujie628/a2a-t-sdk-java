@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sample.authz_policy.AuthzScenario.AuthzExpected;
+import net.openan.a2at.sample.authz_policy.AuthzScenario.ClientExpected;
+import net.openan.a2at.sample.authz_policy.AuthzScenario.ServerExpected;
 import net.openan.a2at.sample.authz_policy.AuthzScenarioRunner.ScenarioOutcome;
 import net.openan.a2at.sample.authz_policy.AuthzScenarioRunner.ScenarioResult;
 import net.openan.a2at.sdk.core.model.MetadataContent;
@@ -23,11 +25,12 @@ import org.junit.jupiter.api.io.TempDir;
 
 class AuthzSampleMainTest {
 
-    private static final AuthzExpected SUCCESS = new AuthzExpected("success", null, null, null);
+    private static final AuthzExpected SUCCESS = new AuthzExpected(
+            new ClientExpected(null, "## rendered prompt", null), new ServerExpected("success", null, null));
     private static final ScenarioResult MATCH_RESULT =
-            new ScenarioResult("success", true, null, List.of());
+            new ScenarioResult("success", true, null, List.of(), true, true, true);
     private static final ScenarioResult MISMATCH_RESULT =
-            new ScenarioResult("slot_validation_error", false, null, List.of());
+            new ScenarioResult("slot_validation_error", false, null, List.of(), null, null, null);
 
     private PrintStream originalOut;
     private ByteArrayOutputStream outContent;
@@ -106,14 +109,14 @@ class AuthzSampleMainTest {
     }
 
     @Test
-    void should_loadSlotSchemaMap_ReturnMapWithPropertiesAndRequired() {
-        Map<String, Object> schema = AuthzSampleMain.loadSlotSchemaMap("zh-CN");
+    void should_loadParamSchema_ReturnBusinessLevelSchema() {
+        Map<String, Object> schema = AuthzSampleMain.loadParamSchema();
+
         assertNotNull(schema);
         assertTrue(schema.containsKey("properties"));
-        assertTrue(schema.containsKey("required"));
-        assertTrue(schema.containsKey("$schema"));
-        assertTrue(schema.containsKey("type"));
-        assertTrue(schema.containsKey("additionalProperties"));
+        Map<?, ?> properties = (Map<?, ?>) schema.get("properties");
+        assertTrue(properties.containsKey("操作类型"));
+        assertTrue(properties.containsKey("策略列表"));
     }
 
     @Test
@@ -121,16 +124,25 @@ class AuthzSampleMainTest {
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
         ScenarioOutcome outcome = new ScenarioOutcome(MISMATCH_RESULT, null, null);
         AuthzSampleMain.printScenarioReport(scenario, outcome);
-        assertTrue(outContent.toString().contains("<生成失败>"));
+        String output = outContent.toString();
+        assertTrue(output.contains("--- Scenario: test ---"));
+        assertTrue(output.contains("[Client]"));
+        assertTrue(output.contains("slot_validation_error"));
+        assertTrue(output.contains("(跳过 - 客户端生成失败)"));
     }
 
     @Test
     void should_printScenarioReport_WhenFilledNull() {
         AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
         MetadataContent metadata = new MetadataContent("template-uri", "prompt text", "extension-uri");
-        ScenarioOutcome outcome = new ScenarioOutcome(MATCH_RESULT, metadata, null);
+        ScenarioResult result = new ScenarioResult(
+                "validation_semantic_rejected", false, null, List.of(), true, false, null);
+        ScenarioOutcome outcome = new ScenarioOutcome(result, metadata, null);
         AuthzSampleMain.printScenarioReport(scenario, outcome);
-        assertTrue(outContent.toString().contains("<未提取参数>"));
+        String output = outContent.toString();
+        assertTrue(output.contains("[Server]"));
+        assertTrue(output.contains("validation_semantic_rejected"));
+        assertTrue(output.contains("校验结果"));
     }
 
     @Test
@@ -143,48 +155,59 @@ class AuthzSampleMainTest {
     }
 
     @Test
-    void should_writeReport_WithExpectedAndActualOutcomeAndParams(@TempDir Path tempDir) throws IOException {
+    void should_writeReport_WithStagedExpectationsAndAssertions(@TempDir Path tempDir) throws IOException {
         AuthzScenario scenario = new AuthzScenario(
-                "test", "from_text", Map.of("text", "hello"),
-                new AuthzExpected("success", Map.of("slot1", "expected_value"), null, null));
+                "test",
+                "from_text",
+                Map.of("text", "hello"),
+                new AuthzExpected(
+                        new ClientExpected(null, "prompt text", null),
+                        new ServerExpected("success", null, Map.of("slot1", "expected_value"))));
         MetadataContent metadata = new MetadataContent("template-uri", "prompt text", "extension-uri");
-        ScenarioOutcome outcome =
-                new ScenarioOutcome(MATCH_RESULT, metadata, new net.openan.a2at.sdk.core.model.FilledParamData(
-                        Map.of("slot1", "actual_value")));
+        ScenarioOutcome outcome = new ScenarioOutcome(
+                MATCH_RESULT,
+                metadata,
+                new net.openan.a2at.sdk.core.model.FilledParamData(Map.of("slot1", "actual_value")));
 
         Path reportPath = AuthzSampleMain.writeReport(List.of(scenario), List.of(outcome), tempDir);
 
         assertTrue(Files.exists(reportPath));
         String content = Files.readString(reportPath);
-        assertTrue(content.contains("\"expected_outcome\""));
-        assertTrue(content.contains("\"success\""));
+        assertTrue(content.contains("\"expected_client\""));
+        assertTrue(content.contains("\"expected_server\""));
         assertTrue(content.contains("\"actual_outcome\""));
+        assertTrue(content.contains("\"success\""));
         assertTrue(content.contains("\"match\""));
-        assertTrue(content.contains("\"expected_params\""));
         assertTrue(content.contains("\"expected_value\""));
         assertTrue(content.contains("\"actual_params\""));
         assertTrue(content.contains("\"actual_value\""));
         assertTrue(content.contains("\"prompt_text\""));
         assertTrue(content.contains("\"prompt text\""));
-        assertTrue(content.contains("\"expected_slot_errors\""));
+        assertTrue(content.contains("\"assertions\""));
         assertTrue(content.contains("\"actual_slot_errors\""));
     }
 
     @Test
     void should_writeReport_WithSlotErrors(@TempDir Path tempDir) throws IOException {
         AuthzScenario scenario = new AuthzScenario(
-                "test", "from_text", Map.of("text", "hello"),
+                "test",
+                "from_text",
+                Map.of("text", "hello"),
                 new AuthzExpected(
-                        "slot_validation_error",
-                        null,
-                        null,
-                        List.of(new AuthzScenario.SlotErrorExpectation("授权策略的操作类型", "missing_required"))));
+                        new ClientExpected(
+                                "slot_validation_error",
+                                null,
+                                List.of(new AuthzScenario.SlotErrorExpectation("授权策略的操作类型", "missing_required"))),
+                        null));
         ScenarioResult result = new ScenarioResult(
                 "slot_validation_error",
                 true,
                 null,
                 List.of(new net.openan.a2at.sdk.core.model.SlotValidationError(
-                        "授权策略的操作类型", "missing_required", "Required slot is missing or empty")));
+                        "授权策略的操作类型", "missing_required", "Required slot is missing or empty")),
+                null,
+                null,
+                null);
         ScenarioOutcome outcome = new ScenarioOutcome(result, null, null);
 
         Path reportPath = AuthzSampleMain.writeReport(List.of(scenario), List.of(outcome), tempDir);

@@ -13,16 +13,16 @@ class AuthzScenarioLoaderTest {
     void should_loadAndValidateAllScenarios() {
         List<AuthzScenario> scenarios = AuthzScenarioLoader.load("sample/authz-policy/scenarios.json");
 
-        assertEquals(3, scenarios.size());
-        assertEquals("add-from-text", scenarios.get(0).label());
+        assertEquals(8, scenarios.size());
+        assertEquals("c1-nl-add-01", scenarios.get(0).label());
         assertEquals("from_text", scenarios.get(0).entry());
-        assertEquals("success", scenarios.get(0).expected().outcome());
-        assertEquals("add-from-data", scenarios.get(1).label());
+        assertEquals("success", scenarios.get(0).expected().server().outcome());
+        assertEquals("c1-data-add-02", scenarios.get(1).label());
         assertEquals("from_data_with_schema", scenarios.get(1).entry());
-        assertEquals("success", scenarios.get(1).expected().outcome());
-        assertEquals("invalid-request", scenarios.get(2).label());
-        assertEquals("from_text", scenarios.get(2).entry());
-        assertEquals("validation_semantic_rejected", scenarios.get(2).expected().outcome());
+        assertEquals("success", scenarios.get(1).expected().server().outcome());
+        assertEquals("a1-nl-01", scenarios.get(5).label());
+        assertEquals("slot_validation_error", scenarios.get(5).expected().client().outcome());
+        assertEquals(null, scenarios.get(5).expected().server());
     }
 
     @Test

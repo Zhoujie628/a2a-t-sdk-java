@@ -8,11 +8,14 @@ import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 /**
  * Immutable configuration item for a single demo scenario.
  *
+ * <p>The expected outcome is staged: {@link ClientExpected} asserts the client SDK behaviour (generation
+ * failure with slot errors, or the exact rendered prompt text), {@link ServerExpected} asserts the server
+ * SDK behaviour (validation outcome, slot-level error details and the extracted parameters).
+ *
  * @param label human-readable scenario label
  * @param entry client entry point ({@code from_text} or {@code from_data_with_schema})
  * @param input scenario input data
- * @param expected expected outcome carrying the outcome code, expected filled params, expected prompt
- *     text and expected slot-level error details
+ * @param expected staged expected outcome
  * @since 2026-08
  */
 public record AuthzScenario(String label, String entry, Map<String, Object> input, AuthzExpected expected) {
@@ -21,10 +24,15 @@ public record AuthzScenario(String label, String entry, Map<String, Object> inpu
     static final String FROM_DATA_WITH_SCHEMA = "from_data_with_schema";
     static final String EXPECTED_SUCCESS = "success";
 
-    static final Set<String> VALID_OUTCOMES = Set.of(
+    static final Set<String> VALID_SERVER_OUTCOMES = Set.of(
             EXPECTED_SUCCESS,
-            A2ATErrorCodes.SLOT_VALIDATION_ERROR,
             A2ATErrorCodes.VALIDATION_SEMANTIC_REJECTED,
+            A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR,
+            A2ATErrorCodes.VALIDATION_PROMPT_RESOURCE_NOT_FOUND,
+            A2ATErrorCodes.LLM_INVOCATION_FAILED);
+
+    static final Set<String> VALID_CLIENT_OUTCOMES = Set.of(
+            A2ATErrorCodes.SLOT_VALIDATION_ERROR,
             A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR,
             A2ATErrorCodes.VALIDATION_PROMPT_RESOURCE_NOT_FOUND,
             A2ATErrorCodes.LLM_INVOCATION_FAILED,
@@ -34,21 +42,36 @@ public record AuthzScenario(String label, String entry, Map<String, Object> inpu
             A2ATErrorCodes.PROMPT_RESOURCE_LOAD_ERROR);
 
     /**
-     * Expected outcome for a scenario.
+     * Staged expected outcome of one scenario.
      *
-     * @param outcome expected outcome code ({@code success} or a specific {@code A2ATErrorCodes} value)
-     * @param filledParams expected slot values extracted by the server; may be {@code null} for error
-     *     scenarios or when no param comparison is needed
-     * @param promptText expected rendered prompt text from the client SDK; may be {@code null} for
-     *     error scenarios
+     * @param client client-stage expectation; a non-null client outcome declares an expected generation
+     *     failure (in which case {@code server} must be {@code null}), a null client outcome declares an
+     *     expected successful generation whose {@code promptText} is asserted
+     * @param server server-stage expectation; {@code null} when the client stage is expected to fail
+     */
+    public record AuthzExpected(ClientExpected client, ServerExpected server) {}
+
+    /**
+     * Client-stage expectation.
+     *
+     * @param outcome expected client failure code; {@code null} means generation is expected to succeed
+     * @param promptText expected rendered prompt text; asserted with trailing-whitespace-insensitive
+     *     equality when {@code outcome} is {@code null}
+     * @param slotErrors expected per-slot error details of the failed generation; may be {@code null} or
+     *     empty when only the outcome code matters
+     */
+    public record ClientExpected(String outcome, String promptText, List<SlotErrorExpectation> slotErrors) {}
+
+    /**
+     * Server-stage expectation.
+     *
+     * @param outcome expected server outcome code ({@code success} or {@code validation_semantic_rejected})
      * @param slotErrors expected per-slot error details; may be {@code null} or empty when only the
      *     outcome code matters
+     * @param params expected extracted parameters; asserted as a subset match (recursive over maps and
+     *     ordered lists) and only meaningful when {@code outcome} is {@code success}
      */
-    public record AuthzExpected(
-            String outcome,
-            Map<String, Object> filledParams,
-            String promptText,
-            List<SlotErrorExpectation> slotErrors) {}
+    public record ServerExpected(String outcome, List<SlotErrorExpectation> slotErrors, Map<String, Object> params) {}
 
     /**
      * Expected error detail for a single slot.
@@ -71,12 +94,28 @@ public record AuthzScenario(String label, String entry, Map<String, Object> inpu
         if (scenario.input == null) {
             throw new IllegalArgumentException("input must not be null");
         }
-        if (scenario.expected == null) {
-            throw new IllegalArgumentException("expected must not be null");
+        if (scenario.expected == null || scenario.expected.client() == null) {
+            throw new IllegalArgumentException("expected.client must not be null");
         }
-        String outcome = scenario.expected.outcome();
-        if (outcome == null || !VALID_OUTCOMES.contains(outcome)) {
-            throw new IllegalArgumentException("Invalid expected outcome: " + outcome);
+        ClientExpected client = scenario.expected.client();
+        ServerExpected server = scenario.expected.server();
+        if (client.outcome() != null) {
+            if (!VALID_CLIENT_OUTCOMES.contains(client.outcome())) {
+                throw new IllegalArgumentException("Invalid expected client outcome: " + client.outcome());
+            }
+            if (server != null) {
+                throw new IllegalArgumentException("expected.server must be null when expected.client.outcome is set");
+            }
+        } else {
+            if (client.promptText() == null || client.promptText().isBlank()) {
+                throw new IllegalArgumentException("expected.client.promptText must be non-blank when client outcome is not set");
+            }
+            if (server == null || server.outcome() == null || !VALID_SERVER_OUTCOMES.contains(server.outcome())) {
+                throw new IllegalArgumentException(
+                        "expected.server.outcome must be one of " + VALID_SERVER_OUTCOMES
+                                + " when client succeeds");
+            }
+            // server.params on a non-success outcome is documentation-only (not asserted), mirroring the probe.
         }
         if (!FROM_TEXT.equals(scenario.entry) && !FROM_DATA_WITH_SCHEMA.equals(scenario.entry)) {
             throw new IllegalArgumentException("Invalid entry: " + scenario.entry);
