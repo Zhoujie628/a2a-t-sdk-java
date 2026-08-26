@@ -23,6 +23,7 @@ import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -43,9 +44,17 @@ class ValidateAndFillingDataPipelineTest {
 
     private static final String SESSION_ID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final NegotiationContext CONTEXT = new NegotiationContext(SESSION_ID, 2, 5);
+    private static final NegotiationContext CONTEXT =
+            new NegotiationContext(SESSION_ID, 2, 5, NegotiationPerformative.PROPOSE);
 
-    private static final NegotiationContext TARGET_CONTEXT = new NegotiationContext(SESSION_ID, 1, 5);
+    private static final NegotiationContext TARGET_CONTEXT =
+            new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE);
+
+    private static final NegotiationContext ACCEPT_CONTEXT =
+            new NegotiationContext(SESSION_ID, 2, 5, NegotiationPerformative.ACCEPT);
+
+    private static final NegotiationContext REJECT_CONTEXT =
+            new NegotiationContext(SESSION_ID, 2, 5, NegotiationPerformative.REJECT);
 
     private static final TemplateUri INFORMATION_PROPOSE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE;
 
@@ -95,8 +104,8 @@ class ValidateAndFillingDataPipelineTest {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(llm);
         String message = informationEndingMessage(orchestrator, NegotiationConclusion.ACCEPT);
 
-        FilledParamData filled =
-                orchestrator.validateAcceptPromptAndDataFilling(message, CONTEXT, ACCESS_PORT_SCHEMA, INFORMATION_ACCEPT_REJECT_URI);
+        FilledParamData filled = orchestrator.validateAcceptPromptAndDataFilling(
+                message, ACCEPT_CONTEXT, ACCESS_PORT_SCHEMA, INFORMATION_ACCEPT_REJECT_URI);
 
         assertEquals(1, llm.calls);
         assertEquals(SESSION_ID, filled.data().get("id"));
@@ -114,8 +123,8 @@ class ValidateAndFillingDataPipelineTest {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(llm);
         String message = informationEndingMessage(orchestrator, NegotiationConclusion.REJECT);
 
-        FilledParamData filled =
-                orchestrator.validateRejectPromptAndDataFilling(message, CONTEXT, ACCESS_PORT_SCHEMA, INFORMATION_ACCEPT_REJECT_URI);
+        FilledParamData filled = orchestrator.validateRejectPromptAndDataFilling(
+                message, REJECT_CONTEXT, ACCESS_PORT_SCHEMA, INFORMATION_ACCEPT_REJECT_URI);
 
         assertEquals(1, llm.calls);
         assertEquals(SESSION_ID, filled.data().get("id"));
@@ -423,7 +432,7 @@ class ValidateAndFillingDataPipelineTest {
                 NegotiationParamExtractionException.class,
                 () -> orchestrator.validateProposePromptAndDataFilling(
                         "## 所需信息项\n1. 接入端口名称\n",
-                        new NegotiationContext(SESSION_ID, 1, 5),
+                        new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE),
                         ACCESS_PORT_SCHEMA,
                         INFORMATION_PROPOSE_URI));
 
@@ -470,7 +479,7 @@ class ValidateAndFillingDataPipelineTest {
     private static String informationProposeMessage(NegotiationGenerationOrchestrator orchestrator) {
         MetadataContent content = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(SESSION_ID, 2, 5),
+                        new NegotiationContext(SESSION_ID, 2, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(
                                 List.of(new NegotiationItem("接入端口名称", "P533-珠江旧城-PTN3900-23-TPA1EG24-1")), null)),
                 INFORMATION_PROPOSE_URI);
@@ -480,7 +489,13 @@ class ValidateAndFillingDataPipelineTest {
     private static String informationEndingMessage(
             NegotiationGenerationOrchestrator orchestrator, NegotiationConclusion conclusion) {
         NegotiationEndingData data = new NegotiationEndingData(
-                new NegotiationContext(SESSION_ID, 2, 5),
+                new NegotiationContext(
+                        SESSION_ID,
+                        2,
+                        5,
+                        conclusion == NegotiationConclusion.ACCEPT
+                                ? NegotiationPerformative.ACCEPT
+                                : NegotiationPerformative.REJECT),
                 new InformationEndingContent(
                         conclusion, List.of(new NegotiationItem("接入端口名称", "P533-珠江旧城-PTN3900-23-TPA1EG24-1"))));
         MetadataContent content = conclusion == NegotiationConclusion.ACCEPT
@@ -492,7 +507,7 @@ class ValidateAndFillingDataPipelineTest {
     private static String targetProposeMessage(NegotiationGenerationOrchestrator orchestrator) {
         MetadataContent content = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(SESSION_ID, 1, 5),
+                        new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE),
                         new TargetProposeContent(
                                 "确认专线质差投诉的时延修复目标调整方案",
                                 List.of(new NegotiationItem("修复意图", "在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内")),

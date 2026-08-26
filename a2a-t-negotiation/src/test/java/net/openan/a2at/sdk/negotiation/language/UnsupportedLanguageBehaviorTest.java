@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
 import net.openan.a2at.sdk.negotiation.resources.DefaultNegotiationTemplateLoader;
@@ -60,7 +60,7 @@ class UnsupportedLanguageBehaviorTest {
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
                 () -> loader.load(
-                        new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "fr-FR")));
+                        new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "fr-FR")));
 
         assertTrue(
                 exception.getMessage().contains("A2AT_LANGUAGE"),

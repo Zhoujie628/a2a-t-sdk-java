@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import org.junit.jupiter.api.BeforeEach;
 import net.openan.a2at.sdk.corpus.Expectation.Metadata;
 import org.junit.jupiter.api.Test;
@@ -154,7 +155,8 @@ class CaseEngineTest {
         assertNotNull(message);
         assertEquals(1, outcome.llmCalls());
         assertEquals(INFORMATION_ACCEPT_REJECT_URI, message.templateUri());
-        assertEquals(new NegotiationContext(SESSION_ID, 2, 5), message.negotiationContext());
+        assertEquals(new NegotiationContext(SESSION_ID, 2, 5, NegotiationPerformative.ACCEPT),
+                message.negotiationContext());
     }
 
     @Test

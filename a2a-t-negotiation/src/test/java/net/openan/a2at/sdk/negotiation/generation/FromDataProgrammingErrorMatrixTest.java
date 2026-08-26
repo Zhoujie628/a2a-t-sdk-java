@@ -18,6 +18,7 @@ import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
@@ -97,7 +98,8 @@ class FromDataProgrammingErrorMatrixTest {
      * as a corpus record.
      */
     private List<MatrixRow> matrix() {
-        NegotiationContext context = new NegotiationContext(UUID, 2, 5);
+        NegotiationContext context = new NegotiationContext(UUID, 2, 5, NegotiationPerformative.PROPOSE);
+        NegotiationContext acceptContext = new NegotiationContext(UUID, 2, 5, NegotiationPerformative.ACCEPT);
         return List.of(
                 new MatrixRow(
                         "null propose data",
@@ -112,7 +114,7 @@ class FromDataProgrammingErrorMatrixTest {
                 new MatrixRow(
                         "accept method with null conclusion",
                         () -> orchestrator.generateAcceptFromData(
-                                new NegotiationEndingData(context, new TargetEndingContent(null, "intent", null)),
+                                new NegotiationEndingData(acceptContext, new TargetEndingContent(null, "intent", null)),
                                 TARGET_ACCEPT_URI),
                         NullPointerException.class,
                         "conclusion must not be null"),
@@ -150,7 +152,7 @@ class FromDataProgrammingErrorMatrixTest {
                         "feasibility ending with blank summary",
                         () -> orchestrator.generateAcceptFromData(
                                 new NegotiationEndingData(
-                                        context, new FeasibilityEndingContent(NegotiationConclusion.ACCEPT, " ")),
+                                        acceptContext, new FeasibilityEndingContent(NegotiationConclusion.ACCEPT, " ")),
                                 FEASIBILITY_ACCEPT_URI),
                         IllegalArgumentException.class,
                         "must not be blank"),

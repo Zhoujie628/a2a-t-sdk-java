@@ -11,8 +11,8 @@ import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import org.junit.jupiter.api.Test;
@@ -21,13 +21,14 @@ class ParamExtractorTest {
 
     private static final String SESSION_ID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final NegotiationContext CONTEXT = new NegotiationContext(SESSION_ID, 2, 5);
+    private static final NegotiationContext CONTEXT =
+            new NegotiationContext(SESSION_ID, 2, 5, NegotiationPerformative.PROPOSE);
 
     private static final String VALID_ZH_PROMPT = "## 所需信息项\n"
             + "1. 节能区域信息：请提供真实存在的区域\n";
 
     private static final NegotiationReference REFERENCE =
-            new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN");
+            new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN");
 
     private static final int MAX_ATTEMPTS = 1;
 
@@ -64,7 +65,12 @@ class ParamExtractorTest {
         complianceChecker.result = new NegotiationRuleCheckResult(true, List.of());
         semanticValidator.result = new SemanticValidationResult(true, "information", List.of(), Map.of());
 
-        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, new NegotiationContext(SESSION_ID, 3, 7), Map.of(), REFERENCE, TEMPLATE_CONTENT);
+        FilledParamData filled = extractor.extract(
+                VALID_ZH_PROMPT,
+                new NegotiationContext(SESSION_ID, 3, 7, NegotiationPerformative.PROPOSE),
+                Map.of(),
+                REFERENCE,
+                TEMPLATE_CONTENT);
 
         assertTrue(filled.data().get("round") instanceof Integer);
         assertTrue(filled.data().get("maxRounds") instanceof Integer);

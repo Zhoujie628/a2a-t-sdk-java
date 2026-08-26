@@ -9,18 +9,19 @@ import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
-import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
+import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
@@ -131,34 +132,36 @@ public final class NegotiationGoldenCases {
     private NegotiationGoldenCases() {}
 
     /**
-     * Returns the default fixture context: round 2 of at most 5 rounds.
+     * Returns the default fixture context: round 2 of at most 5 rounds, carrying the fixture's performative.
      *
+     * @param performative performative of the fixture the context belongs to
      * @return fixed negotiation context of every fixture except the target propose fixture
      */
-    public static NegotiationContext defaultContext() {
-        return new NegotiationContext(SESSION_ID, 2, 5);
+    public static NegotiationContext defaultContext(NegotiationPerformative performative) {
+        return new NegotiationContext(SESSION_ID, 2, 5, performative);
     }
 
     /**
-     * Returns the first-round fixture context used by the target propose fixture.
+     * Returns the first-round fixture context used by the target propose fixture, carrying the fixture's performative.
      *
+     * @param performative performative of the fixture the context belongs to
      * @return fixed negotiation context of round 1 of at most 5 rounds
      */
-    public static NegotiationContext firstRoundContext() {
-        return new NegotiationContext(SESSION_ID, 1, 5);
+    public static NegotiationContext firstRoundContext(NegotiationPerformative performative) {
+        return new NegotiationContext(SESSION_ID, 1, 5, performative);
     }
 
-    /** One golden fixture case: one negotiation type, phase, fixed context, fixed content and its template URI. */
+    /** One golden fixture case: one negotiation type, performative, fixed context, fixed content and its template URI. */
     public enum GoldenCase {
 
         /**
          * Information propose fixture of the complaint diagnosis loop: the OMC asks the workbench for the missing
          * access port name and complaint category, plus an optional null-value private line service identifier.
          */
-        INFORMATION_PROPOSE(NegotiationPhase.PROPOSE, "information-negotiation", "information_propose") {
+        INFORMATION_PROPOSE(NegotiationPerformative.PROPOSE, "information-negotiation", "information_propose") {
             @Override
             public NegotiationContext context() {
-                return NegotiationGoldenCases.defaultContext();
+                return NegotiationGoldenCases.defaultContext(performative());
             }
 
             @Override
@@ -187,10 +190,10 @@ public final class NegotiationGoldenCases {
          * Target propose fixture of round 1: the workbench and the OMC clarify the latency repair target and the
          * completion deadline of the quality degradation complaint.
          */
-        TARGET_PROPOSE(NegotiationPhase.PROPOSE, "target-negotiation", "target_propose") {
+        TARGET_PROPOSE(NegotiationPerformative.PROPOSE, "target-negotiation", "target_propose") {
             @Override
             public NegotiationContext context() {
-                return NegotiationGoldenCases.firstRoundContext();
+                return NegotiationGoldenCases.firstRoundContext(performative());
             }
 
             @Override
@@ -234,10 +237,10 @@ public final class NegotiationGoldenCases {
          * Feasibility propose fixture requesting a feasibility evaluation of the access port bandwidth expansion
          * against the cutover window constraint.
          */
-        FEASIBILITY_PROPOSE(NegotiationPhase.PROPOSE, "feasibility-negotiation", "feasibility_propose") {
+        FEASIBILITY_PROPOSE(NegotiationPerformative.PROPOSE, "feasibility-negotiation", "feasibility_propose") {
             @Override
             public NegotiationContext context() {
-                return NegotiationGoldenCases.defaultContext();
+                return NegotiationGoldenCases.defaultContext(performative());
             }
 
             @Override
@@ -269,7 +272,7 @@ public final class NegotiationGoldenCases {
         },
 
         /** Information accept fixture delivering the access port name and the complaint category. */
-        INFORMATION_ACCEPT(NegotiationPhase.ACCEPT, "information-negotiation", "information_accept") {
+        INFORMATION_ACCEPT(NegotiationPerformative.ACCEPT, "information-negotiation", "information_accept") {
             @Override
             public NegotiationContent content(String language) {
                 if (NegotiationGoldenCases.EN_US.equals(language)) {
@@ -290,7 +293,7 @@ public final class NegotiationGoldenCases {
         },
 
         /** Target accept fixture carrying the finally confirmed latency repair target. */
-        TARGET_ACCEPT(NegotiationPhase.ACCEPT, "target-negotiation", "target_accept") {
+        TARGET_ACCEPT(NegotiationPerformative.ACCEPT, "target-negotiation", "target_accept") {
             @Override
             public NegotiationContent content(String language) {
                 if (NegotiationGoldenCases.EN_US.equals(language)) {
@@ -309,7 +312,7 @@ public final class NegotiationGoldenCases {
         },
 
         /** Feasibility accept fixture confirming a positive port expansion assessment in the exception slot. */
-        FEASIBILITY_ACCEPT(NegotiationPhase.ACCEPT, "feasibility-negotiation", "feasibility_accept") {
+        FEASIBILITY_ACCEPT(NegotiationPerformative.ACCEPT, "feasibility-negotiation", "feasibility_accept") {
             @Override
             public NegotiationContent content(String language) {
                 if (NegotiationGoldenCases.EN_US.equals(language)) {
@@ -326,7 +329,7 @@ public final class NegotiationGoldenCases {
         },
 
         /** Information reject fixture stating that the access port name cannot be provided. */
-        INFORMATION_REJECT(NegotiationPhase.REJECT, "information-negotiation", "information_reject") {
+        INFORMATION_REJECT(NegotiationPerformative.REJECT, "information-negotiation", "information_reject") {
             @Override
             public NegotiationContent content(String language) {
                 if (NegotiationGoldenCases.EN_US.equals(language)) {
@@ -344,7 +347,7 @@ public final class NegotiationGoldenCases {
         },
 
         /** Target reject fixture carrying the failure reason of the unclarified latency target. */
-        TARGET_REJECT(NegotiationPhase.REJECT, "target-negotiation", "target_reject") {
+        TARGET_REJECT(NegotiationPerformative.REJECT, "target-negotiation", "target_reject") {
             @Override
             public NegotiationContent content(String language) {
                 if (NegotiationGoldenCases.EN_US.equals(language)) {
@@ -360,7 +363,7 @@ public final class NegotiationGoldenCases {
         },
 
         /** Feasibility reject fixture confirming a negative port expansion assessment in the exception slot. */
-        FEASIBILITY_REJECT(NegotiationPhase.REJECT, "feasibility-negotiation", "feasibility_reject") {
+        FEASIBILITY_REJECT(NegotiationPerformative.REJECT, "feasibility-negotiation", "feasibility_reject") {
             @Override
             public NegotiationContent content(String language) {
                 if (NegotiationGoldenCases.EN_US.equals(language)) {
@@ -377,7 +380,7 @@ public final class NegotiationGoldenCases {
         },
 
         /** Common abort fixture terminating the negotiation at the round limit. */
-        ABORT(NegotiationPhase.ABORT, "common", "abort") {
+        ABORT(NegotiationPerformative.ABORT, "common", "abort") {
             @Override
             public NegotiationContent content(String language) {
                 if (NegotiationGoldenCases.EN_US.equals(language)) {
@@ -388,25 +391,25 @@ public final class NegotiationGoldenCases {
             }
         };
 
-        private final NegotiationPhase phase;
+        private final NegotiationPerformative performative;
 
         private final String typeSegment;
 
         private final String fileName;
 
-        GoldenCase(NegotiationPhase phase, String typeSegment, String fileName) {
-            this.phase = phase;
+        GoldenCase(NegotiationPerformative performative, String typeSegment, String fileName) {
+            this.performative = performative;
             this.typeSegment = typeSegment;
             this.fileName = fileName;
         }
 
         /**
-         * Returns the API-level phase of this fixture.
+         * Returns the API-level performative of this fixture.
          *
-         * @return propose, accept or reject phase
+         * @return propose, accept, reject or abort performative
          */
-        public NegotiationPhase phase() {
-            return phase;
+        public NegotiationPerformative performative() {
+            return performative;
         }
 
         /**
@@ -416,7 +419,7 @@ public final class NegotiationGoldenCases {
          */
         public TemplateUri template() {
             return TemplateUri.of(StandardTemplates.NEGOTIATION_EXTENSION_NAME, typeSegment,
-                    phase.uriSegment());
+                    NegotiationReference.uriSegmentOf(performative));
         }
 
         /**
@@ -448,7 +451,7 @@ public final class NegotiationGoldenCases {
          * @return fixed negotiation context
          */
         public NegotiationContext context() {
-            return NegotiationGoldenCases.defaultContext();
+            return NegotiationGoldenCases.defaultContext(performative);
         }
 
         /**
@@ -460,14 +463,14 @@ public final class NegotiationGoldenCases {
         public abstract NegotiationContent content(String language);
 
         /**
-         * Generates this fixture through one orchestrator, using the from-data method of the fixture phase.
+         * Generates this fixture through one orchestrator, using the from-data method of the fixture performative.
          *
          * @param orchestrator orchestrator wired with the resources of the fixture language
          * @param language locale identifier such as {@code zh-CN}; selects the business data language
          * @return generated metadata content of this fixture
          */
         public MetadataContent generate(NegotiationGenerationOrchestrator orchestrator, String language) {
-            return switch (phase) {
+            return switch (performative) {
                 case PROPOSE -> orchestrator.generateProposeFromData(
                         new NegotiationProposeData(context(), (NegotiationProposeContent) content(language)),
                         template());

@@ -37,7 +37,6 @@ class NegotiationPackageStructureTest {
                         "NegotiationGenerationException.java",
                         "NegotiationItem.java",
                         "NegotiationParamExtractionException.java",
-                        "NegotiationPhase.java",
                         "NegotiationProcessingException.java",
                         "NegotiationProposeContent.java",
                         "NegotiationProposeData.java",

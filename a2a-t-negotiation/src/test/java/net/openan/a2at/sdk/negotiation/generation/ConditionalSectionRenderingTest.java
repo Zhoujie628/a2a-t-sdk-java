@@ -10,6 +10,7 @@ import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
@@ -45,7 +46,7 @@ class ConditionalSectionRenderingTest {
         String promptText = orchestrator
                 .generateProposeFromData(
                         new NegotiationProposeData(
-                                new NegotiationContext(UUID, 1, 5),
+                                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                                 new FeasibilityProposeContent(
                                         "Please assess the adjusted rate target.",
                                         NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
@@ -66,7 +67,7 @@ class ConditionalSectionRenderingTest {
         String promptText = orchestrator
                 .generateProposeFromData(
                         new NegotiationProposeData(
-                                new NegotiationContext(UUID, 2, 5),
+                                new NegotiationContext(UUID, 2, 5, NegotiationPerformative.PROPOSE),
                                 new FeasibilityProposeContent(
                                         "The rate target is infeasible; a proposal follows.",
                                         NegotiationAction.PROPOSE_ALTERNATIVE_ON_FAILURE,
@@ -88,7 +89,7 @@ class ConditionalSectionRenderingTest {
         String promptText = orchestrator
                 .generateProposeFromData(
                         new NegotiationProposeData(
-                                new NegotiationContext(UUID, 1, 5),
+                                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                                 new TargetProposeContent(
                                         "Clarify the intent of the energy-saving task.",
                                         List.of(new NegotiationItem("task intent", "energy-saving optimization")),
@@ -109,7 +110,7 @@ class ConditionalSectionRenderingTest {
         String promptText = orchestrator
                 .generateProposeFromData(
                         new NegotiationProposeData(
-                                new NegotiationContext(UUID, 3, 5),
+                                new NegotiationContext(UUID, 3, 5, NegotiationPerformative.PROPOSE),
                                 new TargetProposeContent(
                                         "Clarify the intent of the energy-saving task.",
                                         null,
@@ -130,7 +131,7 @@ class ConditionalSectionRenderingTest {
         String withoutClarification = orchestrator
                 .generateProposeFromData(
                         new NegotiationProposeData(
-                                new NegotiationContext(UUID, 1, 5),
+                                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                                 new TargetProposeContent(
                                         "Confirm the understood intent of the energy-saving task.",
                                         List.of(new NegotiationItem("task intent", "energy-saving optimization")),
@@ -143,7 +144,7 @@ class ConditionalSectionRenderingTest {
         String withClarification = orchestrator
                 .generateProposeFromData(
                         new NegotiationProposeData(
-                                new NegotiationContext(UUID, 1, 5),
+                                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                                 new TargetProposeContent(
                                         "Confirm the understood intent of the energy-saving task.",
                                         List.of(new NegotiationItem("task intent", "energy-saving optimization")),

@@ -14,6 +14,7 @@ import net.jqwik.api.Provide;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -137,8 +138,9 @@ class ErrorCodePartitionPropertyTest {
 
             @Override
             FailureOutcome run(String language, NegotiationContext context) {
-                NegotiationContext overBudget =
-                        new NegotiationContext(context.id(), context.maxRounds() + 1, context.maxRounds());
+                // The over-budget context is the incoming context of the propose message being validated.
+                NegotiationContext overBudget = new NegotiationContext(
+                        context.id(), context.maxRounds() + 1, context.maxRounds(), NegotiationPerformative.PROPOSE);
                 ScriptedNegotiationLlmClient llm = ScriptedNegotiationLlmClient.assertionOnly();
                 NegotiationContentService service = PropertyHarness.service(language, llm);
                 A2ATError error = assertThrows(

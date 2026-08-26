@@ -19,6 +19,7 @@ import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
@@ -86,7 +87,7 @@ class TaskPromptNegotiationCoexistenceTest {
 
         MetadataContent negotiationMessage = server.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_TEMPLATE);
         assertEquals(INFORMATION_PROPOSE_URI, negotiationMessage.templateUri());
@@ -106,7 +107,7 @@ class TaskPromptNegotiationCoexistenceTest {
 
         MetadataContent negotiationMessage = server.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 2, 5),
+                        new NegotiationContext(UUID, 2, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_TEMPLATE);
         assertEquals(2, negotiationMessage.negotiationContext().round());

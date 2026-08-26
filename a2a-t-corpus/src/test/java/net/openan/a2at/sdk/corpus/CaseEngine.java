@@ -19,12 +19,12 @@ import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationContentService;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
@@ -221,7 +221,8 @@ public final class CaseEngine {
         }
         for (String fragment : expect.messageContains()) {
             String message = failure.getMessage();
-            if (message == null || !message.contains(fragment)) {
+            if (message == null
+                    || !(message.contains(fragment) || message.contains(performativeWording(fragment)))) {
                 fail(
                         testCase,
                         "$.expect.messageContains",
@@ -288,7 +289,9 @@ public final class CaseEngine {
                         message.templateUri());
             }
             if (Boolean.TRUE.equals(expect.metadata().contextEcho())) {
-                NegotiationContext expectedContext = toContext(testCase.context());
+                // The input context is built with the performative of the case's API, so it equals the emitted context
+                // the generation pipeline stamped with the performative of the addressed template.
+                NegotiationContext expectedContext = toContext(testCase.context(), testCase.api());
                 if (!Objects.equals(expectedContext, message.negotiationContext())) {
                     fail(
                             testCase,
@@ -476,6 +479,21 @@ public final class CaseEngine {
                     "exactly the three entries <extensionUri, templateUri, negotiationContext>",
                     String.valueOf(metadata.keySet()));
         }
+        NegotiationPerformative performative = performativeOf(testCase.api());
+        Object nested = metadata.get(MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY);
+        if (!(nested instanceof Map<?, ?> context)
+                || context.size() != 4
+                || !context.containsKey("id")
+                || !context.containsKey("round")
+                || !context.containsKey("maxRounds")
+                || !performative.name().equals(context.get("performative"))) {
+            fail(
+                    testCase,
+                    "$.expect.contracts[metadataTripleShape]",
+                    "the nested negotiation context with exactly <id, round, maxRounds, performative="
+                            + performative.name() + ">",
+                    String.valueOf(nested));
+        }
     }
 
     // ------------------------------------------------------------------ differential (Q17 C+)
@@ -539,24 +557,24 @@ public final class CaseEngine {
 
     private MetadataContent generateFromData(NegotiationContentService service, NegotiationCase testCase) {
         TemplateUri templateUri = parseTemplateUri(testCase);
-        NegotiationContext context = toContext(testCase.context());
+        NegotiationContext context = toContext(testCase.context(), testCase.api());
         JsonNode data = testCase.inputData();
         return switch (testCase.api()) {
             case GENERATE_PROPOSE_FROM_TEXT -> service.generateProposeFromData(
                     (NegotiationProposeData) TypedInputAssembler.assemble(
-                            data, context, templateUri, NegotiationPhase.PROPOSE, testCase.language()),
+                            data, context, templateUri, NegotiationPerformative.PROPOSE, testCase.language()),
                     templateUri);
             case GENERATE_ACCEPT_FROM_TEXT -> service.generateAcceptFromData(
                     (NegotiationEndingData) TypedInputAssembler.assemble(
-                            data, context, templateUri, NegotiationPhase.ACCEPT, testCase.language()),
+                            data, context, templateUri, NegotiationPerformative.ACCEPT, testCase.language()),
                     templateUri);
             case GENERATE_REJECT_FROM_TEXT -> service.generateRejectFromData(
                     (NegotiationEndingData) TypedInputAssembler.assemble(
-                            data, context, templateUri, NegotiationPhase.REJECT, testCase.language()),
+                            data, context, templateUri, NegotiationPerformative.REJECT, testCase.language()),
                     templateUri);
             case GENERATE_ABORT_FROM_TEXT -> service.generateAbortFromData(
                     (NegotiationAbortData) TypedInputAssembler.assemble(
-                            data, context, templateUri, NegotiationPhase.ABORT, testCase.language()),
+                            data, context, templateUri, NegotiationPerformative.ABORT, testCase.language()),
                     templateUri);
             default -> throw new IllegalStateException(
                     "The differential run pairs a from-text API with its from-data twin but got "
@@ -644,7 +662,7 @@ public final class CaseEngine {
             NegotiationCase testCase,
             @Nullable String promptOverride) {
         TemplateUri templateUri = parseTemplateUri(testCase);
-        NegotiationContext context = toContext(testCase.context());
+        NegotiationContext context = toContext(testCase.context(), testCase.api());
         return switch (testCase.api()) {
             case GENERATE_PROPOSE_FROM_TEXT ->
                 service.generateProposeFromText(testCase.inputText(), context, templateUri);
@@ -656,22 +674,22 @@ public final class CaseEngine {
                 service.generateAbortFromText(testCase.inputText(), context, templateUri);
             case GENERATE_PROPOSE_FROM_DATA -> service.generateProposeFromData(
                     (NegotiationProposeData) TypedInputAssembler.assemble(
-                            requireInputData(testCase), context, templateUri, NegotiationPhase.PROPOSE,
+                            requireInputData(testCase), context, templateUri, NegotiationPerformative.PROPOSE,
                             testCase.language()),
                     templateUri);
             case GENERATE_ACCEPT_FROM_DATA -> service.generateAcceptFromData(
                     (NegotiationEndingData) TypedInputAssembler.assemble(
-                            requireInputData(testCase), context, templateUri, NegotiationPhase.ACCEPT,
+                            requireInputData(testCase), context, templateUri, NegotiationPerformative.ACCEPT,
                             testCase.language()),
                     templateUri);
             case GENERATE_REJECT_FROM_DATA -> service.generateRejectFromData(
                     (NegotiationEndingData) TypedInputAssembler.assemble(
-                            requireInputData(testCase), context, templateUri, NegotiationPhase.REJECT,
+                            requireInputData(testCase), context, templateUri, NegotiationPerformative.REJECT,
                             testCase.language()),
                     templateUri);
             case GENERATE_ABORT_FROM_DATA -> service.generateAbortFromData(
                     (NegotiationAbortData) TypedInputAssembler.assemble(
-                            requireInputData(testCase), context, templateUri, NegotiationPhase.ABORT,
+                            requireInputData(testCase), context, templateUri, NegotiationPerformative.ABORT,
                             testCase.language()),
                     templateUri);
             case VALIDATE_PROPOSE_PROMPT_AND_DATA_FILLING -> service.validateProposePromptAndDataFilling(
@@ -776,8 +794,58 @@ public final class CaseEngine {
         return MAPPER.convertValue(schema, new TypeReference<Map<String, Object>>() {});
     }
 
-    private static @Nullable NegotiationContext toContext(@Nullable ContextSpec spec) {
-        return spec == null ? null : new NegotiationContext(spec.id(), spec.round(), spec.maxRounds());
+    /**
+     * Builds the input context of a case, stamped with the performative of the case's API.
+     *
+     * <p>The generation pipeline stamps the performative of the addressed template onto the emitted context, so an
+     * input context built with the API's performative echoes back unchanged; a validate API receives the message of
+     * exactly that performative, so its input context carries it as well.
+     *
+     * @param spec context spec of the case, or null
+     * @param api API of the case
+     * @return the negotiation context of the spec stamped with the API's performative, or null when the case carries
+     *     no context spec or the task-family API takes no negotiation context
+     */
+    private static @Nullable NegotiationContext toContext(@Nullable ContextSpec spec, NegotiationApi api) {
+        NegotiationPerformative performative = performativeOf(api);
+        if (spec == null || performative == null) {
+            return null;
+        }
+        return new NegotiationContext(spec.id(), spec.round(), spec.maxRounds(), performative);
+    }
+
+    /**
+     * Returns the performative an API addresses: each generation API emits the message of one performative and each
+     * validate API checks the message of one performative, while the task family produces no negotiation message.
+     *
+     * @param api API of the case
+     * @return the performative of the generation and validate families, or null for the task family
+     */
+    private static @Nullable NegotiationPerformative performativeOf(NegotiationApi api) {
+        return switch (api) {
+            case GENERATE_PROPOSE_FROM_TEXT, GENERATE_PROPOSE_FROM_DATA, VALIDATE_PROPOSE_PROMPT_AND_DATA_FILLING ->
+                NegotiationPerformative.PROPOSE;
+            case GENERATE_ACCEPT_FROM_TEXT, GENERATE_ACCEPT_FROM_DATA, VALIDATE_ACCEPT_PROMPT_AND_DATA_FILLING ->
+                NegotiationPerformative.ACCEPT;
+            case GENERATE_REJECT_FROM_TEXT, GENERATE_REJECT_FROM_DATA, VALIDATE_REJECT_PROMPT_AND_DATA_FILLING ->
+                NegotiationPerformative.REJECT;
+            case GENERATE_ABORT_FROM_TEXT, GENERATE_ABORT_FROM_DATA, VALIDATE_ABORT_PROMPT_AND_DATA_FILLING ->
+                NegotiationPerformative.ABORT;
+            default -> null;
+        };
+    }
+
+    /**
+     * Rewrites the pre-rename wording of the frozen corpus fixtures: the case JSON files still say
+     * {@code expected phase}, while the orchestrator's reference-resolution error has said
+     * {@code expected performative} since the {@code phase} to {@code performative} rename. The corpus case JSON
+     * files are frozen by policy, so the harness translates the legacy fragment instead of the fixtures.
+     *
+     * @param fragment message fragment declared by a frozen case fixture
+     * @return the fragment with the legacy wording translated to the current one
+     */
+    private static String performativeWording(String fragment) {
+        return fragment.replace("expected phase", "expected performative");
     }
 
     // ------------------------------------------------------------------ helpers

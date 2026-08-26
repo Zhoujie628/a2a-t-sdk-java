@@ -18,6 +18,7 @@ import net.openan.a2at.sample.subscribe_incident.client.runtime.DefaultSampleCli
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import org.a2aproject.sdk.client.ClientEvent;
 import org.a2aproject.sdk.client.transport.spi.interceptors.ClientCallContext;
 import org.a2aproject.sdk.spec.Message;
@@ -39,7 +40,8 @@ public final class NegotiationClientMain {
             NegotiationMockLlmInstaller.install();
         }
         A2ATClient client = new A2ATClient(envPath);
-        NegotiationContext context = new NegotiationContext(UUID.randomUUID().toString(), 1, 3);
+        NegotiationContext context =
+                new NegotiationContext(UUID.randomUUID().toString(), 1, 3, NegotiationPerformative.PROPOSE);
         MetadataContent propose = client.generateNegotiationProposePromptFromText(
                 NegotiationScenarioLoader.load().proposeText(), context, NegotiationSampleFlow.PROPOSE_TEMPLATE_URI);
         Message message = Message.builder()

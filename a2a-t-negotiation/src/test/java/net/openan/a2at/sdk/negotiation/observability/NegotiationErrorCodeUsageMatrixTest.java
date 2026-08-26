@@ -20,6 +20,7 @@ import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -51,7 +52,8 @@ class NegotiationErrorCodeUsageMatrixTest {
 
     private static final Map<String, Object> SCHEMA = Map.of("type", "object");
 
-    private static final NegotiationContext CONTEXT = new NegotiationContext(UUID, 1, 5);
+    private static final NegotiationContext CONTEXT =
+            new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE);
 
     @TestFactory
     Stream<DynamicTest> everyErrorCodeRowOfTheMatrixBehavesAsPinned() {
@@ -78,7 +80,9 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .maxAttempts(2)
                                 .build()
                                 .generateProposeFromText(
-                                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI),
+                                        "请提供节能区域。",
+                                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                                        INFORMATION_PROPOSE_URI),
                         NegotiationGenerationException.class,
                         A2ATErrorCodes.NEGOTIATION_CONTENT_EXTRACT_FAILED),
                 row(
@@ -91,7 +95,9 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .maxAttempts(3)
                                 .build()
                                 .generateProposeFromText(
-                                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI),
+                                        "请提供节能区域。",
+                                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                                        INFORMATION_PROPOSE_URI),
                         NegotiationGenerationException.class,
                         A2ATErrorCodes.NEGOTIATION_SLOT_MISSING),
                 row(
@@ -104,7 +110,9 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .maxAttempts(3)
                                 .build()
                                 .generateAcceptFromText(
-                                        "确认提供区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_ENDING_URI),
+                                        "确认提供区域。",
+                                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.ACCEPT),
+                                        INFORMATION_ENDING_URI),
                         NegotiationGenerationException.class,
                         A2ATErrorCodes.NEGOTIATION_INVALID_INPUT),
                 row(
@@ -117,7 +125,9 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .maxAttempts(2)
                                 .build()
                                 .generateProposeFromText(
-                                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI),
+                                        "请提供节能区域。",
+                                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                                        INFORMATION_PROPOSE_URI),
                         NegotiationGenerationException.class,
                         A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR),
                 row(
@@ -142,7 +152,7 @@ class NegotiationErrorCodeUsageMatrixTest {
                                 .build()
                                 .validateProposePromptAndDataFilling(
                                         "## 所需信息项\n1. 区域\n",
-                                        new NegotiationContext(UUID, 9, 5),
+                                        new NegotiationContext(UUID, 9, 5, NegotiationPerformative.PROPOSE),
                                         SCHEMA,
                                         INFORMATION_PROPOSE_URI),
                         NegotiationParamExtractionException.class,
@@ -305,7 +315,7 @@ class NegotiationErrorCodeUsageMatrixTest {
 
     private static NegotiationProposeData proposeData() {
         return new NegotiationProposeData(
-                new NegotiationContext(UUID, 1, 5),
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                 new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null));
     }
 

@@ -3,6 +3,7 @@ package net.openan.a2at.sdk.negotiation.generation;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
@@ -11,7 +12,6 @@ import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
@@ -63,10 +63,10 @@ final class NegotiationGeneratorRegistry {
      *     not match the negotiation type, or an ending content carries a conclusion that does not match the phase
      */
     public NegotiationGenerator resolve(
-            @Nullable NegotiationType type, NegotiationPhase phase, NegotiationContent content) {
+            @Nullable NegotiationType type, NegotiationPerformative phase, NegotiationContent content) {
         Objects.requireNonNull(phase, "Negotiation phase must not be null.");
         Objects.requireNonNull(content, "Negotiation content must not be null.");
-        if (phase == NegotiationPhase.ABORT) {
+        if (phase == NegotiationPerformative.ABORT) {
             if (type != null) {
                 throw new IllegalArgumentException(
                         "The ABORT phase is type-independent and must not carry a type but carried " + type + ".");
@@ -77,11 +77,11 @@ final class NegotiationGeneratorRegistry {
                                 + ".");
             }
             LOGGER.atDebug()
-                    .log("negotiation_generator_dispatched generator=AbortGenerator type=common phase=ABORT");
+                    .log("negotiation_generator_dispatched generator=AbortGenerator type=common performative=ABORT");
             return abortGenerator;
         }
         Objects.requireNonNull(type, "Negotiation type must not be null for the " + phase + " phase.");
-        boolean proposePhase = phase == NegotiationPhase.PROPOSE;
+        boolean proposePhase = phase == NegotiationPerformative.PROPOSE;
         boolean proposeContent = content instanceof NegotiationProposeContent;
         if (proposePhase != proposeContent) {
             throw new IllegalArgumentException(
@@ -105,19 +105,20 @@ final class NegotiationGeneratorRegistry {
                     "No negotiation generator is registered for type " + type + " and phase " + phase + ".");
         }
         LOGGER.atDebug().log(
-                "negotiation_generator_dispatched generator={} type={} phase={}",
+                "negotiation_generator_dispatched generator={} type={} performative={}",
                 generator.getClass().getSimpleName(),
                 type,
                 phase);
         return generator;
     }
 
-    private static void requireConclusionMatchesPhase(NegotiationEndingContent content, NegotiationPhase phase) {
+    private static void requireConclusionMatchesPhase(
+            NegotiationEndingContent content, NegotiationPerformative phase) {
         NegotiationConclusion conclusion = Objects.requireNonNull(
                 content.conclusion(),
                 "Negotiation conclusion must not be null; the " + phase + " phase requires a conclusion.");
         NegotiationConclusion expected =
-                phase == NegotiationPhase.ACCEPT ? NegotiationConclusion.ACCEPT : NegotiationConclusion.REJECT;
+                phase == NegotiationPerformative.ACCEPT ? NegotiationConclusion.ACCEPT : NegotiationConclusion.REJECT;
         if (conclusion != expected) {
             throw new IllegalArgumentException(
                     "The " + phase + " phase requires conclusion " + expected.literal() + " but the content carries "

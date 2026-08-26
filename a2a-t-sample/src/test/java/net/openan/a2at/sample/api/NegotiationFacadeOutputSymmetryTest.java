@@ -30,7 +30,7 @@ import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
@@ -106,6 +106,10 @@ class NegotiationFacadeOutputSymmetryTest {
                 assertEquals(clientResult, serverResult, "case " + symmetryCase.label() + " [" + language + "]");
                 assertEquals(clientResult.buildMetadataContent(), serverResult.buildMetadataContent());
                 assertEquals(symmetryCase.templateUri().uri(), clientResult.templateUri());
+                assertEquals(
+                        symmetryCase.performative(),
+                        clientResult.negotiationContext().performative(),
+                        "stamped performative of case " + symmetryCase.label() + " [" + language + "]");
             }
         }
     }
@@ -149,16 +153,17 @@ class NegotiationFacadeOutputSymmetryTest {
 
     /**
      * Builds the nine golden fixture cases of the negotiation module: one fixed typed content, context and template URI
-     * per negotiation type and phase, identical on the client and the server side.
+     * per negotiation type and performative, identical on the client and the server side.
      */
     private static List<SymmetryCase> symmetryCases() {
         return List.of(
                 new SymmetryCase(
                         "information_propose",
-                        NegotiationPhase.PROPOSE,
+                        NegotiationPerformative.PROPOSE,
                         StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE,
                         new NegotiationProposeData(
-                                new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5),
+                                new NegotiationContext(
+                                        "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5, NegotiationPerformative.PROPOSE),
                                 new InformationProposeContent(
                                         List.of(
                                                 new NegotiationItem(
@@ -167,10 +172,11 @@ class NegotiationFacadeOutputSymmetryTest {
                                         "OR"))),
                 new SymmetryCase(
                         "target_propose",
-                        NegotiationPhase.PROPOSE,
+                        NegotiationPerformative.PROPOSE,
                         StandardTemplates.TARGET_NEGOTIATION_PROPOSE,
                         new NegotiationProposeData(
-                                new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 1, 5),
+                                new NegotiationContext(
+                                        "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 1, 5, NegotiationPerformative.PROPOSE),
                                 new TargetProposeContent(
                                         "Clarify the intent of the energy-saving task.",
                                         List.of(new NegotiationItem("task intent", "energy-saving optimization")),
@@ -178,10 +184,11 @@ class NegotiationFacadeOutputSymmetryTest {
                                         List.of(new NegotiationItem("area", "which site is covered"))))),
                 new SymmetryCase(
                         "feasibility_propose",
-                        NegotiationPhase.PROPOSE,
+                        NegotiationPerformative.PROPOSE,
                         StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE,
                         new NegotiationProposeData(
-                                new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5),
+                                new NegotiationContext(
+                                        "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5, NegotiationPerformative.PROPOSE),
                                 new FeasibilityProposeContent(
                                         "Please assess the adjusted rate target.",
                                         NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
@@ -189,59 +196,62 @@ class NegotiationFacadeOutputSymmetryTest {
                                         null))),
                 endingCase(
                         "information_accept",
-                        NegotiationPhase.ACCEPT,
+                        NegotiationPerformative.ACCEPT,
                         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT,
                         new InformationEndingContent(
                                 NegotiationConclusion.ACCEPT,
                                 List.of(new NegotiationItem("area information", "Songshan Lake")))),
                 endingCase(
                         "target_accept",
-                        NegotiationPhase.ACCEPT,
+                        NegotiationPerformative.ACCEPT,
                         StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT,
                         new TargetEndingContent(NegotiationConclusion.ACCEPT, "The confirmed intent.", null)),
                 endingCase(
                         "feasibility_accept",
-                        NegotiationPhase.ACCEPT,
+                        NegotiationPerformative.ACCEPT,
                         StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT,
                         new FeasibilityEndingContent(NegotiationConclusion.ACCEPT, "The target is achievable.")),
                 endingCase(
                         "information_reject",
-                        NegotiationPhase.REJECT,
+                        NegotiationPerformative.REJECT,
                         StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT,
                         new InformationEndingContent(
                                 NegotiationConclusion.REJECT,
                                 List.of(new NegotiationItem("area information", "not available")))),
                 endingCase(
                         "target_reject",
-                        NegotiationPhase.REJECT,
+                        NegotiationPerformative.REJECT,
                         StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT,
                         new TargetEndingContent(NegotiationConclusion.REJECT, null, "The intent is unclear.")),
                 endingCase(
                         "feasibility_reject",
-                        NegotiationPhase.REJECT,
+                        NegotiationPerformative.REJECT,
                         StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT,
                         new FeasibilityEndingContent(NegotiationConclusion.REJECT, "The target is not achievable.")));
     }
 
     private static SymmetryCase endingCase(
-            String label, NegotiationPhase phase, TemplateUri templateUri, NegotiationEndingContent content) {
+            String label,
+            NegotiationPerformative performative,
+            TemplateUri templateUri,
+            NegotiationEndingContent content) {
         return new SymmetryCase(
                 label,
-                phase,
+                performative,
                 templateUri,
                 new NegotiationEndingData(
-                        new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5), content));
+                        new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5, performative), content));
     }
 
     /** One symmetry case: a fixed input addressed to one of the three from-data generation methods. */
-    private record SymmetryCase(String label, NegotiationPhase phase, TemplateUri templateUri, Object data) {
+    private record SymmetryCase(String label, NegotiationPerformative performative, TemplateUri templateUri, Object data) {
 
         MetadataContent generate(ProposeGenerator propose, EndingGenerator accept, EndingGenerator reject) {
-            return switch (phase) {
+            return switch (performative) {
                 case PROPOSE -> propose.generate((NegotiationProposeData) data, templateUri);
                 case ACCEPT -> accept.generate((NegotiationEndingData) data, templateUri);
                 case REJECT -> reject.generate((NegotiationEndingData) data, templateUri);
-                case ABORT -> throw new IllegalArgumentException("The symmetry cases carry no abort phase.");
+                case ABORT -> throw new IllegalArgumentException("The symmetry cases carry no abort performative.");
             };
         }
     }

@@ -26,6 +26,7 @@ import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
@@ -103,7 +104,7 @@ class A2ATClientNegotiationEnvConfigTest {
 
         MetadataContent result = client.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE);
 
@@ -115,7 +116,9 @@ class A2ATClientNegotiationEnvConfigTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> client.generateNegotiationProposePromptFromText(
-                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE));
+                        "请提供节能区域。",
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                        INFORMATION_PROPOSE));
         assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, failure.getCode());
         assertEquals(
                 1,
@@ -135,7 +138,7 @@ class A2ATClientNegotiationEnvConfigTest {
 
         MetadataContent result = client.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
                 INFORMATION_PROPOSE);
 
@@ -148,7 +151,7 @@ class A2ATClientNegotiationEnvConfigTest {
                 NegotiationGenerationException.class,
                 () -> client.generateNegotiationProposePromptFromText(
                         "Provide the energy-saving region.",
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         INFORMATION_PROPOSE));
         assertEquals(
                 2,

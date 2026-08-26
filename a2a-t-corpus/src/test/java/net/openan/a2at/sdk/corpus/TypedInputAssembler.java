@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
@@ -17,7 +18,6 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
@@ -32,9 +32,9 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>The corpus carries the typed content in the same snake_case shape the LLM extraction produces
  * (design document §8.2: the case author writes the typed data explicitly), so this assembler only converts that JSON
- * onto the typed content records — it never invents or reconstructs content. Deliberate phase-content contradictions
- * (an {@code Accept} conclusion fed to the reject API) pass through unvalidated so the production from-data validation
- * surfaces them.
+ * onto the typed content records — it never invents or reconstructs content. Deliberate performative-content
+ * contradictions (an {@code Accept} conclusion fed to the reject API) pass through unvalidated so the production
+ * from-data validation surfaces them.
  *
  * <p>A malformed {@code input.data} node is a corpus authoring defect, not a production behavior: the assembler fails
  * with an {@link IllegalStateException} naming the offending field, which no corpus expectation can match by accident.
@@ -51,7 +51,7 @@ final class TypedInputAssembler {
      * @param data typed content in the snake_case corpus shape
      * @param context negotiation context of the case, or null for the null-context probes
      * @param templateUri template URI addressed by the case, or null for the null-URI probes
-     * @param phase API-level phase of the addressed generation method
+     * @param performative performative of the addressed generation method
      * @param language language of the case
      * @return a {@code NegotiationProposeData}, {@code NegotiationEndingData} or {@code NegotiationAbortData}
      */
@@ -59,11 +59,11 @@ final class TypedInputAssembler {
             JsonNode data,
             @Nullable NegotiationContext context,
             @Nullable TemplateUri templateUri,
-            NegotiationPhase phase,
+            NegotiationPerformative performative,
             String language) {
         Objects.requireNonNull(data, "data");
-        NegotiationType type = resolveType(templateUri, phase, language);
-        return switch (phase) {
+        NegotiationType type = resolveType(templateUri, performative, language);
+        return switch (performative) {
             case PROPOSE -> new NegotiationProposeData(context, proposeContent(data, type));
             case ACCEPT, REJECT -> new NegotiationEndingData(context, endingContent(data, type));
             case ABORT -> new NegotiationAbortData(
@@ -75,7 +75,7 @@ final class TypedInputAssembler {
 
     private static NegotiationProposeContent proposeContent(JsonNode data, @Nullable NegotiationType type) {
         if (type == null) {
-            throw authoring("the abort phase carries no typed propose content");
+            throw authoring("the abort performative carries no typed propose content");
         }
         return switch (type) {
             case INFORMATION -> new InformationProposeContent(
@@ -95,7 +95,7 @@ final class TypedInputAssembler {
 
     private static NegotiationEndingContent endingContent(JsonNode data, @Nullable NegotiationType type) {
         if (type == null) {
-            throw authoring("the abort phase carries no typed ending content");
+            throw authoring("the abort performative carries no typed ending content");
         }
         NegotiationConclusion conclusion = conclusion(data);
         return switch (type) {
@@ -108,14 +108,15 @@ final class TypedInputAssembler {
     }
 
     private static NegotiationType resolveType(
-            @Nullable TemplateUri templateUri, NegotiationPhase phase, String language) {
+            @Nullable TemplateUri templateUri, NegotiationPerformative performative, String language) {
         if (templateUri == null) {
             throw authoring("the template URI is missing but the typed input data needs the negotiation type");
         }
-        return NegotiationReference.fromTemplateUri(templateUri, phase, language)
+        return NegotiationReference.fromTemplateUri(templateUri, performative, language)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Template URI does not address a negotiation template of the expected phase "
-                                + phase + " (" + phase.uriSegment() + "): " + templateUri.uri() + "."))
+                        "Template URI does not address a negotiation template of the expected performative "
+                                + performative + " (" + NegotiationReference.uriSegmentOf(performative) + "): "
+                                + templateUri.uri() + "."))
                 .type();
     }
 

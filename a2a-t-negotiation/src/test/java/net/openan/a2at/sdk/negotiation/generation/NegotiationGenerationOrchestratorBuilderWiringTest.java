@@ -22,6 +22,7 @@ import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
@@ -72,7 +73,7 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
 
         MetadataContent result = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_URI);
 
@@ -99,7 +100,7 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
 
             orchestrator.generateProposeFromData(
                     new NegotiationProposeData(
-                            new NegotiationContext(UUID, 1, 5),
+                            new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                             new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                     INFORMATION_PROPOSE_URI);
 
@@ -127,7 +128,7 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
 
         orchestrator.validateProposePromptAndDataFilling(
                 "## 所需信息项\n1. 区域\n",
-                new NegotiationContext(UUID, 1, 5),
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                 Map.of("type", "object"),
                 INFORMATION_PROPOSE_URI);
 
@@ -145,7 +146,7 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
         NegotiationGenerationException generationFailure = org.junit.jupiter.api.Assertions.assertThrows(
                 NegotiationGenerationException.class,
                 () -> generationOrchestrator.generateProposeFromText(
-                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI));
+                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE), INFORMATION_PROPOSE_URI));
         assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, generationFailure.getCode());
         assertEquals(2, generationClient.calls.get(), "generation chain must retry up to the limit");
 
@@ -159,7 +160,7 @@ class NegotiationGenerationOrchestratorBuilderWiringTest {
                 net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException.class,
                 () -> validationOrchestrator.validateProposePromptAndDataFilling(
                         "## 所需信息项\n1. 区域\n",
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI));
         assertEquals(2, semanticClient.calls.get(), "semantic validation chain must retry up to the limit");

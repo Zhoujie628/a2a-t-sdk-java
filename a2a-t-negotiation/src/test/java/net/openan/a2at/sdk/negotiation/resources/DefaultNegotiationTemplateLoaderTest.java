@@ -11,7 +11,7 @@ import java.util.List;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -46,14 +46,14 @@ class DefaultNegotiationTemplateLoaderTest {
     }
 
     @Test
-    void loadReturnsTheCommonAbortTemplateForTheAbortPhase() {
+    void loadReturnsTheCommonAbortTemplateForTheAbortPerformative() {
         DefaultNegotiationTemplateLoader enUsLoader = new DefaultNegotiationTemplateLoader("en-US", null);
         DefaultNegotiationTemplateLoader zhCnLoader = new DefaultNegotiationTemplateLoader("zh-CN", null);
 
         PromptTemplate englishTemplate =
-                enUsLoader.load(new NegotiationReference(null, NegotiationPhase.ABORT, "en-US"));
+                enUsLoader.load(new NegotiationReference(null, NegotiationPerformative.ABORT, "en-US"));
         PromptTemplate chineseTemplate =
-                zhCnLoader.load(new NegotiationReference(null, NegotiationPhase.ABORT, "zh-CN"));
+                zhCnLoader.load(new NegotiationReference(null, NegotiationPerformative.ABORT, "zh-CN"));
 
         assertEquals(StandardTemplates.NEGOTIATION_ABORT, englishTemplate.templateUri());
         assertTrue(englishTemplate.content().startsWith("## Negotiation Result"));
@@ -78,7 +78,7 @@ class DefaultNegotiationTemplateLoaderTest {
         DefaultNegotiationTemplateLoader loader =
                 new DefaultNegotiationTemplateLoader("zh-CN", customRootDir.toString());
 
-        PromptTemplate overridden = loader.load(new NegotiationReference(null, NegotiationPhase.ABORT, "zh-CN"));
+        PromptTemplate overridden = loader.load(new NegotiationReference(null, NegotiationPerformative.ABORT, "zh-CN"));
         assertTrue(overridden.content().contains("自定义终止模板"));
         assertEquals("custom abort", overridden.description());
 
@@ -94,7 +94,7 @@ class DefaultNegotiationTemplateLoaderTest {
         DefaultNegotiationTemplateLoader loader = new DefaultNegotiationTemplateLoader("en-US", null);
 
         PromptTemplate template =
-                loader.load(new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "en-US"));
+                loader.load(new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "en-US"));
 
         assertEquals(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE, template.templateUri());
         assertTrue(template.content().startsWith("## Information Negotiation"));
@@ -106,9 +106,9 @@ class DefaultNegotiationTemplateLoaderTest {
         DefaultNegotiationTemplateLoader enUsLoader = new DefaultNegotiationTemplateLoader("en-US", null);
 
         PromptTemplate englishTemplate = enUsLoader.load(
-                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "en-US"));
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "en-US"));
         PromptTemplate chineseTemplate = zhCnLoader.load(
-                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN"));
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN"));
 
         assertEquals("", englishTemplate.description());
         assertEquals("", chineseTemplate.description());
@@ -129,19 +129,19 @@ class DefaultNegotiationTemplateLoaderTest {
                 new DefaultNegotiationTemplateLoader("zh-CN", customRootDir.toString());
 
         PromptTemplate overridden =
-                loader.load(new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN"));
+                loader.load(new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN"));
         assertTrue(overridden.content().contains("自定义标记内容"));
         assertEquals("custom template", overridden.description());
 
         PromptTemplate untouched =
-                loader.load(new NegotiationReference(NegotiationType.TARGET, NegotiationPhase.PROPOSE, "zh-CN"));
+                loader.load(new NegotiationReference(NegotiationType.TARGET, NegotiationPerformative.PROPOSE, "zh-CN"));
         assertTrue(untouched.content().contains("目标协商概述"));
         assertTrue(!untouched.content().contains("自定义标记内容"));
 
         Files.delete(customTemplatePath);
 
         PromptTemplate fallback =
-                loader.load(new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN"));
+                loader.load(new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN"));
         assertTrue(fallback.content().contains("## 信息协商"));
         assertTrue(!fallback.content().contains("自定义标记内容"));
         assertEquals("", fallback.description());
@@ -176,7 +176,7 @@ class DefaultNegotiationTemplateLoaderTest {
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
                 () -> loader.load(
-                        new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "fr-FR")));
+                        new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "fr-FR")));
 
         assertTrue(exception.getMessage().contains("A2AT_LANGUAGE"));
         assertEquals(List.of(), loader.loadAll());

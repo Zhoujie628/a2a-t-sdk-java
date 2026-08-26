@@ -15,8 +15,8 @@ import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
@@ -371,7 +371,7 @@ class NegotiationGeneratorsTest {
     void endingGeneratorsRenderConclusionLiterals() {
         String infoRendered = new InformationEndingGenerator()
                 .generate(
-                        context(2),
+                        context(2, NegotiationPerformative.ACCEPT),
                         new InformationEndingContent(
                                 NegotiationConclusion.ACCEPT,
                                 List.of(new NegotiationItem("故障发生时间", "2026-08-19 10:30"))),
@@ -383,7 +383,7 @@ class NegotiationGeneratorsTest {
 
         String targetRendered = new TargetEndingGenerator()
                 .generate(
-                        context(2),
+                        context(2, NegotiationPerformative.REJECT),
                         new TargetEndingContent(NegotiationConclusion.REJECT, null, "双方未就速率保障下限达成一致。"),
                         template(StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT, ZH_TARGET_ENDING_TEMPLATE),
                         zhVocabulary);
@@ -537,7 +537,7 @@ class NegotiationGeneratorsTest {
     @Test
     void generatorsRenderAgainstTheBundledTemplates() {
         NegotiationReference reference = NegotiationReference.tryParse(
-                        StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(), NegotiationPhase.PROPOSE, "zh-CN")
+                        StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(), NegotiationPerformative.PROPOSE, "zh-CN")
                 .orElseThrow(() -> new AssertionError("expected the bundled target propose template to resolve"));
         PromptTemplate loaded = new DefaultNegotiationTemplateLoader("zh-CN", null).load(reference);
 
@@ -560,7 +560,11 @@ class NegotiationGeneratorsTest {
     }
 
     private static NegotiationContext context(int round) {
-        return new NegotiationContext(CONTEXT_ID, round, 5);
+        return context(round, NegotiationPerformative.PROPOSE);
+    }
+
+    private static NegotiationContext context(int round, NegotiationPerformative performative) {
+        return new NegotiationContext(CONTEXT_ID, round, 5, performative);
     }
 
     private static PromptTemplate template(TemplateUri templateUri, String content) {

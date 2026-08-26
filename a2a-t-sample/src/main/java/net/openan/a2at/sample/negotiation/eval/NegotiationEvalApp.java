@@ -23,6 +23,7 @@ import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.validation.ContentValidationException;
@@ -328,7 +329,7 @@ public final class NegotiationEvalApp {
             missingItems.add(new NegotiationItem(slot, missingHint(phrasing, properties, slot)));
         }
         NegotiationContext proposeContext = new NegotiationContext(
-                UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
+                UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS, NegotiationPerformative.PROPOSE);
         String proposeInputText = itemsToProposeText(missingItems, phrasing);
         Map<String, Object> proposeGenerationInput = new LinkedHashMap<>();
         if (negotiationFromText) {
@@ -509,7 +510,7 @@ public final class NegotiationEvalApp {
         }
         String acceptPrompt;
         NegotiationContext acceptContext = new NegotiationContext(
-                UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
+                UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS, NegotiationPerformative.ACCEPT);
         String acceptInputText = itemsToAcceptText(filledItems(fills), phrasing);
         Map<String, Object> acceptGenerationInput = new LinkedHashMap<>();
         if (negotiationFromText) {

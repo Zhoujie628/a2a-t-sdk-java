@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
@@ -19,7 +20,6 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
@@ -37,7 +37,7 @@ class NegotiationContentExtractorTest {
         NegotiationContent content = new DefaultNegotiationContentExtractor(llm)
                 .extract(
                         "请提供故障发生时间与受影响小区标识。",
-                        reference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN"));
+                        reference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN"));
 
         InformationProposeContent proposeContent = assertInstanceOf(InformationProposeContent.class, content);
         assertEquals(
@@ -52,7 +52,7 @@ class NegotiationContentExtractorTest {
         assertTrue(llm.lastMessages.get(1).get("content").contains("请提供故障发生时间与受影响小区标识。"));
         assertEquals(
                 new NegotiationJsonSchemaBuilder()
-                        .buildExtractionSchema(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE),
+                        .buildExtractionSchema(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE),
                 llm.lastSchema);
     }
 
@@ -63,7 +63,7 @@ class NegotiationContentExtractorTest {
                                 + "\"intent_understanding\":[{\"name\":\"发起方理解\",\"value\":\"对方希望降低节能力度\"}],"
                                 + "\"alignment_and_clarification\":null,"
                                 + "\"request_for_clarification\":[{\"name\":\"速率保障下限\",\"value\":null}]}"))
-                .extract("请求调整节能目标。", reference(NegotiationType.TARGET, NegotiationPhase.PROPOSE, "en-US"));
+                .extract("请求调整节能目标。", reference(NegotiationType.TARGET, NegotiationPerformative.PROPOSE, "en-US"));
 
         TargetProposeContent proposeContent = assertInstanceOf(TargetProposeContent.class, content);
         assertEquals("请求将节能目标由30%调整为20%。", proposeContent.targetNegotiationDescription());
@@ -78,7 +78,7 @@ class NegotiationContentExtractorTest {
                         "{\"feasibility_negotiation_description\":\"请评估该节能目标能否达成。\",\"action\":\"REQUEST_FEASIBILITY_EVALUATION\","
                                 + "\"contents_to_evaluate\":[{\"name\":\"评估对象\",\"value\":\"停电8小时期间的速率保障\"}],"
                                 + "\"infeasibility_details_and_proposal\":null}"))
-                .extract("请评估。", reference(NegotiationType.FEASIBILITY, NegotiationPhase.PROPOSE, "zh-CN"));
+                .extract("请评估。", reference(NegotiationType.FEASIBILITY, NegotiationPerformative.PROPOSE, "zh-CN"));
 
         FeasibilityProposeContent requestContent = assertInstanceOf(FeasibilityProposeContent.class, request);
         assertEquals(NegotiationAction.REQUEST_FEASIBILITY_EVALUATION, requestContent.action());
@@ -89,7 +89,7 @@ class NegotiationContentExtractorTest {
                                 "{\"feasibility_negotiation_description\":\"目标不可行，提出下调方案。\",\"action\":\"PROPOSE_ALTERNATIVE_ON_FAILURE\","
                                         + "\"contents_to_evaluate\":null,"
                                         + "\"infeasibility_details_and_proposal\":[{\"name\":\"替代提案\",\"value\":\"下调至2Mbps\"}]}"))
-                .extract("不可行。", reference(NegotiationType.FEASIBILITY, NegotiationPhase.PROPOSE, "zh-CN"));
+                .extract("不可行。", reference(NegotiationType.FEASIBILITY, NegotiationPerformative.PROPOSE, "zh-CN"));
 
         FeasibilityProposeContent alternativeContent = assertInstanceOf(FeasibilityProposeContent.class, alternative);
         assertEquals(NegotiationAction.PROPOSE_ALTERNATIVE_ON_FAILURE, alternativeContent.action());
@@ -101,7 +101,7 @@ class NegotiationContentExtractorTest {
     void extractsEndingContentForEveryTypeAndBothPhases() {
         NegotiationContent infoAccept = new DefaultNegotiationContentExtractor(new RecordingClient(
                         "{\"conclusion\":\"Accept\",\"items\":[{\"name\":\"故障发生时间\",\"value\":\"2026-08-19 10:30\"}]}"))
-                .extract("同意提供。", reference(NegotiationType.INFORMATION, NegotiationPhase.ACCEPT, "zh-CN"));
+                .extract("同意提供。", reference(NegotiationType.INFORMATION, NegotiationPerformative.ACCEPT, "zh-CN"));
 
         InformationEndingContent infoEnding = assertInstanceOf(InformationEndingContent.class, infoAccept);
         assertEquals(NegotiationConclusion.ACCEPT, infoEnding.conclusion());
@@ -109,7 +109,7 @@ class NegotiationContentExtractorTest {
 
         NegotiationContent targetReject = new DefaultNegotiationContentExtractor(new RecordingClient(
                         "{\"conclusion\":\"Reject\",\"confirmed_intent\":null,\"failure_reason\":\"双方未达成一致。\"}"))
-                .extract("无法同意。", reference(NegotiationType.TARGET, NegotiationPhase.REJECT, "zh-CN"));
+                .extract("无法同意。", reference(NegotiationType.TARGET, NegotiationPerformative.REJECT, "zh-CN"));
 
         TargetEndingContent targetEnding = assertInstanceOf(TargetEndingContent.class, targetReject);
         assertEquals(NegotiationConclusion.REJECT, targetEnding.conclusion());
@@ -117,7 +117,7 @@ class NegotiationContentExtractorTest {
 
         NegotiationContent feasibilityAccept = new DefaultNegotiationContentExtractor(
                         new RecordingClient("{\"conclusion\":\"Accept\",\"feasibility_summary\":\"同意下调至2Mbps。\"}"))
-                .extract("同意。", reference(NegotiationType.FEASIBILITY, NegotiationPhase.ACCEPT, "zh-CN"));
+                .extract("同意。", reference(NegotiationType.FEASIBILITY, NegotiationPerformative.ACCEPT, "zh-CN"));
 
         assertEquals(
                 "同意下调至2Mbps。",
@@ -126,9 +126,9 @@ class NegotiationContentExtractorTest {
                                 feasibilityAccept)
                         .feasibilitySummary());
 
-        assertEquals("accept", phaseTokenInUserPrompt(NegotiationPhase.ACCEPT));
-        assertEquals("reject", phaseTokenInUserPrompt(NegotiationPhase.REJECT));
-        assertEquals("propose", phaseTokenInUserPrompt(NegotiationPhase.PROPOSE));
+        assertEquals("accept", phaseTokenInUserPrompt(NegotiationPerformative.ACCEPT));
+        assertEquals("reject", phaseTokenInUserPrompt(NegotiationPerformative.REJECT));
+        assertEquals("propose", phaseTokenInUserPrompt(NegotiationPerformative.PROPOSE));
     }
 
     @Test
@@ -139,7 +139,7 @@ class NegotiationContentExtractorTest {
 
         NegotiationGenerationException exception =
                 assertThrows(NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(failing)
-                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
     }
@@ -148,7 +148,7 @@ class NegotiationContentExtractorTest {
     void mapsMissingLlmClientToTheInfrastructureCode() {
         NegotiationGenerationException exception =
                 assertThrows(NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(null)
-                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
     }
@@ -158,21 +158,21 @@ class NegotiationContentExtractorTest {
         NegotiationGenerationException unparseable =
                 assertThrows(NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(
                                 new RecordingClient("这不是 JSON"))
-                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_CONTENT_EXTRACT_FAILED, unparseable.getCode());
 
         NegotiationGenerationException wrongShape =
                 assertThrows(NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(
                                 new RecordingClient("{\"items\":\"不是数组\"}"))
-                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_CONTENT_EXTRACT_FAILED, wrongShape.getCode());
 
         NegotiationGenerationException emptyResponse =
                 assertThrows(NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(
                                 new RecordingClient("  "))
-                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_CONTENT_EXTRACT_FAILED, emptyResponse.getCode());
     }
@@ -182,7 +182,7 @@ class NegotiationContentExtractorTest {
         NegotiationGenerationException missingItems =
                 assertThrows(NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(
                                 new RecordingClient("{\"relationship\":null}"))
-                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SLOT_MISSING, missingItems.getCode());
         assertTrue(missingItems.getMessage().contains("items"));
@@ -191,7 +191,7 @@ class NegotiationContentExtractorTest {
                 NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(new RecordingClient(
                                 "{\"intent_understanding\":null,\"alignment_and_clarification\":null,"
                                         + "\"request_for_clarification\":null}"))
-                        .extract("文本", reference(NegotiationType.TARGET, NegotiationPhase.PROPOSE, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.TARGET, NegotiationPerformative.PROPOSE, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SLOT_MISSING, missingDescription.getCode());
         assertTrue(missingDescription.getMessage().contains("target_negotiation_description"));
@@ -199,7 +199,7 @@ class NegotiationContentExtractorTest {
         NegotiationGenerationException missingConclusion =
                 assertThrows(NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(
                                 new RecordingClient("{\"items\":[]}"))
-                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPhase.ACCEPT, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPerformative.ACCEPT, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SLOT_MISSING, missingConclusion.getCode());
         assertTrue(missingConclusion.getMessage().contains("conclusion"));
@@ -207,7 +207,7 @@ class NegotiationContentExtractorTest {
         NegotiationGenerationException missingConfirmedIntent = assertThrows(
                 NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(new RecordingClient(
                                 "{\"conclusion\":\"Accept\",\"confirmed_intent\":null,\"failure_reason\":null}"))
-                        .extract("文本", reference(NegotiationType.TARGET, NegotiationPhase.ACCEPT, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.TARGET, NegotiationPerformative.ACCEPT, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SLOT_MISSING, missingConfirmedIntent.getCode());
         assertTrue(missingConfirmedIntent.getMessage().contains("confirmed_intent"));
@@ -218,7 +218,7 @@ class NegotiationContentExtractorTest {
         NegotiationGenerationException rejectInAccept =
                 assertThrows(NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(
                                 new RecordingClient("{\"conclusion\":\"Reject\",\"items\":[]}"))
-                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPhase.ACCEPT, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.INFORMATION, NegotiationPerformative.ACCEPT, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, rejectInAccept.getCode());
         assertTrue(rejectInAccept.getMessage().contains("Reject"));
@@ -226,7 +226,7 @@ class NegotiationContentExtractorTest {
         NegotiationGenerationException acceptInReject =
                 assertThrows(NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(
                                 new RecordingClient("{\"conclusion\":\"Accept\",\"feasibility_summary\":\"同意。\"}"))
-                        .extract("文本", reference(NegotiationType.FEASIBILITY, NegotiationPhase.REJECT, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.FEASIBILITY, NegotiationPerformative.REJECT, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, acceptInReject.getCode());
     }
@@ -236,7 +236,7 @@ class NegotiationContentExtractorTest {
         NegotiationGenerationException exception = assertThrows(
                 NegotiationGenerationException.class,
                 () -> new DefaultNegotiationContentExtractor(new RecordingClient("{\"conclusion\":\"Reject\",\"items\":[]}"))
-                        .extract("拒绝，资源查询服务正在检修。", reference(NegotiationType.INFORMATION, NegotiationPhase.REJECT, "zh-CN")));
+                        .extract("拒绝，资源查询服务正在检修。", reference(NegotiationType.INFORMATION, NegotiationPerformative.REJECT, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SLOT_MISSING, exception.getCode());
         assertTrue(exception.getMessage().contains("result content"));
@@ -247,7 +247,7 @@ class NegotiationContentExtractorTest {
         NegotiationGenerationException exception = assertThrows(
                 NegotiationGenerationException.class,
                 () -> new DefaultNegotiationContentExtractor(new RecordingClient("{\"items\":[]}"))
-                        .extract("请补充缺失信息。", reference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN")));
+                        .extract("请补充缺失信息。", reference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_SLOT_MISSING, exception.getCode());
         assertTrue(exception.getMessage().contains("requested items"));
@@ -258,7 +258,7 @@ class NegotiationContentExtractorTest {
         NegotiationGenerationException missingAction = assertThrows(
                 NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(new RecordingClient(
                                 "{\"feasibility_negotiation_description\":\"描述\",\"contents_to_evaluate\":[]}"))
-                        .extract("文本", reference(NegotiationType.FEASIBILITY, NegotiationPhase.PROPOSE, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.FEASIBILITY, NegotiationPerformative.PROPOSE, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, missingAction.getCode());
 
@@ -266,7 +266,7 @@ class NegotiationContentExtractorTest {
                 NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(new RecordingClient(
                                 "{\"feasibility_negotiation_description\":\"描述\",\"action\":\"REQUEST_FEASIBILITY_EVALUATION\","
                                         + "\"contents_to_evaluate\":[],\"infeasibility_details_and_proposal\":null}"))
-                        .extract("文本", reference(NegotiationType.FEASIBILITY, NegotiationPhase.PROPOSE, "zh-CN")));
+                        .extract("文本", reference(NegotiationType.FEASIBILITY, NegotiationPerformative.PROPOSE, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, emptyDrivenContent.getCode());
     }
@@ -279,7 +279,7 @@ class NegotiationContentExtractorTest {
         NegotiationGenerationException blank = assertThrows(
                 NegotiationGenerationException.class,
                 () -> extractor.extract(
-                        "  ", reference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN")));
+                        "  ", reference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN")));
 
         assertEquals(A2ATErrorCodes.NEGOTIATION_INVALID_INPUT, blank.getCode());
 
@@ -289,15 +289,16 @@ class NegotiationContentExtractorTest {
                         .getMessage());
     }
 
-    private static NegotiationReference reference(NegotiationType type, NegotiationPhase phase, String language) {
-        return new NegotiationReference(type, phase, language);
+    private static NegotiationReference reference(
+            NegotiationType type, NegotiationPerformative performative, String language) {
+        return new NegotiationReference(type, performative, language);
     }
 
-    private static String phaseTokenInUserPrompt(NegotiationPhase phase) {
+    private static String phaseTokenInUserPrompt(NegotiationPerformative performative) {
         RecordingClient client = new RecordingClient("{\"conclusion\":\"Accept\",\"items\":[]}");
         try {
             new DefaultNegotiationContentExtractor(client)
-                    .extract("文本", reference(NegotiationType.INFORMATION, phase, "zh-CN"));
+                    .extract("文本", reference(NegotiationType.INFORMATION, performative, "zh-CN"));
         } catch (NegotiationGenerationException expectedForReject) {
             // The scripted conclusion only satisfies the accept phase; the messages are recorded either way.
         }

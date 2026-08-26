@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
+import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.server.A2ATServer;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ import org.junit.jupiter.api.Test;
  * Locks the v3 negotiation API surface of both facades and the field faces of the result records.
  *
  * <p>The client and the server expose exactly the eleven camelCase negotiation methods with their pinned parameter
- * counts, their surface carries none of the removed v2-shape method names, and the two result records expose exactly
+ * counts, their surface carries none of the removed v2-shape method names, and the result records expose exactly
  * their documented components.
  */
 class NegotiationV3ApiSurfaceTest {
@@ -63,6 +64,8 @@ class NegotiationV3ApiSurfaceTest {
     void resultRecordsExposeTheirPinnedFieldFaces() {
         List<String> metadataComponents = componentNames(MetadataContent.class);
         assertEquals(List.of("templateUri", "promptText", "extensionUri", "negotiationContext"), metadataComponents);
+        List<String> contextComponents = componentNames(NegotiationContext.class);
+        assertEquals(List.of("id", "round", "maxRounds", "performative"), contextComponents);
         List<String> filledComponents = componentNames(FilledParamData.class);
         assertEquals(List.of("data"), filledComponents);
         assertTrue(

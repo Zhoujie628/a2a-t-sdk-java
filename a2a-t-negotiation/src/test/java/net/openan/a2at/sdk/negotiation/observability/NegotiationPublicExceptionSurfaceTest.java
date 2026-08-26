@@ -17,6 +17,7 @@ import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProcessingException;
@@ -72,15 +73,19 @@ class NegotiationPublicExceptionSurfaceTest {
 
         List<String> messages = List.of(
                 failureMessageOf(() -> orchestrator.generateProposeFromText(
-                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI)),
+                        "请提供节能区域。",
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                        INFORMATION_PROPOSE_URI)),
                 failureMessageOf(() -> orchestrator.validateProposePromptAndDataFilling(
                         "## 所需信息项\n1. 区域\n",
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI)),
-                failureMessageOf(() -> new NegotiationContext(" ", 1, 5)),
+                failureMessageOf(() -> new NegotiationContext(" ", 1, 5, NegotiationPerformative.PROPOSE)),
                 failureMessageOf(() -> orchestrator.generateProposeFromText(
-                        "text", new NegotiationContext(UUID, 1, 5), StandardTemplates.ENERGY_SAVING)));
+                        "text",
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                        StandardTemplates.ENERGY_SAVING)));
 
         for (String message : messages) {
             assertTrue(message != null && !message.isBlank(), "failure messages must not be blank");
@@ -101,14 +106,16 @@ class NegotiationPublicExceptionSurfaceTest {
         NegotiationGenerationException generationFailure = catchFailure(
                 NegotiationGenerationException.class,
                 () -> orchestrator.generateProposeFromText(
-                        "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI));
+                        "请提供节能区域。",
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                        INFORMATION_PROPOSE_URI));
         assertTrue(generationFailure.getCode().equals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR));
 
         NegotiationParamExtractionException extractionFailure = catchFailure(
                 NegotiationParamExtractionException.class,
                 () -> orchestrator.validateProposePromptAndDataFilling(
                         "## 所需信息项\n1. 区域\n",
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE_URI));
         assertTrue(extractionFailure.getCode().equals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR));

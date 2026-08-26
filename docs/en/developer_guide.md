@@ -510,7 +510,9 @@ To override one template (for example the information propose template in Chines
 
 All types live in `net.openan.a2at.sdk.negotiation.content`.
 
-**NegotiationContext** — the session context carried by every negotiation message in the `core.model` package: `record NegotiationContext(String id, int round, int maxRounds)`. It is immutable; `nextRound()` returns a context with the round incremented, and `isExhausted()` reports whether the round is strictly greater than `maxRounds`. `NegotiationContext.of(id, round)` applies the default round budget of `DEFAULT_MAX_ROUNDS = 5`.
+**NegotiationContext** — the session context carried by every negotiation message in the `core.model` package: `record NegotiationContext(String id, int round, int maxRounds, NegotiationPerformative performative)`. All four components are required — a blank id, a non-positive round or maxRounds, or a null `performative` throws `IllegalArgumentException`. It is immutable; `nextRound()` returns a context with the round incremented that keeps the performative, `isExhausted()` reports whether the round is strictly greater than `maxRounds`, and `withPerformative(performative)` returns a copy stamped with the given performative. `NegotiationContext.of(id, round, performative)` applies the default round budget of `DEFAULT_MAX_ROUNDS = 5`. The `performative` carries the communicative intent of the message the context travels with: on an input context it is the performative of the incoming message, while the generation pipeline stamps the performative of the operation it performs on the output context.
+
+**NegotiationPerformative** — the communicative intent of a negotiation message, in the `core.model` package: `enum NegotiationPerformative { PROPOSE, ACCEPT, REJECT, ABORT }`. `PROPOSE` puts a proposal on the table, `ACCEPT` and `REJECT` respond to a proposal, and `ABORT` terminates the session; `tryParse(String)` accepts exactly the upper-case constant names and returns an empty `Optional` otherwise. Do not confuse the four performative values with the three template-URI phase segments (`propose`, `accept-reject`, `abort`): the performative is the online semantics of a message, whereas the phase segment addresses the template resource that renders it — `ACCEPT` and `REJECT` messages share the `accept-reject` phase segment.
 
 **Input bundles** — `NegotiationProposeData(context, content)` and `NegotiationEndingData(context, content)` pair the context with the typed content, and `NegotiationAbortData(context, NegotiationAbortContent)` pairs it with the type-independent abort content. The content types are sealed hierarchies per negotiation type:
 
@@ -522,7 +524,7 @@ All types live in `net.openan.a2at.sdk.negotiation.content`.
 
 `NegotiationItem(name, value)` is one named entry of an item list. `NegotiationConclusion` carries `ACCEPT`, `REJECT`, and `ABORT`; only `Accept` and `Reject` are renderable conclusions of the typed negotiation templates — the typed generation methods reject `ABORT` with an `IllegalArgumentException` (a programming error outside the `A2ATError` tree). The `ABORT` outcome is rendered through the type-independent common abort template: `NegotiationAbortContent(terminationReason)` is the only content it carries and `NegotiationAbortData(context, content)` is its input bundle. `NegotiationAction` (`REQUEST_FEASIBILITY_EVALUATION`, `PROPOSE_ALTERNATIVE_ON_FAILURE`) selects the conditional sections of the feasibility propose template.
 
-**MetadataContent** — the generation result: `record MetadataContent(String templateUri, String promptText, String extensionUri, NegotiationContext negotiationContext)`. `buildMetadataContent()` returns `Map<String, Object>`: the TMF extension URI (`https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1`) mapping to the rendered message, and `templateUri` mapping to the template URI; negotiation messages additionally carry `negotiationContext` mapping to the nested `{id, round, maxRounds}` object, while non-negotiation messages omit the key and keep the two-key shape. This map is what travels in the A2A message metadata — the negotiation context travels here, not in the rendered text.
+**MetadataContent** — the generation result: `record MetadataContent(String templateUri, String promptText, String extensionUri, NegotiationContext negotiationContext)`. `buildMetadataContent()` returns `Map<String, Object>`: the TMF extension URI (`https://projects.tmforum.org/a2aproject/telecommunication/extensions/Negotiation-T/v1`) mapping to the rendered message, and `templateUri` mapping to the template URI; negotiation messages additionally carry `negotiationContext` mapping to the nested `{id, round, maxRounds, performative}` object, which always holds all four keys — `performative` holds the upper-case performative name (`"PROPOSE"`, `"ACCEPT"`, `"REJECT"`, `"ABORT"`) and is never omitted — while non-negotiation messages omit the `negotiationContext` key and keep the two-key shape. This map is what travels in the A2A message metadata — the negotiation context travels here, not in the rendered text.
 
 **FilledParamData** — the extraction result: `record FilledParamData(Map<String, Object> data)` holding the context parameters merged with the schema-extracted parameters.
 
@@ -578,6 +580,7 @@ import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.exception.A2ATParamExtractionError;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.negotiation.content.*;
 import net.openan.a2at.sdk.server.A2ATServer;
@@ -585,7 +588,7 @@ import net.openan.a2at.sdk.server.A2ATServer;
 // --- Client side: propose, asking for two missing fields ---
 A2ATClient client = new A2ATClient(Path.of("client.env"));
 
-NegotiationContext context = NegotiationContext.of("neg-0001-uuid", 1);
+NegotiationContext context = NegotiationContext.of("neg-0001-uuid", 1, NegotiationPerformative.PROPOSE);
 InformationProposeContent content = new InformationProposeContent(
         List.of(
                 new NegotiationItem("subscription_condition.incident_level", "critical or warning"),
@@ -600,7 +603,8 @@ MetadataContent propose = client.generateNegotiationProposePromptFromData(
 Map<String, Object> metadata = propose.buildMetadataContent();
 // metadata.get("templateUri")  -> "Negotiation-T/information-negotiation/propose/v1"
 // metadata.get(propose.extensionUri()) -> the rendered message text
-// metadata.get("negotiationContext")   -> the nested {id, round, maxRounds} context
+// metadata.get("negotiationContext")   -> the nested {id, round, maxRounds, performative} context
+//                                         (performative is "PROPOSE" for this message)
 
 // --- Server side: validate the received message and extract parameters ---
 A2ATServer server = new A2ATServer(Path.of("server.env"));

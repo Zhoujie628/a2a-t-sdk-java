@@ -6,12 +6,18 @@ package net.openan.a2at.sdk.core.model;
  * <p>The context identifies one negotiation session, tracks the current round, and bounds how many rounds the session
  * may run. A context is immutable; advancing to the next round produces a new instance.
  *
+ * <p>The {@code performative} carries the communicative intent of the message the context travels with. On an incoming
+ * message it is the performative of that message; the generation pipeline stamps the performative of the operation it
+ * performs on the output context, mirroring the nested {@code negotiationContext} structure of the A2A-T Negotiation-T
+ * specification.
+ *
  * @param id unique identifier of the negotiation session, expected to be a UUID
  * @param round current negotiation round, 1-based
  * @param maxRounds maximum number of rounds before the negotiation must end
+ * @param performative communicative intent of the message this context travels with
  * @since 2026-08
  */
-public record NegotiationContext(String id, int round, int maxRounds) {
+public record NegotiationContext(String id, int round, int maxRounds, NegotiationPerformative performative) {
 
     /** Default round budget applied when a caller does not specify one. */
     public static final int DEFAULT_MAX_ROUNDS = 5;
@@ -19,7 +25,8 @@ public record NegotiationContext(String id, int round, int maxRounds) {
     /**
      * Validates the context fields.
      *
-     * @throws IllegalArgumentException if the id is blank, the round is below 1, or maxRounds is below 1
+     * @throws IllegalArgumentException if the id is blank, the round is below 1, maxRounds is below 1, or the
+     *     performative is null
      */
     public NegotiationContext {
         if (id == null || id.isBlank()) {
@@ -33,6 +40,9 @@ public record NegotiationContext(String id, int round, int maxRounds) {
             throw new IllegalArgumentException(
                     "Negotiation context maxRounds must be a positive integer but was " + maxRounds + ".");
         }
+        if (performative == null) {
+            throw new IllegalArgumentException("Negotiation context performative must not be null.");
+        }
     }
 
     /**
@@ -40,19 +50,33 @@ public record NegotiationContext(String id, int round, int maxRounds) {
      *
      * @param id unique identifier of the negotiation session
      * @param round current negotiation round, 1-based
+     * @param performative communicative intent of the message this context travels with
      * @return new negotiation context with {@link #DEFAULT_MAX_ROUNDS} as the round budget
      */
-    public static NegotiationContext of(String id, int round) {
-        return new NegotiationContext(id, round, DEFAULT_MAX_ROUNDS);
+    public static NegotiationContext of(String id, int round, NegotiationPerformative performative) {
+        return new NegotiationContext(id, round, DEFAULT_MAX_ROUNDS, performative);
     }
 
     /**
      * Returns the context for the next round, leaving this context unchanged.
      *
+     * <p>The returned context keeps this context's performative: the performative of an outbound message is decided by
+     * the generation pipeline, which stamps the operation's performative on the context it emits.
+     *
      * @return new negotiation context whose round is one greater than the current round
      */
     public NegotiationContext nextRound() {
-        return new NegotiationContext(id, round + 1, maxRounds);
+        return new NegotiationContext(id, round + 1, maxRounds, performative);
+    }
+
+    /**
+     * Returns a copy of this context stamped with the given performative, leaving this context unchanged.
+     *
+     * @param performative communicative intent to stamp on the copy
+     * @return new negotiation context with the same {@code id}, {@code round}, and {@code maxRounds} as this context
+     */
+    public NegotiationContext withPerformative(NegotiationPerformative performative) {
+        return new NegotiationContext(id, round, maxRounds, performative);
     }
 
     /**

@@ -13,7 +13,7 @@ import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import org.junit.jupiter.api.Test;
@@ -37,7 +37,7 @@ class DefaultNegotiationSemanticValidatorTest {
             new DefaultNegotiationSemanticValidator(llmClient, schemaBuilder::buildSemanticValidationSchema);
 
     private final NegotiationReference informationReference =
-            new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "en-US");
+            new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "en-US");
 
     private final Map<String, Object> callerSchema =
             Map.of("type", "object", "properties", Map.of("confirmed_rate_mbps", Map.of("type", "integer")));
@@ -65,7 +65,7 @@ class DefaultNegotiationSemanticValidatorTest {
                 "type", "object",
                 "properties", Map.of("energy saving region", Map.of("type", "string")));
         NegotiationReference rejectReference =
-                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.REJECT, "en-US");
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.REJECT, "en-US");
 
         SemanticValidationResult result =
                 validator.validateNegotiation(VALID_PROMPT, rejectSchema, rejectReference, TEMPLATE_CONTENT);
@@ -81,7 +81,7 @@ class DefaultNegotiationSemanticValidatorTest {
         llmClient.payload =
                 "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}";
         NegotiationReference rejectReference =
-                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.REJECT, "en-US");
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.REJECT, "en-US");
 
         validator.validateNegotiation(VALID_PROMPT, callerSchema, rejectReference, TEMPLATE_CONTENT);
 
@@ -94,7 +94,7 @@ class DefaultNegotiationSemanticValidatorTest {
         llmClient.payload =
                 "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}";
         NegotiationReference rejectReference =
-                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.REJECT, "zh-CN");
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.REJECT, "zh-CN");
 
         validator.validateNegotiation(VALID_PROMPT, callerSchema, rejectReference, TEMPLATE_CONTENT);
 
@@ -243,7 +243,7 @@ assertTrue(userPrompt.contains("information"));
     @Test
     void missingPromptResourceForLanguageSurfacesResourceNotFound() {
         NegotiationReference unsupportedLanguageReference =
-                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "fr-FR");
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "fr-FR");
 
         assertThrows(
                 ResourceNotFoundException.class,

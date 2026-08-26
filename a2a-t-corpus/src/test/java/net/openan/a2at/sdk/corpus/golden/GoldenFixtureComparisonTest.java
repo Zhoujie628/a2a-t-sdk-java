@@ -105,6 +105,7 @@ class GoldenFixtureComparisonTest {
         assertEquals(goldenCase.context().id(), nestedContext.get("id"));
         assertEquals(goldenCase.context().round(), nestedContext.get("round"));
         assertEquals(goldenCase.context().maxRounds(), nestedContext.get("maxRounds"));
+        assertEquals(goldenCase.performative().name(), nestedContext.get("performative"));
         assertEquals(metadata, result.buildMetadataContent());
     }
 
@@ -145,8 +146,8 @@ class GoldenFixtureComparisonTest {
     }
 
     /**
-     * Proves that the from-data variants never touch the LLM: all ten type/phase combinations (including the common
-     * abort fixture) of both languages run against a counting LLM client that would record every call.
+     * Proves that the from-data variants never touch the LLM: all ten type/performative combinations (including the
+     * common abort fixture) of both languages run against a counting LLM client that would record every call.
      */
     @ParameterizedTest(name = "from-data generation never calls the LLM [{0}]")
     @ValueSource(strings = {GoldenInputs.ZH_CN, GoldenInputs.EN_US})

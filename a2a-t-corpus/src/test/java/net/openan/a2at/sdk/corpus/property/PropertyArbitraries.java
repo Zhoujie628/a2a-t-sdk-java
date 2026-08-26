@@ -7,6 +7,7 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Combinators;
 import net.jqwik.api.Tuple;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
@@ -97,8 +98,18 @@ final class PropertyArbitraries {
     }
 
     /**
+     * Arbitrary of the four negotiation performatives.
+     *
+     * @return performative arbitrary
+     */
+    static Arbitrary<NegotiationPerformative> performatives() {
+        return Arbitraries.of(NegotiationPerformative.values());
+    }
+
+    /**
      * Arbitrary of rule-gate-valid negotiation contexts: pooled UUID id, round in {@code [1, maxRounds]}, maxRounds in
-     * {@code [1, 10]}.
+     * {@code [1, 10]}, and any of the four performatives (the generation pipeline stamps the operation's performative
+     * onto the emitted context, so the input performative is free).
      *
      * @return negotiation context arbitrary
      */
@@ -108,7 +119,9 @@ final class PropertyArbitraries {
                 .flatMap(maxRounds -> Arbitraries.integers()
                         .between(1, maxRounds)
                         .flatMap(round -> Arbitraries.of(SESSION_ID_POOL)
-                                .map(id -> new NegotiationContext(id, round, maxRounds))));
+                                .flatMap(id -> performatives()
+                                        .map(performative -> new NegotiationContext(
+                                                id, round, maxRounds, performative)))));
     }
 
     /**

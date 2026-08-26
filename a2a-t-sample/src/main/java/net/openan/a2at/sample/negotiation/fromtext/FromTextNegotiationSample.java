@@ -10,6 +10,7 @@ import net.openan.a2at.sample.negotiation.shared.ScenarioData;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 
 /**
  * Sample that demonstrates all three fromText negotiation APIs across all three negotiation types.
@@ -60,8 +61,8 @@ public final class FromTextNegotiationSample {
 
     private static List<Map<String, Object>> informationNegotiation(A2ATClient client, Consumer<String> logSink) {
         NegotiationSampleSupport.emit(logSink, "\n=== 1. Information negotiation (fromText) ===");
-        NegotiationContext ctx =
-                new NegotiationContext(NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
+        NegotiationContext ctx = new NegotiationContext(
+                NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS, NegotiationPerformative.PROPOSE);
         List<Map<String, Object>> results = new ArrayList<>();
 
         Map<String, Object> cases =
@@ -91,8 +92,8 @@ public final class FromTextNegotiationSample {
 
     private static List<Map<String, Object>> targetNegotiation(A2ATClient client, Consumer<String> logSink) {
         NegotiationSampleSupport.emit(logSink, "\n=== 2. Target negotiation (fromText) ===");
-        NegotiationContext ctx =
-                new NegotiationContext(NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
+        NegotiationContext ctx = new NegotiationContext(
+                NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS, NegotiationPerformative.PROPOSE);
         List<Map<String, Object>> results = new ArrayList<>();
 
         Map<String, Object> cases =
@@ -122,8 +123,8 @@ public final class FromTextNegotiationSample {
 
     private static List<Map<String, Object>> feasibilityNegotiation(A2ATClient client, Consumer<String> logSink) {
         NegotiationSampleSupport.emit(logSink, "\n=== 3. Feasibility negotiation (fromText) ===");
-        NegotiationContext ctx =
-                new NegotiationContext(NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
+        NegotiationContext ctx = new NegotiationContext(
+                NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS, NegotiationPerformative.PROPOSE);
         List<Map<String, Object>> results = new ArrayList<>();
 
         Map<String, Object> cases =

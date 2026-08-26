@@ -14,6 +14,7 @@ import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
@@ -36,7 +37,7 @@ class A2ATServerNegotiationApiTest {
 
         MetadataContent result = server.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE);
 
@@ -47,7 +48,7 @@ class A2ATServerNegotiationApiTest {
         assertEquals(3, metadata.size());
         assertEquals(result.promptText(), metadata.get(result.extensionUri()));
         assertEquals(result.templateUri(), metadata.get(MetadataContent.TEMPLATE_URI_METADATA_KEY));
-        assertEquals(new NegotiationContext(UUID, 1, 5), result.negotiationContext());
+        assertEquals(new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE), result.negotiationContext());
     }
 
     @Test
@@ -56,7 +57,7 @@ class A2ATServerNegotiationApiTest {
 
         MetadataContent result = server.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
                 INFORMATION_PROPOSE);
 
@@ -80,7 +81,7 @@ class A2ATServerNegotiationApiTest {
 
         MetadataContent result = server.generateNegotiationAbortPromptFromData(
                 new NegotiationAbortData(
-                        new NegotiationContext(UUID, 5, 5),
+                        new NegotiationContext(UUID, 5, 5, NegotiationPerformative.ABORT),
                         new NegotiationAbortContent("达到协商轮次上限，本次协商确认结束。")),
                 StandardTemplates.NEGOTIATION_ABORT);
 

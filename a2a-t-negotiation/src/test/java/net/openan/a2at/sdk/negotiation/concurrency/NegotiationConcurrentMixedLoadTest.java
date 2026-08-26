@@ -19,6 +19,7 @@ import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
@@ -53,14 +54,14 @@ class NegotiationConcurrentMixedLoadTest {
                 .build();
 
         NegotiationProposeData proposeData = new NegotiationProposeData(
-                new NegotiationContext(UUID, 1, 5),
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                 new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null));
         MetadataContent fromDataBase = orchestrator.generateProposeFromData(proposeData, INFORMATION_PROPOSE_URI);
         MetadataContent fromTextBase = orchestrator.generateProposeFromText(
-                "请提供节能区域信息。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
+                "请提供节能区域信息。", new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE), INFORMATION_PROPOSE_URI);
         FilledParamData validateBase = orchestrator.validateProposePromptAndDataFilling(
                 fromDataBase.promptText(),
-                new NegotiationContext(UUID, 1, 5),
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                 Map.of("type", "object"),
                 INFORMATION_PROPOSE_URI);
         int baselineExtractionCalls = llm.extractionCalls.get();
@@ -82,7 +83,7 @@ class NegotiationConcurrentMixedLoadTest {
                 fromTextThreads++;
                 workers.add(callableOf(() -> {
                     MetadataContent result = orchestrator.generateProposeFromText(
-                            "请提供节能区域信息。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
+                            "请提供节能区域信息。", new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE), INFORMATION_PROPOSE_URI);
                     assertEquals(fromTextBase.promptText(), result.promptText(), "from-text baseline");
                 }));
             } else {
@@ -90,7 +91,7 @@ class NegotiationConcurrentMixedLoadTest {
                 workers.add(callableOf(() -> {
                     FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                             fromDataBase.promptText(),
-                            new NegotiationContext(UUID, 1, 5),
+                            new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                             Map.of("type", "object"),
                             INFORMATION_PROPOSE_URI);
                     assertEquals(validateBase.data(), filled.data(), "validation baseline");

@@ -11,6 +11,7 @@ import net.openan.a2at.sdk.negotiation.content.FeasibilityEndingContent;
 import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
@@ -38,7 +39,7 @@ class ConclusionLiteralAndExceptionSlotTest {
     @MethodSource("languages")
     void acceptConclusionRendersTheAcceptLiteral(String language) {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(language);
-        NegotiationContext context = new NegotiationContext(UUID, 2, 5);
+        NegotiationContext context = new NegotiationContext(UUID, 2, 5, NegotiationPerformative.ACCEPT);
 
         String information = orchestrator
                 .generateAcceptFromData(
@@ -78,7 +79,7 @@ class ConclusionLiteralAndExceptionSlotTest {
     @MethodSource("languages")
     void rejectConclusionRendersTheRejectLiteral(String language) {
         NegotiationGenerationOrchestrator orchestrator = orchestrator(language);
-        NegotiationContext context = new NegotiationContext(UUID, 2, 5);
+        NegotiationContext context = new NegotiationContext(UUID, 2, 5, NegotiationPerformative.REJECT);
 
         String information = orchestrator
                 .generateRejectFromData(
@@ -124,14 +125,14 @@ class ConclusionLiteralAndExceptionSlotTest {
         String acceptText = orchestrator
                 .generateAcceptFromData(
                         new NegotiationEndingData(
-                                new NegotiationContext(UUID, 2, 5),
+                                new NegotiationContext(UUID, 2, 5, NegotiationPerformative.ACCEPT),
                                 new FeasibilityEndingContent(NegotiationConclusion.ACCEPT, summary)),
                         StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT)
                 .promptText();
         String rejectText = orchestrator
                 .generateRejectFromData(
                         new NegotiationEndingData(
-                                new NegotiationContext(UUID, 2, 5),
+                                new NegotiationContext(UUID, 2, 5, NegotiationPerformative.REJECT),
                                 new FeasibilityEndingContent(NegotiationConclusion.REJECT, summary)),
                         StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT)
                 .promptText();
@@ -155,7 +156,7 @@ class ConclusionLiteralAndExceptionSlotTest {
         String promptText = orchestrator
                 .generateAcceptFromData(
                         new NegotiationEndingData(
-                                new NegotiationContext(UUID, 2, 5),
+                                new NegotiationContext(UUID, 2, 5, NegotiationPerformative.ACCEPT),
                                 new FeasibilityEndingContent(NegotiationConclusion.ACCEPT, summary)),
                         StandardTemplates.FEASIBILITY_NEGOTIATION_ACCEPT_REJECT)
                 .promptText();
