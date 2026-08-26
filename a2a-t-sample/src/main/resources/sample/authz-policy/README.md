@@ -41,7 +41,7 @@ A2AT_LLM_API_KEY=<凭据>          # 绝不能提交、打印或写入任何产�
 以下命令均在仓库根目录执行，`<env文件路径>` 替换为上一步准备的 env 文件（单行命令，任何 shell 通用）：
 
 ```
-# 冒烟（默认题集，本目录 scenarios.json，15 例：a/b1-b4 各组负例代表 + 单条/多条列表（NL 与 data、2~3 条、批量修改/删除、部分条目格式错）+ b6 变异 schema 组 3 例）
+# 冒烟（默认题集，本目录 scenarios.json，15 例：a/b1-b4 各组负例代表 + 单条/多条列表（NL 与 data、2~3 条、批量修改/删除、部分条目格式错，含 1 席泛化异构词弱锚单条 + b6 变异 schema 组 3 例）
 java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 @a2a-t-sample/target/authz.javaargs.txt <env文件路径>
 
 # 全量（原题集 100 例，评分基线用）
@@ -60,6 +60,8 @@ env 路径也可省略：省略时按"当前目录 authz.env → classpath 模�
 全量/留出集按组前缀划分：`a`（操作类型识别）、`b1`（必填缺失）、`b2`（日期/日历格式）、`b3`（修改语义）、`b4`（非法标识）、`b5`（其他校验）、`b6`（变异 schema 组）、`c1`-`c6`（增删改查/多条目/混合）。
 
 `b6` 组验证调用方 `param-schema` 约束在服务端校验阶段生效：b6-schema-variant-02/03 通过场景级 `validate_schema` 字段注入"带处置类型短语规则"的变异 schema（完整 JSON 内嵌，不引用外部文件），b6-schema-variant-01 不设 `validate_schema` 作为对照。`validate_schema` 是可选的场景级覆盖字段：缺省时使用 suite 级默认 `param-schema.json`；设置为非空对象时替代默认 schema 参与服务端校验。
+
+授权策略列表值行采用"编号 + 字段名是值"渲染格式（如 `1. 业务场景是校园专网，处置类型是紧急扩容，操作名称是天线调整，有效期是2026-08-01~2030-12-31`），字段间用全角逗号分隔，多条条目间用全角分号分隔并顺延编号；该口径在 `slot.json` 与 `param-schema.json` 的 description 中给出，服务端提参与客户端渲染据此归一。
 
 ## 2. 报告分析
 
