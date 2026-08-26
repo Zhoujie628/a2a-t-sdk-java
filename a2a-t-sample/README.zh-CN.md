@@ -147,7 +147,7 @@ java @a2a-t-sample/target/fromtext.javaargs.txt /path/to/.env
 
 **槽位契约**：评测直接使用 SDK 内置的 private-line-complaint 模板（不做任何资源改动）。模板将"任务上下文"定义为一个组合槽，其内部要求 4 个子项（投诉分类[必选]、问题发生时间[可选]、OSS侧事件流水号[必选]、投诉详情[可选]）。评测的 `task_schema`（eval-suite.json 内）把该组合槽细化为 4 个独立子槽位用于**校验**。**生成门**（内置 slot.json 的 required）要求任务对象与任务上下文非空：任一为空即在生成期 fail-fast，协商不触发；**校验门**（调用方 schema 的 required）检出非空上下文内缺失或非法的必选子字段并触发协商。fromData 用例输入为结构化 JSON——每个 key 对应一个明确的子项值（如 `"OSS侧事件流水号": "event-id-20260511-09013"`）；fromText 用例若走到补槽环节则携带 `client_data`（客户端自身掌握的结构化知识，即其文本引用过的字段），补槽重渲染基于该知识而非服务端提取结果。
 
-通道语义：`fromData` 传结构化 JSON + schema；`fromText` 传自然语言由 LLM 抽取。所有生成/校验接口均走 SDK 管线（规则门 + 语义 LLM 调用）。**需要真实 LLM API key**（env 文件参考根目录 `env.example`，至少配置 `A2AT_LLM_PROVIDER` / `A2AT_LLM_MODEL` / `A2AT_LLM_API_KEY` / `A2AT_LLM_BASE_URL`）。
+通道语义：fromData 与 fromText 走**同一条 LLM 槽位抽取管线**（`llm_calls` 证据可见）——fromData 的抽取做归一化映射（把结构化子字段组合为模板槽值），fromText 的抽取从自然语言中提取槽位；抽取完成后模板渲染均为确定性规则。协商报文的 fromData 生成则是纯确定性渲染（类型化数据 → 模板，零 LLM 调用），fromText 协商生成才走 LLM 抽取。所有校验接口均走 SDK 完整管线（规则门 + 语义 LLM 调用）。**需要真实 LLM API key**（env 文件参考根目录 `env.example`，至少配置 `A2AT_LLM_PROVIDER` / `A2AT_LLM_MODEL` / `A2AT_LLM_API_KEY` / `A2AT_LLM_BASE_URL`）。
 
 运行命令：
 
@@ -191,6 +191,38 @@ A2AT_LLM_MAX_TOKENS=8192                     # 推理型模型建议调大（默
 `*.env` 已被 .gitignore 忽略，携带真实 key 的 env 文件不会被提交。
 
 用例集：`sample/negotiation/eval/eval-suite.json`（**20 条用例，fromData（PLC-D01~D10）与 fromText（PLC-T01~T10）两条轨各 10 条**，覆盖同一场景矩阵：完整输入不触发 / 必选字段缺失（生成期拦截或触发协商）/ 双必选子字段缺失 / 可选字段缺失不触发 / 值无效（对象形态、分类枚举、流水号格式）/ 字段错位归位 / 口语化与推断 / 负例补槽被拒）。报告中每个 case 输出逐步证据（`api_calls`、`llm_calls`、生成 prompt 原文、校验判定与抽取参数、耗时），`metrics` 汇总通过率。
+
+## 协商 fromData 接口专项评测（Negotiation FromData API Eval）
+
+`NegotiationFromDataApiEvalApp` 是**聚焦协商接口本身**的专项验证入口，验证 **6 个协商接口**（生成 3 个 + 校验提参 3 个），不涉及 Task-T 等非协商接口。每个用例是一次"生成 → 校验提参"闭环：
+
+**生成接口**（确定性渲染，零 LLM）：
+- `A2ATServer.generateNegotiationProposePromptFromData`（propose，server 角色）
+- `A2ATClient.generateNegotiationAcceptPromptFromData`（accept，client 角色）
+- `A2ATClient.generateNegotiationRejectPromptFromData`（reject，client 角色）
+
+**校验提参接口**（语义 LLM 管线），由协议中的**接收方角色**调用：
+- `A2ATClient.validateProposePromptAndDataFilling`（client 校验收到的 propose）
+- `A2ATServer.validateAcceptPromptAndDataFilling`（server 校验收到的 accept）
+- `A2ATServer.validateRejectPromptAndDataFilling`（server 校验收到的 reject）
+
+**输入为传统结构化数据**：每个条目就是一个 key-value——key 是 Task-T 模板的槽位名称（必选：任务对象/投诉分类/OSS侧事件流水号；可选：问题发生时间/投诉详情），value 是原子数据值（如 `"投诉分类": "专线中断"`、`"OSS侧事件流水号": "event-id-20260602-08841"`），不含自然语言段落，不构造模板传错场景。断言分两段：
+
+| 阶段 | 断言 |
+|---|---|
+| 生成 | 报文逐字包含每个 item 的名称与值、relationship 原文、`Accept`/`Reject` 结论标记、模板 URI 匹配 |
+| 校验提参 | 校验通过，且**提取出的参数与输入的 key-value 完全一致**（提参保真度） |
+
+**用例矩阵**（按 Task-T 字段模型的组合）：propose 覆盖全部必选缺失/单必选缺失×3/双必选缺失/必选+可选/仅可选/空边界共 8 条；accept 覆盖全必选补齐/单必选补齐/全 5 字段补齐/可选补齐共 4 条；reject 覆盖单字段/双字段无法提供（字段名+原因，模板字面形态）共 2 条。用例集：`sample/negotiation/eval/fromdata-api-suite.json`。
+
+运行命令（生成段零 LLM；**校验提参段走语义 LLM，需真实 key**，两段证据均在报告 `llm_calls` 中）：
+
+```bash
+mvn -pl a2a-t-sample -am -DskipTests package
+java @a2a-t-sample/target/fromdata-eval.javaargs.txt --out fromdata-eval-report.json /path/to/.env
+```
+
+报告含每个 case 两步的 `api_calls`（方法+完整 JSON 入参）、生成的报文原文、校验提取参数、逐条断言与 `llm_calls` 证据。
 
 ## 授权策略（Authorization-T）演示 Demo
 

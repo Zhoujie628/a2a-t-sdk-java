@@ -149,6 +149,10 @@ net.openan.a2at.sample.negotiation.NegotiationDemoApp
 ${sample.jar.path}${path.separator}${sample.runtime.classpath}
 net.openan.a2at.sample.negotiation.eval.NegotiationEvalApp
 </echo>
+                                <echo file="${project.build.directory}/fromdata-eval.javaargs.txt">-cp
+${sample.jar.path}${path.separator}${sample.runtime.classpath}
+net.openan.a2at.sample.negotiation.eval.NegotiationFromDataApiEvalApp
+</echo>
                                 <echo file="${project.build.directory}/fromdata.javaargs.txt">-cp
 ${sample.jar.path}${path.separator}${sample.runtime.classpath}
 net.openan.a2at.sample.negotiation.fromdata.FromDataNegotiationSample
