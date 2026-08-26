@@ -3,6 +3,10 @@
 本目录是 Authorization-T 演示（`net.openan.a2at.sample.authz_policy.AuthzSampleMain`）的资源根。
 本文说明如何执行 demo、如何分析正确率报告，以及安全与判定约束。
 
+## 0. 冒烟留档
+
+最近一次冒烟 15 例的完整原始输入输出（用户入参 → 客户端生成 prompt → 客户端提参理由 → 服务端校验结果与理由 → 服务端提参结果）：[smoke-io-transcript.md](smoke-io-transcript.md)
+
 ## 1. 环境准备
 
 ### 1.1 构建
