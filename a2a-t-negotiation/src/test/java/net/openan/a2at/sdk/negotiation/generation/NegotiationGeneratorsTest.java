@@ -405,6 +405,22 @@ class NegotiationGeneratorsTest {
     }
 
     @Test
+    void informationEndingRejectsEmptyResultItems() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new InformationEndingGenerator()
+                        .generate(
+                                context(2),
+                                new InformationEndingContent(NegotiationConclusion.REJECT, List.of()),
+                                template(StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT, ZH_INFO_ENDING_TEMPLATE),
+                                zhVocabulary));
+
+        assertEquals(
+                "Information negotiation terminal message result content must contain at least one item.",
+                exception.getMessage());
+    }
+
+    @Test
     void abortConclusionIsRejectedByEveryEndingGenerator() {
         assertThrows(IllegalArgumentException.class, () -> new InformationEndingGenerator()
                 .generate(
