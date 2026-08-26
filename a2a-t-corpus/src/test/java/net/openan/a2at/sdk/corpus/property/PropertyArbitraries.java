@@ -143,13 +143,14 @@ final class PropertyArbitraries {
     }
 
     /**
-     * Arbitrary of information propose contents: items in {@code [0, 5]} with 50% null item values, relationship null
-     * or present.
+     * Arbitrary of information propose contents: items in {@code [1, 5]} with 50% null item values, relationship null
+     * or present. The information propose generator requires at least one requested item, so the empty list is not a
+     * valid input.
      *
      * @return information propose content arbitrary
      */
     static Arbitrary<InformationProposeContent> informationProposeContents() {
-        return Combinators.combine(itemLists(0, 5), optionalTexts()).as(InformationProposeContent::new);
+        return Combinators.combine(itemLists(1, 5), optionalTexts()).as(InformationProposeContent::new);
     }
 
     /**

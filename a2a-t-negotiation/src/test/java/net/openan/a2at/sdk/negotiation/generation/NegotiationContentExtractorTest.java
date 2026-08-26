@@ -243,6 +243,17 @@ class NegotiationContentExtractorTest {
     }
 
     @Test
+    void rejectsEmptyInformationProposeItemsBeforeTemplateRendering() {
+        NegotiationGenerationException exception = assertThrows(
+                NegotiationGenerationException.class,
+                () -> new DefaultNegotiationContentExtractor(new RecordingClient("{\"items\":[]}"))
+                        .extract("请补充缺失信息。", reference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN")));
+
+        assertEquals(A2ATErrorCodes.NEGOTIATION_SLOT_MISSING, exception.getCode());
+        assertTrue(exception.getMessage().contains("requested items"));
+    }
+
+    @Test
     void mapsFeasibilityActionProblemsToTheInvalidInputCode() {
         NegotiationGenerationException missingAction = assertThrows(
                 NegotiationGenerationException.class, () -> new DefaultNegotiationContentExtractor(new RecordingClient(

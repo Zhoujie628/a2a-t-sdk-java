@@ -62,7 +62,7 @@ final class NegotiationJsonSchemaBuilder {
 
     private static Map<String, Object> informationProposeSchema() {
         Map<String, Object> properties = new LinkedHashMap<>();
-        properties.put("items", itemArraySchema());
+        properties.put("items", nonEmptyItemArraySchema());
         properties.put("relationship", nullableStringSchema());
         return objectSchema(properties, List.of("items"));
     }

@@ -171,7 +171,8 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
     private static NegotiationContent mapProposeContent(Map<String, Object> payload, NegotiationType type) {
         return switch (type) {
             case INFORMATION -> new InformationProposeContent(
-                    requiredItems(payload, "items"), optionalString(payload, "relationship"));
+                    requiredNonEmptyItems(payload, "items", "information negotiation requested items"),
+                    optionalString(payload, "relationship"));
             case TARGET -> new TargetProposeContent(
                     requiredString(payload, "target_negotiation_description"),
                     optionalItems(payload, "intent_understanding"),
