@@ -213,7 +213,7 @@ A2AT_LLM_MAX_TOKENS=8192                     # 推理型模型建议调大（默
 | 生成 | 报文逐字包含每个 item 的名称与值、relationship 原文、`Accept`/`Reject` 结论标记、模板 URI 匹配 |
 | 校验提参 | 校验通过，且**提取出的参数与输入的 key-value 完全一致**（提参保真度） |
 
-**用例矩阵**（按 Task-T 字段模型的组合）：propose 覆盖全部必选缺失/单必选缺失×3/双必选缺失/必选+可选/仅可选/空边界共 8 条；accept 覆盖全必选补齐/单必选补齐/全 5 字段补齐/可选补齐共 4 条；reject 覆盖单字段/双字段无法提供共 2 条。用例集：`sample/negotiation/eval/fromdata-api-suite.json`。
+**用例矩阵**（按 Task-T 字段模型的组合）：propose 覆盖全部必选缺失/单必选缺失×3/双必选缺失/必选+可选/仅可选/空边界共 8 条；accept 覆盖全必选补齐/单必选补齐/全 5 字段补齐/可选补齐共 4 条；reject 覆盖单字段/双字段无法提供（字段名+原因，模板字面形态）共 2 条。用例集：`sample/negotiation/eval/fromdata-api-suite.json`。
 
 运行命令（生成段零 LLM；**校验提参段走语义 LLM，需真实 key**，两段证据均在报告 `llm_calls` 中）：
 

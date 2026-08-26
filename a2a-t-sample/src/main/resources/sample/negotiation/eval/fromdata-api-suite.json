@@ -1,6 +1,6 @@
 {
   "suite": "negotiation-fromdata-api-eval",
-  "description": "Focused capability verification of the six Negotiation-T fromData interfaces: generateNegotiationProposePromptFromData, generateNegotiationAcceptPromptFromData, generateNegotiationRejectPromptFromData and their validate-and-extract counterparts. Inputs are traditional structured data - every item is one key (the slot name from the private-line-complaint Task-T template) carrying a REAL field value (a live port name, an actual category value, a real event id, a real timestamp); no natural-language passages, no format-spec placeholders, no template-error scenarios. The case matrix is built from the Task-T field model (required: 任务对象/投诉分类/OSS侧事件流水号; optional: 问题发生时间/投诉详情): propose carries every required/optional slot combination with real values (all required, each single required, dual required, required+optional, optional-only, empty boundary), accept supplies the filled values for the same combinations, reject carries the unprovidable fields with reasons. Generation is deterministic rendering (no LLM call); the validate-and-extract step asserts the extracted parameters carry back exactly the input key-value pairs.",
+  "description": "Focused capability verification of the six Negotiation-T fromData interfaces: generateNegotiationProposePromptFromData, generateNegotiationAcceptPromptFromData, generateNegotiationRejectPromptFromData and their validate-and-extract counterparts. Inputs are traditional structured data - every item is one key (the slot name from the private-line-complaint Task-T template) with a value per the message type: propose and accept carry REAL field values (a live port name, an actual category value, a real event id), reject carries the unprovidable field name with its reason plus an explicit \"无法提供\" statement (the accept-reject template's own requirement: name + reason of non-provision). No natural-language passages, no format-spec placeholders, no template-error scenarios. The case matrix is built from the Task-T field model (required: 任务对象/投诉分类/OSS侧事件流水号; optional: 问题发生时间/投诉详情): propose carries every required/optional slot combination with real values (all required, each single required, dual required, required+optional, optional-only, empty boundary), accept supplies the filled values for the same combinations, reject carries the unprovidable fields with reasons. Generation is deterministic rendering (no LLM call); the validate-and-extract step asserts the extracted parameters carry back exactly the input key-value pairs.",
   "scenario": "private-line-complaint",
   "fields": {
     "required": [
@@ -214,10 +214,10 @@
     {
       "id": "FD-R01",
       "api": "reject",
-      "intent": "reject：携带单一拒绝原因条目（站点清单不可用），报文应含 Reject 结论与原因内容",
+      "intent": "reject：单字段无法提供（任务对象，站点清单不可用），报文应含 Reject 结论、字段名与无法提供的原因",
       "input": {
         "items": {
-          "拒绝原因": "站点清单不可用，无法提供任务对象"
+          "任务对象": "站点清单不可用，无法提供"
         }
       },
       "expect": {
@@ -231,11 +231,11 @@
     {
       "id": "FD-R02",
       "api": "reject",
-      "intent": "reject：携带拒绝原因+补充说明双条目，报文应含 Reject 结论与两项内容",
+      "intent": "reject：双字段无法提供（任务对象+OSS侧事件流水号），报文应含 Reject 结论与两项名称+原因",
       "input": {
         "items": {
-          "拒绝原因": "站点清单不可用，无法提供任务对象",
-          "补充说明": "资源系统检修中，预计2小时后恢复"
+          "任务对象": "站点清单不可用，无法提供",
+          "OSS侧事件流水号": "工单系统不可访问，无法提供"
         }
       },
       "expect": {
