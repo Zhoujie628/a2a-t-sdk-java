@@ -43,7 +43,9 @@ public record MetadataContent(
      * <p>The returned map always contains the extension URI mapping to the rendered message and {@code templateUri}
      * mapping to the template URI, in that order. When a negotiation context is present it additionally carries
      * {@code negotiationContext} mapping to a nested map with the {@code id}, {@code round}, and {@code maxRounds}
-     * fields; non-negotiation messages omit the key. Repeated calls return equal maps.
+     * fields, in that order; when the context carries a performative the nested map gains a fourth key
+     * {@code performative} holding the upper-case performative name. Non-negotiation messages omit the
+     * {@code negotiationContext} key entirely. Repeated calls return equal maps.
      *
      * @return newly built metadata map with the extension URI, {@code templateUri}, and, for negotiation messages,
      *     {@code negotiationContext} keys
@@ -57,6 +59,9 @@ public record MetadataContent(
             context.put("id", negotiationContext.id());
             context.put("round", negotiationContext.round());
             context.put("maxRounds", negotiationContext.maxRounds());
+            if (negotiationContext.performative() != null) {
+                context.put("performative", negotiationContext.performative().name());
+            }
             metadata.put(NEGOTIATION_CONTEXT_METADATA_KEY, context);
         }
         return metadata;

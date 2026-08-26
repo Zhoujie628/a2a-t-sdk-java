@@ -97,4 +97,56 @@ class MetadataContentTest {
         assertEquals(CONTEXT.maxRounds(), nestedContext.get("maxRounds"));
         assertEquals(metadata, content.buildMetadataContent());
     }
+
+    @Test
+    void buildMetadataContextOmitsPerformativeWhenNull() {
+        MetadataContent content = new MetadataContent(
+                TEMPLATE_URI, "rendered message", "https://example/ext", new NegotiationContext("session-id", 1, 5, null));
+
+        Map<String, Object> metadata = content.buildMetadataContent();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> nestedContext =
+                (Map<String, Object>) metadata.get(MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY);
+        assertEquals(java.util.List.of("id", "round", "maxRounds"), new java.util.ArrayList<>(nestedContext.keySet()));
+        assertEquals(3, nestedContext.size());
+    }
+
+    @Test
+    void buildMetadataContextCarriesPerformativeAsFourthKeyInUpperCase() {
+        NegotiationContext context =
+                new NegotiationContext("session-id", 2, 5, NegotiationPerformative.REJECT);
+        MetadataContent content =
+                new MetadataContent(TEMPLATE_URI, "rendered message", "https://example/ext", context);
+
+        Map<String, Object> metadata = content.buildMetadataContent();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> nestedContext =
+                (Map<String, Object>) metadata.get(MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY);
+        assertEquals(
+                java.util.List.of("id", "round", "maxRounds", "performative"),
+                new java.util.ArrayList<>(nestedContext.keySet()));
+        assertEquals("REJECT", nestedContext.get("performative"));
+        assertEquals("session-id", nestedContext.get("id"));
+        assertEquals(2, nestedContext.get("round"));
+        assertEquals(5, nestedContext.get("maxRounds"));
+        assertEquals(metadata, content.buildMetadataContent());
+    }
+
+    @Test
+    void buildMetadataContextPinsUpperCaseWireValueForEveryPerformative() {
+        for (NegotiationPerformative performative : NegotiationPerformative.values()) {
+            NegotiationContext context = new NegotiationContext("session-id", 1, 5, performative);
+            MetadataContent content =
+                    new MetadataContent(TEMPLATE_URI, "rendered message", "https://example/ext", context);
+
+            Map<String, Object> metadata = content.buildMetadataContent();
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> nestedContext =
+                    (Map<String, Object>) metadata.get(MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY);
+            assertEquals(performative.name(), nestedContext.get("performative"));
+        }
+    }
 }

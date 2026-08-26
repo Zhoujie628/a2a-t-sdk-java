@@ -22,6 +22,76 @@ class NegotiationContextTest {
     }
 
     @Test
+    void threeArgumentConstructorDefaultsPerformativeToNull() {
+        NegotiationContext context = new NegotiationContext(SESSION_ID, 1, 5);
+
+        assertEquals(null, context.performative());
+    }
+
+    @Test
+    void fourArgumentConstructorCarriesPerformative() {
+        NegotiationContext context = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE);
+
+        assertEquals(SESSION_ID, context.id());
+        assertEquals(1, context.round());
+        assertEquals(5, context.maxRounds());
+        assertEquals(NegotiationPerformative.PROPOSE, context.performative());
+    }
+
+    @Test
+    void fourArgumentConstructorAcceptsNullPerformative() {
+        NegotiationContext context = new NegotiationContext(SESSION_ID, 1, 5, null);
+
+        assertEquals(null, context.performative());
+    }
+
+    @Test
+    void withPerformativeStampsIntentAndKeepsSessionFields() {
+        NegotiationContext handle = new NegotiationContext(SESSION_ID, 2, 5);
+        NegotiationContext stamped = handle.withPerformative(NegotiationPerformative.ACCEPT);
+
+        assertEquals(NegotiationPerformative.ACCEPT, stamped.performative());
+        assertEquals(SESSION_ID, stamped.id());
+        assertEquals(2, stamped.round());
+        assertEquals(5, stamped.maxRounds());
+        assertEquals(null, handle.performative());
+        assertNotEquals(handle, stamped);
+    }
+
+    @Test
+    void withPerformativeOverwritesPreviousStamp() {
+        NegotiationContext first = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE);
+        NegotiationContext second = first.withPerformative(NegotiationPerformative.REJECT);
+
+        assertEquals(NegotiationPerformative.REJECT, second.performative());
+        assertEquals(NegotiationPerformative.PROPOSE, first.performative());
+        assertNotEquals(first, second);
+    }
+
+    @Test
+    void nextRoundDropsPerformative() {
+        NegotiationContext context = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE);
+        NegotiationContext advanced = context.nextRound();
+
+        assertEquals(null, advanced.performative());
+        assertEquals(2, advanced.round());
+        assertEquals(NegotiationPerformative.PROPOSE, context.performative());
+    }
+
+    @Test
+    void equalsTakesPerformativeIntoAccount() {
+        NegotiationContext without = new NegotiationContext(SESSION_ID, 1, 5);
+        NegotiationContext withPropose = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE);
+        NegotiationContext withAbort = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.ABORT);
+        NegotiationContext samePropose = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE);
+
+        assertNotEquals(without, withPropose);
+        assertNotEquals(withPropose, withAbort);
+        assertEquals(withPropose, samePropose);
+        assertEquals(without, new NegotiationContext(SESSION_ID, 1, 5, null));
+    }
+
+    @Test
     void blankIdThrowsWithDistinguishableMessage() {
         IllegalArgumentException blankException =
                 assertThrows(IllegalArgumentException.class, () -> new NegotiationContext("", 1, 5));
@@ -98,5 +168,6 @@ class NegotiationContextTest {
         assertEquals(5, context.maxRounds());
         assertEquals(2, context.round());
         assertEquals(SESSION_ID, context.id());
+        assertEquals(null, context.performative());
     }
 }
