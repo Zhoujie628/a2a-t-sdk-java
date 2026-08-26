@@ -58,6 +58,51 @@ class DefaultNegotiationSemanticValidatorTest {
     }
 
     @Test
+    void rejectMessageParamsCarryTheReasonsOfNonProvision() {
+        llmClient.payload = "{\"semantic_verdict\":true,\"negotiation_type\":\"information\","
+                + "\"errors\":[],\"params\":{\"energy saving region\":\"site inventory unavailable, cannot provide\"}}";
+        Map<String, Object> rejectSchema = Map.of(
+                "type", "object",
+                "properties", Map.of("energy saving region", Map.of("type", "string")));
+        NegotiationReference rejectReference =
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.REJECT, "en-US");
+
+        SemanticValidationResult result =
+                validator.validateNegotiation(VALID_PROMPT, rejectSchema, rejectReference, TEMPLATE_CONTENT);
+
+        assertTrue(result.verdict());
+        assertEquals(
+                Map.of("energy saving region", "site inventory unavailable, cannot provide"),
+                result.params());
+    }
+
+    @Test
+    void englishSystemPromptCarriesTheRejectReasonExtractionRule() {
+        llmClient.payload =
+                "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}";
+        NegotiationReference rejectReference =
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.REJECT, "en-US");
+
+        validator.validateNegotiation(VALID_PROMPT, callerSchema, rejectReference, TEMPLATE_CONTENT);
+
+        String systemPrompt = llmClient.lastMessages.get(0).get("content");
+        assertTrue(systemPrompt.contains("reason of non-provision stated for that field"));
+    }
+
+    @Test
+    void chineseSystemPromptCarriesTheRejectReasonExtractionRule() {
+        llmClient.payload =
+                "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}";
+        NegotiationReference rejectReference =
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.REJECT, "zh-CN");
+
+        validator.validateNegotiation(VALID_PROMPT, callerSchema, rejectReference, TEMPLATE_CONTENT);
+
+        String systemPrompt = llmClient.lastMessages.get(0).get("content");
+        assertTrue(systemPrompt.contains("无法提供的原因文本"));
+    }
+
+    @Test
     void singleStructuredCallReceivesMergedSchemaAndFilledUserPrompt() {
         llmClient.payload =
                 "{\"semantic_verdict\":true,\"negotiation_type\":\"information\"," + "\"errors\":[],\"params\":{}}";

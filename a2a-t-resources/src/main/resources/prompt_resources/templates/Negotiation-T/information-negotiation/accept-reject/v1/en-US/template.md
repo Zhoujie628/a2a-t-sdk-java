@@ -8,12 +8,11 @@ Requirement:
 ## Information Negotiation Result Content
 {{information_negotiation_result_content}} (required)
 Requirement:
-1. If the information can be provided:
-	- State the name and content
-2. If the information cannot be provided:
-	- State the name and the specific reason why it cannot be provided (optional)
-Example 1:
+1. When the conclusion is Accept: state each item as "name: content", where the content is the actual value of the information
+2. When the conclusion is Reject: state each item as "name: reason why it cannot be provided", where the reason is the specific cause preventing the supplement
+Example 1 (Accept):
 Energy saving area information: Songshanhu
 Energy saving rate guarantee goal: 20Mbps
-Example 2:
-Unable to provide area information
+Example 2 (Reject):
+Energy saving area information: site inventory unavailable, cannot provide
+Energy saving rate guarantee goal: goal not confirmed with the customer, cannot provide
