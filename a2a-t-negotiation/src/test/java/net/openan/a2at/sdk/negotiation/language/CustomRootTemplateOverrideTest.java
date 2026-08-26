@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import net.openan.a2at.sdk.core.model.MetadataContent;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestrator;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestratorBuilder;
@@ -105,7 +105,7 @@ class CustomRootTemplateOverrideTest {
     private Path writeCustomizedInformationProposeTemplate() throws IOException {
         PromptTemplate builtinTemplate = new DefaultNegotiationTemplateLoader(NegotiationGoldenCases.ZH_CN, null)
                 .load(new NegotiationReference(
-                        NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, NegotiationGoldenCases.ZH_CN));
+                        NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, NegotiationGoldenCases.ZH_CN));
         Path customTemplate = customRoot
                 .resolve("templates")
                 .resolve("Negotiation-T")

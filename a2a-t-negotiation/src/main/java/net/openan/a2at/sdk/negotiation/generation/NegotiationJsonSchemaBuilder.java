@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import org.jspecify.annotations.Nullable;
 
@@ -33,9 +33,10 @@ final class NegotiationJsonSchemaBuilder {
      * @return JSON Schema describing the snake_case extraction output of the pair
      * @throws NullPointerException if the phase is null, or the type is null on a typed phase
      */
-    public Map<String, Object> buildExtractionSchema(@Nullable NegotiationType type, NegotiationPhase phase) {
+    public Map<String, Object> buildExtractionSchema(
+            @Nullable NegotiationType type, NegotiationPerformative phase) {
         Objects.requireNonNull(phase, "Negotiation phase must not be null.");
-        if (phase == NegotiationPhase.ABORT) {
+        if (phase == NegotiationPerformative.ABORT) {
             if (type != null) {
                 throw new IllegalArgumentException(
                         "The ABORT phase is type-independent and must not carry a type but carried " + type + ".");
@@ -44,11 +45,11 @@ final class NegotiationJsonSchemaBuilder {
         }
         Objects.requireNonNull(type, "Negotiation type must not be null for the " + phase + " phase.");
         return switch (type) {
-            case INFORMATION -> phase == NegotiationPhase.PROPOSE
+            case INFORMATION -> phase == NegotiationPerformative.PROPOSE
                     ? informationProposeSchema()
                     : informationEndingSchema();
-            case TARGET -> phase == NegotiationPhase.PROPOSE ? targetProposeSchema() : targetEndingSchema();
-            case FEASIBILITY -> phase == NegotiationPhase.PROPOSE
+            case TARGET -> phase == NegotiationPerformative.PROPOSE ? targetProposeSchema() : targetEndingSchema();
+            case FEASIBILITY -> phase == NegotiationPerformative.PROPOSE
                     ? feasibilityProposeSchema()
                     : feasibilityEndingSchema();
         };

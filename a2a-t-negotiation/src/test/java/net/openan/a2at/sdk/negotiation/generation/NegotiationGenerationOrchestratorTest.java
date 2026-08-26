@@ -17,6 +17,7 @@ import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -54,7 +55,7 @@ class NegotiationGenerationOrchestratorTest {
         assertEquals(3, metadata.size());
         assertEquals(result.promptText(), metadata.get(NegotiationHandler.NEGOTIATION_T_URI));
         assertEquals(result.templateUri(), metadata.get(MetadataContent.TEMPLATE_URI_METADATA_KEY));
-        assertEquals(new NegotiationContext(UUID, 1, 5), result.negotiationContext());
+        assertEquals(new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE), result.negotiationContext());
         @SuppressWarnings("unchecked")
         Map<String, Object> nestedContext =
                 (Map<String, Object>) metadata.get(MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY);
@@ -75,7 +76,7 @@ class NegotiationGenerationOrchestratorTest {
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
         assertFalse(result.promptText().isBlank());
         assertFalse(result.promptText().contains("Negotiation Context"), "the context section must not be rendered");
-        assertEquals(new NegotiationContext(UUID, 2, 5), result.negotiationContext());
+        assertEquals(new NegotiationContext(UUID, 2, 5, NegotiationPerformative.PROPOSE), result.negotiationContext());
         assertTrue(result.promptText().contains("Required Information Items"));
     }
 
@@ -260,18 +261,18 @@ class NegotiationGenerationOrchestratorTest {
     }
 
     @Test
-    void rejectsTemplateUriThatDoesNotAddressTheExpectedPhase() {
-        IllegalArgumentException phaseMismatchFailure =
+    void rejectsTemplateUriThatDoesNotAddressTheExpectedPerformative() {
+        IllegalArgumentException performativeMismatchFailure =
                 assertThrows(IllegalArgumentException.class, () -> zhOrchestrator()
                         .generateProposeFromData(
                                 new NegotiationProposeData(
                                         new NegotiationContext(UUID, 1, 5),
                                         new InformationProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
                                 StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT));
-        assertTrue(phaseMismatchFailure
+        assertTrue(performativeMismatchFailure
                 .getMessage()
-                .contains("Template URI does not address a negotiation template of the expected phase PROPOSE"
-                        + " (propose)"));
+                .contains("Template URI does not address a negotiation template of the expected performative"
+                        + " PROPOSE (propose)"));
 
         IllegalArgumentException wrongExtensionFailure =
                 assertThrows(IllegalArgumentException.class, () -> zhOrchestrator()
@@ -282,8 +283,8 @@ class NegotiationGenerationOrchestratorTest {
                                 StandardTemplates.ENERGY_SAVING));
         assertTrue(wrongExtensionFailure
                 .getMessage()
-                .contains("Template URI does not address a negotiation template of the expected phase PROPOSE"
-                        + " (propose)"));
+                .contains("Template URI does not address a negotiation template of the expected performative"
+                        + " PROPOSE (propose)"));
     }
 
     private static NegotiationGenerationOrchestrator zhOrchestrator() {

@@ -90,13 +90,13 @@ public final class NegotiationContentService {
     }
 
     /**
-     * Generates a propose-phase negotiation message from typed data, deterministically without any LLM call.
+     * Generates a propose negotiation message from typed data, deterministically without any LLM call.
      *
      * @param data typed propose input carrying the negotiation context and the typed content
-     * @param templateUri template URI whose phase segment must be {@code propose}
+     * @param templateUri template URI whose performative segment must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the data, its context or the template URI is null
-     * @throws IllegalArgumentException if the template URI's phase or type contradicts the method or the content type
+     * @throws IllegalArgumentException if the template URI's performative or type contradicts the method or the content type
      * @throws NegotiationGenerationException with the code {@code template_not_found} or
      *     {@code negotiation_slot_missing} when loading or rendering the template fails
      */
@@ -106,13 +106,13 @@ public final class NegotiationContentService {
     }
 
     /**
-     * Generates an accept-phase negotiation message from typed data, deterministically without any LLM call.
+     * Generates an accept negotiation message from typed data, deterministically without any LLM call.
      *
      * @param data typed terminal input whose content conclusion must be {@code Accept}
-     * @param templateUri template URI whose phase segment must be {@code accept-reject}
+     * @param templateUri template URI whose performative segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the data, its context or the template URI is null
-     * @throws IllegalArgumentException if the template URI's phase or type contradicts the method or the content, or
+     * @throws IllegalArgumentException if the template URI's performative or type contradicts the method or the content, or
      *     the content conclusion is not {@code Accept}
      * @throws NegotiationGenerationException with the code {@code template_not_found} or
      *     {@code negotiation_slot_missing} when loading or rendering the template fails
@@ -123,13 +123,13 @@ public final class NegotiationContentService {
     }
 
     /**
-     * Generates a reject-phase negotiation message from typed data, deterministically without any LLM call.
+     * Generates a reject negotiation message from typed data, deterministically without any LLM call.
      *
      * @param data typed terminal input whose content conclusion must be {@code Reject}
-     * @param templateUri template URI whose phase segment must be {@code accept-reject}
+     * @param templateUri template URI whose performative segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the data, its context or the template URI is null
-     * @throws IllegalArgumentException if the template URI's phase or type contradicts the method or the content, or
+     * @throws IllegalArgumentException if the template URI's performative or type contradicts the method or the content, or
      *     the content conclusion is not {@code Reject}
      * @throws NegotiationGenerationException with the code {@code template_not_found} or
      *     {@code negotiation_slot_missing} when loading or rendering the template fails
@@ -157,18 +157,18 @@ public final class NegotiationContentService {
     }
 
     /**
-     * Generates a propose-phase negotiation message from free text through one LLM content-extraction step.
+     * Generates a propose negotiation message from free text through one LLM content-extraction step.
      *
      * @param text free-text input describing the message content
      * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
-     * @param templateUri template URI whose phase segment must be {@code propose}
+     * @param templateUri template URI whose performative segment must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the context or the template URI is null
      * @throws IllegalArgumentException if the template URI contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found},
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when loading or
      *     extracting fails, {@code negotiation_slot_missing} when the extracted content misses a required field, or
-     *     {@code negotiation_invalid_input} when the text is blank or the extracted content contradicts the phase
+     *     {@code negotiation_invalid_input} when the text is blank or the extracted content contradicts the performative
      */
     public MetadataContent generateProposeFromText(
             String text, @NonNull NegotiationContext context, @NonNull TemplateUri templateUri) {
@@ -176,11 +176,11 @@ public final class NegotiationContentService {
     }
 
     /**
-     * Generates an accept-phase negotiation message from free text through one LLM content-extraction step.
+     * Generates an accept negotiation message from free text through one LLM content-extraction step.
      *
      * @param text free-text input describing the message content
      * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
-     * @param templateUri template URI whose phase segment must be {@code accept-reject}
+     * @param templateUri template URI whose performative segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the context or the template URI is null
      * @throws IllegalArgumentException if the template URI contradicts the method
@@ -195,11 +195,11 @@ public final class NegotiationContentService {
     }
 
     /**
-     * Generates a reject-phase negotiation message from free text through one LLM content-extraction step.
+     * Generates a reject negotiation message from free text through one LLM content-extraction step.
      *
      * @param text free-text input describing the message content
      * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
-     * @param templateUri template URI whose phase segment must be {@code accept-reject}
+     * @param templateUri template URI whose performative segment must be {@code accept-reject}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the context or the template URI is null
      * @throws IllegalArgumentException if the template URI contradicts the method
@@ -234,7 +234,7 @@ public final class NegotiationContentService {
     /**
      * Lists every negotiation template available for the configured language; never throws.
      *
-     * @return loadable negotiation templates of the configured language, in a fixed type and phase order; empty when
+     * @return loadable negotiation templates of the configured language, in a fixed type and performative order; empty when
      *     none can be loaded
      */
     public List<PromptTemplate> getNegotiationPrompts() {
@@ -254,13 +254,13 @@ public final class NegotiationContentService {
     }
 
     /**
-     * Validates a propose-phase negotiation message and extracts its parameters.
+     * Validates a propose negotiation message and extracts its parameters.
      *
      * @param prompt rendered negotiation message text to validate
      * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
      *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
-     * @param templateUri template URI whose phase segment must be {@code propose}
+     * @param templateUri template URI whose performative segment must be {@code propose}
      * @return filled parameter data carrying the context parameters and the extracted parameters
      * @throws NullPointerException if the prompt, the schema or the template URI is null
      * @throws IllegalArgumentException if the prompt is blank, or the template URI contradicts the method
@@ -278,13 +278,13 @@ public final class NegotiationContentService {
     }
 
     /**
-     * Validates an accept-phase negotiation message and extracts its parameters.
+     * Validates an accept negotiation message and extracts its parameters.
      *
      * @param prompt rendered negotiation message text to validate
      * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
      *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
-     * @param templateUri template URI whose phase segment must be {@code accept-reject}
+     * @param templateUri template URI whose performative segment must be {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
      * @throws NullPointerException if the prompt, the schema or the template URI is null
      * @throws IllegalArgumentException if the prompt is blank, or the template URI contradicts the method
@@ -302,13 +302,13 @@ public final class NegotiationContentService {
     }
 
     /**
-     * Validates a reject-phase negotiation message and extracts its parameters.
+     * Validates a reject negotiation message and extracts its parameters.
      *
      * @param prompt rendered negotiation message text to validate
      * @param context negotiation context carried alongside the message in the A2A-T metadata; {@code null} is
      *     reported as not being a negotiation message
      * @param schema caller-provided parameter JSON schema describing the parameters to extract
-     * @param templateUri template URI whose phase segment must be {@code accept-reject}
+     * @param templateUri template URI whose performative segment must be {@code accept-reject}
      * @return filled parameter data carrying the context parameters and the extracted parameters
      * @throws NullPointerException if the prompt, the schema or the template URI is null
      * @throws IllegalArgumentException if the prompt is blank, or the template URI contradicts the method

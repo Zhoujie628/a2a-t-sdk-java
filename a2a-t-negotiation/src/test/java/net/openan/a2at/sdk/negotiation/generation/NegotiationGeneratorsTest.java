@@ -15,8 +15,8 @@ import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
@@ -537,7 +537,7 @@ class NegotiationGeneratorsTest {
     @Test
     void generatorsRenderAgainstTheBundledTemplates() {
         NegotiationReference reference = NegotiationReference.tryParse(
-                        StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(), NegotiationPhase.PROPOSE, "zh-CN")
+                        StandardTemplates.TARGET_NEGOTIATION_PROPOSE.uri(), NegotiationPerformative.PROPOSE, "zh-CN")
                 .orElseThrow(() -> new AssertionError("expected the bundled target propose template to resolve"));
         PromptTemplate loaded = new DefaultNegotiationTemplateLoader("zh-CN", null).load(reference);
 

@@ -11,8 +11,8 @@ import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class ParamExtractorTest {
             + "1. 节能区域信息：请提供真实存在的区域\n";
 
     private static final NegotiationReference REFERENCE =
-            new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "zh-CN");
+            new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN");
 
     private static final int MAX_ATTEMPTS = 1;
 

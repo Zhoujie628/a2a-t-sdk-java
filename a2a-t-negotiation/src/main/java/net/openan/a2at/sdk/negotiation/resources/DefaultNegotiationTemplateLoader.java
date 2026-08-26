@@ -11,8 +11,8 @@ import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.resources.ClasspathResourceStreams;
 import net.openan.a2at.sdk.core.resources.PathSegments;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.core.model.TemplateUri;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.prompt.resources.catalog.TemplateDescriptions;
@@ -44,8 +44,8 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
     private static final List<NegotiationType> LOAD_ALL_TYPE_ORDER =
             List.of(NegotiationType.INFORMATION, NegotiationType.TARGET, NegotiationType.FEASIBILITY);
 
-    private static final List<NegotiationPhase> LOAD_ALL_PHASE_ORDER =
-            List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT);
+    private static final List<NegotiationPerformative> LOAD_ALL_PERFORMATIVE_ORDER =
+            List.of(NegotiationPerformative.PROPOSE, NegotiationPerformative.ACCEPT);
 
     private final String language;
 
@@ -90,8 +90,8 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
      * Loads every loadable negotiation template of the loader's language.
      *
      * <p>The fixed iteration order is the negotiation type order information, target, feasibility crossed with the
-     * phase order propose, accept-reject, followed by the type-independent common abort template. Templates that exist
-     * nowhere are skipped.
+     * performative order propose, accept-reject, followed by the type-independent common abort template. Templates
+     * that exist nowhere are skipped.
      *
      * @return templates of the loader's language that could be loaded, in a fixed order
      */
@@ -99,16 +99,16 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
     public List<PromptTemplate> loadAll() {
         List<PromptTemplate> templates = new ArrayList<>();
         for (NegotiationType type : LOAD_ALL_TYPE_ORDER) {
-            for (NegotiationPhase phase : LOAD_ALL_PHASE_ORDER) {
+            for (NegotiationPerformative performative : LOAD_ALL_PERFORMATIVE_ORDER) {
                 try {
-                    templates.add(load(new NegotiationReference(type, phase, language)));
+                    templates.add(load(new NegotiationReference(type, performative, language)));
                 } catch (ResourceNotFoundException exception) {
                     // A template that exists nowhere for this language is simply not listed.
                 }
             }
         }
         try {
-            templates.add(load(new NegotiationReference(null, NegotiationPhase.ABORT, language)));
+            templates.add(load(new NegotiationReference(null, NegotiationPerformative.ABORT, language)));
         } catch (ResourceNotFoundException exception) {
             // A template that exists nowhere for this language is simply not listed.
         }
@@ -121,7 +121,7 @@ public final class DefaultNegotiationTemplateLoader implements NegotiationTempla
                 "templates",
                 "Negotiation-T",
                 reference.typeSegment(),
-                reference.phase().uriSegment(),
+                NegotiationReference.uriSegmentOf(reference.performative()),
                 TemplateUri.DEFAULT_TEMPLATE_VERSION,
                 reference.language(),
                 TEMPLATE_FILE_NAME);

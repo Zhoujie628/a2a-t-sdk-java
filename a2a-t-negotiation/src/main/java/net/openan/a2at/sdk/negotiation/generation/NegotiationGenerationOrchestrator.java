@@ -11,6 +11,7 @@ import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.FilledParamData;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.core.model.PromptTemplate;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
@@ -19,7 +20,6 @@ import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
@@ -100,7 +100,9 @@ public final class NegotiationGenerationOrchestrator {
      * @param data typed propose input carrying the negotiation context and the typed content
      * @param templateUri template URI such as {@code Negotiation-T/information-negotiation/propose/v1}; its phase
      *     segment must be {@code propose}
-     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI;
+     *     the emitted negotiation context is the input context stamped with the performative of the addressed template,
+     *     so it may differ from the context the caller passed in
      * @throws NullPointerException if the data, its context or the template URI is null
      * @throws IllegalArgumentException if the template URI's phase or type contradicts the method or the content type
      * @throws NegotiationGenerationException with the code {@code template_not_found} when no template exists for the
@@ -109,7 +111,7 @@ public final class NegotiationGenerationOrchestrator {
     public MetadataContent generateProposeFromData(
             @NonNull NegotiationProposeData data, @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(data, "Negotiation propose data must not be null.");
-        return generateFromData(data.context(), data.content(), templateUri, NegotiationPhase.PROPOSE);
+        return generateFromData(data.context(), data.content(), templateUri, NegotiationPerformative.PROPOSE);
     }
 
     /**
@@ -121,7 +123,9 @@ public final class NegotiationGenerationOrchestrator {
      * @param data typed terminal input carrying the negotiation context and the typed ending content
      * @param templateUri template URI such as {@code Negotiation-T/information-negotiation/accept-reject/v1}; its phase
      *     segment must be {@code accept-reject}
-     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI;
+     *     the emitted negotiation context is the input context stamped with the performative of the addressed template,
+     *     so it may differ from the context the caller passed in
      * @throws NullPointerException if the data, its context or the template URI is null
      * @throws IllegalArgumentException if the template URI's phase or type contradicts the method or the content, or
      *     the content conclusion is not {@code Accept}
@@ -131,7 +135,7 @@ public final class NegotiationGenerationOrchestrator {
     public MetadataContent generateAcceptFromData(
             @NonNull NegotiationEndingData data, @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(data, "Negotiation ending data must not be null.");
-        return generateFromData(data.context(), data.content(), templateUri, NegotiationPhase.ACCEPT);
+        return generateFromData(data.context(), data.content(), templateUri, NegotiationPerformative.ACCEPT);
     }
 
     /**
@@ -143,7 +147,9 @@ public final class NegotiationGenerationOrchestrator {
      * @param data typed terminal input carrying the negotiation context and the typed ending content
      * @param templateUri template URI such as {@code Negotiation-T/feasibility-negotiation/accept-reject/v1}; its phase
      *     segment must be {@code accept-reject}
-     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI;
+     *     the emitted negotiation context is the input context stamped with the performative of the addressed template,
+     *     so it may differ from the context the caller passed in
      * @throws NullPointerException if the data, its context or the template URI is null
      * @throws IllegalArgumentException if the template URI's phase or type contradicts the method or the content, or
      *     the content conclusion is not {@code Reject}
@@ -153,7 +159,7 @@ public final class NegotiationGenerationOrchestrator {
     public MetadataContent generateRejectFromData(
             @NonNull NegotiationEndingData data, @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(data, "Negotiation ending data must not be null.");
-        return generateFromData(data.context(), data.content(), templateUri, NegotiationPhase.REJECT);
+        return generateFromData(data.context(), data.content(), templateUri, NegotiationPerformative.REJECT);
     }
 
     /**
@@ -164,7 +170,9 @@ public final class NegotiationGenerationOrchestrator {
      *
      * @param data typed abort input carrying the negotiation context and the termination reason
      * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
-     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI;
+     *     the emitted negotiation context is the input context stamped with the performative of the addressed template,
+     *     so it may differ from the context the caller passed in
      * @throws NullPointerException if the data, its context or the template URI is null
      * @throws IllegalArgumentException if the template URI does not address the common abort template or the
      *     termination reason is blank
@@ -174,7 +182,7 @@ public final class NegotiationGenerationOrchestrator {
     public MetadataContent generateAbortFromData(
             @NonNull NegotiationAbortData data, @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(data, "Negotiation abort data must not be null.");
-        return generateFromData(data.context(), data.content(), templateUri, NegotiationPhase.ABORT);
+        return generateFromData(data.context(), data.content(), templateUri, NegotiationPerformative.ABORT);
     }
 
     /**
@@ -189,7 +197,9 @@ public final class NegotiationGenerationOrchestrator {
      * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI such as {@code Negotiation-T/target-negotiation/propose/v1}; its phase segment
      *     must be {@code propose}
-     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI;
+     *     the emitted negotiation context is the input context stamped with the performative of the addressed template,
+     *     so it may differ from the context the caller passed in
      * @throws NullPointerException if the context or the template URI is null
      * @throws IllegalArgumentException if the template URI's phase contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found} when no template or prompt
@@ -200,7 +210,7 @@ public final class NegotiationGenerationOrchestrator {
      */
     public MetadataContent generateProposeFromText(
             String text, @NonNull NegotiationContext context, @NonNull TemplateUri templateUri) {
-        return generateFromText(text, context, templateUri, NegotiationPhase.PROPOSE);
+        return generateFromText(text, context, templateUri, NegotiationPerformative.PROPOSE);
     }
 
     /**
@@ -214,7 +224,9 @@ public final class NegotiationGenerationOrchestrator {
      * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI such as {@code Negotiation-T/information-negotiation/accept-reject/v1}; its phase
      *     segment must be {@code accept-reject}
-     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI;
+     *     the emitted negotiation context is the input context stamped with the performative of the addressed template,
+     *     so it may differ from the context the caller passed in
      * @throws NullPointerException if the context or the template URI is null
      * @throws IllegalArgumentException if the template URI's phase contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found} when no template or prompt
@@ -225,7 +237,7 @@ public final class NegotiationGenerationOrchestrator {
      */
     public MetadataContent generateAcceptFromText(
             String text, @NonNull NegotiationContext context, @NonNull TemplateUri templateUri) {
-        return generateFromText(text, context, templateUri, NegotiationPhase.ACCEPT);
+        return generateFromText(text, context, templateUri, NegotiationPerformative.ACCEPT);
     }
 
     /**
@@ -239,7 +251,9 @@ public final class NegotiationGenerationOrchestrator {
      * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI such as {@code Negotiation-T/feasibility-negotiation/accept-reject/v1}; its phase
      *     segment must be {@code accept-reject}
-     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI;
+     *     the emitted negotiation context is the input context stamped with the performative of the addressed template,
+     *     so it may differ from the context the caller passed in
      * @throws NullPointerException if the context or the template URI is null
      * @throws IllegalArgumentException if the template URI's phase contradicts the method
      * @throws NegotiationGenerationException with the code {@code template_not_found} when no template or prompt
@@ -250,7 +264,7 @@ public final class NegotiationGenerationOrchestrator {
      */
     public MetadataContent generateRejectFromText(
             String text, @NonNull NegotiationContext context, @NonNull TemplateUri templateUri) {
-        return generateFromText(text, context, templateUri, NegotiationPhase.REJECT);
+        return generateFromText(text, context, templateUri, NegotiationPerformative.REJECT);
     }
 
     /**
@@ -264,7 +278,9 @@ public final class NegotiationGenerationOrchestrator {
      * @param text free-text input stating the termination reason
      * @param context negotiation context carried in the {@code negotiationContext} metadata entry of the generated message without any LLM involvement
      * @param templateUri template URI of the common abort template {@code Negotiation-T/common/abort/v1}
-     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
+     * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI;
+     *     the emitted negotiation context is the input context stamped with the performative of the addressed template,
+     *     so it may differ from the context the caller passed in
      * @throws NullPointerException if the context or the template URI is null
      * @throws IllegalArgumentException if the template URI does not address the common abort template
      * @throws NegotiationGenerationException with the code {@code template_not_found} when no template or prompt
@@ -275,7 +291,7 @@ public final class NegotiationGenerationOrchestrator {
      */
     public MetadataContent generateAbortFromText(
             String text, @NonNull NegotiationContext context, @NonNull TemplateUri templateUri) {
-        return generateFromText(text, context, templateUri, NegotiationPhase.ABORT);
+        return generateFromText(text, context, templateUri, NegotiationPerformative.ABORT);
     }
 
     /**
@@ -358,7 +374,7 @@ public final class NegotiationGenerationOrchestrator {
             NegotiationContext context,
             @NonNull Map<String, Object> schema,
             @NonNull TemplateUri templateUri) {
-        return validatePromptAndDataFilling(prompt, context, schema, templateUri, NegotiationPhase.PROPOSE);
+        return validatePromptAndDataFilling(prompt, context, schema, templateUri, NegotiationPerformative.PROPOSE);
     }
 
     /**
@@ -389,7 +405,7 @@ public final class NegotiationGenerationOrchestrator {
             NegotiationContext context,
             @NonNull Map<String, Object> schema,
             @NonNull TemplateUri templateUri) {
-        return validatePromptAndDataFilling(prompt, context, schema, templateUri, NegotiationPhase.ACCEPT);
+        return validatePromptAndDataFilling(prompt, context, schema, templateUri, NegotiationPerformative.ACCEPT);
     }
 
     /**
@@ -420,7 +436,7 @@ public final class NegotiationGenerationOrchestrator {
             NegotiationContext context,
             @NonNull Map<String, Object> schema,
             @NonNull TemplateUri templateUri) {
-        return validatePromptAndDataFilling(prompt, context, schema, templateUri, NegotiationPhase.REJECT);
+        return validatePromptAndDataFilling(prompt, context, schema, templateUri, NegotiationPerformative.REJECT);
     }
 
     /**
@@ -450,14 +466,17 @@ public final class NegotiationGenerationOrchestrator {
             NegotiationContext context,
             @NonNull Map<String, Object> schema,
             @NonNull TemplateUri templateUri) {
-        return validatePromptAndDataFilling(prompt, context, schema, templateUri, NegotiationPhase.ABORT);
+        return validatePromptAndDataFilling(prompt, context, schema, templateUri, NegotiationPerformative.ABORT);
     }
 
     private MetadataContent generateFromData(
-            NegotiationContext context, NegotiationContent content, TemplateUri templateUri, NegotiationPhase phase) {
+            NegotiationContext context,
+            NegotiationContent content,
+            TemplateUri templateUri,
+            NegotiationPerformative performative) {
         requireContext(context);
         try {
-            NegotiationReference reference = requireReference(templateUri, phase);
+            NegotiationReference reference = requireReference(templateUri, performative);
             PromptTemplate template = loadTemplate(reference);
             String promptText = renderMessage(context, content, reference, template);
             return completeGeneration(reference, promptText, context);
@@ -469,10 +488,10 @@ public final class NegotiationGenerationOrchestrator {
     }
 
     private MetadataContent generateFromText(
-            String text, NegotiationContext context, TemplateUri templateUri, NegotiationPhase phase) {
+            String text, NegotiationContext context, TemplateUri templateUri, NegotiationPerformative performative) {
         requireContext(context);
         try {
-            NegotiationReference reference = requireReference(templateUri, phase);
+            NegotiationReference reference = requireReference(templateUri, performative);
             PromptTemplate template = loadTemplate(reference);
             NegotiationContent content = extractContent(text, reference);
             String promptText = renderMessage(context, content, reference, template);
@@ -507,7 +526,7 @@ public final class NegotiationGenerationOrchestrator {
             NegotiationContent content,
             NegotiationReference reference,
             PromptTemplate template) {
-        NegotiationGenerator generator = generatorRegistry.resolve(reference.type(), reference.phase(), content);
+        NegotiationGenerator generator = generatorRegistry.resolve(reference.type(), reference.performative(), content);
         try {
             return generator.generate(context, content, template, vocabulary);
         } catch (NegotiationRenderException exception) {
@@ -520,15 +539,18 @@ public final class NegotiationGenerationOrchestrator {
 
     private MetadataContent completeGeneration(
             NegotiationReference reference, String promptText, NegotiationContext context) {
+        // The operation is the source of truth for the performative: the emitted context is the input context stamped
+        // with the performative of the addressed template, overriding whatever the caller passed in.
+        NegotiationContext stampedContext = context.withPerformative(reference.performative());
         logger.atInfo().log(
-                "negotiation_generation_completed uri={} type={} phase={} round={} id={}",
+                "negotiation_generation_completed uri={} type={} performative={} round={} id={}",
                 reference.uri(),
                 reference.type(),
-                reference.phase(),
-                context.round(),
-                context.id());
+                reference.performative(),
+                stampedContext.round(),
+                stampedContext.id());
         return new MetadataContent(
-                reference.uri(), promptText, ExtensionUriConstants.NEGOTIATION_T_EXTENSION_URI, context);
+                reference.uri(), promptText, ExtensionUriConstants.NEGOTIATION_T_EXTENSION_URI, stampedContext);
     }
 
     private FilledParamData validatePromptAndDataFilling(
@@ -536,9 +558,9 @@ public final class NegotiationGenerationOrchestrator {
             NegotiationContext context,
             Map<String, Object> schema,
             TemplateUri templateUri,
-            NegotiationPhase phase) {
+            NegotiationPerformative performative) {
         Objects.requireNonNull(schema, "Parameter schema must not be null.");
-        NegotiationReference reference = requireReference(templateUri, phase);
+        NegotiationReference reference = requireReference(templateUri, performative);
         String templateContent;
         try {
             templateContent = loadTemplate(reference).content();
@@ -559,28 +581,30 @@ public final class NegotiationGenerationOrchestrator {
     }
 
     /**
-     * Derives the reference of a typed template URI against one expected phase.
+     * Derives the reference of a typed template URI against one expected performative.
      *
      * @param templateUri template URI declared by the caller
-     * @param phase API-level phase the calling method operates on
-     * @return reference addressed by the URI carrying the expected phase
-     * @throws IllegalArgumentException if the URI does not address a negotiation template of the expected phase
+     * @param performative performative the calling method operates on
+     * @return reference addressed by the URI carrying the expected performative
+     * @throws IllegalArgumentException if the URI does not address a negotiation template of the expected performative
      */
-    private NegotiationReference requireReference(TemplateUri templateUri, NegotiationPhase phase) {
-        return NegotiationReference.fromTemplateUri(templateUri, phase, language)
+    private NegotiationReference requireReference(TemplateUri templateUri, NegotiationPerformative performative) {
+        return NegotiationReference.fromTemplateUri(templateUri, performative, language)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Template URI does not address a negotiation template of the expected phase " + phase + " ("
-                                + phase.uriSegment() + "): " + templateUri.uri() + "."));
+                        "Template URI does not address a negotiation template of the expected performative "
+                                + performative + " (" + NegotiationReference.uriSegmentOf(performative) + "): "
+                                + templateUri.uri() + "."));
     }
 
     private Optional<NegotiationReference> parseQueryReference(TemplateUri templateUri) {
-        // The URI layer cannot distinguish accept from reject because both phases share the accept-reject template
-        // segment. The query therefore addresses the shared template through the ACCEPT phase; the parsed phase is an
-        // addressing artifact only and must never be read as the phase of any message. The abort phase addresses the
-        // type-independent common abort template.
-        for (NegotiationPhase phase :
-                List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT, NegotiationPhase.ABORT)) {
-            Optional<NegotiationReference> reference = NegotiationReference.fromTemplateUri(templateUri, phase, language);
+        // The URI layer cannot distinguish accept from reject because both performatives share the accept-reject
+        // template segment. The query therefore addresses the shared template through the ACCEPT performative; the
+        // parsed performative is an addressing artifact only and must never be read as the performative of any
+        // message. The abort performative addresses the type-independent common abort template.
+        for (NegotiationPerformative performative :
+                List.of(NegotiationPerformative.PROPOSE, NegotiationPerformative.ACCEPT, NegotiationPerformative.ABORT)) {
+            Optional<NegotiationReference> reference =
+                    NegotiationReference.fromTemplateUri(templateUri, performative, language);
             if (reference.isPresent()) {
                 return reference;
             }

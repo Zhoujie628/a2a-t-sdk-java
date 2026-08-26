@@ -49,6 +49,17 @@ public final class NegotiationSampleFlow {
         return new NegotiationFlowResult(requestContext, propose, proposeData, ending, endingData, decision);
     }
 
+    /**
+     * Builds a session-handle context from the filled negotiation data.
+     *
+     * <p>The merged data carries only the three session fields, so the context is built without a performative: the
+     * intent of the next message is legitimately unknown at this point. The performative of an outbound message is
+     * stamped by the generation API ({@code completeGeneration}), not reconstructed here.
+     *
+     * @param data filled negotiation data holding the {@code id}, {@code round}, and {@code maxRounds} fields
+     * @return the negotiation context acting as a session handle
+     * @throws IllegalArgumentException when the data does not contain a valid context
+     */
     public static NegotiationContext contextFrom(Map<String, Object> data) {
         Object id = data.get("id");
         Object round = data.get("round");

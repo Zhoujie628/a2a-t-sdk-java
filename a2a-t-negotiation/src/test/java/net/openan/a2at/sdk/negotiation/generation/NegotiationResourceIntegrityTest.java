@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.generation.NegotiationGoldenCases.GoldenCase;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
@@ -62,8 +62,10 @@ class NegotiationResourceIntegrityTest {
         for (String language : NegotiationGoldenCases.LANGUAGES) {
             DefaultNegotiationTemplateLoader loader = new DefaultNegotiationTemplateLoader(language, null);
             for (NegotiationType type : NegotiationType.values()) {
-                for (NegotiationPhase phase : List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT)) {
-                    PromptTemplate template = loader.load(new NegotiationReference(type, phase, language));
+                for (NegotiationPerformative performative :
+                        List.of(NegotiationPerformative.PROPOSE, NegotiationPerformative.ACCEPT)) {
+                    PromptTemplate template =
+                            loader.load(new NegotiationReference(type, performative, language));
                     assertFalse(template.content().isBlank());
                     templateCount++;
                 }

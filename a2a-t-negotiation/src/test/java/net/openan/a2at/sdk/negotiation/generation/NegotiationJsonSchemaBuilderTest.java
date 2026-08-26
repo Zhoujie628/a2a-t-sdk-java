@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +19,7 @@ class NegotiationJsonSchemaBuilderTest {
     @Test
     void informationProposeSchemaUsesSnakeCasePropertiesAndNullableRelationship() {
         Map<String, Object> schema =
-                builder.buildExtractionSchema(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE);
+                builder.buildExtractionSchema(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE);
 
         assertEquals("object", schema.get("type"));
         Map<?, ?> properties = (Map<?, ?>) schema.get("properties");
@@ -40,7 +40,7 @@ class NegotiationJsonSchemaBuilderTest {
     @Test
     void informationEndingSchemaRequiresConclusionAndItems() {
         Map<String, Object> schema =
-                builder.buildExtractionSchema(NegotiationType.INFORMATION, NegotiationPhase.ACCEPT);
+                builder.buildExtractionSchema(NegotiationType.INFORMATION, NegotiationPerformative.ACCEPT);
 
         Map<?, ?> properties = (Map<?, ?>) schema.get("properties");
         assertEquals(List.of("conclusion", "items"), List.copyOf(properties.keySet()));
@@ -52,13 +52,13 @@ class NegotiationJsonSchemaBuilderTest {
     @Test
     void acceptAndRejectShareTheTerminalSchema() {
         assertEquals(
-                builder.buildExtractionSchema(NegotiationType.TARGET, NegotiationPhase.ACCEPT),
-                builder.buildExtractionSchema(NegotiationType.TARGET, NegotiationPhase.REJECT));
+                builder.buildExtractionSchema(NegotiationType.TARGET, NegotiationPerformative.ACCEPT),
+                builder.buildExtractionSchema(NegotiationType.TARGET, NegotiationPerformative.REJECT));
     }
 
     @Test
     void targetProposeSchemaUsesSnakeCaseProperties() {
-        Map<String, Object> schema = builder.buildExtractionSchema(NegotiationType.TARGET, NegotiationPhase.PROPOSE);
+        Map<String, Object> schema = builder.buildExtractionSchema(NegotiationType.TARGET, NegotiationPerformative.PROPOSE);
 
         Map<?, ?> properties = (Map<?, ?>) schema.get("properties");
         assertEquals(
@@ -74,7 +74,7 @@ class NegotiationJsonSchemaBuilderTest {
 
     @Test
     void targetEndingSchemaCarriesNullableResultFields() {
-        Map<String, Object> schema = builder.buildExtractionSchema(NegotiationType.TARGET, NegotiationPhase.REJECT);
+        Map<String, Object> schema = builder.buildExtractionSchema(NegotiationType.TARGET, NegotiationPerformative.REJECT);
 
         Map<?, ?> properties = (Map<?, ?>) schema.get("properties");
         assertEquals(List.of("conclusion", "confirmed_intent", "failure_reason"), List.copyOf(properties.keySet()));
@@ -86,7 +86,7 @@ class NegotiationJsonSchemaBuilderTest {
     @Test
     void feasibilityProposeSchemaRequiresTheActionEnum() {
         Map<String, Object> schema =
-                builder.buildExtractionSchema(NegotiationType.FEASIBILITY, NegotiationPhase.PROPOSE);
+                builder.buildExtractionSchema(NegotiationType.FEASIBILITY, NegotiationPerformative.PROPOSE);
 
         Map<?, ?> properties = (Map<?, ?>) schema.get("properties");
         assertEquals(
@@ -104,7 +104,7 @@ class NegotiationJsonSchemaBuilderTest {
     @Test
     void feasibilityEndingSchemaRequiresTheSummary() {
         Map<String, Object> schema =
-                builder.buildExtractionSchema(NegotiationType.FEASIBILITY, NegotiationPhase.ACCEPT);
+                builder.buildExtractionSchema(NegotiationType.FEASIBILITY, NegotiationPerformative.ACCEPT);
 
         Map<?, ?> properties = (Map<?, ?>) schema.get("properties");
         assertEquals(List.of("conclusion", "feasibility_summary"), List.copyOf(properties.keySet()));
@@ -117,7 +117,7 @@ class NegotiationJsonSchemaBuilderTest {
                 "Negotiation type must not be null for the PROPOSE phase.",
                 assertThrows(
                                 NullPointerException.class,
-                                () -> builder.buildExtractionSchema(null, NegotiationPhase.PROPOSE))
+                                () -> builder.buildExtractionSchema(null, NegotiationPerformative.PROPOSE))
                         .getMessage());
         assertEquals(
                 "Negotiation phase must not be null.",

@@ -12,6 +12,7 @@ import net.jqwik.api.Provide;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.FeasibilityProposeContent;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
@@ -79,7 +80,7 @@ class FromDataRoundTripPropertyTest {
         TemplateUri templateUri = PropertyHarness.templateUri(COMMON_ABORT_URI);
         MetadataContent message =
                 service.generateAbortFromData(new NegotiationAbortData(context, content), templateUri);
-        assertMessageInvariants(message, templateUri, context);
+        assertMessageInvariants(message, templateUri, context, NegotiationPerformative.ABORT);
         FilledParamData filled = service.validateAbortPromptAndDataFilling(
                 message.promptText(), context, FLAT_SCHEMA, templateUri);
         assertContextSurvives(filled, context);
@@ -97,7 +98,7 @@ class FromDataRoundTripPropertyTest {
         NegotiationContentService service = PropertyHarness.service(language, llm);
         TemplateUri templateUri = PropertyHarness.templateUri(rawUri);
         MetadataContent message = service.generateProposeFromData(data, templateUri);
-        assertMessageInvariants(message, templateUri, context);
+        assertMessageInvariants(message, templateUri, context, NegotiationPerformative.PROPOSE);
         FilledParamData filled =
                 service.validateProposePromptAndDataFilling(message.promptText(), context, FLAT_SCHEMA, templateUri);
         assertContextSurvives(filled, context);
@@ -105,9 +106,10 @@ class FromDataRoundTripPropertyTest {
     }
 
     private static void assertMessageInvariants(
-            MetadataContent message, TemplateUri templateUri, NegotiationContext context) {
+            MetadataContent message, TemplateUri templateUri, NegotiationContext context,
+            NegotiationPerformative performative) {
         assertEquals(templateUri.uri(), message.templateUri());
-        assertEquals(context, message.negotiationContext());
+        assertEquals(context.withPerformative(performative), message.negotiationContext());
         assertFalse(message.promptText().contains("{{"), "the rendered text must not leak unfilled slots");
         assertTrue(message.promptText() != null && !message.promptText().isBlank());
     }

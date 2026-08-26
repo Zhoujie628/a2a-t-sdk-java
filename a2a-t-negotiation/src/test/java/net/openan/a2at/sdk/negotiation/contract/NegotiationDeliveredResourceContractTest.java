@@ -11,8 +11,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
+import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -27,8 +28,8 @@ class NegotiationDeliveredResourceContractTest {
     private static final List<NegotiationType> TYPE_ORDER =
             List.of(NegotiationType.INFORMATION, NegotiationType.TARGET, NegotiationType.FEASIBILITY);
 
-    private static final List<NegotiationPhase> PHASE_ORDER =
-            List.of(NegotiationPhase.PROPOSE, NegotiationPhase.ACCEPT);
+    private static final List<NegotiationPerformative> PERFORMATIVE_ORDER =
+            List.of(NegotiationPerformative.PROPOSE, NegotiationPerformative.ACCEPT);
 
     private static final List<String> LANGUAGES = List.of("zh-CN", "en-US");
 
@@ -37,14 +38,14 @@ class NegotiationDeliveredResourceContractTest {
         List<String> mismatches = new ArrayList<>();
         int compared = 0;
         for (NegotiationType type : TYPE_ORDER) {
-            for (NegotiationPhase phase : PHASE_ORDER) {
+            for (NegotiationPerformative performative : PERFORMATIVE_ORDER) {
                 for (String language : LANGUAGES) {
                     String relativePath = String.join(
                             "/",
                             "templates",
                             "Negotiation-T",
                             type.typeSegment(),
-                            phase.uriSegment(),
+                            NegotiationReference.uriSegmentOf(performative),
                             "v1",
                             language,
                             "template.md");

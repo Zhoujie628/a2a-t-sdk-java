@@ -18,6 +18,7 @@ import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortData;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
 import org.junit.jupiter.api.Test;
 
@@ -58,7 +59,7 @@ class AbortMessageGenerationTest {
         assertTrue(text.contains("## 协商结果\nAbort"), "the fixed Abort conclusion must be kept");
         assertTrue(text.contains("## 协商终止原因"), "the termination reason section must be rendered");
         assertTrue(text.contains("达到协商轮次上限，本次协商确认结束。"));
-        assertEquals(new NegotiationContext(SESSION_ID, 5, 5), result.negotiationContext());
+        assertEquals(new NegotiationContext(SESSION_ID, 5, 5, NegotiationPerformative.ABORT), result.negotiationContext());
         assertFalse(text.contains("{{"), "no unreplaced placeholder may remain");
         assertEquals(0, llm.calls, "the from-data variant must never call the LLM");
     }
@@ -78,7 +79,7 @@ class AbortMessageGenerationTest {
         assertTrue(text.contains("## Negotiation Result\nAbort"));
         assertTrue(text.contains("## Negotiation Termination Reason"));
         assertTrue(text.contains("Reached the negotiation round limit."));
-        assertEquals(new NegotiationContext(SESSION_ID, 3, 5), result.negotiationContext());
+        assertEquals(new NegotiationContext(SESSION_ID, 3, 5, NegotiationPerformative.ABORT), result.negotiationContext());
         assertFalse(text.contains("{{"));
         assertEquals(0, llm.calls);
     }

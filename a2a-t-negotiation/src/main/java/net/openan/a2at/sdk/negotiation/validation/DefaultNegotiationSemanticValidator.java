@@ -155,8 +155,8 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
      *
      * @param prompt rendered negotiation message text
      * @param callerSchema caller-provided parameter JSON schema embedded into the structured-call output contract
-     * @param reference template reference the message is validated against, carrying the declared type, phase and
-     *     language
+     * @param reference template reference the message is validated against, carrying the declared type, performative
+     *     and language
      * @return semantic validation outcome carrying the verdict, the implied negotiation type, the semantic errors and
      *     the extracted parameters
      * @throws NegotiationValidationException if the LLM invocation fails or the response misses a required key or has
@@ -198,7 +198,7 @@ public final class DefaultNegotiationSemanticValidator implements NegotiationSem
         StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
             String replacement = switch (matcher.group(1)) {
-                case "phase" -> Matcher.quoteReplacement(reference.phase().name().toLowerCase(Locale.ROOT));
+                case "phase" -> Matcher.quoteReplacement(reference.performative().name().toLowerCase(Locale.ROOT));
                 case "input" -> Matcher.quoteReplacement(prompt);
                 case "template_uri" -> Matcher.quoteReplacement(reference.uri());
                 case "negotiation_type" -> Matcher.quoteReplacement(declaredTypeName(reference));

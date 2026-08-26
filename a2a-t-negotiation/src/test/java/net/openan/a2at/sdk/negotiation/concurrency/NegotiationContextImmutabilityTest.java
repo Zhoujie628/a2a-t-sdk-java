@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.negotiation.concurrency;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.resources.DefaultNegotiationTemplateLoader;
 import net.openan.a2at.sdk.negotiation.validation.DefaultNegotiationComplianceChecker;
 import net.openan.a2at.sdk.negotiation.validation.NegotiationRuleCheckResult;
@@ -34,7 +36,7 @@ class NegotiationContextImmutabilityTest {
 
     @Test
     void sharedContextNextRoundNeverMutatesTheOriginal() throws Exception {
-        NegotiationContext shared = new NegotiationContext(UUID, 2, 5);
+        NegotiationContext shared = new NegotiationContext(UUID, 2, 5, NegotiationPerformative.PROPOSE);
 
         ExecutorService pool = Executors.newFixedThreadPool(THREADS);
         try {
@@ -47,6 +49,10 @@ class NegotiationContextImmutabilityTest {
                         assertEquals(2, shared.round(), "original round must never change");
                         assertEquals(5, shared.maxRounds(), "original maxRounds must never change");
                         assertEquals(UUID, shared.id(), "original id must never change");
+                        assertEquals(
+                                NegotiationPerformative.PROPOSE,
+                                shared.performative(),
+                                "original performative must never change");
                     }
                     return null;
                 }));
@@ -56,6 +62,9 @@ class NegotiationContextImmutabilityTest {
             }
             assertEquals(1, derived.size(), "every derived context must be identical");
             assertEquals(new NegotiationContext(UUID, 3, 5), derived.iterator().next());
+            assertNull(
+                    derived.iterator().next().performative(),
+                    "the derived context of the next round drops the performative of this round");
         } finally {
             pool.shutdownNow();
         }

@@ -2,11 +2,13 @@ package net.openan.a2at.sdk.negotiation.generation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.json.JacksonJsonValueParser;
 import net.openan.a2at.sdk.core.json.JsonValueParser;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAbortContent;
@@ -19,7 +21,6 @@ import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.negotiation.content.NegotiationContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
 import net.openan.a2at.sdk.negotiation.content.TargetProposeContent;
@@ -96,7 +97,7 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
      * Extracts the typed content of one negotiation message from free text.
      *
      * @param text free-text input describing the message content
-     * @param reference reference identifying the negotiation type, phase and language to extract for
+     * @param reference reference identifying the negotiation type, performative and language to extract for
      * @return typed negotiation content matching the reference
      * @throws NullPointerException if the reference is null
      * @throws NegotiationGenerationException with one of the codes {@code negotiation_llm_infrastructure_error},
@@ -113,16 +114,19 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
         }
         Map<String, String> tokens = Map.of(
                 NegotiationMessageBuilder.TOKEN_PHASE,
-                phaseToken(reference.phase()),
+                phaseToken(reference.performative()),
                 NegotiationMessageBuilder.TOKEN_INPUT,
                 text);
         List<Map<String, String>> messages =
                 messageBuilder.buildMessages(promptCategory(reference.type()), reference.language(), tokens);
-        Map<String, Object> schema = schemaBuilder.buildExtractionSchema(reference.type(), reference.phase());
+        Map<String, Object> schema =
+                schemaBuilder.buildExtractionSchema(reference.type(), reference.performative());
         Map<String, Object> payload = invokeLlm(messages, schema);
-        NegotiationContent content = mapContent(payload, reference.type(), reference.phase());
+        NegotiationContent content = mapContent(payload, reference.type(), reference.performative());
         LOGGER.atInfo().log(
-                "negotiation_content_extraction_completed type={} phase={}", reference.type(), reference.phase());
+                "negotiation_content_extraction_completed type={} performative={}",
+                reference.type(),
+                reference.performative());
         return content;
     }
 
@@ -158,14 +162,14 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
     }
 
     private static NegotiationContent mapContent(
-            Map<String, Object> payload, @Nullable NegotiationType type, NegotiationPhase phase) {
-        if (phase == NegotiationPhase.ABORT) {
+            Map<String, Object> payload, @Nullable NegotiationType type, NegotiationPerformative performative) {
+        if (performative == NegotiationPerformative.ABORT) {
             return new NegotiationAbortContent(requiredString(payload, "termination_reason"));
         }
-        if (phase == NegotiationPhase.PROPOSE) {
+        if (performative == NegotiationPerformative.PROPOSE) {
             return mapProposeContent(payload, type);
         }
-        return mapEndingContent(payload, type, phase);
+        return mapEndingContent(payload, type, performative);
     }
 
     private static NegotiationContent mapProposeContent(Map<String, Object> payload, NegotiationType type) {
@@ -202,9 +206,9 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
     }
 
     private static NegotiationContent mapEndingContent(
-            Map<String, Object> payload, NegotiationType type, NegotiationPhase phase) {
+            Map<String, Object> payload, NegotiationType type, NegotiationPerformative performative) {
         NegotiationConclusion conclusion = requiredConclusion(payload);
-        requireConclusionMatchesPhase(conclusion, phase);
+        requireConclusionMatchesPhase(conclusion, performative);
         return switch (type) {
             case INFORMATION -> new InformationEndingContent(
                     conclusion,
@@ -228,12 +232,14 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
         return new TargetEndingContent(conclusion, confirmedIntent, failureReason);
     }
 
-    private static void requireConclusionMatchesPhase(NegotiationConclusion conclusion, NegotiationPhase phase) {
-        NegotiationConclusion expected =
-                phase == NegotiationPhase.ACCEPT ? NegotiationConclusion.ACCEPT : NegotiationConclusion.REJECT;
+    private static void requireConclusionMatchesPhase(
+            NegotiationConclusion conclusion, NegotiationPerformative performative) {
+        NegotiationConclusion expected = performative == NegotiationPerformative.ACCEPT
+                ? NegotiationConclusion.ACCEPT
+                : NegotiationConclusion.REJECT;
         if (conclusion != expected) {
-            throw invalidInput("Extracted conclusion " + conclusion.literal() + " does not match the " + phase
-                    + " phase; the" + " expected conclusion is " + expected.literal() + ".");
+            throw invalidInput("Extracted conclusion " + conclusion.literal() + " does not match the " + performative
+                    + " performative; the" + " expected conclusion is " + expected.literal() + ".");
         }
     }
 
@@ -338,13 +344,8 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
         return List.copyOf(items);
     }
 
-    private static String phaseToken(NegotiationPhase phase) {
-        return switch (phase) {
-            case PROPOSE -> "propose";
-            case ACCEPT -> "accept";
-            case REJECT -> "reject";
-            case ABORT -> "abort";
-        };
+    private static String phaseToken(NegotiationPerformative performative) {
+        return performative.name().toLowerCase(Locale.ROOT);
     }
 
     private static String promptCategory(@Nullable NegotiationType type) {

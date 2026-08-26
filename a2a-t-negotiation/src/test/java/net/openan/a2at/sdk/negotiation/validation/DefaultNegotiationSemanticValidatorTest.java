@@ -13,7 +13,7 @@ import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.llm.LLMRuntimeError;
-import net.openan.a2at.sdk.negotiation.content.NegotiationPhase;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationType;
 import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
 import org.junit.jupiter.api.Test;
@@ -37,7 +37,7 @@ class DefaultNegotiationSemanticValidatorTest {
             new DefaultNegotiationSemanticValidator(llmClient, schemaBuilder::buildSemanticValidationSchema);
 
     private final NegotiationReference informationReference =
-            new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "en-US");
+            new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "en-US");
 
     private final Map<String, Object> callerSchema =
             Map.of("type", "object", "properties", Map.of("confirmed_rate_mbps", Map.of("type", "integer")));
@@ -243,7 +243,7 @@ assertTrue(userPrompt.contains("information"));
     @Test
     void missingPromptResourceForLanguageSurfacesResourceNotFound() {
         NegotiationReference unsupportedLanguageReference =
-                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.PROPOSE, "fr-FR");
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "fr-FR");
 
         assertThrows(
                 ResourceNotFoundException.class,
