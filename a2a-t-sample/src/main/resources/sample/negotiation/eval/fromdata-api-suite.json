@@ -1,6 +1,6 @@
 {
   "suite": "negotiation-fromdata-api-eval",
-  "description": "Focused capability verification of the six Negotiation-T fromData interfaces: generateNegotiationProposePromptFromData, generateNegotiationAcceptPromptFromData, generateNegotiationRejectPromptFromData and their validate-and-extract counterparts. Inputs are traditional structured data - every item is one key (the slot name from the private-line-complaint Task-T template) carrying a REAL field value (a live port name, an actual category value, a real event id, a real timestamp); no natural-language passages, no format-spec placeholders, no template-error scenarios. The case matrix is built from the Task-T field model (required: 任务对象/投诉分类/OSS侧事件流水号; optional: 问题发生时间/投诉详情): propose requests every required/optional field combination (all required, each single required, dual required, required+optional, optional-only, empty boundary), accept supplies the filled values for the same combinations, reject carries the unprovidable fields with reasons. Generation is deterministic rendering (no LLM call); the validate-and-extract step asserts the extracted parameters carry back exactly the input key-value pairs.",
+  "description": "Focused capability verification of the six Negotiation-T fromData interfaces: generateNegotiationProposePromptFromData, generateNegotiationAcceptPromptFromData, generateNegotiationRejectPromptFromData and their validate-and-extract counterparts. Inputs are traditional structured data - every item is one key (the slot name from the private-line-complaint Task-T template) carrying a REAL field value (a live port name, an actual category value, a real event id, a real timestamp); no natural-language passages, no format-spec placeholders, no template-error scenarios. The case matrix is built from the Task-T field model (required: 任务对象/投诉分类/OSS侧事件流水号; optional: 问题发生时间/投诉详情): propose carries every required/optional slot combination with real values (all required, each single required, dual required, required+optional, optional-only, empty boundary), accept supplies the filled values for the same combinations, reject carries the unprovidable fields with reasons. Generation is deterministic rendering (no LLM call); the validate-and-extract step asserts the extracted parameters carry back exactly the input key-value pairs.",
   "scenario": "private-line-complaint",
   "fields": {
     "required": [
@@ -17,7 +17,7 @@
     {
       "id": "FD-P01",
       "api": "propose",
-      "intent": "propose：全部必选字段缺失（任务对象+投诉分类+OSS流水号），协商请求应携带全部三个槽位",
+      "intent": "propose：携带全部三个必选槽位（任务对象+投诉分类+OSS流水号）的真实值，报文应逐字携带全部槽位名与值及关系句",
       "input": {
         "items": {
           "任务对象": "P781-珠江新城-PTN7900-23-TPA1EG24-17",
@@ -34,7 +34,7 @@
     {
       "id": "FD-P02",
       "api": "propose",
-      "intent": "propose：单必选字段缺失（任务对象）",
+      "intent": "propose：携带单必选槽位（任务对象）的真实值",
       "input": {
         "items": {
           "任务对象": "P781-珠江新城-PTN7900-23-TPA1EG24-17"
@@ -49,7 +49,7 @@
     {
       "id": "FD-P03",
       "api": "propose",
-      "intent": "propose：单必选字段缺失（投诉分类）",
+      "intent": "propose：携带单必选槽位（投诉分类）的真实值",
       "input": {
         "items": {
           "投诉分类": "专线中断"
@@ -64,7 +64,7 @@
     {
       "id": "FD-P04",
       "api": "propose",
-      "intent": "propose：单必选字段缺失（OSS侧事件流水号）",
+      "intent": "propose：携带单必选槽位（OSS侧事件流水号）的真实值",
       "input": {
         "items": {
           "OSS侧事件流水号": "event-id-20260602-08841"
@@ -79,7 +79,7 @@
     {
       "id": "FD-P05",
       "api": "propose",
-      "intent": "propose：双必选字段缺失（任务对象+投诉分类）",
+      "intent": "propose：携带双必选槽位（任务对象+投诉分类）的真实值",
       "input": {
         "items": {
           "任务对象": "P781-珠江新城-PTN7900-23-TPA1EG24-17",
@@ -95,7 +95,7 @@
     {
       "id": "FD-P06",
       "api": "propose",
-      "intent": "propose：必选+可选字段同时缺失（OSS流水号+问题发生时间）",
+      "intent": "propose：携带必选+可选槽位组合（OSS流水号+问题发生时间）的真实值",
       "input": {
         "items": {
           "OSS侧事件流水号": "event-id-20260602-08841",
@@ -111,7 +111,7 @@
     {
       "id": "FD-P07",
       "api": "propose",
-      "intent": "propose：仅可选字段缺失（问题发生时间+投诉详情），边界组合",
+      "intent": "propose：携带仅可选槽位组合（问题发生时间+投诉详情）的真实值，边界组合",
       "input": {
         "items": {
           "问题发生时间": "2026-06-02T14:30:00Z",
@@ -127,7 +127,7 @@
     {
       "id": "FD-P08",
       "api": "propose",
-      "intent": "propose：items 为空对象（数据边界；当前实现未防护零请求项，期望失败——接口层发现）",
+      "intent": "propose：items 为空对象（数据边界；接口应拒绝零请求项——PR #151 修复验证用例）",
       "input": {
         "items": {},
         "relationship": "以上参数均为必选，缺少无法启动诊断"
