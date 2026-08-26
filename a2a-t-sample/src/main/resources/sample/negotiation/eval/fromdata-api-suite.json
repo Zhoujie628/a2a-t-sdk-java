@@ -1,10 +1,17 @@
 {
   "suite": "negotiation-fromdata-api-eval",
-  "description": "Focused capability verification of the three Negotiation-T fromData generation interfaces: generateNegotiationProposePromptFromData, generateNegotiationAcceptPromptFromData and generateNegotiationRejectPromptFromData. Inputs are traditional structured data - every item is one key (the slot name from the private-line-complaint Task-T template) carrying an atomic value; no natural-language passages, no template-error scenarios. The case matrix is built from the Task-T field model (required: 任务对象/投诉分类/OSS侧事件流水号; optional: 问题发生时间/投诉详情): propose requests every required/optional field combination (all required, each single required, dual required, required+optional, optional-only, empty boundary), accept supplies the filled values for the same combinations, reject carries the unprovidable fields with reasons. Generation is deterministic rendering (no LLM call), so assertions are exact: the generated prompt must carry every item name and value and the matching template URI.",
+  "description": "Focused capability verification of the six Negotiation-T fromData interfaces: generateNegotiationProposePromptFromData, generateNegotiationAcceptPromptFromData, generateNegotiationRejectPromptFromData and their validate-and-extract counterparts. Inputs are traditional structured data - every item is one key (the slot name from the private-line-complaint Task-T template) carrying a REAL field value (a live port name, an actual category value, a real event id, a real timestamp); no natural-language passages, no format-spec placeholders, no template-error scenarios. The case matrix is built from the Task-T field model (required: 任务对象/投诉分类/OSS侧事件流水号; optional: 问题发生时间/投诉详情): propose requests every required/optional field combination (all required, each single required, dual required, required+optional, optional-only, empty boundary), accept supplies the filled values for the same combinations, reject carries the unprovidable fields with reasons. Generation is deterministic rendering (no LLM call); the validate-and-extract step asserts the extracted parameters carry back exactly the input key-value pairs.",
   "scenario": "private-line-complaint",
   "fields": {
-    "required": ["任务对象", "投诉分类", "OSS侧事件流水号"],
-    "optional": ["问题发生时间", "投诉详情"]
+    "required": [
+      "任务对象",
+      "投诉分类",
+      "OSS侧事件流水号"
+    ],
+    "optional": [
+      "问题发生时间",
+      "投诉详情"
+    ]
   },
   "cases": [
     {
@@ -13,9 +20,9 @@
       "intent": "propose：全部必选字段缺失（任务对象+投诉分类+OSS流水号），协商请求应携带全部三个槽位",
       "input": {
         "items": {
-          "任务对象": "网元名称+单板号+单板型号+端口号",
-          "投诉分类": "专线中断|专线质差",
-          "OSS侧事件流水号": "event-id-YYYYMMDD-NNNNN"
+          "任务对象": "P781-珠江新城-PTN7900-23-TPA1EG24-17",
+          "投诉分类": "专线中断",
+          "OSS侧事件流水号": "event-id-20260602-08841"
         },
         "relationship": "以上参数均为必选，缺少无法启动诊断"
       },
@@ -30,7 +37,7 @@
       "intent": "propose：单必选字段缺失（任务对象）",
       "input": {
         "items": {
-          "任务对象": "网元名称+单板号+单板型号+端口号"
+          "任务对象": "P781-珠江新城-PTN7900-23-TPA1EG24-17"
         },
         "relationship": "以上参数均为必选，缺少无法启动诊断"
       },
@@ -45,7 +52,7 @@
       "intent": "propose：单必选字段缺失（投诉分类）",
       "input": {
         "items": {
-          "投诉分类": "专线中断|专线质差"
+          "投诉分类": "专线中断"
         },
         "relationship": "以上参数均为必选，缺少无法启动诊断"
       },
@@ -60,7 +67,7 @@
       "intent": "propose：单必选字段缺失（OSS侧事件流水号）",
       "input": {
         "items": {
-          "OSS侧事件流水号": "event-id-YYYYMMDD-NNNNN"
+          "OSS侧事件流水号": "event-id-20260602-08841"
         },
         "relationship": "以上参数均为必选，缺少无法启动诊断"
       },
@@ -75,8 +82,8 @@
       "intent": "propose：双必选字段缺失（任务对象+投诉分类）",
       "input": {
         "items": {
-          "任务对象": "网元名称+单板号+单板型号+端口号",
-          "投诉分类": "专线中断|专线质差"
+          "任务对象": "P781-珠江新城-PTN7900-23-TPA1EG24-17",
+          "投诉分类": "专线中断"
         },
         "relationship": "以上参数均为必选，缺少无法启动诊断"
       },
@@ -91,8 +98,8 @@
       "intent": "propose：必选+可选字段同时缺失（OSS流水号+问题发生时间）",
       "input": {
         "items": {
-          "OSS侧事件流水号": "event-id-YYYYMMDD-NNNNN",
-          "问题发生时间": "ISO8601"
+          "OSS侧事件流水号": "event-id-20260602-08841",
+          "问题发生时间": "2026-06-02T14:30:00Z"
         },
         "relationship": "以上参数为诊断所需，缺少影响定位效率"
       },
@@ -107,8 +114,8 @@
       "intent": "propose：仅可选字段缺失（问题发生时间+投诉详情），边界组合",
       "input": {
         "items": {
-          "问题发生时间": "ISO8601",
-          "投诉详情": "客户可感知的现象描述"
+          "问题发生时间": "2026-06-02T14:30:00Z",
+          "投诉详情": "深圳访问广州响应延迟骤升，交易接口频繁报连接超时"
         },
         "relationship": "以上参数为可选补充信息"
       },
@@ -143,7 +150,9 @@
       "expect": {
         "succeeds": true,
         "template": "Negotiation-T/information-negotiation/accept-reject/v1",
-        "contains": ["Accept"]
+        "contains": [
+          "Accept"
+        ]
       }
     },
     {
@@ -158,7 +167,9 @@
       "expect": {
         "succeeds": true,
         "template": "Negotiation-T/information-negotiation/accept-reject/v1",
-        "contains": ["Accept"]
+        "contains": [
+          "Accept"
+        ]
       }
     },
     {
@@ -168,7 +179,7 @@
       "input": {
         "items": {
           "任务对象": "P781-珠江新城-PTN7900-23-TPA1EG24-17",
-          "投诉分类": "专线质差",
+          "投诉分类": "专线中断",
           "OSS侧事件流水号": "event-id-20260602-08841",
           "问题发生时间": "2026-06-02T14:30:00Z",
           "投诉详情": "深圳访问广州响应延迟骤升，交易接口频繁报连接超时"
@@ -177,7 +188,9 @@
       "expect": {
         "succeeds": true,
         "template": "Negotiation-T/information-negotiation/accept-reject/v1",
-        "contains": ["Accept"]
+        "contains": [
+          "Accept"
+        ]
       }
     },
     {
@@ -193,7 +206,9 @@
       "expect": {
         "succeeds": true,
         "template": "Negotiation-T/information-negotiation/accept-reject/v1",
-        "contains": ["Accept"]
+        "contains": [
+          "Accept"
+        ]
       }
     },
     {
@@ -208,7 +223,9 @@
       "expect": {
         "succeeds": true,
         "template": "Negotiation-T/information-negotiation/accept-reject/v1",
-        "contains": ["Reject"]
+        "contains": [
+          "Reject"
+        ]
       }
     },
     {
@@ -224,7 +241,9 @@
       "expect": {
         "succeeds": true,
         "template": "Negotiation-T/information-negotiation/accept-reject/v1",
-        "contains": ["Reject"]
+        "contains": [
+          "Reject"
+        ]
       }
     }
   ]
