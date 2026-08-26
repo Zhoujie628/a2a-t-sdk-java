@@ -16,6 +16,7 @@ import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -50,7 +51,7 @@ class CustomRootPromptsIgnoredTest {
         writeFakePromptFiles("information_negotiation");
         RecordingLlmClient llm = new RecordingLlmClient(EXTRACTION_RESPONSE);
         NegotiationGenerationOrchestrator orchestrator = orchestratorWithCustomRoot(llm);
-        NegotiationContext context = new NegotiationContext(UUID, 1, 5);
+        NegotiationContext context = new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE);
 
         MetadataContent result = orchestrator.generateProposeFromText("请提供节能区域。", context, INFORMATION_PROPOSE_URI);
 
@@ -74,11 +75,11 @@ class CustomRootPromptsIgnoredTest {
         RecordingLlmClient llm = new RecordingLlmClient(EXTRACTION_RESPONSE, SEMANTIC_RESPONSE);
         NegotiationGenerationOrchestrator orchestrator = orchestratorWithCustomRoot(llm);
         MetadataContent message = orchestrator.generateProposeFromText(
-                "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
+                "请提供节能区域。", new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE), INFORMATION_PROPOSE_URI);
 
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                 message.promptText(),
-                new NegotiationContext(UUID, 1, 5),
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                 INFORMATION_PROPOSE_URI);
 

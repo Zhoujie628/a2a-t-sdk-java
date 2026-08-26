@@ -371,7 +371,7 @@ class NegotiationGeneratorsTest {
     void endingGeneratorsRenderConclusionLiterals() {
         String infoRendered = new InformationEndingGenerator()
                 .generate(
-                        context(2),
+                        context(2, NegotiationPerformative.ACCEPT),
                         new InformationEndingContent(
                                 NegotiationConclusion.ACCEPT,
                                 List.of(new NegotiationItem("故障发生时间", "2026-08-19 10:30"))),
@@ -383,7 +383,7 @@ class NegotiationGeneratorsTest {
 
         String targetRendered = new TargetEndingGenerator()
                 .generate(
-                        context(2),
+                        context(2, NegotiationPerformative.REJECT),
                         new TargetEndingContent(NegotiationConclusion.REJECT, null, "双方未就速率保障下限达成一致。"),
                         template(StandardTemplates.TARGET_NEGOTIATION_ACCEPT_REJECT, ZH_TARGET_ENDING_TEMPLATE),
                         zhVocabulary);
@@ -560,7 +560,11 @@ class NegotiationGeneratorsTest {
     }
 
     private static NegotiationContext context(int round) {
-        return new NegotiationContext(CONTEXT_ID, round, 5);
+        return context(round, NegotiationPerformative.PROPOSE);
+    }
+
+    private static NegotiationContext context(int round, NegotiationPerformative performative) {
+        return new NegotiationContext(CONTEXT_ID, round, 5, performative);
     }
 
     private static PromptTemplate template(TemplateUri templateUri, String content) {

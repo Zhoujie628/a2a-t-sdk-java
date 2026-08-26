@@ -41,7 +41,7 @@ class NegotiationGenerationOrchestratorTest {
         MetadataContent result = zhOrchestrator()
                 .generateProposeFromData(
                         new NegotiationProposeData(
-                                new NegotiationContext(UUID, 1, 5),
+                                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                                 new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                         INFORMATION_PROPOSE);
 
@@ -62,6 +62,7 @@ class NegotiationGenerationOrchestratorTest {
         assertEquals(UUID, nestedContext.get("id"));
         assertEquals(1, nestedContext.get("round"));
         assertEquals(5, nestedContext.get("maxRounds"));
+        assertEquals("PROPOSE", nestedContext.get("performative"));
     }
 
     @Test
@@ -69,7 +70,7 @@ class NegotiationGenerationOrchestratorTest {
         MetadataContent result = orchestrator("en-US")
                 .generateProposeFromData(
                         new NegotiationProposeData(
-                                new NegotiationContext(UUID, 2, 5),
+                                new NegotiationContext(UUID, 2, 5, NegotiationPerformative.PROPOSE),
                                 new InformationProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
                         INFORMATION_PROPOSE);
 
@@ -90,7 +91,7 @@ class NegotiationGenerationOrchestratorTest {
                 .build();
 
         MetadataContent result = orchestrator.generateProposeFromText(
-                "请提供故障发生时间。", new NegotiationContext(UUID, 2, 5), INFORMATION_PROPOSE);
+                "请提供故障发生时间。", new NegotiationContext(UUID, 2, 5, NegotiationPerformative.PROPOSE), INFORMATION_PROPOSE);
 
         assertEquals(1, llm.calls);
         assertEquals(INFORMATION_PROPOSE_URI, result.templateUri());
@@ -110,13 +111,13 @@ class NegotiationGenerationOrchestratorTest {
                 .build();
         MetadataContent message = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE);
 
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
                 message.promptText(),
-                new NegotiationContext(UUID, 1, 5),
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                 Map.of("type", "object", "properties", Map.of("region", Map.of("type", "string"))),
                 INFORMATION_PROPOSE);
 
@@ -157,7 +158,7 @@ class NegotiationGenerationOrchestratorTest {
                 .build();
 
         MetadataContent result = orchestrator.generateProposeFromText(
-                "请提供区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE);
+                "请提供区域。", new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE), INFORMATION_PROPOSE);
 
         assertEquals(3, llm.calls);
         assertFalse(result.promptText().isBlank());
@@ -175,7 +176,7 @@ class NegotiationGenerationOrchestratorTest {
         NegotiationGenerationException failure = assertThrows(
                 NegotiationGenerationException.class,
                 () -> orchestrator.generateProposeFromText(
-                        "请提供区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE));
+                        "请提供区域。", new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE), INFORMATION_PROPOSE));
 
         assertEquals(2, llm.calls);
         assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, failure.getCode());
@@ -192,7 +193,7 @@ class NegotiationGenerationOrchestratorTest {
                 NegotiationGenerationException.class,
                 () -> generationOrchestrator.generateProposeFromData(
                         new NegotiationProposeData(
-                                new NegotiationContext(UUID, 1, 5),
+                                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                                 new InformationProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
                         INFORMATION_PROPOSE));
         assertEquals(A2ATErrorCodes.TEMPLATE_NOT_FOUND, generationFailure.getCode());
@@ -209,7 +210,7 @@ class NegotiationGenerationOrchestratorTest {
                 NegotiationParamExtractionException.class,
                 () -> validationOrchestrator.validateProposePromptAndDataFilling(
                         "## 所需信息项\n1. 区域\n",
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE));
         assertEquals(A2ATErrorCodes.TEMPLATE_NOT_FOUND, extractionFailure.getCode());
@@ -226,7 +227,7 @@ class NegotiationGenerationOrchestratorTest {
                 NegotiationParamExtractionException.class,
                 () -> orchestrator.validateProposePromptAndDataFilling(
                         "## 所需信息项\n1. 区域\n",
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         Map.of("type", "object"),
                         INFORMATION_PROPOSE));
 
@@ -266,7 +267,7 @@ class NegotiationGenerationOrchestratorTest {
                 assertThrows(IllegalArgumentException.class, () -> zhOrchestrator()
                         .generateProposeFromData(
                                 new NegotiationProposeData(
-                                        new NegotiationContext(UUID, 1, 5),
+                                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                                         new InformationProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
                                 StandardTemplates.INFORMATION_NEGOTIATION_ACCEPT_REJECT));
         assertTrue(performativeMismatchFailure
@@ -278,7 +279,7 @@ class NegotiationGenerationOrchestratorTest {
                 assertThrows(IllegalArgumentException.class, () -> zhOrchestrator()
                         .generateProposeFromData(
                                 new NegotiationProposeData(
-                                        new NegotiationContext(UUID, 1, 5),
+                                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                                         new InformationProposeContent(List.of(new NegotiationItem("区域", "松山湖")), null)),
                                 StandardTemplates.ENERGY_SAVING));
         assertTrue(wrongExtensionFailure

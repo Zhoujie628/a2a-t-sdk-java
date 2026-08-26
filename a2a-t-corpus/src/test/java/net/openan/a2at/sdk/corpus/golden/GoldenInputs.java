@@ -60,21 +60,23 @@ public final class GoldenInputs {
     private GoldenInputs() {}
 
     /**
-     * Returns the default fixture context: round 2 of at most 5 rounds.
+     * Returns the default fixture context: round 2 of at most 5 rounds, stamped with the given performative.
      *
+     * @param performative communicative intent of the message the context travels with
      * @return fixed negotiation context of every fixture except the target propose fixture
      */
-    public static NegotiationContext defaultContext() {
-        return new NegotiationContext(SESSION_ID, 2, 5);
+    public static NegotiationContext defaultContext(NegotiationPerformative performative) {
+        return new NegotiationContext(SESSION_ID, 2, 5, performative);
     }
 
     /**
-     * Returns the first-round fixture context used by the target propose fixture.
+     * Returns the first-round fixture context used by the target propose fixture, stamped with the given performative.
      *
+     * @param performative communicative intent of the message the context travels with
      * @return fixed negotiation context of round 1 of at most 5 rounds
      */
-    public static NegotiationContext firstRoundContext() {
-        return new NegotiationContext(SESSION_ID, 1, 5);
+    public static NegotiationContext firstRoundContext(NegotiationPerformative performative) {
+        return new NegotiationContext(SESSION_ID, 1, 5, performative);
     }
 
     /** One golden fixture case: one negotiation type, performative, fixed context, fixed content and its template URI. */
@@ -114,7 +116,7 @@ public final class GoldenInputs {
         TARGET_PROPOSE(NegotiationPerformative.PROPOSE, "target-negotiation", "target_propose") {
             @Override
             public NegotiationContext context() {
-                return GoldenInputs.firstRoundContext().withPerformative(performative());
+                return GoldenInputs.firstRoundContext(performative());
             }
 
             @Override
@@ -367,7 +369,8 @@ public final class GoldenInputs {
         }
 
         /**
-         * Returns the fixed negotiation context of this fixture stamped with the fixture performative.
+         * Returns the fixed negotiation context of this fixture: the fixture context stamped with the fixture
+         * performative.
          *
          * <p>The generation pipeline stamps the performative of the addressed template onto the emitted context, so the
          * fixed context a fixture compares against carries the fixture performative as well.
@@ -375,7 +378,7 @@ public final class GoldenInputs {
          * @return fixed negotiation context stamped with the fixture performative
          */
         public NegotiationContext context() {
-            return GoldenInputs.defaultContext().withPerformative(performative);
+            return GoldenInputs.defaultContext(performative);
         }
 
         /**

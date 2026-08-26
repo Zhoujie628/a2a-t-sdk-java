@@ -51,7 +51,7 @@ class A2ATClientNegotiationApiTest {
 
         MetadataContent result = client.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE);
 
@@ -71,7 +71,7 @@ class A2ATClientNegotiationApiTest {
 
         MetadataContent result = client.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
                 INFORMATION_PROPOSE);
 
@@ -95,7 +95,7 @@ class A2ATClientNegotiationApiTest {
 
         MetadataContent result = client.generateNegotiationAbortPromptFromData(
                 new NegotiationAbortData(
-                        new NegotiationContext(UUID, 5, 5),
+                        new NegotiationContext(UUID, 5, 5, NegotiationPerformative.ABORT),
                         new NegotiationAbortContent("达到协商轮次上限，本次协商确认结束。")),
                 StandardTemplates.NEGOTIATION_ABORT);
 
@@ -112,7 +112,7 @@ class A2ATClientNegotiationApiTest {
 
         MetadataContent result = client.generateNegotiationAbortPromptFromData(
                 new NegotiationAbortData(
-                        new NegotiationContext(UUID, 3, 5),
+                        new NegotiationContext(UUID, 3, 5, NegotiationPerformative.ABORT),
                         new NegotiationAbortContent("Reached the negotiation round limit. This negotiation is confirmed and ended.")),
                 StandardTemplates.NEGOTIATION_ABORT);
 

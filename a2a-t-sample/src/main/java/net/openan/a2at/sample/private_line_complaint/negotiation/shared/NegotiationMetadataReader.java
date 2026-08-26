@@ -35,9 +35,8 @@ public final class NegotiationMetadataReader {
     /**
      * Reads the negotiation context carried in the {@code negotiationContext} metadata entry.
      *
-     * <p>The nested map's optional {@code performative} entry is read along with the three legacy fields: a missing
-     * entry yields a {@code null} performative (older three-field wire format), a present entry must hold a valid
-     * upper-case performative name.
+     * <p>The nested map must carry the four fields {@code id}, {@code round}, {@code maxRounds}, and
+     * {@code performative}; the performative entry must hold a valid upper-case performative name.
      *
      * @param metadata A2A message metadata of a Negotiation-T message
      * @return the carried negotiation context, or {@code null} when the metadata carries no context
@@ -67,18 +66,18 @@ public final class NegotiationMetadataReader {
     }
 
     /**
-     * Reads the optional {@code performative} entry of the nested context map.
+     * Reads the {@code performative} entry of the nested context map.
      *
-     * <p>A missing entry yields {@code null}, which keeps three-field contexts of the older wire format readable. A
-     * present entry must hold one of the four upper-case performative names.
+     * <p>A missing entry is malformed: every negotiation context carries the performative of its message. A present
+     * entry must hold one of the four upper-case performative names.
      *
      * @param value candidate wire value, may be {@code null}
-     * @return the matching performative, or {@code null} when the entry is absent
-     * @throws IllegalArgumentException when the entry exists but is not a valid performative name
+     * @return the matching performative
+     * @throws IllegalArgumentException when the entry is absent or is not a valid performative name
      */
     private static NegotiationPerformative readPerformative(Object value) {
         if (value == null) {
-            return null;
+            throw new IllegalArgumentException("Negotiation-T context metadata has no performative entry");
         }
         return NegotiationPerformative.tryParse(String.valueOf(value))
                 .orElseThrow(() -> new IllegalArgumentException(

@@ -37,7 +37,7 @@ class A2ATServerNegotiationApiTest {
 
         MetadataContent result = server.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE);
 
@@ -57,7 +57,7 @@ class A2ATServerNegotiationApiTest {
 
         MetadataContent result = server.generateNegotiationProposePromptFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("Region", "Songshan Lake")), null)),
                 INFORMATION_PROPOSE);
 
@@ -81,7 +81,7 @@ class A2ATServerNegotiationApiTest {
 
         MetadataContent result = server.generateNegotiationAbortPromptFromData(
                 new NegotiationAbortData(
-                        new NegotiationContext(UUID, 5, 5),
+                        new NegotiationContext(UUID, 5, 5, NegotiationPerformative.ABORT),
                         new NegotiationAbortContent("达到协商轮次上限，本次协商确认结束。")),
                 StandardTemplates.NEGOTIATION_ABORT);
 

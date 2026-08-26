@@ -19,6 +19,7 @@ import net.openan.a2at.sample.subscribe_incident.client.flow.SampleStreamTermina
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.runtime.helper.NegotiationPayloadMapper;
 import net.openan.a2at.sdk.negotiation.types.model.NegotiationType;
@@ -135,7 +136,8 @@ public final class NegotiationClient {
 
         MetadataContent acceptPrompt = strategy.generateAccept(
                 client,
-                new NegotiationContext(UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS),
+                new NegotiationContext(
+                        UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS, NegotiationPerformative.ACCEPT),
                 itemsFromFilledParams(),
                 DemoConstants.NEGOTIATION_ACCEPT);
         emit("[client] Negotiation-T accept rendered");

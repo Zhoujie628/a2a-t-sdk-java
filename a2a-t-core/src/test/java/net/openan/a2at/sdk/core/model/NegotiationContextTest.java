@@ -14,22 +14,6 @@ class NegotiationContextTest {
 
     @Test
     void constructionAcceptsLegalContext() {
-        NegotiationContext context = new NegotiationContext(SESSION_ID, 1, 5);
-
-        assertEquals(SESSION_ID, context.id());
-        assertEquals(1, context.round());
-        assertEquals(5, context.maxRounds());
-    }
-
-    @Test
-    void threeArgumentConstructorDefaultsPerformativeToNull() {
-        NegotiationContext context = new NegotiationContext(SESSION_ID, 1, 5);
-
-        assertEquals(null, context.performative());
-    }
-
-    @Test
-    void fourArgumentConstructorCarriesPerformative() {
         NegotiationContext context = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE);
 
         assertEquals(SESSION_ID, context.id());
@@ -39,22 +23,24 @@ class NegotiationContextTest {
     }
 
     @Test
-    void fourArgumentConstructorAcceptsNullPerformative() {
-        NegotiationContext context = new NegotiationContext(SESSION_ID, 1, 5, null);
+    void nullPerformativeThrowsWithDistinguishableMessage() {
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext(SESSION_ID, 1, 5, null));
 
-        assertEquals(null, context.performative());
+        assertTrue(exception.getMessage().contains("performative"));
+        assertTrue(exception.getMessage().contains("null"));
     }
 
     @Test
     void withPerformativeStampsIntentAndKeepsSessionFields() {
-        NegotiationContext handle = new NegotiationContext(SESSION_ID, 2, 5);
+        NegotiationContext handle = new NegotiationContext(SESSION_ID, 2, 5, NegotiationPerformative.PROPOSE);
         NegotiationContext stamped = handle.withPerformative(NegotiationPerformative.ACCEPT);
 
         assertEquals(NegotiationPerformative.ACCEPT, stamped.performative());
         assertEquals(SESSION_ID, stamped.id());
         assertEquals(2, stamped.round());
         assertEquals(5, stamped.maxRounds());
-        assertEquals(null, handle.performative());
+        assertEquals(NegotiationPerformative.PROPOSE, handle.performative());
         assertNotEquals(handle, stamped);
     }
 
@@ -69,36 +55,46 @@ class NegotiationContextTest {
     }
 
     @Test
-    void nextRoundDropsPerformative() {
+    void withPerformativeRejectsNull() {
+        NegotiationContext context = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE);
+
+        assertThrows(IllegalArgumentException.class, () -> context.withPerformative(null));
+    }
+
+    @Test
+    void nextRoundCarriesPerformative() {
         NegotiationContext context = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE);
         NegotiationContext advanced = context.nextRound();
 
-        assertEquals(null, advanced.performative());
+        assertEquals(NegotiationPerformative.PROPOSE, advanced.performative());
         assertEquals(2, advanced.round());
         assertEquals(NegotiationPerformative.PROPOSE, context.performative());
     }
 
     @Test
     void equalsTakesPerformativeIntoAccount() {
-        NegotiationContext without = new NegotiationContext(SESSION_ID, 1, 5);
         NegotiationContext withPropose = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE);
         NegotiationContext withAbort = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.ABORT);
         NegotiationContext samePropose = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE);
 
-        assertNotEquals(without, withPropose);
         assertNotEquals(withPropose, withAbort);
         assertEquals(withPropose, samePropose);
-        assertEquals(without, new NegotiationContext(SESSION_ID, 1, 5, null));
     }
 
     @Test
     void blankIdThrowsWithDistinguishableMessage() {
         IllegalArgumentException blankException =
-                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext("", 1, 5));
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> new NegotiationContext("", 1, 5, NegotiationPerformative.PROPOSE));
         IllegalArgumentException whitespaceException =
-                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext("   ", 1, 5));
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> new NegotiationContext("   ", 1, 5, NegotiationPerformative.PROPOSE));
         IllegalArgumentException nullException =
-                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext(null, 1, 5));
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> new NegotiationContext(null, 1, 5, NegotiationPerformative.PROPOSE));
 
         assertTrue(blankException.getMessage().contains("id"));
         assertTrue(blankException.getMessage().contains("blank"));
@@ -108,8 +104,9 @@ class NegotiationContextTest {
 
     @Test
     void zeroRoundThrowsWithDistinguishableMessage() {
-        IllegalArgumentException exception =
-                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext(SESSION_ID, 0, 5));
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new NegotiationContext(SESSION_ID, 0, 5, NegotiationPerformative.PROPOSE));
 
         assertTrue(exception.getMessage().contains("round"));
         assertTrue(exception.getMessage().contains("0"));
@@ -117,8 +114,9 @@ class NegotiationContextTest {
 
     @Test
     void negativeRoundThrowsWithDistinguishableMessage() {
-        IllegalArgumentException exception =
-                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext(SESSION_ID, -1, 5));
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new NegotiationContext(SESSION_ID, -1, 5, NegotiationPerformative.PROPOSE));
 
         assertTrue(exception.getMessage().contains("round"));
         assertTrue(exception.getMessage().contains("-1"));
@@ -126,8 +124,9 @@ class NegotiationContextTest {
 
     @Test
     void zeroMaxRoundsThrowsWithDistinguishableMessage() {
-        IllegalArgumentException exception =
-                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext(SESSION_ID, 1, 0));
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> new NegotiationContext(SESSION_ID, 1, 0, NegotiationPerformative.PROPOSE));
 
         assertTrue(exception.getMessage().contains("maxRounds"));
         assertTrue(exception.getMessage().contains("0"));
@@ -135,7 +134,7 @@ class NegotiationContextTest {
 
     @Test
     void roundGreaterThanMaxRoundsIsAllowedAtConstruction() {
-        NegotiationContext context = new NegotiationContext(SESSION_ID, 6, 5);
+        NegotiationContext context = new NegotiationContext(SESSION_ID, 6, 5, NegotiationPerformative.PROPOSE);
 
         assertEquals(6, context.round());
         assertTrue(context.isExhausted());
@@ -143,7 +142,7 @@ class NegotiationContextTest {
 
     @Test
     void nextRoundReturnsNewInstanceAndLeavesOriginalUnchanged() {
-        NegotiationContext context = new NegotiationContext(SESSION_ID, 1, 5);
+        NegotiationContext context = new NegotiationContext(SESSION_ID, 1, 5, NegotiationPerformative.PROPOSE);
         NegotiationContext advanced = context.nextRound();
 
         assertEquals(2, advanced.round());
@@ -155,19 +154,24 @@ class NegotiationContextTest {
 
     @Test
     void isExhaustedIsFalseAtBoundaryAndTrueBeyondIt() {
-        assertFalse(new NegotiationContext(SESSION_ID, 4, 5).isExhausted());
-        assertFalse(new NegotiationContext(SESSION_ID, 5, 5).isExhausted());
-        assertTrue(new NegotiationContext(SESSION_ID, 6, 5).isExhausted());
+        assertFalse(new NegotiationContext(SESSION_ID, 4, 5, NegotiationPerformative.PROPOSE).isExhausted());
+        assertFalse(new NegotiationContext(SESSION_ID, 5, 5, NegotiationPerformative.PROPOSE).isExhausted());
+        assertTrue(new NegotiationContext(SESSION_ID, 6, 5, NegotiationPerformative.PROPOSE).isExhausted());
     }
 
     @Test
     void factoryAppliesDefaultMaxRounds() {
-        NegotiationContext context = NegotiationContext.of(SESSION_ID, 2);
+        NegotiationContext context = NegotiationContext.of(SESSION_ID, 2, NegotiationPerformative.PROPOSE);
 
         assertEquals(5, NegotiationContext.DEFAULT_MAX_ROUNDS);
         assertEquals(5, context.maxRounds());
         assertEquals(2, context.round());
         assertEquals(SESSION_ID, context.id());
-        assertEquals(null, context.performative());
+        assertEquals(NegotiationPerformative.PROPOSE, context.performative());
+    }
+
+    @Test
+    void factoryRejectsNullPerformative() {
+        assertThrows(IllegalArgumentException.class, () -> NegotiationContext.of(SESSION_ID, 2, null));
     }
 }

@@ -16,6 +16,7 @@ import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.negotiation.content.NegotiationAction;
 import net.openan.a2at.sdk.negotiation.content.NegotiationConclusion;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationEndingData;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import net.openan.a2at.sdk.negotiation.content.TargetEndingContent;
@@ -70,8 +71,8 @@ public final class FromDataNegotiationSample {
 
     private static List<Map<String, Object>> informationNegotiation(A2ATClient client, Consumer<String> logSink) {
         NegotiationSampleSupport.emit(logSink, "\n=== 1. Information negotiation ===");
-        NegotiationContext ctx =
-                new NegotiationContext(NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
+        NegotiationContext ctx = new NegotiationContext(
+                NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS, NegotiationPerformative.PROPOSE);
         List<Map<String, Object>> results = new ArrayList<>();
 
         Map<String, Object> section = ScenarioData.caseSection("information");
@@ -115,8 +116,8 @@ public final class FromDataNegotiationSample {
 
     private static List<Map<String, Object>> targetNegotiation(A2ATClient client, Consumer<String> logSink) {
         NegotiationSampleSupport.emit(logSink, "\n=== 2. Target negotiation ===");
-        NegotiationContext ctx =
-                new NegotiationContext(NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
+        NegotiationContext ctx = new NegotiationContext(
+                NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS, NegotiationPerformative.PROPOSE);
         List<Map<String, Object>> results = new ArrayList<>();
 
         Map<String, Object> section = ScenarioData.caseSection("target");
@@ -163,8 +164,8 @@ public final class FromDataNegotiationSample {
 
     private static List<Map<String, Object>> feasibilityNegotiation(A2ATClient client, Consumer<String> logSink) {
         NegotiationSampleSupport.emit(logSink, "\n=== 3. Feasibility negotiation ===");
-        NegotiationContext ctx =
-                new NegotiationContext(NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
+        NegotiationContext ctx = new NegotiationContext(
+                NegotiationSampleSupport.SESSION_ID, 1, NegotiationContext.DEFAULT_MAX_ROUNDS, NegotiationPerformative.PROPOSE);
         List<Map<String, Object>> results = new ArrayList<>();
 
         Map<String, Object> section = ScenarioData.caseSection("feasibility");

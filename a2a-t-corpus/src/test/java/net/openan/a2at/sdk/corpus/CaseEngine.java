@@ -289,13 +289,9 @@ public final class CaseEngine {
                         message.templateUri());
             }
             if (Boolean.TRUE.equals(expect.metadata().contextEcho())) {
-                NegotiationContext expectedContext = toContext(testCase.context());
-                NegotiationPerformative performative = performativeOf(testCase.api());
-                if (expectedContext != null && performative != null) {
-                    // The generation pipeline stamps the performative of the addressed template onto the emitted
-                    // context, so the echo expectation carries the performative of the case's API.
-                    expectedContext = expectedContext.withPerformative(performative);
-                }
+                // The input context is built with the performative of the case's API, so it equals the emitted context
+                // the generation pipeline stamped with the performative of the addressed template.
+                NegotiationContext expectedContext = toContext(testCase.context(), testCase.api());
                 if (!Objects.equals(expectedContext, message.negotiationContext())) {
                     fail(
                             testCase,
@@ -484,15 +480,18 @@ public final class CaseEngine {
                     String.valueOf(metadata.keySet()));
         }
         NegotiationPerformative performative = performativeOf(testCase.api());
-        if (performative == null) {
-            return;
-        }
         Object nested = metadata.get(MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY);
-        if (!(nested instanceof Map<?, ?> context) || !performative.name().equals(context.get("performative"))) {
+        if (!(nested instanceof Map<?, ?> context)
+                || context.size() != 4
+                || !context.containsKey("id")
+                || !context.containsKey("round")
+                || !context.containsKey("maxRounds")
+                || !performative.name().equals(context.get("performative"))) {
             fail(
                     testCase,
                     "$.expect.contracts[metadataTripleShape]",
-                    "the nested negotiation context carrying performative=" + performative.name(),
+                    "the nested negotiation context with exactly <id, round, maxRounds, performative="
+                            + performative.name() + ">",
                     String.valueOf(nested));
         }
     }
@@ -558,7 +557,7 @@ public final class CaseEngine {
 
     private MetadataContent generateFromData(NegotiationContentService service, NegotiationCase testCase) {
         TemplateUri templateUri = parseTemplateUri(testCase);
-        NegotiationContext context = toContext(testCase.context());
+        NegotiationContext context = toContext(testCase.context(), testCase.api());
         JsonNode data = testCase.inputData();
         return switch (testCase.api()) {
             case GENERATE_PROPOSE_FROM_TEXT -> service.generateProposeFromData(
@@ -663,7 +662,7 @@ public final class CaseEngine {
             NegotiationCase testCase,
             @Nullable String promptOverride) {
         TemplateUri templateUri = parseTemplateUri(testCase);
-        NegotiationContext context = toContext(testCase.context());
+        NegotiationContext context = toContext(testCase.context(), testCase.api());
         return switch (testCase.api()) {
             case GENERATE_PROPOSE_FROM_TEXT ->
                 service.generateProposeFromText(testCase.inputText(), context, templateUri);
@@ -795,24 +794,43 @@ public final class CaseEngine {
         return MAPPER.convertValue(schema, new TypeReference<Map<String, Object>>() {});
     }
 
-    private static @Nullable NegotiationContext toContext(@Nullable ContextSpec spec) {
-        return spec == null ? null : new NegotiationContext(spec.id(), spec.round(), spec.maxRounds());
+    /**
+     * Builds the input context of a case, stamped with the performative of the case's API.
+     *
+     * <p>The generation pipeline stamps the performative of the addressed template onto the emitted context, so an
+     * input context built with the API's performative echoes back unchanged; a validate API receives the message of
+     * exactly that performative, so its input context carries it as well.
+     *
+     * @param spec context spec of the case, or null
+     * @param api API of the case
+     * @return the negotiation context of the spec stamped with the API's performative, or null when the case carries
+     *     no context spec or the task-family API takes no negotiation context
+     */
+    private static @Nullable NegotiationContext toContext(@Nullable ContextSpec spec, NegotiationApi api) {
+        NegotiationPerformative performative = performativeOf(api);
+        if (spec == null || performative == null) {
+            return null;
+        }
+        return new NegotiationContext(spec.id(), spec.round(), spec.maxRounds(), performative);
     }
 
     /**
-     * Returns the performative the generation pipeline stamps onto the emitted context of an API: the eight generation
-     * APIs each address one performative, while the validate and task families produce no negotiation message whose
-     * context could echo it.
+     * Returns the performative an API addresses: each generation API emits the message of one performative and each
+     * validate API checks the message of one performative, while the task family produces no negotiation message.
      *
      * @param api API of the case
-     * @return the performative of the generation family, or null for the validate and task families
+     * @return the performative of the generation and validate families, or null for the task family
      */
     private static @Nullable NegotiationPerformative performativeOf(NegotiationApi api) {
         return switch (api) {
-            case GENERATE_PROPOSE_FROM_TEXT, GENERATE_PROPOSE_FROM_DATA -> NegotiationPerformative.PROPOSE;
-            case GENERATE_ACCEPT_FROM_TEXT, GENERATE_ACCEPT_FROM_DATA -> NegotiationPerformative.ACCEPT;
-            case GENERATE_REJECT_FROM_TEXT, GENERATE_REJECT_FROM_DATA -> NegotiationPerformative.REJECT;
-            case GENERATE_ABORT_FROM_TEXT, GENERATE_ABORT_FROM_DATA -> NegotiationPerformative.ABORT;
+            case GENERATE_PROPOSE_FROM_TEXT, GENERATE_PROPOSE_FROM_DATA, VALIDATE_PROPOSE_PROMPT_AND_DATA_FILLING ->
+                NegotiationPerformative.PROPOSE;
+            case GENERATE_ACCEPT_FROM_TEXT, GENERATE_ACCEPT_FROM_DATA, VALIDATE_ACCEPT_PROMPT_AND_DATA_FILLING ->
+                NegotiationPerformative.ACCEPT;
+            case GENERATE_REJECT_FROM_TEXT, GENERATE_REJECT_FROM_DATA, VALIDATE_REJECT_PROMPT_AND_DATA_FILLING ->
+                NegotiationPerformative.REJECT;
+            case GENERATE_ABORT_FROM_TEXT, GENERATE_ABORT_FROM_DATA, VALIDATE_ABORT_PROMPT_AND_DATA_FILLING ->
+                NegotiationPerformative.ABORT;
             default -> null;
         };
     }

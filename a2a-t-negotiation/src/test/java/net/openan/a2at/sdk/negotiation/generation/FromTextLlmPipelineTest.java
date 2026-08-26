@@ -548,7 +548,7 @@ class FromTextLlmPipelineTest {
      */
     @Test
     void contextIsInjectedFromTheCallerWithoutAnyLlmInvolvement() {
-        NegotiationContext context = new NegotiationContext(NegotiationGoldenCases.SESSION_ID, 4, 7);
+        NegotiationContext context = new NegotiationContext(NegotiationGoldenCases.SESSION_ID, 4, 7, NegotiationPerformative.PROPOSE);
         ScriptedExtractionClient llm = new ScriptedExtractionClient(
                 extractionJson(GoldenCase.INFORMATION_PROPOSE.content(ZH_CN), NegotiationPerformative.PROPOSE));
         NegotiationGenerationOrchestrator orchestrator = orchestrator(ZH_CN, llm, 3);

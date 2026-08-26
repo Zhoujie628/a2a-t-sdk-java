@@ -23,6 +23,7 @@ import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.InformationEndingContent;
@@ -135,8 +136,11 @@ public final class NegotiationFromDataApiEvalApp {
         String relationship = String.valueOf(input.get("relationship"));
         TemplateUri template = resolveTemplate(api, input);
 
+        NegotiationPerformative performative = "propose".equals(api)
+                ? NegotiationPerformative.PROPOSE
+                : "accept".equals(api) ? NegotiationPerformative.ACCEPT : NegotiationPerformative.REJECT;
         NegotiationContext context =
-                new NegotiationContext(UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS);
+                new NegotiationContext(UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS, performative);
         List<NegotiationItem> items = new ArrayList<>();
         for (Map.Entry<String, Object> entry : itemsInput.entrySet()) {
             items.add(new NegotiationItem(entry.getKey(), String.valueOf(entry.getValue())));

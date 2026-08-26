@@ -23,6 +23,7 @@ import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
@@ -183,7 +184,7 @@ class TemplateUriEntryMatrixTest {
 
     private static NegotiationProposeData informationProposeData() {
         return new NegotiationProposeData(
-                new NegotiationContext(UUID, 2, 5),
+                new NegotiationContext(UUID, 2, 5, NegotiationPerformative.PROPOSE),
                 new InformationProposeContent(List.of(new NegotiationItem("接入端口名称", "P533-珠江旧城-PTN3900-23-TPA1EG24-1")), null));
     }
 

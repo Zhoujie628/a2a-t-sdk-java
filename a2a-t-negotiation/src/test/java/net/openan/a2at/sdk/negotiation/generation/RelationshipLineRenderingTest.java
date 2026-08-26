@@ -8,6 +8,7 @@ import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationProposeData;
 import org.junit.jupiter.api.Test;
@@ -78,7 +79,7 @@ class RelationshipLineRenderingTest {
         return orchestrator
                 .generateProposeFromData(
                         new NegotiationProposeData(
-                                new NegotiationContext(UUID, 2, 5),
+                                new NegotiationContext(UUID, 2, 5, NegotiationPerformative.PROPOSE),
                                 new InformationProposeContent(
                                         List.of(new NegotiationItem(
                                                 chinese ? "节能区域" : "area", chinese ? "松山湖" : "Songshan Lake")),

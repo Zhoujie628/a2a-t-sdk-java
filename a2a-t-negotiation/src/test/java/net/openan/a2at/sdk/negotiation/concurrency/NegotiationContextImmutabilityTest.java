@@ -1,7 +1,6 @@
 package net.openan.a2at.sdk.negotiation.concurrency;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,10 +60,11 @@ class NegotiationContextImmutabilityTest {
                 future.get(30, TimeUnit.SECONDS);
             }
             assertEquals(1, derived.size(), "every derived context must be identical");
-            assertEquals(new NegotiationContext(UUID, 3, 5), derived.iterator().next());
-            assertNull(
+            assertEquals(new NegotiationContext(UUID, 3, 5, NegotiationPerformative.PROPOSE), derived.iterator().next());
+            assertEquals(
+                    NegotiationPerformative.PROPOSE,
                     derived.iterator().next().performative(),
-                    "the derived context of the next round drops the performative of this round");
+                    "the derived context of the next round keeps the performative of this round");
         } finally {
             pool.shutdownNow();
         }
@@ -72,7 +72,7 @@ class NegotiationContextImmutabilityTest {
 
     @Test
     void ruleCheckerIsPureUnderConcurrentCalls() throws Exception {
-        NegotiationContext context = new NegotiationContext(UUID, 1, 5);
+        NegotiationContext context = new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE);
         DefaultNegotiationComplianceChecker checker = new DefaultNegotiationComplianceChecker();
         NegotiationRuleCheckResult baseline = checker.check(context);
 

@@ -13,6 +13,7 @@ import net.jqwik.api.Property;
 import net.jqwik.api.Provide;
 import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -99,15 +100,18 @@ class NegotiationErrorPathPropertyTest {
             @ForAll("languages") String language,
             @ForAll("maxRoundsValues") int maxRounds,
             @ForAll("budgetOvershoots") int overshoot) {
-        NegotiationContext context =
-                new NegotiationContext(PropertyArbitraries.anySessionId(), maxRounds + overshoot, maxRounds);
+        // Each leg validates the message of one performative, so its incoming context carries that performative.
+        NegotiationContext proposeContext = new NegotiationContext(
+                PropertyArbitraries.anySessionId(), maxRounds + overshoot, maxRounds, NegotiationPerformative.PROPOSE);
+        NegotiationContext abortContext = new NegotiationContext(
+                PropertyArbitraries.anySessionId(), maxRounds + overshoot, maxRounds, NegotiationPerformative.ABORT);
         ScriptedNegotiationLlmClient llm = ScriptedNegotiationLlmClient.assertionOnly();
         NegotiationContentService service = PropertyHarness.service(language, llm);
         NegotiationParamExtractionException propose = assertThrows(
                 NegotiationParamExtractionException.class,
                 () -> service.validateProposePromptAndDataFilling(
                         "Rendered negotiation message text.",
-                        context,
+                        proposeContext,
                         FLAT_SCHEMA,
                         PropertyHarness.templateUri("Negotiation-T/information-negotiation/propose/v1")));
         assertEquals(A2ATErrorCodes.NEGOTIATION_RULE_VIOLATION, propose.getCode());
@@ -115,7 +119,7 @@ class NegotiationErrorPathPropertyTest {
                 NegotiationParamExtractionException.class,
                 () -> service.validateAbortPromptAndDataFilling(
                         "Rendered negotiation message text.",
-                        context,
+                        abortContext,
                         FLAT_SCHEMA,
                         PropertyHarness.templateUri("Negotiation-T/common/abort/v1")));
         assertEquals(A2ATErrorCodes.NEGOTIATION_RULE_VIOLATION, abort.getCode());

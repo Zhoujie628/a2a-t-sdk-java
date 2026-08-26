@@ -22,6 +22,7 @@ import net.openan.a2at.sdk.core.exception.A2ATParamExtractionError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.server.A2ATServer;
 
 /**
@@ -109,7 +110,8 @@ public final class NegotiationQwenEvaluationMain {
         result.put("propose_input", testCase.proposeCase().text());
         result.put("expected_propose", testCase.expectedPropose());
         result.put("expected_ending", testCase.expectedEnding());
-        NegotiationContext context = new NegotiationContext(UUID.randomUUID().toString(), 1, 3);
+        NegotiationContext context =
+                new NegotiationContext(UUID.randomUUID().toString(), 1, 3, NegotiationPerformative.PROPOSE);
         result.put("client_supplement", testCase.clientSupplement());
         result.put("ending_input", testCase.endingGenerationText());
         result.put("actual_propose", null);
@@ -137,7 +139,9 @@ public final class NegotiationQwenEvaluationMain {
             result.put("propose_context_matched", contextMatches(context, proposeFilled.data()));
             result.put("propose_succeeded", true);
 
-            NegotiationContext responseContext = NegotiationSampleFlow.contextFrom(proposeFilled.data());
+            NegotiationPerformative endingPerformative =
+                    "accept".equals(testCase.decision()) ? NegotiationPerformative.ACCEPT : NegotiationPerformative.REJECT;
+            NegotiationContext responseContext = NegotiationSampleFlow.contextFrom(proposeFilled.data(), endingPerformative);
             MetadataContent ending = generateEndingWithLog(
                     server, testCase, responseContext, runId, processLogger, apiTrace);
             result.put("ending_generation_succeeded", true);

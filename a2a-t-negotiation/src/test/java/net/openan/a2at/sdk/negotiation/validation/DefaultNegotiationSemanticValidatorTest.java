@@ -65,7 +65,7 @@ class DefaultNegotiationSemanticValidatorTest {
                 "type", "object",
                 "properties", Map.of("energy saving region", Map.of("type", "string")));
         NegotiationReference rejectReference =
-                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.REJECT, "en-US");
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.REJECT, "en-US");
 
         SemanticValidationResult result =
                 validator.validateNegotiation(VALID_PROMPT, rejectSchema, rejectReference, TEMPLATE_CONTENT);
@@ -81,7 +81,7 @@ class DefaultNegotiationSemanticValidatorTest {
         llmClient.payload =
                 "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}";
         NegotiationReference rejectReference =
-                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.REJECT, "en-US");
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.REJECT, "en-US");
 
         validator.validateNegotiation(VALID_PROMPT, callerSchema, rejectReference, TEMPLATE_CONTENT);
 
@@ -94,7 +94,7 @@ class DefaultNegotiationSemanticValidatorTest {
         llmClient.payload =
                 "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}";
         NegotiationReference rejectReference =
-                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPhase.REJECT, "zh-CN");
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.REJECT, "zh-CN");
 
         validator.validateNegotiation(VALID_PROMPT, callerSchema, rejectReference, TEMPLATE_CONTENT);
 

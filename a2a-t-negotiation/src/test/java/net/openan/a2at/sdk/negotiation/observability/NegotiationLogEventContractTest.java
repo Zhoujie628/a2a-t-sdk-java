@@ -166,14 +166,19 @@ class NegotiationLogEventContractTest {
 
         MetadataContent generated = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem(promptMarker, "value")), null)),
                 INFORMATION_PROPOSE_URI);
         assertTrue(generated.promptText().contains(promptMarker));
         orchestrator.generateProposeFromText(
-                "free text containing " + inputMarker, new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
+                "free text containing " + inputMarker,
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                INFORMATION_PROPOSE_URI);
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
-                generated.promptText(), new NegotiationContext(UUID, 1, 5), Map.of("type", "object"), INFORMATION_PROPOSE_URI);
+                generated.promptText(),
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                Map.of("type", "object"),
+                INFORMATION_PROPOSE_URI);
         assertTrue(filled.data().containsValue(paramValueMarker));
 
         List<ILoggingEvent> infoAndHigher = appender.list.stream()
@@ -241,7 +246,7 @@ class NegotiationLogEventContractTest {
                 .build();
         MetadataContent result = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_URI);
         assertEquals(new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE), result.negotiationContext());
@@ -253,7 +258,9 @@ class NegotiationLogEventContractTest {
                 .llmClient(new ScriptedClient(validExtractionPayload(), validSemanticPayload()))
                 .build();
         MetadataContent result = orchestrator.generateProposeFromText(
-                "请提供节能区域。", new NegotiationContext(UUID, 2, 5), INFORMATION_PROPOSE_URI);
+                "请提供节能区域。",
+                new NegotiationContext(UUID, 2, 5, NegotiationPerformative.PROPOSE),
+                INFORMATION_PROPOSE_URI);
         assertTrue(result.promptText().contains("所需信息项"));
     }
 
@@ -264,7 +271,9 @@ class NegotiationLogEventContractTest {
                 .maxAttempts(2)
                 .build();
         MetadataContent result = orchestrator.generateProposeFromText(
-                "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
+                "请提供节能区域。",
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                INFORMATION_PROPOSE_URI);
         assertTrue(result.promptText().contains("所需信息项"));
     }
 
@@ -281,7 +290,9 @@ class NegotiationLogEventContractTest {
                 .build();
         try {
             orchestrator.generateProposeFromText(
-                    "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI);
+                    "请提供节能区域。",
+                    new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                    INFORMATION_PROPOSE_URI);
         } catch (NegotiationGenerationException failure) {
             assertEquals(A2ATErrorCodes.NEGOTIATION_LLM_INFRASTRUCTURE_ERROR, failure.getCode());
             return failure;
@@ -296,11 +307,14 @@ class NegotiationLogEventContractTest {
                 .build();
         MetadataContent message = orchestrator.generateProposeFromData(
                 new NegotiationProposeData(
-                        new NegotiationContext(UUID, 1, 5),
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                 INFORMATION_PROPOSE_URI);
         FilledParamData filled = orchestrator.validateProposePromptAndDataFilling(
-                message.promptText(), new NegotiationContext(UUID, 1, 5), Map.of("type", "object"), INFORMATION_PROPOSE_URI);
+                message.promptText(),
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                Map.of("type", "object"),
+                INFORMATION_PROPOSE_URI);
         assertEquals(UUID, filled.data().get("id"));
     }
 
@@ -315,7 +329,7 @@ class NegotiationLogEventContractTest {
         try {
             orchestrator.validateProposePromptAndDataFilling(
                     "## 所需信息项\n1. 区域\n",
-                    new NegotiationContext(UUID, 1, 5),
+                    new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                     Map.of("type", "object"),
                     INFORMATION_PROPOSE_URI);
         } catch (NegotiationParamExtractionException expected) {
@@ -331,7 +345,7 @@ class NegotiationLogEventContractTest {
         try {
             orchestrator.validateProposePromptAndDataFilling(
                     "## 所需信息项\n1. 区域\n",
-                    new NegotiationContext(UUID, 9, 5),
+                    new NegotiationContext(UUID, 9, 5, NegotiationPerformative.PROPOSE),
                     Map.of("type", "object"),
                     INFORMATION_PROPOSE_URI);
         } catch (NegotiationParamExtractionException expected) {

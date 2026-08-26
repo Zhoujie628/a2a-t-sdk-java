@@ -17,6 +17,7 @@ import net.openan.a2at.sdk.llm.LLMError;
 import net.openan.a2at.sdk.llm.LLMResponse;
 import net.openan.a2at.sdk.negotiation.content.InformationProposeContent;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.negotiation.content.NegotiationGenerationException;
 import net.openan.a2at.sdk.negotiation.content.NegotiationItem;
 import net.openan.a2at.sdk.negotiation.content.NegotiationParamExtractionException;
@@ -48,7 +49,9 @@ class NegotiationExceptionTreeRootCatchTest {
                 .build();
 
         RuntimeException failure = catchThroughRoot(() -> orchestrator.generateProposeFromText(
-                "请提供节能区域。", new NegotiationContext(UUID, 1, 5), INFORMATION_PROPOSE_URI));
+                "请提供节能区域。",
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                INFORMATION_PROPOSE_URI));
 
         assertTrue(failure instanceof NegotiationGenerationException);
         assertEquals(
@@ -64,7 +67,7 @@ class NegotiationExceptionTreeRootCatchTest {
 
         RuntimeException failure = catchThroughRoot(() -> orchestrator.validateProposePromptAndDataFilling(
                 "## 所需信息项\n1. 区域\n",
-                new NegotiationContext(UUID, 9, 5),
+                new NegotiationContext(UUID, 9, 5, NegotiationPerformative.PROPOSE),
                 Map.of("type", "object"),
                 INFORMATION_PROPOSE_URI));
 
@@ -85,7 +88,7 @@ class NegotiationExceptionTreeRootCatchTest {
 
         RuntimeException failure = catchThroughRoot(() -> orchestrator.validateProposePromptAndDataFilling(
                 "## 所需信息项\n1. 区域\n",
-                new NegotiationContext(UUID, 1, 5),
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                 Map.of("type", "object"),
                 INFORMATION_PROPOSE_URI));
 
@@ -105,7 +108,7 @@ class NegotiationExceptionTreeRootCatchTest {
 
         RuntimeException failure = catchThroughRoot(() -> orchestrator.validateProposePromptAndDataFilling(
                 "## 所需信息项\n1. 区域\n",
-                new NegotiationContext(UUID, 1, 5),
+                new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                 Map.of("type", "object"),
                 INFORMATION_PROPOSE_URI));
 
@@ -138,7 +141,7 @@ class NegotiationExceptionTreeRootCatchTest {
         try {
             orchestrator.generateProposeFromData(
                     new NegotiationProposeData(
-                            new NegotiationContext(UUID, 1, 5),
+                            new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                             new InformationProposeContent(List.of(new NegotiationItem("节能区域", "松山湖")), null)),
                     StandardTemplates.ENERGY_SAVING);
         } catch (A2ATError caughtByRoot) {
@@ -156,8 +159,8 @@ class NegotiationExceptionTreeRootCatchTest {
 
     @Test
     void contentProgrammingErrorsOfTheContextStayOutsideTheCommonRoot() {
-        IllegalArgumentException failure =
-                assertThrows(IllegalArgumentException.class, () -> new NegotiationContext("  ", 1, 5));
+        IllegalArgumentException failure = assertThrows(
+                IllegalArgumentException.class, () -> new NegotiationContext("  ", 1, 5, NegotiationPerformative.PROPOSE));
 
         assertFalse(
                 A2ATError.class.isInstance(failure), "content programming errors must stay outside the A2ATError tree");
@@ -171,7 +174,11 @@ class NegotiationExceptionTreeRootCatchTest {
 
         NullPointerException failure = assertThrows(
                 NullPointerException.class,
-                () -> orchestrator.validateProposePromptAndDataFilling(null, new NegotiationContext(UUID, 1, 5), Map.of("type", "object"), INFORMATION_PROPOSE_URI));
+                () -> orchestrator.validateProposePromptAndDataFilling(
+                        null,
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                        Map.of("type", "object"),
+                        INFORMATION_PROPOSE_URI));
 
         assertFalse(A2ATError.class.isInstance(failure), "a null prompt is a programming error and must stay outside the A2ATError tree");
     }
@@ -185,7 +192,10 @@ class NegotiationExceptionTreeRootCatchTest {
         IllegalArgumentException failure = assertThrows(
                 IllegalArgumentException.class,
                 () -> orchestrator.validateProposePromptAndDataFilling(
-                        "   ", new NegotiationContext(UUID, 1, 5), Map.of("type", "object"), INFORMATION_PROPOSE_URI));
+                        "   ",
+                        new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
+                        Map.of("type", "object"),
+                        INFORMATION_PROPOSE_URI));
 
         assertFalse(
                 A2ATError.class.isInstance(failure),

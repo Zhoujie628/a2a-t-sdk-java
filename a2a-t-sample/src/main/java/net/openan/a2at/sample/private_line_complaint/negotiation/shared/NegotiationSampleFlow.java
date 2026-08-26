@@ -8,6 +8,7 @@ import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.StandardTemplates;
 import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
+import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.server.A2ATServer;
 
 /** Runs the six Negotiation-T APIs used by the private-line complaint sample. */
@@ -25,7 +26,8 @@ public final class NegotiationSampleFlow {
             A2ATServer server,
             NegotiationScenario scenario,
             NegotiationDecision decision) {
-        NegotiationContext requestContext = new NegotiationContext(UUID.randomUUID().toString(), 1, 3);
+        NegotiationContext requestContext =
+                new NegotiationContext(UUID.randomUUID().toString(), 1, 3, NegotiationPerformative.PROPOSE);
         MetadataContent propose =
                 client.generateNegotiationProposePromptFromText(scenario.proposeText(), requestContext, PROPOSE_TEMPLATE_URI);
         Map<String, Object> proposeMetadata = propose.buildMetadataContent();
@@ -50,24 +52,25 @@ public final class NegotiationSampleFlow {
     }
 
     /**
-     * Builds a session-handle context from the filled negotiation data.
+     * Builds a context from the filled negotiation data.
      *
-     * <p>The merged data carries only the three session fields, so the context is built without a performative: the
-     * intent of the next message is legitimately unknown at this point. The performative of an outbound message is
-     * stamped by the generation API ({@code completeGeneration}), not reconstructed here.
+     * <p>The merged data carries the three session fields, so the performative of the message the context travels with
+     * is passed in explicitly. The performative of an outbound message is stamped by the generation API
+     * ({@code completeGeneration}), overriding whatever this context carries.
      *
      * @param data filled negotiation data holding the {@code id}, {@code round}, and {@code maxRounds} fields
-     * @return the negotiation context acting as a session handle
+     * @param performative communicative intent of the message the returned context travels with
+     * @return the negotiation context
      * @throws IllegalArgumentException when the data does not contain a valid context
      */
-    public static NegotiationContext contextFrom(Map<String, Object> data) {
+    public static NegotiationContext contextFrom(Map<String, Object> data, NegotiationPerformative performative) {
         Object id = data.get("id");
         Object round = data.get("round");
         Object maxRounds = data.get("maxRounds");
         if (!(id instanceof String text) || !(round instanceof Number roundNumber) || !(maxRounds instanceof Number maxRoundsNumber)) {
             throw new IllegalArgumentException("Filled negotiation data does not contain a valid context");
         }
-        return new NegotiationContext(text, roundNumber.intValue(), maxRoundsNumber.intValue());
+        return new NegotiationContext(text, roundNumber.intValue(), maxRoundsNumber.intValue(), performative);
     }
 
     public record NegotiationFlowResult(

@@ -35,10 +35,10 @@ class NegotiationMetadataReaderTest {
                 MetadataContent.TEMPLATE_URI_METADATA_KEY,
                 NegotiationSampleFlow.PROPOSE_TEMPLATE_URI.uri(),
                 MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY,
-                Map.of("id", "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round", 1, "maxRounds", 5));
+                Map.of("id", "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round", 1, "maxRounds", 5, "performative", "PROPOSE"));
 
         assertEquals(
-                new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 1, 5),
+                new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 1, 5, NegotiationPerformative.PROPOSE),
                 NegotiationMetadataReader.readContext(metadata));
         assertEquals(null, NegotiationMetadataReader.readContext(Map.of("other", "value")));
         assertEquals(null, NegotiationMetadataReader.readContext(null));
@@ -64,14 +64,13 @@ class NegotiationMetadataReaderTest {
     }
 
     @Test
-    void readsTheOldThreeFieldContextWithoutAPerformative() {
+    void rejectsAContextWithoutAPerformative() {
         Map<String, Object> metadata = Map.of(
                 MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY,
                 Map.of("id", "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round", 1, "maxRounds", 5));
 
-        assertEquals(
-                new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 1, 5, null),
-                NegotiationMetadataReader.readContext(metadata));
+        assertThrows(
+                IllegalArgumentException.class, () -> NegotiationMetadataReader.readContext(metadata));
     }
 
     @Test

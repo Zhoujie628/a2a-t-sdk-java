@@ -21,7 +21,8 @@ class ParamExtractorTest {
 
     private static final String SESSION_ID = "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3";
 
-    private static final NegotiationContext CONTEXT = new NegotiationContext(SESSION_ID, 2, 5);
+    private static final NegotiationContext CONTEXT =
+            new NegotiationContext(SESSION_ID, 2, 5, NegotiationPerformative.PROPOSE);
 
     private static final String VALID_ZH_PROMPT = "## 所需信息项\n"
             + "1. 节能区域信息：请提供真实存在的区域\n";
@@ -64,7 +65,12 @@ class ParamExtractorTest {
         complianceChecker.result = new NegotiationRuleCheckResult(true, List.of());
         semanticValidator.result = new SemanticValidationResult(true, "information", List.of(), Map.of());
 
-        FilledParamData filled = extractor.extract(VALID_ZH_PROMPT, new NegotiationContext(SESSION_ID, 3, 7), Map.of(), REFERENCE, TEMPLATE_CONTENT);
+        FilledParamData filled = extractor.extract(
+                VALID_ZH_PROMPT,
+                new NegotiationContext(SESSION_ID, 3, 7, NegotiationPerformative.PROPOSE),
+                Map.of(),
+                REFERENCE,
+                TEMPLATE_CONTENT);
 
         assertTrue(filled.data().get("round") instanceof Integer);
         assertTrue(filled.data().get("maxRounds") instanceof Integer);

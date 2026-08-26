@@ -14,7 +14,7 @@ class MetadataContentTest {
     private static final String TEMPLATE_URI = StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE.uri();
 
     private static final NegotiationContext CONTEXT =
-            new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 1, 5);
+            new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 1, 5, NegotiationPerformative.PROPOSE);
 
     @Test
     void recordExposesAllComponents() {
@@ -95,21 +95,9 @@ class MetadataContentTest {
         assertEquals(CONTEXT.id(), nestedContext.get("id"));
         assertEquals(CONTEXT.round(), nestedContext.get("round"));
         assertEquals(CONTEXT.maxRounds(), nestedContext.get("maxRounds"));
+        assertEquals("PROPOSE", nestedContext.get("performative"));
+        assertEquals(4, nestedContext.size());
         assertEquals(metadata, content.buildMetadataContent());
-    }
-
-    @Test
-    void buildMetadataContextOmitsPerformativeWhenNull() {
-        MetadataContent content = new MetadataContent(
-                TEMPLATE_URI, "rendered message", "https://example/ext", new NegotiationContext("session-id", 1, 5, null));
-
-        Map<String, Object> metadata = content.buildMetadataContent();
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> nestedContext =
-                (Map<String, Object>) metadata.get(MetadataContent.NEGOTIATION_CONTEXT_METADATA_KEY);
-        assertEquals(java.util.List.of("id", "round", "maxRounds"), new java.util.ArrayList<>(nestedContext.keySet()));
-        assertEquals(3, nestedContext.size());
     }
 
     @Test

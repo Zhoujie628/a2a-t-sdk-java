@@ -132,21 +132,23 @@ public final class NegotiationGoldenCases {
     private NegotiationGoldenCases() {}
 
     /**
-     * Returns the default fixture context: round 2 of at most 5 rounds.
+     * Returns the default fixture context: round 2 of at most 5 rounds, carrying the fixture's performative.
      *
+     * @param performative performative of the fixture the context belongs to
      * @return fixed negotiation context of every fixture except the target propose fixture
      */
-    public static NegotiationContext defaultContext() {
-        return new NegotiationContext(SESSION_ID, 2, 5);
+    public static NegotiationContext defaultContext(NegotiationPerformative performative) {
+        return new NegotiationContext(SESSION_ID, 2, 5, performative);
     }
 
     /**
-     * Returns the first-round fixture context used by the target propose fixture.
+     * Returns the first-round fixture context used by the target propose fixture, carrying the fixture's performative.
      *
+     * @param performative performative of the fixture the context belongs to
      * @return fixed negotiation context of round 1 of at most 5 rounds
      */
-    public static NegotiationContext firstRoundContext() {
-        return new NegotiationContext(SESSION_ID, 1, 5);
+    public static NegotiationContext firstRoundContext(NegotiationPerformative performative) {
+        return new NegotiationContext(SESSION_ID, 1, 5, performative);
     }
 
     /** One golden fixture case: one negotiation type, performative, fixed context, fixed content and its template URI. */
@@ -159,7 +161,7 @@ public final class NegotiationGoldenCases {
         INFORMATION_PROPOSE(NegotiationPerformative.PROPOSE, "information-negotiation", "information_propose") {
             @Override
             public NegotiationContext context() {
-                return NegotiationGoldenCases.defaultContext();
+                return NegotiationGoldenCases.defaultContext(performative());
             }
 
             @Override
@@ -191,7 +193,7 @@ public final class NegotiationGoldenCases {
         TARGET_PROPOSE(NegotiationPerformative.PROPOSE, "target-negotiation", "target_propose") {
             @Override
             public NegotiationContext context() {
-                return NegotiationGoldenCases.firstRoundContext();
+                return NegotiationGoldenCases.firstRoundContext(performative());
             }
 
             @Override
@@ -238,7 +240,7 @@ public final class NegotiationGoldenCases {
         FEASIBILITY_PROPOSE(NegotiationPerformative.PROPOSE, "feasibility-negotiation", "feasibility_propose") {
             @Override
             public NegotiationContext context() {
-                return NegotiationGoldenCases.defaultContext();
+                return NegotiationGoldenCases.defaultContext(performative());
             }
 
             @Override
@@ -449,7 +451,7 @@ public final class NegotiationGoldenCases {
          * @return fixed negotiation context
          */
         public NegotiationContext context() {
-            return NegotiationGoldenCases.defaultContext();
+            return NegotiationGoldenCases.defaultContext(performative);
         }
 
         /**

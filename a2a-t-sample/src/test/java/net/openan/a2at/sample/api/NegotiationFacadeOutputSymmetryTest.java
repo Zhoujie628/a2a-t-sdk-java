@@ -162,7 +162,8 @@ class NegotiationFacadeOutputSymmetryTest {
                         NegotiationPerformative.PROPOSE,
                         StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE,
                         new NegotiationProposeData(
-                                new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5),
+                                new NegotiationContext(
+                                        "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5, NegotiationPerformative.PROPOSE),
                                 new InformationProposeContent(
                                         List.of(
                                                 new NegotiationItem(
@@ -174,7 +175,8 @@ class NegotiationFacadeOutputSymmetryTest {
                         NegotiationPerformative.PROPOSE,
                         StandardTemplates.TARGET_NEGOTIATION_PROPOSE,
                         new NegotiationProposeData(
-                                new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 1, 5),
+                                new NegotiationContext(
+                                        "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 1, 5, NegotiationPerformative.PROPOSE),
                                 new TargetProposeContent(
                                         "Clarify the intent of the energy-saving task.",
                                         List.of(new NegotiationItem("task intent", "energy-saving optimization")),
@@ -185,7 +187,8 @@ class NegotiationFacadeOutputSymmetryTest {
                         NegotiationPerformative.PROPOSE,
                         StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE,
                         new NegotiationProposeData(
-                                new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5),
+                                new NegotiationContext(
+                                        "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5, NegotiationPerformative.PROPOSE),
                                 new FeasibilityProposeContent(
                                         "Please assess the adjusted rate target.",
                                         NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
@@ -237,7 +240,7 @@ class NegotiationFacadeOutputSymmetryTest {
                 performative,
                 templateUri,
                 new NegotiationEndingData(
-                        new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5), content));
+                        new NegotiationContext("3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 2, 5, performative), content));
     }
 
     /** One symmetry case: a fixed input addressed to one of the three from-data generation methods. */
