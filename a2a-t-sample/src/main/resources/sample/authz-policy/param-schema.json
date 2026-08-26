@@ -27,7 +27,7 @@
           },
           "处置类型": {
             "type": "string",
-            "description": "动网操作的处置类型，应为简短的处置动作短语（如业务抢通、业务优化、路由调整），非短语式的整句描述判 invalid_value"
+            "description": "动网操作的处置类型"
           },
           "操作名称": {
             "type": "string",

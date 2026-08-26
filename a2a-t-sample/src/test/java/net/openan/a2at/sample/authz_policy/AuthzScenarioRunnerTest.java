@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -549,5 +550,41 @@ class AuthzScenarioRunnerTest {
 
         assertTrue(outcome.result().match());
         assertTrue(outcome.result().warnings().isEmpty());
+    }
+
+    @Test
+    void should_useScenarioSchema_WhenValidateSchemaPresent() {
+        Map<String, Object> scenarioSchema = Map.of("处置规则", "应为短语");
+        AtomicReference<Map<String, Object>> receivedSchema = new AtomicReference<>();
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), "generated prompt", "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> {
+            receivedSchema.set(schema);
+            return new FilledParamData(Map.of());
+        };
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario =
+                new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS, scenarioSchema);
+
+        runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertSame(scenarioSchema, receivedSchema.get());
+    }
+
+    @Test
+    void should_useDefaultSchema_WhenValidateSchemaAbsent() {
+        AtomicReference<Map<String, Object>> receivedSchema = new AtomicReference<>();
+        AuthzPromptGenerator generator =
+                scenario -> new MetadataContent(TEMPLATE_URI.uri(), "generated prompt", "Authorization-T/v1");
+        AuthzPromptValidator validator = (prompt, schema, templateUri) -> {
+            receivedSchema.set(schema);
+            return new FilledParamData(Map.of());
+        };
+        AuthzScenarioRunner runner = new AuthzScenarioRunner(generator, validator);
+        AuthzScenario scenario = new AuthzScenario("test", "from_text", Map.of("text", "hello"), SUCCESS);
+
+        runner.run(scenario, PARAM_SCHEMA, TEMPLATE_URI);
+
+        assertSame(PARAM_SCHEMA, receivedSchema.get());
     }
 }

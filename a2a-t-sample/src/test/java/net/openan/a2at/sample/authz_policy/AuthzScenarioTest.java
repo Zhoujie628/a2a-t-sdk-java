@@ -2,6 +2,7 @@ package net.openan.a2at.sample.authz_policy;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -205,5 +206,35 @@ class AuthzScenarioTest {
         IllegalArgumentException ex =
                 assertThrows(IllegalArgumentException.class, () -> AuthzScenario.validate(null));
         assertEquals("scenario must not be null", ex.getMessage());
+    }
+
+    @Test
+    void should_haveNullValidateSchema_WhenFourArgConstructor() {
+        AuthzScenario scenario = new AuthzScenario(
+                "add-from-text", "from_text", Map.of("text", "test"), success());
+
+        assertNull(scenario.validateSchema());
+    }
+
+    @Test
+    void should_acceptNonEmptyValidateSchema() {
+        AuthzScenario scenario = new AuthzScenario(
+                "add-from-text",
+                "from_text",
+                Map.of("text", "test"),
+                success(),
+                Map.of("动网操作的授权策略列表", Map.of("处置类型", "应为简短的处置动作短语")));
+
+        assertDoesNotThrow(() -> AuthzScenario.validate(scenario));
+    }
+
+    @Test
+    void should_rejectEmptyValidateSchema() {
+        AuthzScenario scenario = new AuthzScenario(
+                "add-from-text", "from_text", Map.of("text", "test"), success(), Map.of());
+
+        IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> AuthzScenario.validate(scenario));
+        assertEquals("validateSchema must be non-empty when set", ex.getMessage());
     }
 }

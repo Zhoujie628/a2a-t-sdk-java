@@ -1,10 +1,13 @@
 package net.openan.a2at.sample.authz_policy;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class AuthzScenarioLoaderTest {
@@ -13,20 +16,22 @@ class AuthzScenarioLoaderTest {
     void should_loadAndValidateAllScenarios() {
         List<AuthzScenario> scenarios = AuthzScenarioLoader.load("sample/authz-policy/scenarios.json");
 
-        assertEquals(12, scenarios.size());
-        assertEquals("a-nl-unsupported-01", scenarios.get(0).label());
+        assertEquals(15, scenarios.size());
+        assertEquals("a-nl-neg-01", scenarios.get(0).label());
         assertEquals("from_text", scenarios.get(0).entry());
         assertEquals("slot_validation_error", scenarios.get(0).expected().client().outcome());
         assertEquals(null, scenarios.get(0).expected().server());
-        assertEquals("c1-nl-add-01", scenarios.get(6).label());
-        assertEquals("from_text", scenarios.get(6).entry());
-        assertEquals("success", scenarios.get(6).expected().server().outcome());
-        assertEquals("c1-data-add-02", scenarios.get(7).label());
-        assertEquals("from_data_with_schema", scenarios.get(7).entry());
-        assertEquals("success", scenarios.get(7).expected().server().outcome());
-        assertEquals("c6-nl-mixed-01", scenarios.get(11).label());
+        assertEquals("c1-nl-add-01", scenarios.get(5).label());
+        assertEquals("from_text", scenarios.get(5).entry());
+        assertEquals("success", scenarios.get(5).expected().server().outcome());
+        assertEquals("c2-data-multi-07", scenarios.get(8).label());
+        assertEquals("from_data_with_schema", scenarios.get(8).entry());
+        assertEquals("success", scenarios.get(8).expected().server().outcome());
+        assertEquals("b6-schema-variant-02", scenarios.get(13).label());
+        assertEquals(false, scenarios.get(13).validateSchema() == null);
+        assertEquals("c6-nl-mixed-07", scenarios.get(11).label());
         assertEquals("from_text", scenarios.get(11).entry());
-        assertEquals("success", scenarios.get(11).expected().server().outcome());
+        assertEquals("validation_semantic_rejected", scenarios.get(11).expected().server().outcome());
     }
 
     @Test
@@ -70,5 +75,37 @@ class AuthzScenarioLoaderTest {
                 () -> AuthzScenarioLoader.load("sample/authz-policy/test/scenario-label-non-string.json"));
 
         assertTrue(ex.getMessage().contains("label"));
+    }
+
+    @Test
+    void should_parseValidateSchema_WhenPresent() {
+        List<AuthzScenario> scenarios =
+                AuthzScenarioLoader.load("sample/authz-policy/test/validate-schema-scenarios.json");
+
+        assertEquals(2, scenarios.size());
+        AuthzScenario present = scenarios.get(0);
+        assertEquals("vs-present", present.label());
+        assertNotNull(present.validateSchema());
+        assertEquals(
+                "应为简短的处置动作短语",
+                ((Map<?, ?>) present.validateSchema().get("动网操作的授权策略列表")).get("处置类型"));
+    }
+
+    @Test
+    void should_haveNullValidateSchema_WhenAbsent() {
+        List<AuthzScenario> scenarios =
+                AuthzScenarioLoader.load("sample/authz-policy/test/validate-schema-scenarios.json");
+
+        assertEquals("vs-missing", scenarios.get(1).label());
+        assertNull(scenarios.get(1).validateSchema());
+    }
+
+    @Test
+    void should_throwIllegalStateException_WhenValidateSchemaIsEmpty() {
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> AuthzScenarioLoader.load("sample/authz-policy/test/validate-schema-empty.json"));
+
+        assertTrue(ex.getMessage().contains("validate_schema"));
     }
 }

@@ -226,13 +226,13 @@ java @a2a-t-sample/target/fromdata-eval.javaargs.txt --out fromdata-eval-report.
 
 ## 授权策略（Authorization-T）演示 Demo
 
-授权策略 Demo 是单进程直调 SDK 示例：客户端生成 Authorization-T prompt → 服务端校验合规性并提取参数。覆盖 3 个预置场景：
+授权策略 Demo 是单进程直调 SDK 示例：客户端生成 Authorization-T prompt → 服务端校验合规性并提取参数。题集按场景分组，覆盖新增/修改/删除/查询四种操作类型及各类校验失败路径：
 
-| 场景 | 入口 | 说明 |
+| 题集 | 入口 | 说明 |
 |---|---|---|
-| `add-from-text` | 自然语言 | 新增两条动网操作授权策略 |
-| `add-from-data` | 结构化数据 | 结构化输入新增授权策略 |
-| `invalid-request` | 自然语言 | 不在四种操作类型之内，预期拒绝 |
+| 冒烟集 `scenarios.json` | 默认题集 | 15 例，负例代表 + 多条列表 + 变异 schema 组 |
+| 全量集 `scenarios-100.json` | 全量评测 | 100 例，评分基线 |
+| 留出集 `scenarios-holdout-100.json` | 防过拟合 | 100 例，与全量同构 |
 
 入口类：`net.openan.a2at.sample.authz_policy.AuthzSampleMain`
 
