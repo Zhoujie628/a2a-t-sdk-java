@@ -275,8 +275,22 @@ public final class NegotiationFromDataApiEvalApp {
                 check(checks, "validation passed", true);
                 for (Map.Entry<String, Object> entry : itemsInput.entrySet()) {
                     Object value = extracted.get(entry.getKey());
-                    check(checks, "extracted param matches input: " + entry.getKey(),
-                            valueMatches(value, String.valueOf(entry.getValue())));
+                    if ("propose".equals(api)) {
+                        // expectation contract: the extracted value must keep the meaning head of the stated
+                        // expectation (a sample-only extraction would read as if the field were already supplied -
+                        // the description-vs-value confusion) and must stay within the stated expectation (no
+                        // hallucinated content beyond the message)
+                        String stated = String.valueOf(entry.getValue());
+                        String meaningHead = meaningHead(stated);
+                        check(checks, "extracted expectation keeps the meaning part: " + entry.getKey(),
+                                value != null
+                                        && normalize(String.valueOf(value)).contains(normalize(meaningHead)));
+                        check(checks, "extracted expectation stays within the stated expectation: " + entry.getKey(),
+                                value != null && normalize(stated).contains(normalize(String.valueOf(value))));
+                    } else {
+                        check(checks, "extracted param matches input: " + entry.getKey(),
+                                valueMatches(value, String.valueOf(entry.getValue())));
+                    }
                 }
             } catch (RuntimeException error) {
                 Map<String, Object> validation = new LinkedHashMap<>();
@@ -327,6 +341,17 @@ public final class NegotiationFromDataApiEvalApp {
         String inputText = normalize(input);
         return !extractedText.isEmpty()
                 && (extractedText.contains(inputText) || inputText.contains(extractedText));
+    }
+
+    /**
+     * The meaning head of a propose expectation value: the description before the first sample or enum marker
+     * (for example "接入端口名称" out of "接入端口名称，如P781-..."). A meaning-plus-sample expectation carries its
+     * semantics in the head, so an extraction that dropped the head would read as a supplied value - the exact
+     * description-vs-value confusion the propose contract forbids.
+     */
+    private static String meaningHead(String expectation) {
+        int index = expectation.indexOf('，');
+        return index > 0 ? expectation.substring(0, index) : expectation;
     }
 
     private static Map<String, Object> errorJson(RuntimeException error) {
