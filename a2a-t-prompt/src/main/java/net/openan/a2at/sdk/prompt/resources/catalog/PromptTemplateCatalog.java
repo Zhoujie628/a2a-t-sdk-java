@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * Authorization-T, Negotiation-T and any extension added later — is picked up without a hardcoded extension list.
  * A template file lives at {@code templates/<extensionName>/<pathSegments>/<templateVersion>/<language>/template.md}
  * and is addressed by the URI formed from the segments before the language, for example
- * {@code Negotiation-T/information-negotiation/propose/v1} or {@code Task-T/network-layer/energy-saving/v1}.
+ * {@code Negotiation-T/information-negotiation/propose/v1} or {@code Task-T/network-layer/ran-energy-saving/v1}.
  *
  * <p>A local file under the configured local resource root overrides the built-in classpath template of the same
  * path, and the classpath is the fallback otherwise. Both query methods never throw: a template or a root that cannot
@@ -126,7 +126,7 @@ final class PromptTemplateCatalog {
      * Loads one template of the configured language by its URI, regardless of the extension.
      *
      * @param templateUri template URI such as {@code Negotiation-T/information-negotiation/propose/v1} or
-     *     {@code Task-T/network-layer/energy-saving/v1}
+     *     {@code Task-T/network-layer/ran-energy-saving/v1}
      * @return the addressed template, or an empty optional when no template exists for it in the configured language
      * @throws NullPointerException if the template URI is null
      */

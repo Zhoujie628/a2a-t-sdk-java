@@ -81,7 +81,7 @@ class AuthorizationSlotSchemaResourceTest {
                 new ClasspathPromptSlotSchemaLoader(new ClasspathPromptResourceLoader());
 
         PromptSlotSchema authSchema = loader.loadSlotSchema("authorization-policy-management", "zh-CN");
-        PromptSlotSchema energySchema = loader.loadSlotSchema("energy-saving", "zh-CN");
+        PromptSlotSchema energySchema = loader.loadSlotSchema("ran-energy-saving", "zh-CN");
 
         assertFalse(authSchema.slotDefinitions().isEmpty());
         assertFalse(energySchema.slotDefinitions().isEmpty());

@@ -91,8 +91,8 @@ class ConditionalSectionRenderingTest {
                         new NegotiationProposeData(
                                 new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                                 new TargetProposeContent(
-                                        "Clarify the intent of the energy-saving task.",
-                                        List.of(new NegotiationItem("task intent", "energy-saving optimization")),
+                                        "Clarify the intent of the ran-energy-saving task.",
+                                        List.of(new NegotiationItem("task intent", "ran-energy-saving optimization")),
                                         null,
                                         null)),
                         TARGET_PROPOSE_URI)
@@ -112,7 +112,7 @@ class ConditionalSectionRenderingTest {
                         new NegotiationProposeData(
                                 new NegotiationContext(UUID, 3, 5, NegotiationPerformative.PROPOSE),
                                 new TargetProposeContent(
-                                        "Clarify the intent of the energy-saving task.",
+                                        "Clarify the intent of the ran-energy-saving task.",
                                         null,
                                         List.of(new NegotiationItem("task intent", "confirmed as correct")),
                                         null)),
@@ -133,8 +133,8 @@ class ConditionalSectionRenderingTest {
                         new NegotiationProposeData(
                                 new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                                 new TargetProposeContent(
-                                        "Confirm the understood intent of the energy-saving task.",
-                                        List.of(new NegotiationItem("task intent", "energy-saving optimization")),
+                                        "Confirm the understood intent of the ran-energy-saving task.",
+                                        List.of(new NegotiationItem("task intent", "ran-energy-saving optimization")),
                                         null,
                                         null)),
                         TARGET_PROPOSE_URI)
@@ -146,8 +146,8 @@ class ConditionalSectionRenderingTest {
                         new NegotiationProposeData(
                                 new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                                 new TargetProposeContent(
-                                        "Confirm the understood intent of the energy-saving task.",
-                                        List.of(new NegotiationItem("task intent", "energy-saving optimization")),
+                                        "Confirm the understood intent of the ran-energy-saving task.",
+                                        List.of(new NegotiationItem("task intent", "ran-energy-saving optimization")),
                                         null,
                                         List.of(new NegotiationItem("area", "which site is covered")))),
                         TARGET_PROPOSE_URI)

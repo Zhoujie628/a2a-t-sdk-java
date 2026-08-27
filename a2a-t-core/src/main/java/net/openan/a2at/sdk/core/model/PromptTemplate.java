@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * One loadable prompt template of any A2A-T extension.
  *
- * @param templateUri typed template URI such as {@code Task-T/network-layer/energy-saving/v1} or
+ * @param templateUri typed template URI such as {@code Task-T/network-layer/ran-energy-saving/v1} or
  *     {@code Negotiation-T/information-negotiation/propose/v1}
  * @param description template description taken from the leading HTML comment; empty string when the template has no
  *     comment

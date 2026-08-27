@@ -12,19 +12,19 @@ class TemplateUriTest {
 
     @Test
     void composesUriFromComponents() {
-        TemplateUri uri = TemplateUri.of("Task-T", "network-layer", "energy-saving");
-        assertEquals("Task-T/network-layer/energy-saving/v1", uri.uri());
+        TemplateUri uri = TemplateUri.of("Task-T", "network-layer", "ran-energy-saving");
+        assertEquals("Task-T/network-layer/ran-energy-saving/v1", uri.uri());
         assertEquals("Task-T", uri.extensionName());
-        assertEquals(List.of("network-layer", "energy-saving"), uri.pathSegments());
+        assertEquals(List.of("network-layer", "ran-energy-saving"), uri.pathSegments());
         assertEquals("v1", uri.templateVersion());
     }
 
     @Test
     void parseRoundTripsNetworkLayerUri() {
-        Optional<TemplateUri> parsed = TemplateUri.parse("Task-T/network-layer/energy-saving/v1");
+        Optional<TemplateUri> parsed = TemplateUri.parse("Task-T/network-layer/ran-energy-saving/v1");
         assertEquals(
-                Optional.of(TemplateUri.of("Task-T", "network-layer", "energy-saving")), parsed);
-        assertEquals("Task-T/network-layer/energy-saving/v1", parsed.orElseThrow().uri());
+                Optional.of(TemplateUri.of("Task-T", "network-layer", "ran-energy-saving")), parsed);
+        assertEquals("Task-T/network-layer/ran-energy-saving/v1", parsed.orElseThrow().uri());
     }
 
     @Test
@@ -47,9 +47,9 @@ class TemplateUriTest {
         assertEquals(Optional.empty(), TemplateUri.parse("  "));
         assertEquals(Optional.empty(), TemplateUri.parse("Task-T"));
         assertEquals(Optional.empty(), TemplateUri.parse("Task-T/v1"));
-        assertEquals(Optional.empty(), TemplateUri.parse("Task-T/network-layer/energy-saving/../etc"));
+        assertEquals(Optional.empty(), TemplateUri.parse("Task-T/network-layer/ran-energy-saving/../etc"));
         assertEquals(Optional.empty(), TemplateUri.parse("Task-T/network-layer/energy\\saving/v1"));
-        assertEquals(Optional.empty(), TemplateUri.parse("Task-T//energy-saving/v1"));
+        assertEquals(Optional.empty(), TemplateUri.parse("Task-T//ran-energy-saving/v1"));
     }
 
     @Test
@@ -67,9 +67,9 @@ class TemplateUriTest {
 
     @Test
     void pathSegmentsAreDefensivelyCopied() {
-        ArrayList<String> segments = new ArrayList<>(List.of("network-layer", "energy-saving"));
+        ArrayList<String> segments = new ArrayList<>(List.of("network-layer", "ran-energy-saving"));
         TemplateUri uri = new TemplateUri("Task-T", segments, "v1");
         segments.add("tampered");
-        assertEquals(List.of("network-layer", "energy-saving"), uri.pathSegments());
+        assertEquals(List.of("network-layer", "ran-energy-saving"), uri.pathSegments());
     }
 }

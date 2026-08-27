@@ -19,7 +19,7 @@ class RealTemplateRenderingContractTest {
     @Test
     void energySavingEnUsTemplateCollapsesScaffolding() {
         String template = loadTemplate(
-                "prompt_resources/templates/Task-T/network-layer/energy-saving/v1/en-US/template.md");
+                "prompt_resources/templates/Task-T/network-layer/ran-energy-saving/v1/en-US/template.md");
         String rendered = taskRenderer.render(template, Map.of(
                 "operation_type", "Create",
                 "task_description", "Energy saving plan.",
@@ -37,7 +37,7 @@ class RealTemplateRenderingContractTest {
     @Test
     void energySavingZhCnTemplateCollapsesScaffolding() {
         String template = loadTemplate(
-                "prompt_resources/templates/Task-T/network-layer/energy-saving/v1/zh-CN/template.md");
+                "prompt_resources/templates/Task-T/network-layer/ran-energy-saving/v1/zh-CN/template.md");
         String rendered = taskRenderer.render(template, Map.of(
                 "操作类型", "创建",
                 "任务描述", "节能方案。",

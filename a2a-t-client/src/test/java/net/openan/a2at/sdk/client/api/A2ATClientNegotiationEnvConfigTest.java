@@ -150,7 +150,7 @@ class A2ATClientNegotiationEnvConfigTest {
         assertThrows(
                 NegotiationGenerationException.class,
                 () -> client.generateNegotiationProposePromptFromText(
-                        "Provide the energy-saving region.",
+                        "Provide the ran-energy-saving region.",
                         new NegotiationContext(UUID, 1, 5, NegotiationPerformative.PROPOSE),
                         INFORMATION_PROPOSE));
         assertEquals(

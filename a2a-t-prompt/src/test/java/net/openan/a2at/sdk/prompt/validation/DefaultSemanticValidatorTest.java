@@ -43,7 +43,7 @@ class DefaultSemanticValidatorTest {
         DefaultSemanticValidator validator = new DefaultSemanticValidator(llmClient, "en-US");
 
         ValidationResult result = validator.validate(
-                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"), TEMPLATE_CONTENT);
+                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "ran-energy-saving"), TEMPLATE_CONTENT);
 
         assertTrue(result.verdict());
         assertEquals(Map.of("site", "Site A"), result.params());
@@ -75,7 +75,7 @@ class DefaultSemanticValidatorTest {
         ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 2);
 
         FilledParamData result = pipeline.validate(
-                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"), TEMPLATE_CONTENT);
+                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "ran-energy-saving"), TEMPLATE_CONTENT);
 
         assertEquals(Map.of("site", "Site A"), result.data());
         assertEquals(2, flakyClient.invocations());
@@ -102,7 +102,7 @@ class DefaultSemanticValidatorTest {
                 () -> pipeline.validate(
                         "Check Site A power usage.",
                         Map.of("type", "object"),
-                        TemplateUri.of("Task-T", "energy-saving"), TEMPLATE_CONTENT));
+                        TemplateUri.of("Task-T", "ran-energy-saving"), TEMPLATE_CONTENT));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertInstanceOf(LLMRuntimeError.class, exception.getCause().getCause());
@@ -259,7 +259,7 @@ class DefaultSemanticValidatorTest {
         ValidationPipeline pipeline = new ValidationPipeline(prompt -> Map.of(), validator, 2);
 
         FilledParamData result = pipeline.validate(
-                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "energy-saving"), TEMPLATE_CONTENT);
+                "Check Site A power usage.", Map.of("type", "object"), TemplateUri.of("Task-T", "ran-energy-saving"), TEMPLATE_CONTENT);
 
         // first attempt violates the output contract (string verdict) → retryable infra error → second attempt
         // returns a compliant response and the pipeline succeeds
@@ -280,7 +280,7 @@ class DefaultSemanticValidatorTest {
                 () -> pipeline.validate(
                         "Check Site A power usage.",
                         Map.of("type", "object"),
-                        TemplateUri.of("Task-T", "energy-saving"), TEMPLATE_CONTENT));
+                        TemplateUri.of("Task-T", "ran-energy-saving"), TEMPLATE_CONTENT));
 
         assertEquals(A2ATErrorCodes.VALIDATION_LLM_INFRASTRUCTURE_ERROR, exception.getCode());
         assertEquals(3, client.invocations());

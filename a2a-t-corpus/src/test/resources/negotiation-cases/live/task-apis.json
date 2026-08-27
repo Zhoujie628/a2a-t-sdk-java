@@ -49,10 +49,10 @@
       "live",
       "happy",
       "task",
-      "energy-saving"
+      "ran-energy-saving"
     ],
     "summary": "第二场景类型（能效优化任务下发）的典型文本，字段锚点齐备；校验 schema 内联声明（键为英文参数名，语义对应节能模板的 操作类型/任务对象/任务目标/任务上下文 槽位），仅断言确定性的 操作类型 与 小区制式",
-    "templateUri": "Task-T/network-layer/energy-saving/v1",
+    "templateUri": "Task-T/network-layer/ran-energy-saving/v1",
     "input": {
       "text": {
         "zh-CN": "帮我创建一个无线网络节能任务，操作类型：创建；任务描述：基于松山湖管委会区域和NR制式节能条件，输出无线网络节能方案，达成总功耗降低30%的目标，并按照预期输出中定义的格式返回无线网络节能结果；任务对象：区域为松山湖管委会；节能的小区制式为NR；需要节能的时间范围为每天08:00:00至12:00:00；能耗目标：总功耗降低30%；速率保障目标：全时段不低于50Mbps；预期输出：输出网络节能任务的意图报告，包含节能报告唯一标识、节能任务唯一标识、总体意图执行结果。"
@@ -104,7 +104,7 @@
     },
     "expect": {
       "success": true,
-      "scenarioCode": "energy-saving",
+      "scenarioCode": "ran-energy-saving",
       "paramsContains": {
         "operationType": "创建",
         "radioMode": "NR"

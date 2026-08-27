@@ -25,13 +25,13 @@ class ClientPromptGenerationOrchestratorBuilderTest {
     @Test
     void buildCreatesStructuredDefaultPromptGenerationAssembly() {
         RecordingClient llmClient = new RecordingClient(
-                "{\"matched\":true,\"scenario_code\":\"energy-saving\",\"error_message\":null}",
+                "{\"matched\":true,\"scenario_code\":\"ran-energy-saving\",\"error_message\":null}",
                 "{\"slots\":{\"site\":\"Site A\",\"additional_notes\":\"critical\",\"limit\":\"5\",\"severity\":\"high\"},\"slot_errors\":[]}");
 
         DefaultClientPromptGenerationOrchestrator orchestrator = ClientPromptGenerationOrchestratorBuilder.builder()
                 .llmClient(llmClient)
                 .scenarios(List.of(new ScenarioDefinition(
-                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")))
+                        "ran-energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")))
                 .language("en-US")
                 .scenarioSystemPrompt("Identify the best matching scenario.")
                 .scenarioUserPrompt("Choose from the provided scenario list.")
@@ -55,7 +55,7 @@ class ClientPromptGenerationOrchestratorBuilderTest {
     @Test
     void buildUsesExplicitCollaboratorsWhenProvided() {
         RecordingScenarioRecognizer scenarioRecognizer =
-                new RecordingScenarioRecognizer(new ScenarioRecognitionResult(true, "energy-saving", null));
+                new RecordingScenarioRecognizer(new ScenarioRecognitionResult(true, "ran-energy-saving", null));
         RecordingTemplateLoader templateLoader = new RecordingTemplateLoader("Site: {site}\nNotes: {additional_notes}");
         RecordingSlotValueExtractor slotValueExtractor =
                 new RecordingSlotValueExtractor(Map.of("site", "Site B", "additional_notes", "follow-up"));
@@ -63,7 +63,7 @@ class ClientPromptGenerationOrchestratorBuilderTest {
         DefaultClientPromptGenerationOrchestrator orchestrator = ClientPromptGenerationOrchestratorBuilder.builder()
                 .llmClient(new RecordingClient())
                 .scenarios(List.of(new ScenarioDefinition(
-                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")))
+                        "ran-energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")))
                 .language("zh-CN")
                 .scenarioSystemPrompt("scenario-system")
                 .scenarioUserPrompt("scenario-user")
@@ -82,10 +82,10 @@ class ClientPromptGenerationOrchestratorBuilderTest {
         assertEquals("Analyze Site B.", scenarioRecognizer.lastInput);
         assertEquals("scenario-system", scenarioRecognizer.lastSystemPrompt);
         assertEquals("scenario-user", scenarioRecognizer.lastUserPrompt);
-        assertEquals("energy-saving", templateLoader.lastScenarioCode);
+        assertEquals("ran-energy-saving", templateLoader.lastScenarioCode);
         assertEquals("zh-CN", templateLoader.lastLanguage);
         assertSame("Analyze Site B.", slotValueExtractor.lastUserInput);
-        assertEquals("energy-saving", slotValueExtractor.lastScenarioCode);
+        assertEquals("ran-energy-saving", slotValueExtractor.lastScenarioCode);
         assertEquals("zh-CN", slotValueExtractor.lastLanguage);
     }
 
@@ -94,7 +94,7 @@ class ClientPromptGenerationOrchestratorBuilderTest {
         IllegalStateException ex =
                 assertThrows(IllegalStateException.class, () -> ClientPromptGenerationOrchestratorBuilder.builder()
                         .scenarios(List.of(new ScenarioDefinition(
-                                "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")))
+                                "ran-energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")))
                         .language("en-US")
                         .scenarioSystemPrompt("Identify the best matching scenario.")
                         .scenarioUserPrompt("Choose from the provided scenario list.")

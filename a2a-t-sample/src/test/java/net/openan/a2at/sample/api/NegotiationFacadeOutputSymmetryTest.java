@@ -167,7 +167,7 @@ class NegotiationFacadeOutputSymmetryTest {
                                 new InformationProposeContent(
                                         List.of(
                                                 new NegotiationItem(
-                                                        "energy-saving area information", "e.g. Songshan Lake"),
+                                                        "ran-energy-saving area information", "e.g. Songshan Lake"),
                                                 new NegotiationItem("VLANId", null)),
                                         "OR"))),
                 new SymmetryCase(
@@ -178,8 +178,8 @@ class NegotiationFacadeOutputSymmetryTest {
                                 new NegotiationContext(
                                         "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", 1, 5, NegotiationPerformative.PROPOSE),
                                 new TargetProposeContent(
-                                        "Clarify the intent of the energy-saving task.",
-                                        List.of(new NegotiationItem("task intent", "energy-saving optimization")),
+                                        "Clarify the intent of the ran-energy-saving task.",
+                                        List.of(new NegotiationItem("task intent", "ran-energy-saving optimization")),
                                         null,
                                         List.of(new NegotiationItem("area", "which site is covered"))))),
                 new SymmetryCase(

@@ -18,7 +18,7 @@ class DefaultServerPromptComplianceOrchestratorTest {
     @Test
     void checkTaskPromptReturnsSuccessWhenMetadataExtractionAndValidationPass() {
         ProcessedPromptMetadata metadata =
-                new ProcessedPromptMetadata("energy-saving", "en-US", "Site: {site}", Map.of("site", "Site A"));
+                new ProcessedPromptMetadata("ran-energy-saving", "en-US", "Site: {site}", Map.of("site", "Site A"));
         RecordingPromptMetadataExtractor extractor = new RecordingPromptMetadataExtractor(metadata);
         RecordingPromptSemanticValidator validator = new RecordingPromptSemanticValidator(null);
         DefaultServerPromptComplianceOrchestrator orchestrator =
@@ -51,7 +51,7 @@ class DefaultServerPromptComplianceOrchestratorTest {
     @Test
     void checkTaskPromptReturnsFailureWhenSemanticValidationFails() {
         ProcessedPromptMetadata metadata =
-                new ProcessedPromptMetadata("energy-saving", "en-US", "Site: {site}", Map.of("site", "Site A"));
+                new ProcessedPromptMetadata("ran-energy-saving", "en-US", "Site: {site}", Map.of("site", "Site A"));
         DefaultServerPromptComplianceOrchestrator orchestrator = new DefaultServerPromptComplianceOrchestrator(
                 new RecordingPromptMetadataExtractor(metadata),
                 new RecordingPromptSemanticValidator(new PromptComplianceCheckException(
