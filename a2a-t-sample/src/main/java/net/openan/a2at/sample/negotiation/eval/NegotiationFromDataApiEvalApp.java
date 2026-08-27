@@ -160,7 +160,7 @@ public final class NegotiationFromDataApiEvalApp {
         String validateRole = "propose".equals(api) ? "client" : "server";
 
         Map<String, Object> generateInput = new LinkedHashMap<>();
-        generateInput.put("context", Map.of("round", 1, "maxRounds", NegotiationContext.DEFAULT_MAX_ROUNDS));
+        generateInput.put("context", contextJson(context));
         generateInput.put("items", itemsInput);
         if (input.containsKey("relationship")) {
             generateInput.put("relationship", relationship);
@@ -200,6 +200,10 @@ public final class NegotiationFromDataApiEvalApp {
             generateStep.put("generated_prompt", prompt);
             generateStep.put("template_uri", content.templateUri());
             generateStep.put("extension_uri", content.extensionUri());
+            NegotiationContext emitted = content.negotiationContext();
+            if (emitted != null) {
+                generateStep.put("emitted_context", contextJson(emitted));
+            }
             if (expectSuccess) {
                 String normalized = normalize(prompt);
                 for (Map.Entry<String, Object> entry : itemsInput.entrySet()) {
@@ -218,6 +222,11 @@ public final class NegotiationFromDataApiEvalApp {
                     check(checks, "template uri matches",
                             String.valueOf(expect.get("template")).equals(content.templateUri()));
                 }
+                // the wire context carries the performative of the emitted message and keeps the session identity
+                check(checks, "emitted context performative matches the api",
+                        emitted != null && performative.equals(emitted.performative()));
+                check(checks, "emitted context keeps the session id",
+                        emitted != null && context.id().equals(emitted.id()));
             } else {
                 check(checks, "expected generation failure but succeeded", false);
             }
@@ -236,7 +245,7 @@ public final class NegotiationFromDataApiEvalApp {
         if (prompt != null && !itemsInput.isEmpty()) {
             Map<String, Object> validateInput = new LinkedHashMap<>();
             validateInput.put("prompt", prompt);
-            validateInput.put("context", Map.of("round", 1, "maxRounds", NegotiationContext.DEFAULT_MAX_ROUNDS));
+            validateInput.put("context", contextJson(context));
             validateInput.put("schema", itemsSchema(itemsInput));
             validateInput.put("template_uri", template.uri());
             Map<String, Object> validateStep = step("2. validate + extract " + api + " (fromData)", validateRole);
@@ -408,6 +417,16 @@ public final class NegotiationFromDataApiEvalApp {
 
     private static void api(Map<String, Object> step, Map<String, Object> call) {
         step.put("api_calls", List.of(call));
+    }
+
+    /** Negotiation context as report JSON, including the performative of the message it travels with. */
+    private static Map<String, Object> contextJson(NegotiationContext context) {
+        Map<String, Object> json = new LinkedHashMap<>();
+        json.put("id", context.id());
+        json.put("round", context.round());
+        json.put("maxRounds", context.maxRounds());
+        json.put("performative", context.performative().name());
+        return json;
     }
 
     private static Map<String, Object> apiCall(String method, Map<String, Object> input) {
