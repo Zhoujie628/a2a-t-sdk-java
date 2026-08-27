@@ -10,7 +10,7 @@ import java.util.List;
  * bound by the SDK, not by the caller. Use these constants instead of hand-written URI strings to get compile-time
  * safety against spelling drift.
  *
- * <p>Example: {@code StandardTemplates.ENERGY_SAVING.uri()} is {@code Task-T/network-layer/energy-saving/v1}. The
+ * <p>Example: {@code StandardTemplates.ENERGY_SAVING.uri()} is {@code Task-T/network-layer/ran-energy-saving/v1}. The
  * Task-T and Notification-T templates carry the {@code network-layer} domain segment; Authorization-T and
  * Negotiation-T templates do not.
  *
@@ -39,9 +39,9 @@ public final class StandardTemplates {
 
     private static final String V1 = TemplateUri.DEFAULT_TEMPLATE_VERSION;
 
-    /** Task-T template for the energy-saving scenario. */
+    /** Task-T template for the ran-energy-saving scenario. */
     public static final TemplateUri ENERGY_SAVING =
-            TemplateUri.of(TASK_EXTENSION_NAME, NETWORK_LAYER_SEGMENT, "energy-saving");
+            TemplateUri.of(TASK_EXTENSION_NAME, NETWORK_LAYER_SEGMENT, "ran-energy-saving");
 
     /** Task-T template for the private-line-complaint scenario. */
     public static final TemplateUri PRIVATE_LINE_COMPLAINT =

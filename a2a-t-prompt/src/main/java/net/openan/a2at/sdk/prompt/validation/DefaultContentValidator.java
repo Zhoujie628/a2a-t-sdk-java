@@ -74,7 +74,7 @@ public final class DefaultContentValidator implements ContentValidator {
      * @param prompt content prompt text
      * @param schema caller-provided parameter JSON schema
      * @param templateUri URI of the template the content is validated against, such as
-     *     {@code Task-T/network-layer/energy-saving/v1}
+     *     {@code Task-T/network-layer/ran-energy-saving/v1}
      * @return filled parameter data carrying the merged parameters
      * @throws NullPointerException if the prompt, schema or template URI is null
      * @throws IllegalArgumentException if the prompt is blank, the template URI addresses another extension than the

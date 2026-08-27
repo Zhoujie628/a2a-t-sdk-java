@@ -458,7 +458,7 @@ public final class A2ATClient {
      * failure.
      *
      * @param templateUri template URI such as {@code Negotiation-T/target-negotiation/propose/v1} or
-     *     {@code Task-T/network-layer/energy-saving/v1}
+     *     {@code Task-T/network-layer/ran-energy-saving/v1}
      * @return the addressed template, or an empty optional when no template exists for it in the configured language
      */
     public Optional<PromptTemplate> getPrompt(@NonNull TemplateUri templateUri) {

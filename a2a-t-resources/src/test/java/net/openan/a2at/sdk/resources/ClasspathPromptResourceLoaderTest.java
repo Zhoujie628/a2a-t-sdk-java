@@ -46,7 +46,7 @@ class ClasspathPromptResourceLoaderTest {
         String text = loader.loadText(PromptResourceKey.scenario("zh-CN", "scenarios.json"));
 
         assertTrue(text.contains("subscribe-incident"));
-        assertTrue(text.contains("energy-saving"));
+        assertTrue(text.contains("ran-energy-saving"));
     }
 
     @Test

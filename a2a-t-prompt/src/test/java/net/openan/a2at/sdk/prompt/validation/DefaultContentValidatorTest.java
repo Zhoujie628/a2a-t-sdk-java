@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 class DefaultContentValidatorTest {
 
-    private static final TemplateUri TASK_URI = TemplateUri.of("Task-T", "network-layer", "energy-saving");
+    private static final TemplateUri TASK_URI = TemplateUri.of("Task-T", "network-layer", "ran-energy-saving");
 
     private static final PromptTemplateTextLoader STUB_LOADER = (scenarioCode, language) -> "dummy template content";
 

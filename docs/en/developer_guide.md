@@ -239,7 +239,7 @@ prompt_resources/
   prompts/semantic_validation/zh-CN/user.md
 ```
 
-The `slots/` and `templates/` directory paths mirror the template URI segment by segment: `{extension_name}/{path_segments}/{version}` is the template URI, with `{version}` (`v1` by default) as the trailing segment. For example, the `energy-saving` scenario resolves to `templates/Task-T/network-layer/energy-saving/v1/zh-CN/template.md` and `slots/Task-T/network-layer/energy-saving/v1/zh-CN/slot.json`; negotiation templates follow `templates/Negotiation-T/information-negotiation/propose/v1/zh-CN/template.md`.
+The `slots/` and `templates/` directory paths mirror the template URI segment by segment: `{extension_name}/{path_segments}/{version}` is the template URI, with `{version}` (`v1` by default) as the trailing segment. For example, the `ran-energy-saving` scenario resolves to `templates/Task-T/network-layer/ran-energy-saving/v1/zh-CN/template.md` and `slots/Task-T/network-layer/ran-energy-saving/v1/zh-CN/slot.json`; negotiation templates follow `templates/Negotiation-T/information-negotiation/propose/v1/zh-CN/template.md`.
 
 Then specify in `.env`:
 

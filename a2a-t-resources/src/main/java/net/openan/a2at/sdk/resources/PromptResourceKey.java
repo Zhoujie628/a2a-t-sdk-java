@@ -9,8 +9,8 @@ import net.openan.a2at.sdk.core.model.TemplateUri;
  * Identifies one resource bundled with the SDK prompt resource tree.
  *
  * <p>Template resources mirror the {@link TemplateUri} layout one-to-one, so a template or slot schema for the URI
- * {@code Task-T/network-layer/energy-saving/v1} lives at
- * {@code prompt_resources/templates/Task-T/network-layer/energy-saving/v1/<language>/<fileName>}.
+ * {@code Task-T/network-layer/ran-energy-saving/v1} lives at
+ * {@code prompt_resources/templates/Task-T/network-layer/ran-energy-saving/v1/<language>/<fileName>}.
  *
  * @param category resource category such as prompts, templates, slots or scenarios
  * @param pathSegments segments between the category and the language, such as {@code [slot_extraction]} for a prompt

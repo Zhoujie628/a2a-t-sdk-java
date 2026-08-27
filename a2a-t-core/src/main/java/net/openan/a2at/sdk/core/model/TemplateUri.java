@@ -24,7 +24,7 @@ import org.jspecify.annotations.Nullable;
  * configuration by whichever component needs it, never an addressability dimension of the template.
  *
  * @param extensionName first URI segment identifying the template family, such as {@code Task-T}
- * @param pathSegments middle URI segments, such as {@code [network-layer, energy-saving]} or
+ * @param pathSegments middle URI segments, such as {@code [network-layer, ran-energy-saving]} or
  *     {@code [information-negotiation, propose]}
  * @param templateVersion trailing URI segment, such as {@code v1}
  * @since 2026-08
@@ -59,7 +59,7 @@ public record TemplateUri(
      * {@link #DEFAULT_TEMPLATE_VERSION}.
      *
      * @param extensionName first URI segment identifying the template family, such as {@code Task-T}
-     * @param pathSegments middle URI segments, such as {@code network-layer, energy-saving}
+     * @param pathSegments middle URI segments, such as {@code network-layer, ran-energy-saving}
      * @return validated template URI
      * @throws NullPointerException if the extension name or any path segment is null
      * @throws IllegalArgumentException if any component is not a simple path segment or no path segment is given
@@ -72,7 +72,7 @@ public record TemplateUri(
      * Creates a template URI from its components with an explicit template version.
      *
      * @param extensionName first URI segment identifying the template family, such as {@code Task-T}
-     * @param pathSegments middle URI segments, such as {@code network-layer, energy-saving}
+     * @param pathSegments middle URI segments, such as {@code network-layer, ran-energy-saving}
      * @param templateVersion trailing URI segment, such as {@code v2}
      * @return validated template URI
      * @throws NullPointerException if any component is null
@@ -88,7 +88,7 @@ public record TemplateUri(
     /**
      * Tries to parse a raw template URI into its components.
      *
-     * @param templateUri template URI such as {@code Task-T/network-layer/energy-saving/v1}
+     * @param templateUri template URI such as {@code Task-T/network-layer/ran-energy-saving/v1}
      * @return parsed template URI, or an empty result when the input is null, blank, has fewer than three segments or
      *     contains a segment that is not a simple path segment
      */

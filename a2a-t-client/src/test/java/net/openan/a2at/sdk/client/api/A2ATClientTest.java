@@ -556,14 +556,14 @@ A2AT_LLM_API_KEY=test-key
                 .resolve("templates")
                 .resolve("Task-T")
                 .resolve("network-layer")
-                .resolve("energy-saving")
+                .resolve("ran-energy-saving")
                 .resolve("v1")
                 .resolve("zh-CN");
         Path slotsDir = promptRoot
                 .resolve("slots")
                 .resolve("Task-T")
                 .resolve("network-layer")
-                .resolve("energy-saving")
+                .resolve("ran-energy-saving")
                 .resolve("v1")
                 .resolve("zh-CN");
         Files.createDirectories(scenarioPromptDir);
@@ -578,7 +578,7 @@ A2AT_LLM_API_KEY=test-key
                 {
                   "scenarios": [
                     {
-                      "scenario_code": "energy-saving",
+                      "scenario_code": "ran-energy-saving",
                       "scenario_name": "Energy Saving",
                       "description": "Energy analysis",
                       "example": "Analyze site power"
@@ -636,14 +636,14 @@ A2AT_LLM_API_KEY=test-key
                 .resolve("templates")
                 .resolve("Task-T")
                 .resolve("network-layer")
-                .resolve("energy-saving")
+                .resolve("ran-energy-saving")
                 .resolve("v1")
                 .resolve("zh-CN");
         Path slotsDir = promptRoot
                 .resolve("slots")
                 .resolve("Task-T")
                 .resolve("network-layer")
-                .resolve("energy-saving")
+                .resolve("ran-energy-saving")
                 .resolve("v1")
                 .resolve("zh-CN");
         Files.createDirectories(scenarioPromptDir);
@@ -658,7 +658,7 @@ A2AT_LLM_API_KEY=test-key
                 {
                   "scenarios": [
                     {
-                      "scenario_code": "energy-saving",
+                      "scenario_code": "ran-energy-saving",
                       "scenario_name": "Energy Saving",
                       "description": "Energy analysis",
                       "example": "Analyze site power"
@@ -750,7 +750,7 @@ A2AT_LLM_API_KEY=test-key
                 slots.append("}");
                 return "{\"slots\":" + slots + ",\"slot_errors\":[]}";
             }
-            return "{\"matched\":true,\"scenario_code\":\"energy-saving\",\"error_message\":null}";
+            return "{\"matched\":true,\"scenario_code\":\"ran-energy-saving\",\"error_message\":null}";
         }
     }
 }

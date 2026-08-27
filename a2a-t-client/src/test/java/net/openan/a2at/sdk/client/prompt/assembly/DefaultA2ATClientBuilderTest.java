@@ -134,7 +134,7 @@ class DefaultA2ATClientBuilderTest {
                 {
                   "scenarios": [
                     {
-                      "scenario_code": "energy-saving",
+                      "scenario_code": "ran-energy-saving",
                       "scenario_name": "Energy Saving",
                       "description": "Energy analysis",
                       "example": "Analyze site power"

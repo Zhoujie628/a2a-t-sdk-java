@@ -38,7 +38,7 @@ class PathSegmentsTest {
 
     @Test
     void should_acceptValidSegment_When_valueIsSimple() {
-        assertTrue(PathSegments.isSimpleSegment("energy-saving"));
+        assertTrue(PathSegments.isSimpleSegment("ran-energy-saving"));
         assertTrue(PathSegments.isSimpleSegment("Task-T"));
         assertTrue(PathSegments.isSimpleSegment("zh-CN"));
         assertTrue(PathSegments.isSimpleSegment("a.b"));

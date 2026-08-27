@@ -54,7 +54,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 "Return slots as JSON.");
 
         StructuredSlotExtractionResult result =
-                extractor.extractSlots("Analyze Site A with critical severity.", "energy-saving", "en-US");
+                extractor.extractSlots("Analyze Site A with critical severity.", "ran-energy-saving", "en-US");
 
         assertEquals(
                 Map.of(
@@ -90,7 +90,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 "Return slots as JSON.");
 
         StructuredSlotExtractionResult result =
-                extractor.extractSlots("Analyze Site A with fallback note.", "energy-saving", "en-US");
+                extractor.extractSlots("Analyze Site A with fallback note.", "ran-energy-saving", "en-US");
 
         assertEquals(Map.of("site", "Site A", "additional_notes", "Need } fallback"), result.slots());
         assertEquals(List.of(), result.slotErrors());
@@ -122,7 +122,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                         "severity", Map.of("type", "string", "description", "The severity level")),
                 "required", List.of("site"));
 
-        extractor.extractSlots("Analyze Site A.", "energy-saving", "en-US", dataSchema);
+        extractor.extractSlots("Analyze Site A.", "ran-energy-saving", "en-US", dataSchema);
 
         String userMessage = llmClient.lastUserContent();
         assertTrue(userMessage.contains("[data_schema]"));
@@ -150,7 +150,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
-        extractor.extractSlots("Analyze Site A.", "energy-saving", "en-US", null);
+        extractor.extractSlots("Analyze Site A.", "ran-energy-saving", "en-US", null);
 
         String userMessage = llmClient.lastUserContent();
         assertFalse(userMessage.contains("[data_schema]"));
@@ -175,7 +175,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
-        extractor.extractSlots("Analyze Site A.", "energy-saving", "en-US", Map.of());
+        extractor.extractSlots("Analyze Site A.", "ran-energy-saving", "en-US", Map.of());
 
         String userMessage = llmClient.lastUserContent();
         assertFalse(userMessage.contains("[data_schema]"));
@@ -210,7 +210,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
                 "Extract slots from the input.",
                 "Return slots as JSON.");
 
-        extractor.extractSlots("Analyze Site A.", "energy-saving", "en-US");
+        extractor.extractSlots("Analyze Site A.", "ran-energy-saving", "en-US");
 
         String userMessage = llmClient.lastUserContent();
         assertTrue(userMessage.contains("[slots]"));
@@ -250,7 +250,7 @@ class DefaultStructuredPromptSlotValueExtractorTest {
         PromptSlotValueExtractor lambdaExtractor = (input, code, lang) -> extractor.extractSlots(input, code, lang);
 
         StructuredSlotExtractionResult result =
-                lambdaExtractor.extractSlots("Analyze Site A.", "energy-saving", "en-US", Map.of("site", "desc"));
+                lambdaExtractor.extractSlots("Analyze Site A.", "ran-energy-saving", "en-US", Map.of("site", "desc"));
 
         String userMessage = llmClient.lastUserContent();
         assertFalse(userMessage.contains("[data_schema]"));

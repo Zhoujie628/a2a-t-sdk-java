@@ -48,7 +48,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 recognizer,
                 List.of(new ScenarioDefinition(
-                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "ran-energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -62,10 +62,10 @@ class DefaultClientPromptGenerationOrchestratorTest {
         assertTrue(result.success());
         assertEquals("Site: Site A\nNotes: critical", result.promptText());
         assertEquals("Analyze Site A.", recognizer.lastNormalizedInput);
-        assertEquals("energy-saving", templateLoader.lastScenarioCode);
+        assertEquals("ran-energy-saving", templateLoader.lastScenarioCode);
         assertEquals("en-US", templateLoader.lastLanguage);
         assertEquals("Analyze Site A.", slotValueExtractor.lastUserInput);
-        assertEquals("energy-saving", slotValueExtractor.lastScenarioCode);
+        assertEquals("ran-energy-saving", slotValueExtractor.lastScenarioCode);
         assertEquals("en-US", slotValueExtractor.lastLanguage);
     }
 
@@ -75,7 +75,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 (normalizedInput, scenarios, systemPrompt, userPrompt) ->
                         new ScenarioRecognitionResult(false, null, "No scenario matched."),
                 List.of(new ScenarioDefinition(
-                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "ran-energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -97,9 +97,9 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void generateTaskPromptReturnsFailureWhenTemplateIsMissing() {
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 (normalizedInput, scenarios, systemPrompt, userPrompt) ->
-                        new ScenarioRecognitionResult(true, "energy-saving", null),
+                        new ScenarioRecognitionResult(true, "ran-energy-saving", null),
                 List.of(new ScenarioDefinition(
-                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "ran-energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -123,9 +123,9 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void generateTaskPromptReturnsFailureWhenRenderingFails() {
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 (normalizedInput, scenarios, systemPrompt, userPrompt) ->
-                        new ScenarioRecognitionResult(true, "energy-saving", null),
+                        new ScenarioRecognitionResult(true, "ran-energy-saving", null),
                 List.of(new ScenarioDefinition(
-                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "ran-energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -152,7 +152,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                             "prompt_resources/prompts/scenario_recognition/zh-CN/system.md");
                 },
                 List.of(new ScenarioDefinition(
-                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "ran-energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "zh-CN",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -177,7 +177,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
         return new DefaultClientPromptGenerationOrchestrator(
                 recognizer,
                 List.of(new ScenarioDefinition(
-                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "ran-energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -196,7 +196,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 String normalizedInput, List<ScenarioDefinition> scenarios, String systemPrompt, String userPrompt) {
             this.invocationCount++;
             this.lastNormalizedInput = normalizedInput;
-            return new ScenarioRecognitionResult(true, "energy-saving", null);
+            return new ScenarioRecognitionResult(true, "ran-energy-saving", null);
         }
     }
 
@@ -522,7 +522,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
                 new RecordingScenarioRecognizer(),
                 new FakeTemplateLoader("Site: {site}"),
                 new FailingSlotValueExtractor(
-                        new ResourceNotFoundException("Slot schema file does not exist.", "energy-saving")));
+                        new ResourceNotFoundException("Slot schema file does not exist.", "ran-energy-saving")));
 
         PromptGenerationException ex = assertThrows(
                 PromptGenerationException.class,
@@ -851,7 +851,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 recognizer,
                 List.of(new ScenarioDefinition(
-                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "ran-energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -895,9 +895,9 @@ class DefaultClientPromptGenerationOrchestratorTest {
     void generateTaskPromptEscapesLlmRuntimeErrorFromExtractor() {
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 (normalizedInput, scenarios, systemPrompt, userPrompt) ->
-                        new ScenarioRecognitionResult(true, "energy-saving", null),
+                        new ScenarioRecognitionResult(true, "ran-energy-saving", null),
                 List.of(new ScenarioDefinition(
-                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "ran-energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
@@ -917,7 +917,7 @@ class DefaultClientPromptGenerationOrchestratorTest {
         DefaultClientPromptGenerationOrchestrator orchestrator = new DefaultClientPromptGenerationOrchestrator(
                 recognizer,
                 List.of(new ScenarioDefinition(
-                        "energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
+                        "ran-energy-saving", "Energy Saving", "Energy analysis", "Analyze site power")),
                 "en-US",
                 "Identify the best matching scenario.",
                 "Choose from the provided scenario list.",
