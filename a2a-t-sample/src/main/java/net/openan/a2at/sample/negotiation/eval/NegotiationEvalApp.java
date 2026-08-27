@@ -787,6 +787,7 @@ public final class NegotiationEvalApp {
         json.put("id", context.id());
         json.put("round", context.round());
         json.put("maxRounds", context.maxRounds());
+        json.put("performative", context.performative().name());
         return json;
     }
 
