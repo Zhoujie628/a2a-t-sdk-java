@@ -17,21 +17,25 @@ class AuthzScenarioLoaderTest {
         List<AuthzScenario> scenarios = AuthzScenarioLoader.load("sample/authz-policy/scenarios.json");
 
         assertEquals(15, scenarios.size());
-        assertEquals("a-nl-neg-01", scenarios.get(0).label());
+        // 预期成功在前（index 0-8），预期拒绝在中（index 9-13），客户端拦截在末尾（index 14）
+        assertEquals("c1-nl-add-01", scenarios.get(0).label());
         assertEquals("from_text", scenarios.get(0).entry());
-        assertEquals("slot_validation_error", scenarios.get(0).expected().client().outcome());
-        assertEquals(null, scenarios.get(0).expected().server());
-        assertEquals("c1-nl-add-01", scenarios.get(5).label());
-        assertEquals("from_text", scenarios.get(5).entry());
-        assertEquals("success", scenarios.get(5).expected().server().outcome());
-        assertEquals("c2-data-multi-07", scenarios.get(8).label());
-        assertEquals("from_data_with_schema", scenarios.get(8).entry());
-        assertEquals("success", scenarios.get(8).expected().server().outcome());
+        assertEquals("success", scenarios.get(0).expected().server().outcome());
+        assertEquals("c2-data-multi-07", scenarios.get(3).label());
+        assertEquals("from_data_with_schema", scenarios.get(3).entry());
+        assertEquals("success", scenarios.get(3).expected().server().outcome());
+        assertEquals("b6-schema-variant-01", scenarios.get(7).label());
+        assertEquals("success", scenarios.get(7).expected().server().outcome());
+        assertEquals(null, scenarios.get(7).validateSchema());
         assertEquals("b6-schema-variant-02", scenarios.get(13).label());
         assertEquals(false, scenarios.get(13).validateSchema() == null);
-        assertEquals("c6-nl-mixed-07", scenarios.get(11).label());
-        assertEquals("from_text", scenarios.get(11).entry());
-        assertEquals("validation_semantic_rejected", scenarios.get(11).expected().server().outcome());
+        assertEquals("b1-nl-missing-01", scenarios.get(9).label());
+        assertEquals("validation_semantic_rejected", scenarios.get(9).expected().server().outcome());
+        assertEquals("c6-nl-mixed-07", scenarios.get(12).label());
+        assertEquals("validation_semantic_rejected", scenarios.get(12).expected().server().outcome());
+        assertEquals("a-nl-neg-01", scenarios.get(14).label());
+        assertEquals("slot_validation_error", scenarios.get(14).expected().client().outcome());
+        assertEquals(null, scenarios.get(14).expected().server());
     }
 
     @Test
