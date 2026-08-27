@@ -52,6 +52,9 @@ class NegotiationEvaluationCaseLoaderTest {
         assertTrue(flows.stream().allMatch(flow -> flow.endingCase().phase().equals(flow.decision())));
         assertTrue(flows.stream().allMatch(flow -> flow.clientSupplement().contains("## 客户端补充信息")));
         assertTrue(flows.stream().noneMatch(flow -> flow.clientSupplement().contains("协商上下文")));
+        assertTrue(flows.stream().filter(flow -> flow.decision().equals("reject"))
+                .allMatch(flow -> flow.expectedEnding().keySet().equals(
+                        Map.of("access_port_name", "", "complaint_category", "").keySet())));
     }
 
     @Test
@@ -92,7 +95,7 @@ class NegotiationEvaluationCaseLoaderTest {
 
     private static java.util.Set<String> expectedKeys(String phase) {
         return phase.equals("reject")
-                ? Map.of("rejection_reason", "").keySet()
+                ? Map.of("access_port_name", "", "complaint_category", "").keySet()
                 : Map.of("access_port_name", "", "complaint_category", "").keySet();
     }
 }

@@ -56,8 +56,13 @@ public final class InformationNegotiationSchemas {
 
     private static Map<String, Object> createRejectSchema() {
         Map<String, Object> properties = new LinkedHashMap<>();
-        properties.put("rejection_reason", stringSchema("Reason why the requested complaint information cannot be supplied"));
-        return objectSchema(properties, List.of("rejection_reason"));
+        properties.put(
+                "access_port_name",
+                stringSchema("Reason why the access-port name cannot be supplied"));
+        properties.put(
+                "complaint_category",
+                stringSchema("Reason why the complaint category cannot be supplied"));
+        return objectSchema(properties, List.of("access_port_name", "complaint_category"));
     }
 
     private static Map<String, Object> stringSchema(String description) {

@@ -35,12 +35,13 @@ class InformationNegotiationSchemasTest {
     }
 
     @Test
-    void rejectSchemaOnlyRequiresAReason() {
+    void rejectSchemaRequiresReasonForEachRequestedItem() {
         Map<String, Object> schema = InformationNegotiationSchemas.reject();
         Map<?, ?> properties = propertiesOf(schema);
 
-        assertEquals(List.of("rejection_reason"), schema.get("required"));
-        assertStringProperty(properties, "rejection_reason");
+        assertEquals(List.of("access_port_name", "complaint_category"), schema.get("required"));
+        assertStringProperty(properties, "access_port_name");
+        assertStringProperty(properties, "complaint_category");
     }
 
     private static void assertStringProperty(Map<?, ?> properties, String name) {

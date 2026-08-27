@@ -32,9 +32,9 @@ The negotiation phase of the input text is given by the phase field in the user 
 ## Extraction Principles
 1. Extract only content explicitly expressed in the input text; do not fill in values from general knowledge or guess.
 2. In the propose phase, expressions such as "we still need / please provide / missing" introduce the information items to obtain; qualifying statements that follow (format, example, meaning) become the value of that item.
-3. In the ending phase, when conclusion is Accept, the answer content maps to items. When conclusion is Reject, each explicit reason for rejection or inability to provide the requested information maps to items; prefer {"name":"Rejection reason","value":"specific reason"}. A Reject conclusion must never produce an empty items array.
+3. In the ending phase, when conclusion is Accept, map each answer to its requested item. When conclusion is Reject, output one item for every requested information item explicitly identified as unavailable: use that information item's name as name and its concrete non-provision reason as value. If one reason applies to multiple items, repeat it in each corresponding item; do not merge them into one aggregate "Rejection reason" item. A Reject conclusion must never produce an empty items array.
 4. Descriptions of dependencies, exclusivity, or composition between information items map to relationship.
-5. When uncertain: output null for optional fields. The propose-phase items array may be empty. The ending-phase items array must not be empty; when Reject has no explicit reason, output {"name":"Rejection reason","value":null} and do not fabricate a reason.
+5. When uncertain: output null for optional fields. The propose-phase items array may be empty. The ending-phase items array must not be empty; when Reject has no explicit reason, output one item with a null value for each unavailable information item explicitly named in the input, and do not fabricate reasons or add items that are not named.
 
 ## Output Examples
 
@@ -58,11 +58,12 @@ The negotiation phase of the input text is given by the phase field in the user 
   ]
 }
 
-### Example 3: ending phase (reject)
+### Example 3: ending phase (reject, itemized)
 
 {
   "conclusion": "Reject",
   "items": [
-    {"name": "Rejection reason", "value": "The resource query service is under maintenance and cannot provide the requested information."}
+    {"name": "access-port name", "value": "The resource query service is under maintenance and cannot provide it."},
+    {"name": "complaint category", "value": "The resource query service is under maintenance and cannot provide it."}
   ]
 }

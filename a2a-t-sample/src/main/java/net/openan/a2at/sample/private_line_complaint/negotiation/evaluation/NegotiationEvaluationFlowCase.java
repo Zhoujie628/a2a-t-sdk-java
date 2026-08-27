@@ -25,7 +25,10 @@ public record NegotiationEvaluationFlowCase(
                     + "1. 接入端口名称：" + expectedEnding().get("access_port_name")
                     + "\n2. 投诉分类：" + expectedEnding().get("complaint_category");
         }
-        return header + "无法补充所需信息，原因：" + expectedEnding().get("rejection_reason");
+        Object reason = expectedEnding().get("access_port_name");
+        return header
+                + "1. 接入端口名称：无法提供，原因：" + reason
+                + "\n2. 投诉分类：无法提供，原因：" + expectedEnding().get("complaint_category");
     }
 
     public String endingGenerationText() {

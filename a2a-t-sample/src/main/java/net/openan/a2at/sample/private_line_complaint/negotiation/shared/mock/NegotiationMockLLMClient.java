@@ -26,7 +26,8 @@ public final class NegotiationMockLLMClient implements LLMClient {
             """;
 
     private static final String REJECT_CONTENT = """
-            {"conclusion":"Reject","items":[{"name":"拒绝原因",
+            {"conclusion":"Reject","items":[{"name":"接入端口名称",
+            "value":"当前账号没有资源系统查询权限"},{"name":"投诉分类",
             "value":"当前账号没有资源系统查询权限"}]}
             """;
 
@@ -41,7 +42,8 @@ public final class NegotiationMockLLMClient implements LLMClient {
             """;
 
     private static final String REJECT_PARAMS = """
-            {"rejection_reason":"当前账号没有资源系统查询权限"}
+            {"access_port_name":"当前账号没有资源系统查询权限",
+            "complaint_category":"当前账号没有资源系统查询权限"}
             """;
 
     public NegotiationMockLLMClient(LLMClientConfig config) {
