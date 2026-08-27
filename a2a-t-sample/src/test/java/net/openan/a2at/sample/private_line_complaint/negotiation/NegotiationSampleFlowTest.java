@@ -48,7 +48,8 @@ class NegotiationSampleFlowTest {
 
         assertEquals(NegotiationDecision.REJECT, result.decision());
         assertContextIsShared(result);
-        assertEquals("当前账号没有资源系统查询权限", result.endingData().data().get("rejection_reason"));
+        assertEquals("当前账号没有资源系统查询权限", result.endingData().data().get("access_port_name"));
+        assertEquals("当前账号没有资源系统查询权限", result.endingData().data().get("complaint_category"));
     }
 
     private NegotiationSampleFlow.NegotiationFlowResult run(NegotiationDecision decision) throws IOException {
