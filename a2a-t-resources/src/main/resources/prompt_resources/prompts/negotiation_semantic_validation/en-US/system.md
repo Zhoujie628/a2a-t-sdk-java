@@ -33,6 +33,7 @@ Output exactly one JSON object containing exactly the following 4 required keys;
 - Extract parameters from the message content per the parameter schema given in the user prompt and fill the params object.
 - The property names and structure of params must follow the parameter schema; output null for properties that cannot be extracted from the message.
 - When the message conclusion is Reject, each parameter schema field's value is the reason of non-provision stated for that field in the message, not null - the reason is what the field transports in this negotiation round.
+- When the declared negotiation phase is propose, each parameter schema field's value is the full expectation text stated for that field in the message (meaning, format requirement, or sample), neither null nor the sample alone - the expectation is what the field transports in a request message. Keep the sample markers such as "如"/"e.g." and never treat a sample as the field's supplied value.
 - The parameter extraction result does not affect semantic_verdict; semantic_verdict is decided solely by validation tasks 1-6.
 
 ## slot_name Convention

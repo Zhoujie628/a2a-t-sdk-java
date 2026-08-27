@@ -103,6 +103,51 @@ class DefaultNegotiationSemanticValidatorTest {
     }
 
     @Test
+    void proposeMessageParamsCarryTheFullExpectationText() {
+        llmClient.payload = "{\"semantic_verdict\":true,\"negotiation_type\":\"information\","
+                + "\"errors\":[],\"params\":{\"energy saving region\":\"energy saving area information, e.g. Songshanhu\"}}";
+        Map<String, Object> proposeSchema = Map.of(
+                "type", "object",
+                "properties", Map.of("energy saving region", Map.of("type", "string")));
+        NegotiationReference proposeReference =
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "en-US");
+
+        SemanticValidationResult result =
+                validator.validateNegotiation(VALID_PROMPT, proposeSchema, proposeReference, TEMPLATE_CONTENT);
+
+        assertTrue(result.verdict());
+        assertEquals(
+                Map.of("energy saving region", "energy saving area information, e.g. Songshanhu"),
+                result.params());
+    }
+
+    @Test
+    void englishSystemPromptCarriesTheProposeExpectationExtractionRule() {
+        llmClient.payload =
+                "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}";
+
+        validator.validateNegotiation(VALID_PROMPT, callerSchema, informationReference, TEMPLATE_CONTENT);
+
+        String systemPrompt = llmClient.lastMessages.get(0).get("content");
+        assertTrue(systemPrompt.contains("the full expectation text stated for that field"));
+        assertTrue(systemPrompt.contains("never treat a sample as the field's supplied value"));
+    }
+
+    @Test
+    void chineseSystemPromptCarriesTheProposeExpectationExtractionRule() {
+        llmClient.payload =
+                "{\"semantic_verdict\":true,\"negotiation_type\":\"information\",\"errors\":[],\"params\":{}}";
+        NegotiationReference proposeReference =
+                new NegotiationReference(NegotiationType.INFORMATION, NegotiationPerformative.PROPOSE, "zh-CN");
+
+        validator.validateNegotiation(VALID_PROMPT, callerSchema, proposeReference, TEMPLATE_CONTENT);
+
+        String systemPrompt = llmClient.lastMessages.get(0).get("content");
+        assertTrue(systemPrompt.contains("完整期望内容原文"));
+        assertTrue(systemPrompt.contains("不得将样例当作该字段已提供的真实值"));
+    }
+
+    @Test
     void singleStructuredCallReceivesMergedSchemaAndFilledUserPrompt() {
         llmClient.payload =
                 "{\"semantic_verdict\":true,\"negotiation_type\":\"information\"," + "\"errors\":[],\"params\":{}}";
