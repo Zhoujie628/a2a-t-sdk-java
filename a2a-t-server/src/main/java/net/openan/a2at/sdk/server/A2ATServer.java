@@ -70,6 +70,9 @@ public final class A2ATServer {
     /**
      * Checks one processed task prompt for server-side compliance.
      *
+     * <p>An input longer than {@code A2AT_INPUT_TEXT_MAX_CHARS} characters (default 12288) fails fast with the code
+     * {@code input_text_too_long} before any LLM call.
+     *
      * @param processedPromptText processed task prompt text
      * @return compliance result containing only success state or failure details
      */
@@ -223,8 +226,9 @@ public final class A2ATServer {
      *     {@code template_not_found} when no template or prompt resource exists for the URI and language,
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when the
      *     extraction step fails after exhausting its retries, {@code negotiation_slot_missing} when the extracted
-     *     content misses a required field, or {@code negotiation_invalid_input} when the text is blank or the extracted
-     *     content contradicts the phase
+     *     content misses a required field, {@code negotiation_invalid_input} when the text is blank or the extracted
+     *     content contradicts the phase, or {@code input_text_too_long} when the text exceeds the configured maximum
+     *     length (A2AT_INPUT_TEXT_MAX_CHARS, default 12288)
      */
     public MetadataContent generateNegotiationProposePromptFromText(
             @NonNull String text,
@@ -252,8 +256,9 @@ public final class A2ATServer {
      *     {@code template_not_found} when no template or prompt resource exists for the URI and language,
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when the
      *     extraction step fails after exhausting its retries, {@code negotiation_slot_missing} when the extracted
-     *     content misses a required field, or {@code negotiation_invalid_input} when the text is blank or the extracted
-     *     conclusion is not {@code Accept}
+     *     content misses a required field, {@code negotiation_invalid_input} when the text is blank or the extracted
+     *     conclusion is not {@code Accept}, or {@code input_text_too_long} when the text exceeds the configured
+     *     maximum length (A2AT_INPUT_TEXT_MAX_CHARS, default 12288)
      */
     public MetadataContent generateNegotiationAcceptPromptFromText(
             @NonNull String text,
@@ -281,8 +286,9 @@ public final class A2ATServer {
      *     {@code template_not_found} when no template or prompt resource exists for the URI and language,
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when the
      *     extraction step fails after exhausting its retries, {@code negotiation_slot_missing} when the extracted
-     *     content misses a required field, or {@code negotiation_invalid_input} when the text is blank or the extracted
-     *     conclusion is not {@code Reject}
+     *     content misses a required field, {@code negotiation_invalid_input} when the text is blank or the extracted
+     *     conclusion is not {@code Reject}, or {@code input_text_too_long} when the text exceeds the configured
+     *     maximum length (A2AT_INPUT_TEXT_MAX_CHARS, default 12288)
      */
     public MetadataContent generateNegotiationRejectPromptFromText(
             @NonNull String text,
@@ -308,7 +314,9 @@ public final class A2ATServer {
      *     {@code template_not_found} when no template or prompt resource exists for the URI and language,
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when the
      *     extraction step fails after exhausting its retries, {@code negotiation_slot_missing} when the extracted
-     *     content misses the termination reason, or {@code negotiation_invalid_input} when the text is blank
+     *     content misses the termination reason, {@code negotiation_invalid_input} when the text is blank, or
+     *     {@code input_text_too_long} when the text exceeds the configured maximum length
+     *     (A2AT_INPUT_TEXT_MAX_CHARS, default 12288)
      */
     public MetadataContent generateNegotiationAbortPromptFromText(
             @NonNull String text,
@@ -395,7 +403,9 @@ public final class A2ATServer {
      *     {@code negotiation_rule_violation} when the negotiation context violates a rule,
      *     {@code negotiation_semantic_rejected} when the semantic validation rejects the message,
      *     {@code negotiation_llm_infrastructure_error} when the semantic step fails after exhausting its retries, or
-     *     {@code template_not_found} when the semantic validation prompt resources are missing
+     *     {@code template_not_found} when the semantic validation prompt resources are missing, or
+ *     {@code input_text_too_long} when the prompt exceeds the configured maximum length
+ *     (A2AT_INPUT_TEXT_MAX_CHARS, default 12288)
      */
     public FilledParamData validateProposePromptAndDataFilling(
             @NonNull String prompt,
@@ -427,7 +437,9 @@ public final class A2ATServer {
      *     {@code negotiation_rule_violation} when the negotiation context violates a rule,
      *     {@code negotiation_semantic_rejected} when the semantic validation rejects the message,
      *     {@code negotiation_llm_infrastructure_error} when the semantic step fails after exhausting its retries, or
-     *     {@code template_not_found} when the semantic validation prompt resources are missing
+     *     {@code template_not_found} when the semantic validation prompt resources are missing, or
+ *     {@code input_text_too_long} when the prompt exceeds the configured maximum length
+ *     (A2AT_INPUT_TEXT_MAX_CHARS, default 12288)
      */
     public FilledParamData validateAcceptPromptAndDataFilling(
             @NonNull String prompt,
@@ -459,7 +471,9 @@ public final class A2ATServer {
      *     {@code negotiation_rule_violation} when the negotiation context violates a rule,
      *     {@code negotiation_semantic_rejected} when the semantic validation rejects the message,
      *     {@code negotiation_llm_infrastructure_error} when the semantic step fails after exhausting its retries, or
-     *     {@code template_not_found} when the semantic validation prompt resources are missing
+     *     {@code template_not_found} when the semantic validation prompt resources are missing, or
+ *     {@code input_text_too_long} when the prompt exceeds the configured maximum length
+ *     (A2AT_INPUT_TEXT_MAX_CHARS, default 12288)
      */
     public FilledParamData validateRejectPromptAndDataFilling(
             @NonNull String prompt,
@@ -490,7 +504,9 @@ public final class A2ATServer {
      *     {@code negotiation_rule_violation} when the negotiation context violates a rule,
      *     {@code negotiation_semantic_rejected} when the semantic validation rejects the message,
      *     {@code negotiation_llm_infrastructure_error} when the semantic step fails after exhausting its retries, or
-     *     {@code template_not_found} when the semantic validation prompt resources are missing
+     *     {@code template_not_found} when the semantic validation prompt resources are missing, or
+ *     {@code input_text_too_long} when the prompt exceeds the configured maximum length
+ *     (A2AT_INPUT_TEXT_MAX_CHARS, default 12288)
      */
     public FilledParamData validateAbortPromptAndDataFilling(
             @NonNull String prompt,
@@ -516,7 +532,9 @@ public final class A2ATServer {
      * @throws net.openan.a2at.sdk.core.validation.ContentValidationException with the code
      *     {@code validation_semantic_rejected} when the semantic validation rejects the content,
      *     {@code validation_llm_infrastructure_error} when the semantic step fails after exhausting its retries, or
-     *     {@code validation_prompt_resource_not_found} when the validation prompt resources are missing
+     *     {@code validation_prompt_resource_not_found} when the validation prompt resources are missing, or
+ *     {@code input_text_too_long} when the prompt exceeds the configured maximum length
+ *     (A2AT_INPUT_TEXT_MAX_CHARS, default 12288)
      */
     public FilledParamData validateTaskPromptAndDataFilling(
             @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
@@ -539,7 +557,9 @@ public final class A2ATServer {
      * @throws net.openan.a2at.sdk.core.validation.ContentValidationException with the code
      *     {@code validation_semantic_rejected} when the semantic validation rejects the content,
      *     {@code validation_llm_infrastructure_error} when the semantic step fails after exhausting its retries, or
-     *     {@code validation_prompt_resource_not_found} when the validation prompt resources are missing
+     *     {@code validation_prompt_resource_not_found} when the validation prompt resources are missing, or
+ *     {@code input_text_too_long} when the prompt exceeds the configured maximum length
+ *     (A2AT_INPUT_TEXT_MAX_CHARS, default 12288)
      */
     public FilledParamData validateNotificationPromptAndDataFilling(
             @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {
@@ -562,7 +582,9 @@ public final class A2ATServer {
      * @throws net.openan.a2at.sdk.core.validation.ContentValidationException with the code
      *     {@code validation_semantic_rejected} when the semantic validation rejects the content,
      *     {@code validation_llm_infrastructure_error} when the semantic step fails after exhausting its retries, or
-     *     {@code validation_prompt_resource_not_found} when the validation prompt resources are missing
+     *     {@code validation_prompt_resource_not_found} when the validation prompt resources are missing, or
+ *     {@code input_text_too_long} when the prompt exceeds the configured maximum length
+ *     (A2AT_INPUT_TEXT_MAX_CHARS, default 12288)
      */
     public FilledParamData validateAuthPromptAndDataFilling(
             @NonNull String prompt, @NonNull Map<String, Object> schema, @NonNull TemplateUri templateUri) {

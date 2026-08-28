@@ -62,8 +62,10 @@ public final class A2ATClient {
      * Generates a processed task prompt from raw user input. Both text and structured input ({@code Map}) are unified
      * through LLM extraction; there is no zero-LLM rule shortcut.
      *
-     * @param userInput user-provided task description (text or structured input map)
-     * @return prompt generation result containing either rendered prompt text or failure details
+     * @param userInput user-provided task description (text or structured input map); a String input longer than the
+     *     configured maximum length ({@code A2AT_INPUT_TEXT_MAX_CHARS}) fails fast without any LLM call
+     * @return prompt generation result containing either rendered prompt text or failure details; a String input over
+     *     the limit yields the failure code {@code input_text_too_long}
      */
     public PromptGenerationResult generateTaskPrompt(Object userInput) {
         return promptGenerationOrchestrator.generateTaskPrompt(userInput);
@@ -79,7 +81,8 @@ public final class A2ATClient {
      * @throws NullPointerException if the text or template URI is null
      * @throws net.openan.a2at.sdk.core.exception.PromptGenerationException with the code {@code template_not_found},
      *     {@code prompt_resource_load_error}, {@code slot_schema_not_found}, {@code llm_invocation_failed},
-     *     {@code render_failed} or {@code slot_validation_error} when generating the prompt fails
+     *     {@code render_failed} or {@code slot_validation_error} when generating the prompt fails, or the code
+     *     {@code input_text_too_long} when the text exceeds the configured maximum length
      */
     public MetadataContent generateTaskPromptFromText(@NonNull String text, @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(text, "text");
@@ -122,7 +125,8 @@ public final class A2ATClient {
      * @throws NullPointerException if the text or template URI is null
      * @throws net.openan.a2at.sdk.core.exception.PromptGenerationException with the code {@code template_not_found},
      *     {@code prompt_resource_load_error}, {@code slot_schema_not_found}, {@code llm_invocation_failed},
-     *     {@code render_failed} or {@code slot_validation_error} when generating the prompt fails
+     *     {@code render_failed} or {@code slot_validation_error} when generating the prompt fails, or the code
+     *     {@code input_text_too_long} when the text exceeds the configured maximum length
      */
     public MetadataContent generateAuthPromptFromText(@NonNull String text, @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(text, "text");
@@ -165,7 +169,8 @@ public final class A2ATClient {
      * @throws NullPointerException if the text or template URI is null
      * @throws net.openan.a2at.sdk.core.exception.PromptGenerationException with the code {@code template_not_found},
      *     {@code prompt_resource_load_error}, {@code slot_schema_not_found}, {@code llm_invocation_failed},
-     *     {@code render_failed} or {@code slot_validation_error} when generating the prompt fails
+     *     {@code render_failed} or {@code slot_validation_error} when generating the prompt fails, or the code
+     *     {@code input_text_too_long} when the text exceeds the configured maximum length
      */
     public MetadataContent generateNotificationPromptFromText(@NonNull String text, @NonNull TemplateUri templateUri) {
         Objects.requireNonNull(text, "text");
@@ -341,7 +346,9 @@ public final class A2ATClient {
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when the
      *     extraction step fails after exhausting its retries, {@code negotiation_slot_missing} when the extracted
      *     content misses a required field, or {@code negotiation_invalid_input} when the text is blank or the extracted
-     *     content contradicts the phase
+     *     content contradicts the phase,
+     *     or the code {@code input_text_too_long} when the text exceeds the configured
+     *     maximum length
      */
     public MetadataContent generateNegotiationProposePromptFromText(
             @NonNull String text,
@@ -370,7 +377,9 @@ public final class A2ATClient {
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when the
      *     extraction step fails after exhausting its retries, {@code negotiation_slot_missing} when the extracted
      *     content misses a required field, or {@code negotiation_invalid_input} when the text is blank or the extracted
-     *     conclusion is not {@code Accept}
+     *     conclusion is not {@code Accept},
+     *     or the code {@code input_text_too_long} when the text exceeds the configured
+     *     maximum length
      */
     public MetadataContent generateNegotiationAcceptPromptFromText(
             @NonNull String text,
@@ -399,7 +408,9 @@ public final class A2ATClient {
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when the
      *     extraction step fails after exhausting its retries, {@code negotiation_slot_missing} when the extracted
      *     content misses a required field, or {@code negotiation_invalid_input} when the text is blank or the extracted
-     *     conclusion is not {@code Reject}
+     *     conclusion is not {@code Reject},
+     *     or the code {@code input_text_too_long} when the text exceeds the configured
+     *     maximum length
      */
     public MetadataContent generateNegotiationRejectPromptFromText(
             @NonNull String text,
@@ -427,7 +438,9 @@ public final class A2ATClient {
      *     {@code template_not_found} when no template or prompt resource exists for the URI and language,
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when the
      *     extraction step fails after exhausting its retries, {@code negotiation_slot_missing} when the extracted
-     *     content misses the termination reason, or {@code negotiation_invalid_input} when the text is blank
+     *     content misses the termination reason, or {@code negotiation_invalid_input} when the text is blank,
+     *     or the code {@code input_text_too_long} when the text exceeds the configured
+     *     maximum length
      */
     public MetadataContent generateNegotiationAbortPromptFromText(
             @NonNull String text,

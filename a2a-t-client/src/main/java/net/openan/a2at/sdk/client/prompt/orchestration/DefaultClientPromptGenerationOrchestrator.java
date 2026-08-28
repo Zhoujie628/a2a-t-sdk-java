@@ -13,6 +13,7 @@ import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
 import net.openan.a2at.sdk.core.exception.PromptGenerationException;
 import net.openan.a2at.sdk.core.exception.ResourceNotFoundException;
 import net.openan.a2at.sdk.core.model.ExtensionUriConstants;
+import net.openan.a2at.sdk.core.model.InputLimitConfig;
 import net.openan.a2at.sdk.core.model.MetadataContent;
 import net.openan.a2at.sdk.core.model.SlotValidationError;
 import net.openan.a2at.sdk.core.model.TemplateUri;
@@ -53,6 +54,8 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
 
     private final TaskPromptRenderer renderer;
 
+    private final int maxTextChars;
+
     /**
      * Creates a client prompt-generation orchestrator with explicit collaborators.
      *
@@ -76,6 +79,44 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
             PromptSlotValueExtractor slotValueExtractor,
             TaskPromptRenderer renderer,
             PromptSlotSchemaLoader slotSchemaLoader) {
+        this(
+                scenarioRecognizer,
+                scenarios,
+                language,
+                systemPrompt,
+                userPrompt,
+                templateLoader,
+                slotValueExtractor,
+                renderer,
+                slotSchemaLoader,
+                InputLimitConfig.DEFAULT_MAX_TEXT_CHARS);
+    }
+
+    /**
+     * Creates a client prompt-generation orchestrator with explicit collaborators and one free-text input length limit.
+     *
+     * @param scenarioRecognizer scenario recognizer
+     * @param scenarios supported scenario definitions
+     * @param language locale identifier for resource lookup
+     * @param systemPrompt system prompt for scenario recognition
+     * @param userPrompt user prompt for scenario recognition
+     * @param templateLoader template loader
+     * @param slotValueExtractor slot value extractor
+     * @param renderer task prompt renderer
+     * @param slotSchemaLoader slot schema loader
+     * @param maxTextChars maximum accepted length in characters for free-text inputs
+     */
+    public DefaultClientPromptGenerationOrchestrator(
+            ScenarioRecognizer scenarioRecognizer,
+            List<ScenarioDefinition> scenarios,
+            String language,
+            String systemPrompt,
+            String userPrompt,
+            PromptTemplateTextLoader templateLoader,
+            PromptSlotValueExtractor slotValueExtractor,
+            TaskPromptRenderer renderer,
+            PromptSlotSchemaLoader slotSchemaLoader,
+            int maxTextChars) {
         this.scenarioRecognizer = scenarioRecognizer;
         this.scenarios = scenarios;
         this.language = language;
@@ -85,10 +126,17 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
         this.slotValueExtractor = slotValueExtractor;
         this.renderer = renderer;
         this.slotSchemaLoader = slotSchemaLoader;
+        this.maxTextChars = maxTextChars;
     }
 
     @Override
     public PromptGenerationResult generateTaskPrompt(Object userInput) {
+        if (userInput instanceof String text && InputLimitConfig.isTooLong(text, maxTextChars)) {
+            return PromptGenerationResult.failure(new PromptGenerationFailure(
+                    A2ATErrorCodes.INPUT_TEXT_TOO_LONG,
+                    InputLimitConfig.violationMessage(text, maxTextChars),
+                    "input"));
+        }
         String normalizedInput = String.valueOf(userInput);
 
         final ScenarioRecognitionResult recognition;
@@ -167,6 +215,11 @@ public final class DefaultClientPromptGenerationOrchestrator implements ClientPr
     private MetadataContent generateFromTemplateUriWithMetadata(
             String userInput, TemplateUri templateUri, String extensionUri) {
         Objects.requireNonNull(userInput, "userInput");
+        if (InputLimitConfig.isTooLong(userInput, maxTextChars)) {
+            throw new PromptGenerationException(
+                    A2ATErrorCodes.INPUT_TEXT_TOO_LONG,
+                    InputLimitConfig.violationMessage(userInput, maxTextChars));
+        }
         return generateWithMetadata(templateUri, extensionUri, templateIdentifier -> slotValueExtractor
                 .extractSlots(userInput, templateIdentifier, language)
                 .slots());

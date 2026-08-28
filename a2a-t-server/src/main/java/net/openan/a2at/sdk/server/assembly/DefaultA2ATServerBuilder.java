@@ -21,6 +21,7 @@ import net.openan.a2at.sdk.prompt.resources.model.ScenarioDefinition;
 import net.openan.a2at.sdk.prompt.validation.DefaultContentValidator;
 import net.openan.a2at.sdk.server.compliance.DefaultServerPromptComplianceOrchestrator;
 import net.openan.a2at.sdk.server.metadata.LlmBackedPromptMetadataExtractor;
+import net.openan.a2at.sdk.server.validation.InputLimitedContentValidator;
 import net.openan.a2at.sdk.server.validation.LlmBackedPromptSemanticValidator;
 import org.jspecify.annotations.Nullable;
 
@@ -132,8 +133,8 @@ public final class DefaultA2ATServerBuilder {
                         slotSchemaLoader,
                         new DefaultStructuredPromptSlotValueExtractor(
                                 client, slotSchemaLoader, slotSystemPrompt, slotUserPrompt)),
-                new LlmBackedPromptSemanticValidator(
-                        client, slotSchemaLoader, semanticSystemPrompt, semanticUserPrompt));
+                new LlmBackedPromptSemanticValidator(client, slotSchemaLoader, semanticSystemPrompt, semanticUserPrompt),
+                config.inputLimits().maxTextChars());
         return promptComplianceOrchestrator;
     }
 
@@ -221,12 +222,14 @@ public final class DefaultA2ATServerBuilder {
         require(config, "Unified SDK config must be configured.");
         requireSupportedConfig();
         require(envPath, "Unified SDK env path must be configured.");
-        return new DefaultContentValidator(
-                extensionName,
-                config.prompt().language(),
-                config.llm().maxAttempts(),
-                llmClient(),
-                promptResourceAccess().templateLoader());
+        return new InputLimitedContentValidator(
+                new DefaultContentValidator(
+                        extensionName,
+                        config.prompt().language(),
+                        config.llm().maxAttempts(),
+                        llmClient(),
+                        promptResourceAccess().templateLoader()),
+                config.inputLimits().maxTextChars());
     }
 
     private static void require(Object value, String message) {

@@ -133,6 +133,7 @@ public final class DefaultA2ATClientBuilder {
                 .slotSchemaLoader(slotSchemaLoader)
                 .slotValueExtractor(slotValueExtractor)
                 .renderer(new TaskPromptRenderer())
+                .maxTextChars(config.inputLimits().maxTextChars())
                 .build();
     }
 

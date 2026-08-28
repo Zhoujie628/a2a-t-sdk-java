@@ -327,6 +327,7 @@ A2AT_LLM_MODEL=deepseek-chat
 A2AT_LLM_API_KEY={your_llm_api_key}
 A2AT_LLM_BASE_URL=https://api.deepseek.com
 A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
+A2AT_INPUT_TEXT_MAX_CHARS=16384
 ```
 
 > `A2AT_LLM_API_KEY` is the key used to **call the external large model**. Keep it safe.
@@ -334,6 +335,8 @@ A2AT_NEGOTIATION_STATE_STORE_TYPE=in_memory
 > The SDK connects to external large models through OpenAI-compatible interfaces. `A2AT_LLM_PROVIDER` currently supports only `openai`; when connecting to OpenAI-compatible services such as DeepSeek, specify the service address with `A2AT_LLM_BASE_URL` and the model name with `A2AT_LLM_MODEL`.
 >
 > The prompt resource source is controlled by `A2AT_PROMPT_SOURCE_TYPE`: the default `classpath` loads the resources bundled in the `a2a-t-resources` jar; when set to `local_file`, specify the local resource root directory with `A2AT_PROMPT_RESOURCE_LOCAL_ROOT_DIR` (relative paths are resolved against the directory of the `.env` file).
+>
+> Free-text inputs are length-guarded before any LLM call: every facade entry point that accepts a natural-language `String` (the `FromText` generation methods, `generateTaskPrompt` with a text input, and the prompt-validation entry points such as `checkTaskPrompt` and `validate*PromptAndDataFilling`) rejects an input longer than `A2AT_INPUT_TEXT_MAX_CHARS` characters (`String.length()`) with the error code `input_text_too_long`, so oversized inputs fail fast instead of overflowing the LLM context. The key defaults to `16384` (16×1024); invalid or non-positive values fall back to the default with a warning log. The guard never truncates: the caller keeps full control over how to shorten the input. Structured (`Map`) inputs are not checked.
 
 #### Step3 Initialize the AgentCard
 

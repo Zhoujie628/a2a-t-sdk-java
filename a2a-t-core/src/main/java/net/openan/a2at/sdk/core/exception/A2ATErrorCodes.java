@@ -14,6 +14,9 @@ public final class A2ATErrorCodes {
     /** Default code for SDK processing failures without a more specific code. */
     public static final String SDK_INTERNAL_ERROR = "sdk_internal_error";
 
+    /** A free-text input exceeded the configured maximum length. */
+    public static final String INPUT_TEXT_TOO_LONG = "input_text_too_long";
+
     /** Default code for parameter-extraction failures without a more specific code. */
     public static final String PARAM_EXTRACTION_FAILED = "param_extraction_failed";
 

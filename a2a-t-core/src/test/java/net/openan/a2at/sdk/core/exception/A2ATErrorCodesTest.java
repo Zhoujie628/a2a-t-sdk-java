@@ -23,16 +23,16 @@ import org.junit.jupiter.api.Test;
 class A2ATErrorCodesTest {
 
     /**
-     * Verifies that {@link A2ATErrorCodes} declares exactly the twenty expected error code constants with the expected
-     * values.
+     * Verifies that {@link A2ATErrorCodes} declares exactly the twenty-one expected error code constants with the
+     * expected values.
      *
      * <p>Scenario: Reflection inspects all declared static final String fields of the registry. Expected result: The
-     * field set contains exactly the twenty known constants and no others.
+     * field set contains exactly the twenty-one known constants and no others.
      *
      * @throws IllegalAccessException if a declared field cannot be read
      */
     @Test
-    void should_declareExactlyTwentyConstants_When_reflectingOverDeclaredFields() throws IllegalAccessException {
+    void should_declareExactlyTwentyOneConstants_When_reflectingOverDeclaredFields() throws IllegalAccessException {
         Map<String, String> constants = new TreeMap<>();
         for (Field field : A2ATErrorCodes.class.getDeclaredFields()) {
             if (field.getType() == String.class
@@ -47,6 +47,7 @@ class A2ATErrorCodesTest {
                 Map.ofEntries(
                         Map.entry("SDK_INTERNAL_ERROR", "sdk_internal_error"),
                         Map.entry("PARAM_EXTRACTION_FAILED", "param_extraction_failed"),
+                        Map.entry("INPUT_TEXT_TOO_LONG", "input_text_too_long"),
                         Map.entry("TEMPLATE_NOT_FOUND", "template_not_found"),
                         Map.entry("NEGOTIATION_CONTENT_EXTRACT_FAILED", "negotiation_content_extract_failed"),
                         Map.entry("NEGOTIATION_SEMANTIC_REJECTED", "negotiation_semantic_rejected"),
