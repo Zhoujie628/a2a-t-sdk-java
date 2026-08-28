@@ -58,13 +58,11 @@ negotiation/
 │   ├── NegotiationMessage.java      # A2A metadata 桥接（扩展 prompt + 协商上下文序列化）
 │   ├── DemoConstants.java           # 扩展 URI / 元数据键常量
 │   ├── ScenarioData.java            # scenario.json 加载器
-│   └── NegotiationSampleSupport.java # 3×3 API 样例公共辅助
-├── fromdata/
-│   └── FromDataNegotiationSample.java  # 信息/目标/可行性 × 提议/接受/拒绝，共 9 个生成用例
-├── fromtext/
-│   └── FromTextNegotiationSample.java  # 同上 9 个用例，自然语言输入
+│   └── InformationNegotiationSchemas.java # 协商校验 caller schema（与 private-line 样例共用）
 └── eval/
-    └── NegotiationEvalApp.java        # 协商接口闭环评测：逐用例驱动接口并输出可回放 JSON 报告
+    ├── NegotiationEvalApp.java        # 协商接口闭环评测：逐用例驱动接口并输出可回放 JSON 报告
+    ├── NegotiationFromDataApiEvalApp.java # fromData 六接口专项评测
+    └── EvalLlmCaptureClient.java     # LLM 调用证据采集
 ```
 
 评测用例与场景配置同目录外置：`src/main/resources/sample/negotiation/eval/eval-suite.json`。
@@ -82,7 +80,7 @@ negotiation/
 
 ### 场景数据外部化
 
-场景的全部实例化值集中在 `src/main/resources/sample/negotiation/scenario.json`：Task-T 槽位 schema（含槽位描述与示例）、参数缺失/补齐两份输入、协商文案模板（`{slot}`/`{description}`/`{params}` 占位符）、诊断结果行模板、3×3 API 样例的全部用例数据。Java 代码只保留通用规则（槽位遍历、编号列表拼装、占位符替换），源码中不含任何场景实例化字符串。更换演示场景只需编辑该文件。
+场景的全部实例化值集中在 `src/main/resources/sample/negotiation/scenario.json`：Task-T 槽位 schema（含槽位描述与示例）、参数缺失/补齐两份输入、协商文案模板（`{slot}`/`{description}`/`{params}` 占位符）、诊断结果行模板。Java 代码只保留通用规则（槽位遍历、编号列表拼装、占位符替换），源码中不含任何场景实例化字符串。更换演示场景只需编辑该文件。
 
 ## 五、运行
 
@@ -94,7 +92,7 @@ negotiation/
 
 ### 命令形态说明
 
-所有入口使用 Java 的 @-argfile 语法（JDK 9+）：`java @<file>` 把文件内容展开为启动参数。构建时（`mvn package`）Maven antrun 插件在 `target/` 下为每个入口生成一个 `*.javaargs.txt`，文件内容是两行——`-cp` 加上完整的依赖 jar 路径链，以及主类的全限定名。这样运行命令无需手写数百字符的 classpath。每个入口对应一个文件：`negotiation.javaargs.txt`（端到端 demo）、`fromdata.javaargs.txt` / `fromtext.javaargs.txt`（3×3 生成用例）、`eval.javaargs.txt`（协商接口评测）。Windows 控制台建议加 `-Dfile.encoding=UTF-8` 前缀，避免中文日志显示为乱码（不影响输出文件本身的编码）。
+所有入口使用 Java 的 @-argfile 语法（JDK 9+）：`java @<file>` 把文件内容展开为启动参数。构建时（`mvn package`）Maven antrun 插件在 `target/` 下为每个入口生成一个 `*.javaargs.txt`，文件内容是两行——`-cp` 加上完整的依赖 jar 路径链，以及主类的全限定名。这样运行命令无需手写数百字符的 classpath。每个入口对应一个文件：`negotiation.javaargs.txt`（端到端 demo）、`eval.javaargs.txt`（协商接口评测）、`fromdata-eval.javaargs.txt`（fromData 专项评测）。Windows 控制台建议加 `-Dfile.encoding=UTF-8` 前缀，避免中文日志显示为乱码（不影响输出文件本身的编码）。
 
 ### 端到端 demo
 
@@ -107,10 +105,6 @@ java @a2a-t-sample/target/negotiation.javaargs.txt --fromText /path/to/.env
 
 # 强制阻塞端点（覆盖 message:send 场景）
 java @a2a-t-sample/target/negotiation.javaargs.txt --no-stream /path/to/.env
-
-# 3×3 API 生成用例（结构化数据通道 / 自然语言通道）
-java @a2a-t-sample/target/fromdata.javaargs.txt /path/to/.env
-java @a2a-t-sample/target/fromtext.javaargs.txt /path/to/.env
 ```
 
 组合 `--fromText` 与 `--no-stream` 可覆盖全部四种通道 × 端点组合。
