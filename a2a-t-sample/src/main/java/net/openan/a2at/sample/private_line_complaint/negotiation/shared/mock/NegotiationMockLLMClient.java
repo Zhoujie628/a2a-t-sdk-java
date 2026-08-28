@@ -32,18 +32,18 @@ public final class NegotiationMockLLMClient implements LLMClient {
             """;
 
     private static final String PROPOSE_PARAMS = """
-            {"access_port_name":"物理端口或逻辑端口名称",
-            "complaint_category":"专线中断或专线质差"}
+            {"items":[{"name":"接入端口名称","requirement":"物理端口或逻辑端口名称"},
+            {"name":"投诉分类","requirement":"专线中断或专线质差"}],"relationship":null}
             """;
 
     private static final String ACCEPT_PARAMS = """
-            {"access_port_name":"P781-珠江新城-PTN7900-23-TPA1EG24-17(cvlan=100)",
-            "complaint_category":"专线质差"}
+            {"items":[{"name":"接入端口名称","value":"P781-珠江新城-PTN7900-23-TPA1EG24-17(cvlan=100)"},
+            {"name":"投诉分类","value":"专线质差"}]}
             """;
 
     private static final String REJECT_PARAMS = """
-            {"access_port_name":"当前账号没有资源系统查询权限",
-            "complaint_category":"当前账号没有资源系统查询权限"}
+            {"items":[{"name":"接入端口名称","reason":"当前账号没有资源系统查询权限"},
+            {"name":"投诉分类","reason":"当前账号没有资源系统查询权限"}]}
             """;
 
     public NegotiationMockLLMClient(LLMClientConfig config) {

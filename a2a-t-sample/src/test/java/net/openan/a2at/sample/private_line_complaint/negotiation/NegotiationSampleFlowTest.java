@@ -1,10 +1,13 @@
 package net.openan.a2at.sample.private_line_complaint.negotiation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationDecision;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationSampleFlow;
@@ -37,9 +40,12 @@ class NegotiationSampleFlowTest {
         assertEquals(ExtensionUriConstants.NEGOTIATION_T_EXTENSION_URI, result.propose().extensionUri());
         assertContextIsShared(result);
         assertEquals(
-                "P781-珠江新城-PTN7900-23-TPA1EG24-17(cvlan=100)",
-                result.endingData().data().get("access_port_name"));
-        assertEquals("专线质差", result.endingData().data().get("complaint_category"));
+                List.of(
+                        Map.of(
+                                "name", "接入端口名称",
+                                "value", "P781-珠江新城-PTN7900-23-TPA1EG24-17(cvlan=100)"),
+                        Map.of("name", "投诉分类", "value", "专线质差")),
+                result.endingData().data().get("items"));
     }
 
     @Test
@@ -48,8 +54,11 @@ class NegotiationSampleFlowTest {
 
         assertEquals(NegotiationDecision.REJECT, result.decision());
         assertContextIsShared(result);
-        assertEquals("当前账号没有资源系统查询权限", result.endingData().data().get("access_port_name"));
-        assertEquals("当前账号没有资源系统查询权限", result.endingData().data().get("complaint_category"));
+        assertEquals(
+                List.of(
+                        Map.of("name", "接入端口名称", "reason", "当前账号没有资源系统查询权限"),
+                        Map.of("name", "投诉分类", "reason", "当前账号没有资源系统查询权限")),
+                result.endingData().data().get("items"));
     }
 
     private NegotiationSampleFlow.NegotiationFlowResult run(NegotiationDecision decision) throws IOException {
@@ -87,7 +96,13 @@ class NegotiationSampleFlowTest {
         assertEquals(result.requestContext().round(), ((Number) endingData.get("round")).intValue());
         assertEquals(result.requestContext().maxRounds(), ((Number) proposeData.get("maxRounds")).intValue());
         assertEquals(result.requestContext().maxRounds(), ((Number) endingData.get("maxRounds")).intValue());
-        assertEquals("物理端口或逻辑端口名称", proposeData.get("access_port_name"));
-        assertEquals("专线中断或专线质差", proposeData.get("complaint_category"));
+        assertEquals(
+                List.of(
+                        Map.of("name", "接入端口名称", "requirement", "物理端口或逻辑端口名称"),
+                        Map.of("name", "投诉分类", "requirement", "专线中断或专线质差")),
+                proposeData.get("items"));
+        assertNull(proposeData.get("relationship"));
+        assertFalse(proposeData.containsKey("access_port_name"));
+        assertFalse(endingData.containsKey("complaint_category"));
     }
 }
