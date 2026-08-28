@@ -276,12 +276,15 @@ public final class NegotiationQwenEvaluationMain {
         boolean accept = "accept".equals(testCase.decision());
         NegotiationEvaluationCase endingCase = testCase.endingCase();
         List<NegotiationItem> endingItems = filledItems(requestedFields, endingCase);
+        // the fromText channel voices the supplement explicitly (mirroring NegotiationEvalApp step 6): terse corpus
+        // texts may paraphrase or omit the field names, so the LLM extraction needs the discovered fields spelled out
+        String endingInputText = clientSupplementText(endingItems, accept) + "\n\n" + endingCase.text();
         Map<String, Object> request = fromData
                 ? Map.of("data", Map.of(
                         "items", itemsJson(endingItems),
                         "conclusion", accept ? NegotiationConclusion.ACCEPT.toString() : NegotiationConclusion.REJECT.toString()),
                         "template_uri", NegotiationSampleFlow.ENDING_TEMPLATE_URI.uri())
-                : Map.of("text", endingCase.text(),
+                : Map.of("text", endingInputText,
                         "template_uri", NegotiationSampleFlow.ENDING_TEMPLATE_URI.uri());
         try {
             MetadataContent content = fromData
@@ -296,9 +299,9 @@ public final class NegotiationQwenEvaluationMain {
                                     NegotiationSampleFlow.ENDING_TEMPLATE_URI)
                     : accept
                             ? client.generateNegotiationAcceptPromptFromText(
-                                    endingCase.text(), context, NegotiationSampleFlow.ENDING_TEMPLATE_URI)
+                                    endingInputText, context, NegotiationSampleFlow.ENDING_TEMPLATE_URI)
                             : client.generateNegotiationRejectPromptFromText(
-                                    endingCase.text(), context, NegotiationSampleFlow.ENDING_TEMPLATE_URI);
+                                    endingInputText, context, NegotiationSampleFlow.ENDING_TEMPLATE_URI);
             writeStage(processLogger, apiTrace, stageEvent(runId, testCase, "generate_" + testCase.decision(), testCase.decision(), channel, context,
                     request, Map.of("prompt", content.promptText(), "template_uri", content.templateUri(),
                             "extension_uri", content.extensionUri()), startedAt, null));
@@ -388,6 +391,24 @@ public final class NegotiationQwenEvaluationMain {
             json.add(Map.of("name", item.name(), "value", String.valueOf(item.value())));
         }
         return json;
+    }
+
+    /** The client's explicit supplement for the fields it discovered from the inbound propose. */
+    private static String clientSupplementText(List<NegotiationItem> items, boolean accept) {
+        StringBuilder text = new StringBuilder("## 客户端补充信息\n");
+        for (int index = 0; index < items.size(); index++) {
+            NegotiationItem item = items.get(index);
+            if (index > 0) {
+                text.append('\n');
+            }
+            text.append(index + 1).append(". ").append(item.name()).append('：');
+            if (accept) {
+                text.append(item.value());
+            } else {
+                text.append("无法提供，原因：").append(item.value());
+            }
+        }
+        return text.toString();
     }
 
     private static Map<String, Object> stageEvent(
