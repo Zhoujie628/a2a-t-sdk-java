@@ -5,7 +5,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Scenario-specific caller schemas for the private-line complaint information negotiation sample. */
+/**
+ * Business-neutral, phase-specific caller schemas for information-negotiation validation.
+ *
+ * <p>The three validation APIs intentionally use independent parameter contracts. The contracts describe the
+ * shape of the extracted result while the information-item names and values come from the negotiation message.
+ */
 public final class InformationNegotiationSchemas {
 
     private static final Map<String, Object> PROPOSE = createProposeSchema();
@@ -32,41 +37,63 @@ public final class InformationNegotiationSchemas {
     private static Map<String, Object> createProposeSchema() {
         Map<String, Object> properties = new LinkedHashMap<>();
         properties.put(
-                "access_port_name",
-                stringSchema("Requested access-port information, including the accepted physical or logical port format"));
+                "items",
+                itemArraySchema(
+                        itemSchema(
+                                "requirement",
+                                "Meaning, format, constraint, or example requested for the information item"),
+                        "Requested information items and their requirements"));
         properties.put(
-                "complaint_category",
-                stringSchema("Requested complaint category and its allowed private-line complaint values"));
-        return objectSchema(properties, List.of("access_port_name", "complaint_category"));
+                "relationship",
+                nullableStringSchema("Relationship among requested information items, or null when unspecified"));
+        return objectSchema(properties, List.of("items"));
     }
 
     private static Map<String, Object> createAcceptSchema() {
         Map<String, Object> properties = new LinkedHashMap<>();
         properties.put(
-                "access_port_name",
-                stringSchema("Physical or logical access-port name supplied for private-line diagnosis"));
-        properties.put(
-                "complaint_category",
-                Map.of(
-                        "type", "string",
-                        "description", "Private-line complaint category",
-                        "enum", List.of("专线中断", "专线质差")));
-        return objectSchema(properties, List.of("access_port_name", "complaint_category"));
+                "items",
+                itemArraySchema(
+                        itemSchema("value", "Value supplied for the information item"),
+                        "Information items and values supplied by the accepting party"));
+        return objectSchema(properties, List.of("items"));
     }
 
     private static Map<String, Object> createRejectSchema() {
         Map<String, Object> properties = new LinkedHashMap<>();
         properties.put(
-                "access_port_name",
-                stringSchema("Reason why the access-port name cannot be supplied"));
-        properties.put(
-                "complaint_category",
-                stringSchema("Reason why the complaint category cannot be supplied"));
-        return objectSchema(properties, List.of("access_port_name", "complaint_category"));
+                "items",
+                itemArraySchema(
+                        itemSchema("reason", "Reason why the information item cannot be supplied"),
+                        "Information items that cannot be supplied and their reasons"));
+        return objectSchema(properties, List.of("items"));
+    }
+
+    private static Map<String, Object> itemArraySchema(Map<String, Object> itemSchema, String description) {
+        Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("type", "array");
+        schema.put("items", itemSchema);
+        schema.put("minItems", 1);
+        schema.put("description", description);
+        return Collections.unmodifiableMap(schema);
+    }
+
+    private static Map<String, Object> itemSchema(String valueName, String valueDescription) {
+        Map<String, Object> properties = new LinkedHashMap<>();
+        properties.put("name", stringSchema("Name of the information item"));
+        properties.put(valueName, nullableStringSchema(valueDescription));
+        return objectSchema(properties, List.of("name", valueName));
     }
 
     private static Map<String, Object> stringSchema(String description) {
         return Map.of("type", "string", "description", description);
+    }
+
+    private static Map<String, Object> nullableStringSchema(String description) {
+        Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("type", List.of("string", "null"));
+        schema.put("description", description);
+        return Collections.unmodifiableMap(schema);
     }
 
     private static Map<String, Object> objectSchema(Map<String, Object> properties, List<String> required) {
