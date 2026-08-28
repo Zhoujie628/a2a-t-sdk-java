@@ -328,6 +328,7 @@ public final class NegotiationEvalApp {
         for (String slot : actualMissing) {
             missingItems.add(new NegotiationItem(slot, missingHint(phrasing, properties, slot)));
         }
+        String proposeRelationship = missingItems.size() > 1 ? phrasing.get("propose_relationship") : null;
         NegotiationContext proposeContext = new NegotiationContext(
                 UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS, NegotiationPerformative.PROPOSE);
         String proposeInputText = itemsToProposeText(missingItems, phrasing);
@@ -336,10 +337,13 @@ public final class NegotiationEvalApp {
             proposeGenerationInput.put("text", proposeInputText);
             proposeGenerationInput.put("context", contextJson(proposeContext));
         } else {
-            proposeGenerationInput.put("data", Map.of(
-                    "context", contextJson(proposeContext),
-                    "items", itemsJson(missingItems),
-                    "relationship", String.valueOf(phrasing.get("propose_relationship"))));
+            Map<String, Object> proposeData = new LinkedHashMap<>();
+            proposeData.put("context", contextJson(proposeContext));
+            proposeData.put("items", itemsJson(missingItems));
+            if (proposeRelationship != null) {
+                proposeData.put("relationship", proposeRelationship);
+            }
+            proposeGenerationInput.put("data", proposeData);
         }
         proposeGenerationInput.put("template_uri", DemoTemplates.NEGOTIATION_PROPOSE.uri());
         String proposeGenerationApi = negotiationFromText
@@ -354,7 +358,7 @@ public final class NegotiationEvalApp {
                     : server.generateNegotiationProposePromptFromData(
                             new NegotiationProposeData(
                                     proposeContext,
-                                    new InformationProposeContent(missingItems, phrasing.get("propose_relationship"))),
+                                    new InformationProposeContent(missingItems, proposeRelationship)),
                             DemoTemplates.NEGOTIATION_PROPOSE);
             proposePrompt = propose.promptText();
             Map<String, Object> step =
@@ -876,7 +880,7 @@ public final class NegotiationEvalApp {
     private static String itemsToProposeText(List<NegotiationItem> items, Map<String, String> phrasing) {
         StringBuilder text = new StringBuilder(phrasing.getOrDefault("from_text_propose_prefix", ""));
         appendNumberedItems(text, items);
-        String relationship = phrasing.get("propose_relationship");
+        String relationship = items.size() > 1 ? phrasing.get("propose_relationship") : null;
         if (relationship != null && !relationship.isBlank()) {
             text.append(relationship);
         }

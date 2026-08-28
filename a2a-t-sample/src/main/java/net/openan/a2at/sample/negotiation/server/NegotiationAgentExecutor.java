@@ -120,12 +120,15 @@ public final class NegotiationAgentExecutor implements AgentExecutor {
         Map<String, Object> replyContext = negotiationContext;
 
         // dynamically generate the Negotiation-T information-propose prompt via the strategy
+        String relationship = missingItems.size() > 1
+                ? ScenarioData.negotiationPhrasing().get("propose_relationship")
+                : null;
         MetadataContent negotiationPrompt = strategy.generatePropose(
                 server,
                 new NegotiationContext(
                         UUID.randomUUID().toString(), 1, NegotiationContext.DEFAULT_MAX_ROUNDS, NegotiationPerformative.PROPOSE),
                 missingItems,
-                ScenarioData.negotiationPhrasing().get("propose_relationship"),
+                relationship,
                 DemoConstants.NEGOTIATION_PROPOSE);
         emit("[server] negotiation request rendered");
 
