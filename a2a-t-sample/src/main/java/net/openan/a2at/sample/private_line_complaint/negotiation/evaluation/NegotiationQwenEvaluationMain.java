@@ -66,9 +66,6 @@ public final class NegotiationQwenEvaluationMain {
         long endingSucceeded = results.stream()
                 .filter(result -> Boolean.TRUE.equals(result.get("ending_succeeded")))
                 .count();
-        long goldenMatched = results.stream()
-                .filter(result -> Boolean.TRUE.equals(result.get("golden_matched")))
-                .count();
         Map<String, Object> report = new LinkedHashMap<>();
         report.put("generated_at", Instant.now().toString());
         report.put("run_id", runId);
@@ -82,9 +79,7 @@ public final class NegotiationQwenEvaluationMain {
         report.put("ending_succeeded", endingSucceeded);
         report.put("passed", passed);
         report.put("end_to_end_success_rate", (double) passed / results.size());
-        report.put("golden_matched", goldenMatched);
-        report.put("golden_exact_match_rate", (double) goldenMatched / results.size());
-        report.put("note", "A flow passes when all four generation/validation API calls return successfully. Golden exact matching is an auxiliary diagnostic because semantically equivalent natural-language values may differ in wording.");
+        report.put("note", "A flow passes when all four generation/validation API calls return successfully. Natural-language output is evaluated by whether the four API calls can be chained successfully.");
         report.put("process_log", processLogPath.toAbsolutePath().toString());
         report.put("cases", results);
         Files.createDirectories(reportPath.toAbsolutePath().getParent());
@@ -122,7 +117,6 @@ public final class NegotiationQwenEvaluationMain {
         result.put("ending_validation_succeeded", false);
         result.put("propose_succeeded", false);
         result.put("ending_succeeded", false);
-        result.put("golden_matched", false);
         List<Map<String, Object>> apiTrace = new ArrayList<>();
         result.put("api_trace", apiTrace);
         try {
@@ -134,8 +128,6 @@ public final class NegotiationQwenEvaluationMain {
                     server, testCase, propose.promptText(), context, runId, processLogger, apiTrace);
             result.put("propose_validation_succeeded", true);
             result.put("actual_propose", proposeFilled.data());
-            boolean proposeMatched = expectedValuesMatch(testCase.expectedPropose(), proposeFilled.data());
-            result.put("propose_expected_matched", proposeMatched);
             result.put("propose_context_matched", contextMatches(context, proposeFilled.data()));
             result.put("propose_succeeded", true);
 
@@ -150,11 +142,8 @@ public final class NegotiationQwenEvaluationMain {
                     client, testCase, ending.promptText(), responseContext, runId, processLogger, apiTrace);
             result.put("ending_validation_succeeded", true);
             result.put("actual_ending", endingFilled.data());
-            boolean endingMatched = expectedValuesMatch(testCase.expectedEnding(), endingFilled.data());
-            result.put("ending_expected_matched", endingMatched);
             result.put("ending_context_matched", contextMatches(responseContext, endingFilled.data()));
             result.put("ending_succeeded", true);
-            result.put("golden_matched", proposeMatched && endingMatched);
             result.put("passed", true);
         } catch (RuntimeException exception) {
             result.put("passed", false);
@@ -436,10 +425,6 @@ public final class NegotiationQwenEvaluationMain {
         String logFilename = (extensionStart < 0 ? filename : filename.substring(0, extensionStart)) + "-process.jsonl";
         Path parent = reportPath.getParent();
         return parent == null ? Path.of(logFilename) : parent.resolve(logFilename);
-    }
-
-    private static boolean expectedValuesMatch(Map<String, Object> expected, Map<String, Object> actual) {
-        return expected.entrySet().stream().allMatch(entry -> entry.getValue().equals(actual.get(entry.getKey())));
     }
 
     private static boolean contextMatches(NegotiationContext context, Map<String, Object> actual) {
