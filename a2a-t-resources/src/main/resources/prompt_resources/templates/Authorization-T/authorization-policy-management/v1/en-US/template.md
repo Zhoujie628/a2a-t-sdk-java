@@ -21,6 +21,7 @@ Requirement:
 2. When adding an authorization policy, the required parameters include: network operation business scenario, network operation handling type, network operation name, validity period
    When modifying an authorization policy, the parameter that can be modified is: validity period
    When querying authorization policies, the supported query conditions are: network operation business scenario, network operation handling type, network operation name
+   When deleting authorization policies, the required parameters include: network operation authorization policy identifier
 
 ## Expected Output
 1. Authorization operation execution result. Allowed values: success, failure, partial success
