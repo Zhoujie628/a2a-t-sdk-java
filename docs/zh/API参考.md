@@ -123,7 +123,7 @@ Map<String, Object> metadata = propose.buildMetadataContent();
 
 - `negotiation_llm_infrastructure_error`（LLM 基础设施故障，可重试）
 
-- `negotiation_invalid_input`（文本为空、抽取内容与阶段不符）
+- `negotiation_invalid_input`（文本为空、抽取内容与阶段不符、确认请求与其它板块组合矛盾）
 
 - `negotiation_slot_missing`（缺少必需槽位）
 
@@ -284,8 +284,8 @@ public MetadataContent generateNegotiationProposePromptFromData(
 | 协商类型 | Propose 内容类型 | 字段 |
 | -------- | ---------------- | ---- |
 | 信息协商 | `InformationProposeContent` | `items`（缺失项清单）、`relationship`（缺失项间关系，可空） |
-| 目标协商 | `TargetProposeContent` | `targetNegotiationDescription`（必填）、`intentUnderstanding`、`alignmentAndClarification`、`requestForClarification`（三个条目列表均可空，空则省略对应章节） |
-| 可行性协商 | `FeasibilityProposeContent` | `feasibilityNegotiationDescription`（必填）、`action`（`NegotiationAction.REQUEST_FEASIBILITY_EVALUATION` / `PROPOSE_ALTERNATIVE_ON_FAILURE`）、`contentsToEvaluate`、`infeasibilityDetailsAndProposal` |
+| 目标协商 | `TargetProposeContent` | `targetNegotiationDescription`（必填）、`intentUnderstanding`、`alignmentAndClarification`、`requestForClarification`（三个条目列表均可空，空则省略对应章节）、`targetConfirmRequest`（可空 string，非空表示本轮消息类别为"目标已澄清并请求对方确认"，渲染"目标澄清后的确认请求"章节，内容固定为"目标已经澄清，是否同意按照此目标继续执行？"；非空时 `intentUnderstanding` / `alignmentAndClarification` / `requestForClarification` 必须全为空） |
+| 可行性协商 | `FeasibilityProposeContent` | `feasibilityNegotiationDescription`（必填）、`action`（`NegotiationAction.REQUEST_FEASIBILITY_EVALUATION` / `PROPOSE_ALTERNATIVE_ON_FAILURE`，两值不变）、`contentsToEvaluate`、`infeasibilityDetailsAndProposal`、`feasibilityConfirmRequest`（可空 string，非空表示本轮消息类别为"评估可行并请求确认"：`action` 须取 `REQUEST_FEASIBILITY_EVALUATION` 且 `contentsToEvaluate` / `infeasibilityDetailsAndProposal` 皆为空；内容按评估类别固定为"评估目标可行，是否同意按照此目标继续执行？"（目标达成）或"评估方案可行，是否同意按照此方案继续执行？"（方案可行性）） |
 
 **请求样例**
 

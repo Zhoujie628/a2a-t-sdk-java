@@ -346,5 +346,78 @@
       }
     ],
     "expectFlow": { "terminalCondition": "abort", "roundsUsed": 2, "distinctMessages": true }
+  },
+  {
+    "id": "SC-FSB-04",
+    "summary": "端口扩容可行性协商确认请求闭环：工作台 round 1 发起扩容评估请求，OMC 评估可行后于 round 2 发出评估可行并请求确认的提议，工作台同意后生成接受消息完成闭环",
+    "languages": ["zh-CN"],
+    "roles": ["A", "B"],
+    "rolesDesc": {
+      "A": "工作台（client，扩容评估请求/确认方）",
+      "B": "OMC（server，可行性评估与确认请求发起方）"
+    },
+    "steps": [
+      {
+        "step": 1,
+        "role": "A",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 1, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "请评估专线接入端口扩容方案能否在割接窗口内完成：接入端口带宽由100Mbps扩容至1000Mbps，割接窗口仅限2026年5月30日02:00-06:00，业务中断不超过30分钟。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.feasibility.propose.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "feasibility_propose"
+        }
+      },
+      {
+        "step": 2,
+        "role": "B",
+        "api": "generateProposeFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+        "input": {
+          "text": {
+            "zh-CN": "针对专线接入端口扩容方案的目标达成可行性评估已完成：扩容可在割接窗口2026年5月30日02:00-06:00内完成，业务中断时长满足不超过30分钟的约束，结论为可行。评估目标可行，是否同意按照此目标继续执行？"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.feasibility.propose.confirm.goal" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextContains": ["评估可行时的确认请求", "评估目标可行，是否同意按照此目标继续执行？"],
+          "metadata": {
+            "templateUriEcho": "Negotiation-T/feasibility-negotiation/propose/v1",
+            "contextEcho": true
+          },
+          "contracts": ["metadataTripleShape"]
+        }
+      },
+      {
+        "step": 3,
+        "role": "A",
+        "api": "generateAcceptFromText",
+        "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+        "templateUri": "Negotiation-T/feasibility-negotiation/accept-reject/v1",
+        "input": {
+          "text": {
+            "zh-CN": "同意按照此目标继续执行。端口扩容方案可在割接窗口内完成，业务中断时长满足不超过30分钟的约束，本次可行性协商确认结束。"
+          }
+        },
+        "llm": { "script": [ { "$ref": "responses/extract.feasibility.accept.full" } ] },
+        "expect": {
+          "outcome": "success",
+          "llmCalls": 1,
+          "promptTextEqualsGolden": "feasibility_accept",
+          "contracts": ["conclusionLiteralPresent"]
+        }
+      }
+    ],
+    "expectFlow": { "terminalCondition": "accept", "roundsUsed": 2, "distinctMessages": true }
   }
 ]

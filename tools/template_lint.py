@@ -34,9 +34,9 @@ NEGOTIATION_STATIC_SECTIONS = {"info_static"}
 NEGOTIATION_PROFILES = {
     ("information-negotiation", "propose"): ("info_static", "info_items"),
     ("information-negotiation", "accept-reject"): ("info_conclusion", "info_result_content"),
-    ("target-negotiation", "propose"): ("target", "target_intent", "target_alignment", "target_clarification"),
+    ("target-negotiation", "propose"): ("target", "target_intent", "target_alignment", "target_clarification", "target_confirm_request"),
     ("target-negotiation", "accept-reject"): ("target_conclusion", "target_result_content"),
-    ("feasibility-negotiation", "propose"): ("feasibility", "feasibility_evaluate", "feasibility_infeasible"),
+    ("feasibility-negotiation", "propose"): ("feasibility", "feasibility_evaluate", "feasibility_infeasible", "feasibility_confirm_request"),
     ("feasibility-negotiation", "accept-reject"): ("feasibility_conclusion", "feasibility_confirm"),
 }
 NEGOTIATION_MARKER = re.compile(

@@ -131,9 +131,31 @@ public final class FromDataNegotiationSample {
                                 ScenarioData.text(propose, "description"),
                                 ScenarioData.items(propose, "intent_understanding"),
                                 ScenarioData.items(propose, "alignment_and_clarification"),
-                                ScenarioData.items(propose, "request_for_clarification"))),
+                                ScenarioData.items(propose, "request_for_clarification"),
+                                ScenarioData.text(propose, "target_confirm_request"))),
                 NegotiationSampleSupport.TARGET_PROPOSE_URI);
         results.add(NegotiationSampleSupport.summary("target", "propose", proposeResult, logSink));
+
+        // propose (round 2): the target is clarified and the executor requests confirmation to proceed
+        Map<String, Object> proposeConfirm = ScenarioData.map(section, "propose_confirm");
+        if (!proposeConfirm.isEmpty()) {
+            NegotiationContext laterRoundCtx = new NegotiationContext(
+                    NegotiationSampleSupport.SESSION_ID,
+                    2,
+                    NegotiationContext.DEFAULT_MAX_ROUNDS,
+                    NegotiationPerformative.PROPOSE);
+            MetadataContent proposeConfirmResult = client.generateNegotiationProposePromptFromData(
+                    new NegotiationProposeData(
+                            laterRoundCtx,
+                            new TargetProposeContent(
+                                    ScenarioData.text(proposeConfirm, "description"),
+                                    null,
+                                    null,
+                                    null,
+                                    ScenarioData.text(proposeConfirm, "target_confirm_request"))),
+                    NegotiationSampleSupport.TARGET_PROPOSE_URI);
+            results.add(NegotiationSampleSupport.summary("target", "propose_confirm", proposeConfirmResult, logSink));
+        }
 
         // accept: confirm the negotiated target intent
         Map<String, Object> accept = ScenarioData.map(section, "accept");
@@ -179,9 +201,27 @@ public final class FromDataNegotiationSample {
                                 ScenarioData.text(propose, "description"),
                                 NegotiationAction.valueOf(ScenarioData.text(propose, "action")),
                                 ScenarioData.items(propose, "contents_to_evaluate"),
-                                ScenarioData.items(propose, "infeasibility_details_and_proposal"))),
+                                ScenarioData.items(propose, "infeasibility_details_and_proposal"),
+                                ScenarioData.text(propose, "feasibility_confirm_request"))),
                 NegotiationSampleSupport.FEASIBILITY_PROPOSE_URI);
         results.add(NegotiationSampleSupport.summary("feasibility", "propose", proposeResult, logSink));
+
+        // propose (round 2): the assessment is complete and the executor requests confirmation to proceed
+        Map<String, Object> proposeConfirm = ScenarioData.map(section, "propose_confirm");
+        if (!proposeConfirm.isEmpty()) {
+            MetadataContent proposeConfirmResult = client.generateNegotiationProposePromptFromData(
+                    new NegotiationProposeData(
+                            ctx,
+                            new FeasibilityProposeContent(
+                                    ScenarioData.text(proposeConfirm, "description"),
+                                    NegotiationAction.valueOf(ScenarioData.text(proposeConfirm, "action")),
+                                    ScenarioData.items(proposeConfirm, "contents_to_evaluate"),
+                                    ScenarioData.items(proposeConfirm, "infeasibility_details_and_proposal"),
+                                    ScenarioData.text(proposeConfirm, "feasibility_confirm_request"))),
+                    NegotiationSampleSupport.FEASIBILITY_PROPOSE_URI);
+            results.add(
+                    NegotiationSampleSupport.summary("feasibility", "propose_confirm", proposeConfirmResult, logSink));
+        }
 
         // accept: feasibility confirmed
         Map<String, Object> accept = ScenarioData.map(section, "accept");

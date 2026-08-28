@@ -124,7 +124,7 @@ Error codes:
 
 - `negotiation_llm_infrastructure_error` (LLM infrastructure failure, retryable)
 
-- `negotiation_invalid_input` (text is blank, or the extracted content contradicts the phase)
+- `negotiation_invalid_input` (text is blank, the extracted content contradicts the phase, or the confirm request contradicts the other sections)
 
 - `negotiation_slot_missing` (a required slot is missing)
 
@@ -286,8 +286,8 @@ Propose content of the three negotiation types:
 | Negotiation type | Propose content type | Fields |
 | -------- | ---------------- | ---- |
 | Information | `InformationProposeContent` | `items` (list of missing items), `relationship` (relationship between the missing items, nullable) |
-| Target | `TargetProposeContent` | `targetNegotiationDescription` (required), `intentUnderstanding`, `alignmentAndClarification`, `requestForClarification` (all three item lists nullable; empty lists omit the corresponding sections) |
-| Feasibility | `FeasibilityProposeContent` | `feasibilityNegotiationDescription` (required), `action` (`NegotiationAction.REQUEST_FEASIBILITY_EVALUATION` / `PROPOSE_ALTERNATIVE_ON_FAILURE`), `contentsToEvaluate`, `infeasibilityDetailsAndProposal` |
+| Target | `TargetProposeContent` | `targetNegotiationDescription` (required), `intentUnderstanding`, `alignmentAndClarification`, `requestForClarification` (all three item lists nullable; empty lists omit the corresponding sections), `targetConfirmRequest` (nullable string; a non-null value marks this round's message category as "target clarified and requesting confirmation from the counterparty" and renders the Target Clarification Confirmation Request section with the fixed content "The target has been clarified. Do you agree to proceed with this target?"; when it is non-null, `intentUnderstanding` / `alignmentAndClarification` / `requestForClarification` must all be empty) |
+| Feasibility | `FeasibilityProposeContent` | `feasibilityNegotiationDescription` (required), `action` (`NegotiationAction.REQUEST_FEASIBILITY_EVALUATION` / `PROPOSE_ALTERNATIVE_ON_FAILURE`, unchanged two values), `contentsToEvaluate`, `infeasibilityDetailsAndProposal`, `feasibilityConfirmRequest` (nullable string; a non-null value marks this round's message category as "assess as feasible and request confirmation": `action` must be `REQUEST_FEASIBILITY_EVALUATION` with `contentsToEvaluate` / `infeasibilityDetailsAndProposal` both empty; the content is fixed by the assessment category to "The target is assessed as feasible. Do you agree to proceed with this target?" (goal achievement) or "The solution is assessed as feasible. Do you agree to proceed with this solution?" (solution feasibility)) |
 
 **Request Example**
 

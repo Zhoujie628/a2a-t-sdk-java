@@ -181,7 +181,8 @@ class NegotiationFacadeOutputSymmetryTest {
                                         "Clarify the intent of the ran-energy-saving task.",
                                         List.of(new NegotiationItem("task intent", "ran-energy-saving optimization")),
                                         null,
-                                        List.of(new NegotiationItem("area", "which site is covered"))))),
+                                        List.of(new NegotiationItem("area", "which site is covered")),
+                                        null))),
                 new SymmetryCase(
                         "feasibility_propose",
                         NegotiationPerformative.PROPOSE,
@@ -193,6 +194,7 @@ class NegotiationFacadeOutputSymmetryTest {
                                         "Please assess the adjusted rate target.",
                                         NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
                                         List.of(new NegotiationItem("adjusted target", "rate lowered to 2Mbps")),
+                                        null,
                                         null))),
                 endingCase(
                         "information_accept",

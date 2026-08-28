@@ -86,6 +86,13 @@ final class PropertyArbitraries {
             "Access port expansion feasibility assessment within the cutover window",
             "Complaint information supplement negotiation between the workbench and the OMC");
 
+    /** Fixed wording pool of the confirm-request category, one entry per language. */
+    private static final List<String> CONFIRM_REQUEST_TEXTS = List.of(
+            "目标已经澄清，是否同意按照此目标继续执行？",
+            "The target has been clarified. Do you agree to proceed with this target?",
+            "目标评估为可行，是否同意按照此目标继续执行？",
+            "The target is assessed as feasible. Do you agree to proceed with this target?");
+
     private PropertyArbitraries() {}
 
     /**
@@ -167,26 +174,49 @@ final class PropertyArbitraries {
     }
 
     /**
-     * Arbitrary of target propose contents: non-blank description, each optional list null or non-empty.
+     * Arbitrary of target propose contents covering both message categories: the round-driven clarification rounds
+     * (non-blank description, each optional list null or non-empty, no confirm request) and the confirm-request rounds
+     * (non-blank description and confirm request with all three conditional lists null, so the generated record always
+     * satisfies the mutual exclusion of the confirm-request category).
      *
      * @return target propose content arbitrary
      */
     static Arbitrary<TargetProposeContent> targetProposeContents() {
+        return Arbitraries.frequencyOf(
+                Tuple.of(2, clarificationRoundContents()), Tuple.of(1, confirmRoundTargetContents()));
+    }
+
+    private static Arbitrary<TargetProposeContent> clarificationRoundContents() {
         return Combinators.combine(
                         Arbitraries.of(NON_BLANK_TEXTS),
                         optionalItemLists(),
                         optionalItemLists(),
                         optionalItemLists())
-                .as(TargetProposeContent::new);
+                .as((description, intent, alignment, clarification) -> new TargetProposeContent(
+                        description, intent, alignment, clarification, null));
+    }
+
+    private static Arbitrary<TargetProposeContent> confirmRoundTargetContents() {
+        return Combinators.combine(
+                        Arbitraries.of(NON_BLANK_TEXTS), Arbitraries.of(CONFIRM_REQUEST_TEXTS))
+                .as((description, confirmRequest) -> new TargetProposeContent(
+                        description, null, null, null, confirmRequest));
     }
 
     /**
-     * Arbitrary of feasibility propose contents covering both action branches: the action-selected item list is always
-     * non-empty, the other one is null or non-empty.
+     * Arbitrary of feasibility propose contents covering all three message categories: both action branches (the
+     * action-selected item list always non-empty, the other one null or non-empty) and the derived confirm-request
+     * category (REQUEST_FEASIBILITY_EVALUATION action with both lists null and a non-blank confirm request, which the
+     * mutual exclusion of the category requires).
      *
      * @return feasibility propose content arbitrary
      */
     static Arbitrary<FeasibilityProposeContent> feasibilityProposeContents() {
+        return Arbitraries.frequencyOf(
+                Tuple.of(2, actionDrivenContents()), Tuple.of(1, confirmRoundFeasibilityContents()));
+    }
+
+    private static Arbitrary<FeasibilityProposeContent> actionDrivenContents() {
         return Combinators.combine(
                         Arbitraries.of(NegotiationAction.values()),
                         Arbitraries.of(NON_BLANK_TEXTS),
@@ -196,7 +226,19 @@ final class PropertyArbitraries {
                         description,
                         action,
                         action == NegotiationAction.REQUEST_FEASIBILITY_EVALUATION ? selected : other,
-                        action == NegotiationAction.PROPOSE_ALTERNATIVE_ON_FAILURE ? selected : other));
+                        action == NegotiationAction.PROPOSE_ALTERNATIVE_ON_FAILURE ? selected : other,
+                        null));
+    }
+
+    private static Arbitrary<FeasibilityProposeContent> confirmRoundFeasibilityContents() {
+        return Combinators.combine(
+                        Arbitraries.of(NON_BLANK_TEXTS), Arbitraries.of(CONFIRM_REQUEST_TEXTS))
+                .as((description, confirmRequest) -> new FeasibilityProposeContent(
+                        description,
+                        NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
+                        null,
+                        null,
+                        confirmRequest));
     }
 
     /**

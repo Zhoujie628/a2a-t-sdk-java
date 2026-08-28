@@ -177,13 +177,26 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
             case INFORMATION -> new InformationProposeContent(
                     requiredNonEmptyItems(payload, "items", "information negotiation requested items"),
                     optionalString(payload, "relationship"));
-            case TARGET -> new TargetProposeContent(
-                    requiredString(payload, "target_negotiation_description"),
-                    optionalItems(payload, "intent_understanding"),
-                    optionalItems(payload, "alignment_and_clarification"),
-                    optionalItems(payload, "request_for_clarification"));
+            case TARGET -> mapTargetProposeContent(payload);
             case FEASIBILITY -> mapFeasibilityProposeContent(payload);
         };
+    }
+
+    private static NegotiationContent mapTargetProposeContent(Map<String, Object> payload) {
+        String description = requiredString(payload, "target_negotiation_description");
+        List<NegotiationItem> intentUnderstanding = optionalItems(payload, "intent_understanding");
+        List<NegotiationItem> alignmentAndClarification = optionalItems(payload, "alignment_and_clarification");
+        List<NegotiationItem> requestForClarification = optionalItems(payload, "request_for_clarification");
+        String confirmRequest = optionalString(payload, "target_confirm_request");
+        if (hasText(confirmRequest)
+                && (hasItems(intentUnderstanding) || hasItems(alignmentAndClarification) || hasItems(requestForClarification))) {
+            throw invalidInput(
+                    "Target confirm request extracted together with the intent understanding, alignment and"
+                            + " clarification or clarification request sections; a confirm-request round carries only"
+                            + " the summary and the confirm request.");
+        }
+        return new TargetProposeContent(
+                description, intentUnderstanding, alignmentAndClarification, requestForClarification, confirmRequest);
     }
 
     private static NegotiationContent mapFeasibilityProposeContent(Map<String, Object> payload) {
@@ -191,7 +204,22 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
         NegotiationAction action = feasibilityAction(payload);
         List<NegotiationItem> contentsToEvaluate = optionalItems(payload, "contents_to_evaluate");
         List<NegotiationItem> infeasibilityDetails = optionalItems(payload, "infeasibility_details_and_proposal");
-        if (action == NegotiationAction.REQUEST_FEASIBILITY_EVALUATION) {
+        String confirmRequest = optionalString(payload, "feasibility_confirm_request");
+        if (hasText(confirmRequest)) {
+            if (action != NegotiationAction.REQUEST_FEASIBILITY_EVALUATION) {
+                throw invalidInput(
+                        "Feasibility confirm request requires the REQUEST_FEASIBILITY_EVALUATION action but the"
+                                + " extracted action was "
+                                + action.name()
+                                + ".");
+            }
+            if (hasItems(contentsToEvaluate) || hasItems(infeasibilityDetails)) {
+                throw invalidInput(
+                        "Feasibility confirm request extracted together with the contents to evaluate or"
+                                + " infeasibility details and proposal sections; a confirm-request round carries only"
+                                + " the summary and the confirm request.");
+            }
+        } else if (action == NegotiationAction.REQUEST_FEASIBILITY_EVALUATION) {
             if (contentsToEvaluate == null || contentsToEvaluate.isEmpty()) {
                 throw invalidInput(
                         "Feasibility evaluation request extracted no contents to evaluate; the driven section would"
@@ -202,7 +230,8 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
                     "Alternative proposal on failure extracted no infeasibility details; the driven section would be"
                             + " empty.");
         }
-        return new FeasibilityProposeContent(description, action, contentsToEvaluate, infeasibilityDetails);
+        return new FeasibilityProposeContent(
+                description, action, contentsToEvaluate, infeasibilityDetails, confirmRequest);
     }
 
     private static NegotiationContent mapEndingContent(
@@ -295,6 +324,14 @@ final class DefaultNegotiationContentExtractor implements NegotiationContentExtr
             return text;
         }
         throw extractFailed("Field " + field + " must be a string or null but was: " + value);
+    }
+
+    private static boolean hasText(@Nullable String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private static boolean hasItems(@Nullable List<NegotiationItem> items) {
+        return items != null && !items.isEmpty();
     }
 
     private static List<NegotiationItem> requiredItems(Map<String, Object> payload, String field) {

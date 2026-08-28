@@ -84,12 +84,14 @@ final class TypedInputAssembler {
                     requiredText(data, "target_negotiation_description"),
                     optionalItems(data, "intent_understanding"),
                     optionalItems(data, "alignment_and_clarification"),
-                    optionalItems(data, "request_for_clarification"));
+                    optionalItems(data, "request_for_clarification"),
+                    optionalText(data, "target_confirm_request"));
             case FEASIBILITY -> new FeasibilityProposeContent(
                     requiredText(data, "feasibility_negotiation_description"),
                     action(data),
                     optionalItems(data, "contents_to_evaluate"),
-                    optionalItems(data, "infeasibility_details_and_proposal"));
+                    optionalItems(data, "infeasibility_details_and_proposal"),
+                    optionalText(data, "feasibility_confirm_request"));
         };
     }
 

@@ -122,6 +122,9 @@ def load_corpus(root: Path) -> tuple[list[Case], list[Scenario], dict, list[str]
             elif path.name == "schemas.json":
                 shared["schemas"] = len(data)
             continue
+        # The live family targets a real model and is not part of the offline coverage index.
+        if relative.startswith("live/"):
+            continue
         if not isinstance(data, list):
             errors.append(error(path, "corpus-file", "Corpus files must be JSON arrays of records."))
             continue

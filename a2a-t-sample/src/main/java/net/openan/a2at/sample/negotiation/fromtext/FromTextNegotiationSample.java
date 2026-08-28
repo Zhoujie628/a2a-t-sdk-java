@@ -104,6 +104,19 @@ public final class FromTextNegotiationSample {
                 text(cases, "propose"), ctx, NegotiationSampleSupport.TARGET_PROPOSE_URI);
         results.add(NegotiationSampleSupport.summary("target", "propose", propose, logSink));
 
+        // propose (round 2): the target is clarified and the executor requests confirmation to proceed
+        String proposeConfirmText = text(cases, "propose_confirm");
+        if (proposeConfirmText != null) {
+            NegotiationContext laterRoundCtx = new NegotiationContext(
+                    NegotiationSampleSupport.SESSION_ID,
+                    2,
+                    NegotiationContext.DEFAULT_MAX_ROUNDS,
+                    NegotiationPerformative.PROPOSE);
+            MetadataContent proposeConfirm = client.generateNegotiationProposePromptFromText(
+                    proposeConfirmText, laterRoundCtx, NegotiationSampleSupport.TARGET_PROPOSE_URI);
+            results.add(NegotiationSampleSupport.summary("target", "propose_confirm", proposeConfirm, logSink));
+        }
+
         // accept: confirm the negotiated target intent
         MetadataContent accept = client.generateNegotiationAcceptPromptFromText(
                 text(cases, "accept"), ctx, NegotiationSampleSupport.TARGET_ACCEPT_REJECT_URI);
@@ -134,6 +147,14 @@ public final class FromTextNegotiationSample {
         MetadataContent propose = client.generateNegotiationProposePromptFromText(
                 text(cases, "propose"), ctx, NegotiationSampleSupport.FEASIBILITY_PROPOSE_URI);
         results.add(NegotiationSampleSupport.summary("feasibility", "propose", propose, logSink));
+
+        // propose (round 2): the assessment is complete and the executor requests confirmation to proceed
+        String proposeConfirmText = text(cases, "propose_confirm");
+        if (proposeConfirmText != null) {
+            MetadataContent proposeConfirm = client.generateNegotiationProposePromptFromText(
+                    proposeConfirmText, ctx, NegotiationSampleSupport.FEASIBILITY_PROPOSE_URI);
+            results.add(NegotiationSampleSupport.summary("feasibility", "propose_confirm", proposeConfirm, logSink));
+        }
 
         // accept: feasibility confirmed
         MetadataContent accept = client.generateNegotiationAcceptPromptFromText(

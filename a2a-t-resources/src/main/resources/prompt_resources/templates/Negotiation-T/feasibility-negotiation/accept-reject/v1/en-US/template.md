@@ -10,12 +10,14 @@ Requirement:
 Requirement:
 1. If the assessment result is feasible and there are multiple optional solutions in the assessment request, explicitly specify which solution to use
 2. If the assessment result is infeasible, state the reason for rejection
-3. If the assessment result provided by the counterparty is accepted: briefly summarize the counterparty's assessment result, and state that this assessment result is accepted
-4. If the assessment result provided by the counterparty is not accepted: briefly summarize the counterparty's assessment result, and state that this assessment result is not accepted
+3. If the feasible evaluation confirmation request from the counterparty is received, and it is determined to proceed with this solution or target, reply with agreement
+4. If the assessment result provided by the counterparty is accepted: briefly summarize the counterparty's assessment result, and state that this assessment result is accepted
+5. If the assessment result provided by the counterparty is not accepted: briefly summarize the counterparty's assessment result, and state that this assessment result is not accepted
 
 Example 1 (Accept): The energy saving goal can be achieved. This negotiation is confirmed and ended.
 Example 2 (Accept): Agree to adjust the rate guarantee goal from 5Mbps down to 2Mbps. This negotiation is confirmed and ended.
 Example 3 (Accept): The current neighbor cell keepalive solution is feasible, and the impact is controllable. This negotiation is confirmed and ended.
 Example 4 (Accept): Accept the assessment result that the energy saving goal achievement is infeasible. This negotiation is confirmed and ended.
-Example 5 (Reject): The energy saving goal cannot be achieved. This negotiation is confirmed and ended.
-Example 6 (Reject): Do not accept the assessment result that the energy saving goal achievement is infeasible. This negotiation is confirmed and ended.
+Example 5 (Accept): Agree to adopt this solution. Please execute according to this solution. This negotiation is confirmed and ended.
+Example 6 (Reject): The energy saving goal cannot be achieved. This negotiation is confirmed and ended.
+Example 7 (Reject): Do not accept the assessment result that the energy saving goal achievement is infeasible. This negotiation is confirmed and ended.

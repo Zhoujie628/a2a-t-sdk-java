@@ -80,6 +80,67 @@ class NegotiationGeneratorsTest {
             提案要求。
             """;
 
+    private static final String ZH_TARGET_PROPOSE_CONFIRM_TEMPLATE =
+            """
+            ## 协商上下文
+            {{协商上下文}}（必填）
+            要求：
+            上下文要求。
+
+            ## 目标协商
+            {{目标协商概述}}（必填）
+            要求：
+            概述要求。
+
+            ## 意图理解陈述
+            {{意图理解陈述}}（选填）
+            要求：
+            意图要求。
+
+            ## 理解对齐与疑问澄清
+            {{理解对齐与疑问澄清}}（选填）
+            要求：
+            对齐要求。
+
+            ## 待澄清内容
+            {{待澄清内容}}（选填）
+            要求：
+            澄清要求。
+
+            ## 目标澄清后的确认请求
+            {{目标澄清后的确认请求}}（选填）
+            要求：
+            确认要求。
+            """;
+
+    private static final String ZH_FEASIBILITY_PROPOSE_CONFIRM_TEMPLATE =
+            """
+            ## 协商上下文
+            {{协商上下文}}（必填）
+            要求：
+            上下文要求。
+
+            ## 可行性协商
+            {{可行性协商概述}}（必填）
+            要求：
+            概述要求。
+
+            ## 待评估内容说明
+            {{待评估内容说明}}（选填）
+            要求：
+            评估要求。
+
+            ## 评估不可行时的详情和提案
+            {{评估不可行时的详情和提案}}（选填）
+            要求：
+            提案要求。
+
+            ## 评估可行时的确认请求
+            {{评估可行时的确认请求}}（选填）
+            要求：
+            确认要求。
+            """;
+
     private static final String ZH_INFO_PROPOSE_TEMPLATE =
             """
             ## 协商上下文
@@ -160,7 +221,8 @@ class NegotiationGeneratorsTest {
                 "请协助评估该节能目标能否达成。",
                 NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
                 List.of(new NegotiationItem("评估对象", "停电8小时期间核心用户的速率保障")),
-                List.of(new NegotiationItem("不应出现", "值")));
+                List.of(new NegotiationItem("不应出现", "值")),
+                null);
 
         String rendered = new FeasibilityProposeGenerator()
                 .generate(
@@ -183,7 +245,8 @@ class NegotiationGeneratorsTest {
                 List.of(new NegotiationItem("不应出现", "值")),
                 List.of(
                         new NegotiationItem("不可行原因", "蓄电池仅能支撑8小时2Mbps的保障能力"),
-                        new NegotiationItem("替代提案", "停电期间将速率保障目标下调至2Mbps")));
+                        new NegotiationItem("替代提案", "停电期间将速率保障目标下调至2Mbps")),
+                null);
 
         String rendered = new FeasibilityProposeGenerator()
                 .generate(
@@ -201,7 +264,7 @@ class NegotiationGeneratorsTest {
     @Test
     void feasibilityNullActionOrEmptyDrivenContentIsRejected() {
         FeasibilityProposeContent nullAction =
-                new FeasibilityProposeContent("描述", null, List.of(new NegotiationItem("名称", "值")), null);
+                new FeasibilityProposeContent("描述", null, List.of(new NegotiationItem("名称", "值")), null, null);
 
         NullPointerException nullActionError =
                 assertThrows(NullPointerException.class, () -> new FeasibilityProposeGenerator()
@@ -215,7 +278,8 @@ class NegotiationGeneratorsTest {
         assertTrue(nullActionError.getMessage().contains("action must not be null"));
 
         FeasibilityProposeContent emptyEvaluation =
-                new FeasibilityProposeContent("描述", NegotiationAction.REQUEST_FEASIBILITY_EVALUATION, null, null);
+                new FeasibilityProposeContent(
+                "描述", NegotiationAction.REQUEST_FEASIBILITY_EVALUATION, null, null, null);
 
         IllegalArgumentException emptyEvaluationError =
                 assertThrows(IllegalArgumentException.class, () -> new FeasibilityProposeGenerator()
@@ -231,7 +295,8 @@ class NegotiationGeneratorsTest {
                 emptyEvaluationError.getMessage());
 
         FeasibilityProposeContent emptyAlternative =
-                new FeasibilityProposeContent("描述", NegotiationAction.PROPOSE_ALTERNATIVE_ON_FAILURE, null, List.of());
+                new FeasibilityProposeContent(
+                "描述", NegotiationAction.PROPOSE_ALTERNATIVE_ON_FAILURE, null, List.of(), null);
 
         IllegalArgumentException emptyAlternativeError =
                 assertThrows(IllegalArgumentException.class, () -> new FeasibilityProposeGenerator()
@@ -247,7 +312,7 @@ class NegotiationGeneratorsTest {
                 emptyAlternativeError.getMessage());
 
         FeasibilityProposeContent blankDescription = new FeasibilityProposeContent(
-                " ", NegotiationAction.REQUEST_FEASIBILITY_EVALUATION, List.of(new NegotiationItem("名称", "值")), null);
+                " ", NegotiationAction.REQUEST_FEASIBILITY_EVALUATION, List.of(new NegotiationItem("名称", "值")), null, null);
 
         assertEquals(
                 "Feasibility negotiation description must not be blank.",
@@ -263,12 +328,124 @@ class NegotiationGeneratorsTest {
     }
 
     @Test
+    void targetConfirmRequestRendersOnlyTheSummaryAndConfirmRequestSections() {
+        TargetProposeContent content = new TargetProposeContent(
+                "任务目标澄清完成，请答复<目标澄清后的确认请求>。",
+                null,
+                null,
+                null,
+                "目标已经澄清，是否同意按照此目标继续执行？");
+
+        String rendered = new TargetProposeGenerator()
+                .generate(
+                        context(2),
+                        content,
+                        template(StandardTemplates.TARGET_NEGOTIATION_PROPOSE, ZH_TARGET_PROPOSE_CONFIRM_TEMPLATE),
+                        zhVocabulary);
+
+        assertTrue(rendered.contains("## 目标协商\n任务目标澄清完成，请答复<目标澄清后的确认请求>。"));
+        assertTrue(rendered.contains("## 目标澄清后的确认请求\n目标已经澄清，是否同意按照此目标继续执行？"));
+        assertFalse(rendered.contains("## 意图理解陈述"));
+        assertFalse(rendered.contains("## 理解对齐与疑问澄清"));
+        assertFalse(rendered.contains("## 待澄清内容"));
+        assertFalse(rendered.contains("要求："));
+
+        String renderedEn = new TargetProposeGenerator()
+                .generate(
+                        context(2),
+                        new TargetProposeContent(
+                                "The clarification of the task target has been completed. Please reply to <Target"
+                                        + " Clarification Confirmation Request>.",
+                                null,
+                                null,
+                                null,
+                                "The target has been clarified. Do you agree to proceed with this target?"),
+                        template(
+                                StandardTemplates.TARGET_NEGOTIATION_PROPOSE,
+                                """
+                                ## Target Negotiation
+                                {{target_negotiation_summary}} (required)
+                                Requirement: summary.
+
+                                ## Intent Understanding Statement
+                                {{intent_understanding_statement}} (optional)
+                                Requirement: intent.
+
+                                ## Target Clarification Confirmation Request
+                                {{target_confirm_request}} (optional)
+                                Requirement: confirm.
+                                """),
+                        enVocabulary);
+
+        assertTrue(renderedEn.contains("## Target Clarification Confirmation Request\nThe target has been clarified."
+                + " Do you agree to proceed with this target?"));
+        assertFalse(renderedEn.contains("## Intent Understanding Statement"));
+    }
+
+    @Test
+    void feasibilityConfirmRequestRendersOnlyTheSummaryAndConfirmRequestSections() {
+        FeasibilityProposeContent content = new FeasibilityProposeContent(
+                "针对调整后的速率保障目标，可行性评估已完成，结论为可行，请答复<评估可行时的确认请求>。",
+                NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
+                null,
+                null,
+                "评估目标可行，是否同意按照此目标继续执行？");
+
+        String rendered = new FeasibilityProposeGenerator()
+                .generate(
+                        context(2),
+                        content,
+                        template(StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE, ZH_FEASIBILITY_PROPOSE_CONFIRM_TEMPLATE),
+                        zhVocabulary);
+
+        assertTrue(rendered.contains(
+                "## 可行性协商\n针对调整后的速率保障目标，可行性评估已完成，结论为可行，请答复<评估可行时的确认请求>。"));
+        assertTrue(rendered.contains("## 评估可行时的确认请求\n评估目标可行，是否同意按照此目标继续执行？"));
+        assertFalse(rendered.contains("## 待评估内容说明"));
+        assertFalse(rendered.contains("## 评估不可行时的详情和提案"));
+        assertFalse(rendered.contains("要求："));
+
+        String renderedEn = new FeasibilityProposeGenerator()
+                .generate(
+                        context(2),
+                        new FeasibilityProposeContent(
+                                "Regarding the adjusted rate guarantee target, the feasibility assessment has been"
+                                        + " completed and the conclusion is feasible. Please reply to <Feasible"
+                                        + " Evaluation Confirmation Request>.",
+                                NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
+                                null,
+                                null,
+                                "The target is assessed as feasible. Do you agree to proceed with this target?"),
+                        template(
+                                StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE,
+                                """
+                                ## Feasibility Negotiation
+                                {{feasibility_negotiation_summary}} (required)
+                                Requirement: summary.
+
+                                ## Under Evaluation Description
+                                {{under_evaluation_description}} (optional)
+                                Requirement: evaluate.
+
+                                ## Feasible Evaluation Confirmation Request
+                                {{feasibility_confirm_request}} (optional)
+                                Requirement: confirm.
+                                """),
+                        enVocabulary);
+
+        assertTrue(renderedEn.contains("## Feasible Evaluation Confirmation Request\nThe target is assessed as"
+                + " feasible. Do you agree to proceed with this target?"));
+        assertFalse(renderedEn.contains("## Under Evaluation Description"));
+    }
+
+    @Test
     void targetFirstRoundRendersIntentSectionAndDropsAlignmentSection() {
         TargetProposeContent content = new TargetProposeContent(
                 "对无线节能优化任务的意图理解参见意图理解陈述，请澄清和确认。",
                 List.of(new NegotiationItem("发起方理解", "对方希望在体验无损的前提下降低节能力度")),
                 List.of(new NegotiationItem("对齐项", "不应在首轮渲染")),
-                List.of(new NegotiationItem("节能时间范围", "需要澄清")));
+                List.of(new NegotiationItem("节能时间范围", "需要澄清")),
+                null);
 
         String rendered = new TargetProposeGenerator()
                 .generate(
@@ -289,6 +466,7 @@ class NegotiationGeneratorsTest {
                 "已提供疑问澄清，请确认。",
                 List.of(new NegotiationItem("意图项", "不应在非首轮渲染")),
                 List.of(new NegotiationItem("确认结果", "节能时间范围确认为08:00~18:00")),
+                null,
                 null);
 
         String rendered = new TargetProposeGenerator()
@@ -305,7 +483,7 @@ class NegotiationGeneratorsTest {
 
     @Test
     void targetBlankDescriptionIsRejected() {
-        TargetProposeContent content = new TargetProposeContent(" ", null, null, null);
+        TargetProposeContent content = new TargetProposeContent(" ", null, null, null, null);
 
         IllegalArgumentException exception =
                 assertThrows(IllegalArgumentException.class, () -> new TargetProposeGenerator()
@@ -527,7 +705,7 @@ class NegotiationGeneratorsTest {
                 assertThrows(IllegalArgumentException.class, () -> new InformationProposeGenerator()
                         .generate(
                                 context(1),
-                                new TargetProposeContent("描述", null, null, null),
+                                new TargetProposeContent("描述", null, null, null, null),
                                 template(StandardTemplates.INFORMATION_NEGOTIATION_PROPOSE, ZH_INFO_PROPOSE_TEMPLATE),
                                 zhVocabulary));
 
@@ -545,7 +723,8 @@ class NegotiationGeneratorsTest {
                 "对无线节能优化任务的意图理解参见<意图理解陈述>，请澄清和确认。",
                 List.of(new NegotiationItem("发起方理解", "对方希望在体验无损的前提下降低节能力度")),
                 null,
-                List.of(new NegotiationItem("节能时间范围", "需要澄清")));
+                List.of(new NegotiationItem("节能时间范围", "需要澄清")),
+                null);
 
         String rendered = new TargetProposeGenerator().generate(context(1), content, loaded, zhVocabulary);
 

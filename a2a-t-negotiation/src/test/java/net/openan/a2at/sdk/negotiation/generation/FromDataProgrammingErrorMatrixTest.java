@@ -121,7 +121,7 @@ class FromDataProgrammingErrorMatrixTest {
                 new MatrixRow(
                         "target propose with blank description",
                         () -> orchestrator.generateProposeFromData(
-                                new NegotiationProposeData(context, new TargetProposeContent(" ", null, null, null)),
+                                new NegotiationProposeData(context, new TargetProposeContent(" ", null, null, null, null)),
                                 TARGET_PROPOSE_URI),
                         IllegalArgumentException.class,
                         "Target negotiation description must not be blank."),
@@ -134,6 +134,7 @@ class FromDataProgrammingErrorMatrixTest {
                                                 " ",
                                                 NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
                                                 List.of(new NegotiationItem("目标", "2Mbps")),
+                                                null,
                                                 null)),
                                 FEASIBILITY_PROPOSE_URI),
                         IllegalArgumentException.class,
@@ -144,7 +145,8 @@ class FromDataProgrammingErrorMatrixTest {
                                 new NegotiationProposeData(
                                         context,
                                         new FeasibilityProposeContent(
-                                                "请评估。", null, List.of(new NegotiationItem("目标", "2Mbps")), null)),
+                                                "请评估。", null, List.of(new NegotiationItem("目标", "2Mbps")), null,
+                                                null)),
                                 FEASIBILITY_PROPOSE_URI),
                         NullPointerException.class,
                         "Feasibility negotiation action must not be null"),
@@ -160,7 +162,7 @@ class FromDataProgrammingErrorMatrixTest {
                         "template URI type contradicts the content type",
                         () -> orchestrator.generateProposeFromData(
                                 new NegotiationProposeData(
-                                        context, new TargetProposeContent("目标协商概述。", null, null, null)),
+                                        context, new TargetProposeContent("目标协商概述。", null, null, null, null)),
                                 INFORMATION_PROPOSE_URI),
                         IllegalArgumentException.class,
                         "Negotiation type INFORMATION requires content of type InformationProposeContent"));

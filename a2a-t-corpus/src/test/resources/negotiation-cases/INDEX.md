@@ -12,11 +12,11 @@ language expansion is listed per record and totaled in the statistics.
 
 | Metric | Value |
 |---|---|
-| Case records | 151 |
-| Scenario records (steps) | 18 (87) |
-| Base records total | 169 |
-| Language-expanded units | 226 |
-| Shared LLM payloads | 32 |
+| Case records | 154 |
+| Scenario records (steps) | 20 (93) |
+| Base records total | 174 |
+| Language-expanded units | 234 |
+| Shared LLM payloads | 35 |
 | Shared schema variants | 8 |
 | Error codes covered | 7 (negotiation_content_extract_failed, negotiation_invalid_input, negotiation_llm_infrastructure_error, negotiation_rule_violation, negotiation_semantic_rejected, negotiation_slot_missing, template_not_found) |
 | Exception-only failures | 33 (IllegalArgumentException, NullPointerException) |
@@ -25,7 +25,7 @@ Priority distribution (case records; scenarios carry no priority):
 
 | Priority | Cases |
 |---|---|
-| P0 | 76 |
+| P0 | 79 |
 | P1 | 63 |
 | P2 | 12 |
 
@@ -34,7 +34,7 @@ Priority distribution (case records; scenarios carry no priority):
 | Family | Category | Corpus file | Records | Steps | Languages |
 |---|---|---|---|---|---|
 | from-text (FT) | FT-EXTRACT | from-text/extraction-failures.json | 15 | 0 | en-US, zh-CN |
-| from-text (FT) | FT-HAPPY | from-text/happy.json | 10 | 0 | en-US, zh-CN |
+| from-text (FT) | FT-HAPPY | from-text/happy.json | 13 | 0 | en-US, zh-CN |
 | from-text (FT) | FT-PROG | from-text/programming-errors.json | 8 | 0 | zh-CN |
 | from-text (FT) | FT-RETRY | from-text/retry.json | 13 | 0 | en-US, zh-CN |
 | from-text (FT) | FT-TPL | from-text/template-resolution.json | 4 | 0 | zh-CN |
@@ -50,9 +50,9 @@ Priority distribution (case records; scenarios carry no priority):
 | validate (VAL) | VAL-SEM | validate/semantic-verdicts.json | 17 | 0 | en-US, zh-CN |
 | scenarios (SC) | SC-ERR | scenarios/boundary-flows.json | 7 | 33 | zh-CN |
 | scenarios (SC) | SC-EXH | scenarios/boundary-flows.json | 2 | 11 | zh-CN |
-| scenarios (SC) | SC-FSB | scenarios/feasibility-flows.json | 3 | 15 | en-US, zh-CN |
+| scenarios (SC) | SC-FSB | scenarios/feasibility-flows.json | 4 | 18 | en-US, zh-CN |
 | scenarios (SC) | SC-INFO | scenarios/information-flows.json | 3 | 17 | en-US, zh-CN |
-| scenarios (SC) | SC-TGT | scenarios/target-flows.json | 3 | 11 | zh-CN |
+| scenarios (SC) | SC-TGT | scenarios/target-flows.json | 4 | 14 | zh-CN |
 
 ## API x category coverage
 
@@ -61,7 +61,7 @@ Cells count base records (case records plus scenario steps) per API and category
 | Category | generateProposeFromText | generateAcceptFromText | generateRejectFromText | generateAbortFromText | generateProposeFromData | generateAcceptFromData | generateRejectFromData | generateAbortFromData | validateProposePromptAndDataFilling | validateAcceptPromptAndDataFilling | validateRejectPromptAndDataFilling | validateAbortPromptAndDataFilling | generateTaskPromptFromText | generateTaskPromptFromDataWithSchema | validateTaskPromptAndDataFilling | Total |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | FT-EXTRACT | 7 | 4 | 2 | 2 | - | - | - | - | - | - | - | - | - | - | - | 15 |
-| FT-HAPPY | 3 | 3 | 3 | 1 | - | - | - | - | - | - | - | - | - | - | - | 10 |
+| FT-HAPPY | 6 | 3 | 3 | 1 | - | - | - | - | - | - | - | - | - | - | - | 13 |
 | FT-PROG | 3 | 3 | 1 | 1 | - | - | - | - | - | - | - | - | - | - | - | 8 |
 | FT-RETRY | 5 | 6 | 1 | 1 | - | - | - | - | - | - | - | - | - | - | - | 13 |
 | FT-TPL | 1 | 1 | 1 | 1 | - | - | - | - | - | - | - | - | - | - | - | 4 |
@@ -77,10 +77,10 @@ Cells count base records (case records plus scenario steps) per API and category
 | VAL-SEM | - | - | - | - | - | - | - | - | 10 | 2 | 2 | 3 | - | - | - | 17 |
 | SC-ERR | 6 | 7 | - | - | - | - | - | - | 2 | 10 | - | - | 4 | - | 4 | 33 |
 | SC-EXH | 3 | - | 2 | 1 | - | - | - | - | 2 | - | - | 1 | 1 | - | 1 | 11 |
-| SC-FSB | 4 | 2 | 2 | 1 | - | - | - | - | 2 | 2 | 1 | 1 | - | - | - | 15 |
+| SC-FSB | 6 | 3 | 2 | 1 | - | - | - | - | 2 | 2 | 1 | 1 | - | - | - | 18 |
 | SC-INFO | 4 | 2 | 1 | 1 | - | - | - | - | - | 2 | - | 1 | 2 | 1 | 3 | 17 |
-| SC-TGT | 4 | 2 | 2 | 1 | - | - | - | - | - | 2 | - | - | - | - | - | 11 |
-| **Total** | **40** | **30** | **15** | **10** | **12** | **7** | **5** | **1** | **45** | **33** | **12** | **12** | **7** | **1** | **8** | **238** |
+| SC-TGT | 6 | 3 | 2 | 1 | - | - | - | - | - | 2 | - | - | - | - | - | 14 |
+| **Total** | **47** | **32** | **15** | **10** | **12** | **7** | **5** | **1** | **45** | **33** | **12** | **12** | **7** | **1** | **8** | **247** |
 
 ## API x expected outcome coverage
 
@@ -88,8 +88,8 @@ Cells count base records per API and expectation; the `exception` column aggrega
 
 | API | `success` | `negotiation_content_extract_failed` | `negotiation_invalid_input` | `negotiation_llm_infrastructure_error` | `negotiation_rule_violation` | `negotiation_semantic_rejected` | `negotiation_slot_missing` | `template_not_found` | `exception` | Total |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `generateProposeFromText` | 25 | 7 | 3 | 1 | - | - | 1 | 1 | 2 | 40 |
-| `generateAcceptFromText` | 18 | 2 | 3 | 1 | - | - | 3 | 1 | 2 | 30 |
+| `generateProposeFromText` | 32 | 7 | 3 | 1 | - | - | 1 | 1 | 2 | 47 |
+| `generateAcceptFromText` | 20 | 2 | 3 | 1 | - | - | 3 | 1 | 2 | 32 |
 | `generateRejectFromText` | 10 | - | 1 | 1 | - | - | 1 | 1 | 1 | 15 |
 | `generateAbortFromText` | 6 | - | - | - | - | - | 2 | 1 | 1 | 10 |
 | `generateProposeFromData` | 4 | - | - | - | - | - | - | - | 8 | 12 |
@@ -140,6 +140,9 @@ Cells count base records per API and expectation; the `exception` column aggrega
 | FT-HAPPY-08 | `generateAcceptFromText` | en-US, zh-CN | P0 | success | 端口扩容可行性评估通过后从自然语言生成可行性协商接受消息，消息携带可行性结论并含 Accept 结论字面量（golden 等值与 differential 不可表达降级为包含断言，缘由同 FT-HAPPY-01，deviation 已记录） |
 | FT-HAPPY-09 | `generateRejectFromText` | en-US, zh-CN | P0 | success | 汇聚机房板卡槽位不足致端口扩容不可行时从自然语言生成可行性协商拒绝消息，消息携带不可行结论并含 Reject 结论字面量（golden 等值与 differential 不可表达降级为包含断言，缘由同 FT-HAPPY-01，deviation 已记录） |
 | FT-HAPPY-10 | `generateAbortFromText` | en-US, zh-CN | P0 | success | 投诉诊断协商轮次耗尽时从自然语言生成协商终止消息，走通用 abort 模板并含终止原因与 Abort 结论字面量（golden 等值与 differential 不可表达降级为包含断言，缘由同 FT-HAPPY-01，deviation 已记录） |
+| FT-HAPPY-11 | `generateProposeFromText` | en-US, zh-CN | P0 | success | 目标澄清完成后的确认请求轮从自然语言生成目标协商提议消息：抽取结果 target_confirm_request 非空且三个互斥板块全空，渲染仅含目标协商概述与目标澄清后的确认请求两个板块、携带固定确认措辞（harness 的 llm 脚本与 input.data 不随语言展开，en-US 渲染为英文模板骨架+中文数据，deviation 已记录） |
+| FT-HAPPY-12 | `generateProposeFromText` | en-US, zh-CN | P0 | success | 目标达成类可行性确认请求轮从自然语言生成可行性协商提议消息：抽取结果 feasibility_confirm_request 非空、action 为 REQUEST_FEASIBILITY_EVALUATION 且两个互斥板块全空，渲染仅含可行性协商概述与评估可行时的确认请求两个板块、携带目标可行固定措辞（en-US 渲染为英文模板骨架+中文数据，deviation 已记录） |
+| FT-HAPPY-13 | `generateProposeFromText` | en-US, zh-CN | P0 | success | 方案可行性类确认请求轮从自然语言生成可行性协商提议消息：抽取结果 feasibility_confirm_request 非空且互斥板块全空，渲染携带方案可行固定措辞，验证固定措辞在目标/方案两条中的二选一（en-US 渲染为英文模板骨架+中文数据，deviation 已记录） |
 
 ### FT-PROG -- from-text/programming-errors.json
 
@@ -360,6 +363,7 @@ Cells count base records per API and expectation; the `exception` column aggrega
 | SC-FSB-01 | `generateProposeFromText`, `validateProposePromptAndDataFilling`, `generateAcceptFromText`, `validateAcceptPromptAndDataFilling` | en-US, zh-CN | - | accept, rounds=1, distinct-messages | - | 端口扩容可行性协商单轮闭环（双语）：工作台就接入端口带宽扩容能否在割接窗口内完成发起可行性评估请求，OMC 评估通过后生成接受消息，工作台校验确认达成一致 |
 | SC-FSB-02 | `generateProposeFromText`, `generateRejectFromText`, `validateRejectPromptAndDataFilling`, `validateProposePromptAndDataFilling`, `generateAcceptFromText`, `validateAcceptPromptAndDataFilling` | zh-CN | - | accept, rounds=2, distinct-messages | - | 端口扩容可行性协商两轮演进：round 1 因汇聚机房板卡槽位不足评估不可行并拒绝，工作台于 round 2 改提更换高容量板卡并拆分割接窗口的替代方案，OMC 评估通过并接受 |
 | SC-FSB-03 | `generateProposeFromText`, `generateRejectFromText`, `generateAbortFromText`, `validateAbortPromptAndDataFilling` | zh-CN | - | abort, rounds=2, distinct-messages | - | 端口扩容可行性协商中止：round 1 评估因汇聚机房板卡槽位不足不可行且双方无法推进，round 2 生成终止消息并经校验确认协商提前终止 |
+| SC-FSB-04 | `generateProposeFromText`, `generateAcceptFromText` | zh-CN | - | accept, rounds=2, distinct-messages | - | 端口扩容可行性协商确认请求闭环：工作台 round 1 发起扩容评估请求，OMC 评估可行后于 round 2 发出评估可行并请求确认的提议，工作台同意后生成接受消息完成闭环 |
 
 ### SC-INFO -- scenarios/information-flows.json
 
@@ -376,4 +380,5 @@ Cells count base records per API and expectation; the `exception` column aggrega
 | SC-TGT-01 | `generateProposeFromText`, `generateAcceptFromText`, `validateAcceptPromptAndDataFilling` | zh-CN | - | accept, rounds=2, distinct-messages | - | 修复目标协商单轮闭环：工作台就专线质差修复目标发起目标协商提议，OMC 确认最终意图生成接受消息，工作台校验提取时延目标与完成时限参数 |
 | SC-TGT-02 | `generateProposeFromText`, `generateRejectFromText`, `generateAcceptFromText`, `validateAcceptPromptAndDataFilling` | zh-CN | - | accept, rounds=2, distinct-messages | - | 修复目标协商两轮演进：首轮因光缆割接窗口尚未确认被拒，工作台对齐时延目标后于第2轮重新提议，OMC 确认接受且参数校验提取成功 |
 | SC-TGT-03 | `generateProposeFromText`, `generateRejectFromText`, `generateAbortFromText` | zh-CN | - | abort, rounds=2, distinct-messages | - | 修复目标协商中断：光缆割接窗口持续无法确认，修复目标在轮次预算内无法完成澄清，于第2轮生成终止消息结束协商 |
+| SC-TGT-04 | `generateProposeFromText`, `generateAcceptFromText` | zh-CN | - | accept, rounds=2, distinct-messages | - | 修复目标协商确认请求闭环：工作台 round 1 发起意图理解澄清提议，OMC 完成澄清对齐后于 round 2 发出目标已澄清并请求确认的提议，工作台同意后生成接受消息完成闭环 |
 

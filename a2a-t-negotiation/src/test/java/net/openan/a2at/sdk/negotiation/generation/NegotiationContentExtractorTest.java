@@ -98,6 +98,63 @@ class NegotiationContentExtractorTest {
     }
 
     @Test
+    void extractsTargetProposeConfirmRequestContent() {
+        NegotiationContent content = new DefaultNegotiationContentExtractor(new RecordingClient(
+                        "{\"target_negotiation_description\":\"任务目标澄清完成，请答复<目标澄清后的确认请求>。\","
+                                + "\"intent_understanding\":null,"
+                                + "\"alignment_and_clarification\":null,"
+                                + "\"request_for_clarification\":null,"
+                                + "\"target_confirm_request\":\"目标已经澄清，是否同意按照此目标继续执行？\"}"))
+                .extract("目标已经澄清，请确认。", reference(NegotiationType.TARGET, NegotiationPerformative.PROPOSE, "zh-CN"));
+
+        TargetProposeContent proposeContent = assertInstanceOf(TargetProposeContent.class, content);
+        assertEquals("任务目标澄清完成，请答复<目标澄清后的确认请求>。", proposeContent.targetNegotiationDescription());
+        assertEquals("目标已经澄清，是否同意按照此目标继续执行？", proposeContent.targetConfirmRequest());
+        assertNull(proposeContent.intentUnderstanding());
+        assertNull(proposeContent.alignmentAndClarification());
+        assertNull(proposeContent.requestForClarification());
+    }
+
+    @Test
+    void extractsFeasibilityProposeConfirmRequestContent() {
+        NegotiationContent content = new DefaultNegotiationContentExtractor(
+                        new RecordingClient(
+                                "{\"feasibility_negotiation_description\":\"针对调整后的速率保障目标，可行性评估已完成，结论为可行，请答复<评估可行时的确认请求>。\","
+                                        + "\"action\":\"REQUEST_FEASIBILITY_EVALUATION\","
+                                        + "\"contents_to_evaluate\":null,"
+                                        + "\"infeasibility_details_and_proposal\":null,"
+                                        + "\"feasibility_confirm_request\":\"评估目标可行，是否同意按照此目标继续执行？\"}"))
+                .extract("评估目标可行，请确认。", reference(NegotiationType.FEASIBILITY, NegotiationPerformative.PROPOSE, "zh-CN"));
+
+        FeasibilityProposeContent proposeContent = assertInstanceOf(FeasibilityProposeContent.class, content);
+        assertEquals(NegotiationAction.REQUEST_FEASIBILITY_EVALUATION, proposeContent.action());
+        assertEquals("评估目标可行，是否同意按照此目标继续执行？", proposeContent.feasibilityConfirmRequest());
+        assertNull(proposeContent.contentsToEvaluate());
+        assertNull(proposeContent.infeasibilityDetailsAndProposal());
+    }
+
+    @Test
+    void passesConfirmRequestWordingThroughLeniently() {
+        TargetProposeContent target = assertInstanceOf(
+                TargetProposeContent.class,
+                new DefaultNegotiationContentExtractor(new RecordingClient(
+                                "{\"target_negotiation_description\":\"描述\",\"intent_understanding\":null,"
+                                        + "\"alignment_and_clarification\":null,\"request_for_clarification\":null,"
+                                        + "\"target_confirm_request\":\"请确认按此目标推进\"}"))
+                        .extract("文本", reference(NegotiationType.TARGET, NegotiationPerformative.PROPOSE, "zh-CN")));
+        assertEquals("请确认按此目标推进", target.targetConfirmRequest());
+
+        FeasibilityProposeContent feasibility = assertInstanceOf(
+                FeasibilityProposeContent.class,
+                new DefaultNegotiationContentExtractor(new RecordingClient(
+                                "{\"feasibility_negotiation_description\":\"描述\",\"action\":\"REQUEST_FEASIBILITY_EVALUATION\","
+                                        + "\"contents_to_evaluate\":null,\"infeasibility_details_and_proposal\":null,"
+                                        + "\"feasibility_confirm_request\":\"方案可行，望确认\"}"))
+                        .extract("文本", reference(NegotiationType.FEASIBILITY, NegotiationPerformative.PROPOSE, "zh-CN")));
+        assertEquals("方案可行，望确认", feasibility.feasibilityConfirmRequest());
+    }
+
+    @Test
     void extractsEndingContentForEveryTypeAndBothPhases() {
         NegotiationContent infoAccept = new DefaultNegotiationContentExtractor(new RecordingClient(
                         "{\"conclusion\":\"Accept\",\"items\":[{\"name\":\"故障发生时间\",\"value\":\"2026-08-19 10:30\"}]}"))

@@ -37,7 +37,7 @@ class NegotiationGeneratorRegistryTest {
                 registry.resolve(
                         NegotiationType.TARGET,
                         NegotiationPerformative.PROPOSE,
-                        new TargetProposeContent("描述", null, null, null)));
+                        new TargetProposeContent("描述", null, null, null, null)));
         assertInstanceOf(
                 FeasibilityProposeGenerator.class,
                 registry.resolve(
@@ -47,6 +47,7 @@ class NegotiationGeneratorRegistryTest {
                                 "描述",
                                 NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
                                 List.of(new NegotiationItem("名称", "值")),
+                                null,
                                 null)));
         assertInstanceOf(
                 InformationEndingGenerator.class,
@@ -116,7 +117,7 @@ class NegotiationGeneratorRegistryTest {
                 () -> registry.resolve(
                         NegotiationType.INFORMATION,
                         NegotiationPerformative.PROPOSE,
-                        new TargetProposeContent("描述", null, null, null)));
+                        new TargetProposeContent("描述", null, null, null, null)));
 
         assertTrue(exception
                 .getMessage()
