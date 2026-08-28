@@ -331,5 +331,107 @@
       },
       "contracts": ["conclusionLiteralPresent", "metadataTripleShape"]
     }
+  },
+  {
+    "id": "FT-HAPPY-11",
+    "api": "generateProposeFromText",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "target", "propose", "confirm-request"],
+    "summary": "目标澄清完成后的确认请求轮从自然语言生成目标协商提议消息：抽取结果 target_confirm_request 非空且三个互斥板块全空，渲染仅含目标协商概述与目标澄清后的确认请求两个板块、携带固定确认措辞（harness 的 llm 脚本与 input.data 不随语言展开，en-US 渲染为英文模板骨架+中文数据，deviation 已记录）",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/target-negotiation/propose/v1",
+    "input": {
+      "text": {
+        "zh-CN": "任务目标澄清完成：在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内，高峰时段丢包率不高于1%。目标已经澄清，是否同意按照此目标继续执行？",
+        "en-US": "The clarification of the task target has been completed: restore the average latency of the Shenzhen-to-Guangzhou dedicated line to within 20ms before 2026-05-15, with a peak-hour packet loss rate no higher than 1%. The target has been clarified. Do you agree to proceed with this target?"
+      },
+      "data": {
+        "target_negotiation_description": "任务目标澄清完成，请答复<目标澄清后的确认请求>。",
+        "intent_understanding": null,
+        "alignment_and_clarification": null,
+        "request_for_clarification": null,
+        "target_confirm_request": "目标已经澄清，是否同意按照此目标继续执行？"
+      }
+    },
+    "llm": { "script": [ { "$ref": "responses/extract.target.propose.confirm" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "promptTextContains": ["目标已经澄清，是否同意按照此目标继续执行？"],
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/target-negotiation/propose/v1",
+        "contextEcho": true
+      },
+      "contracts": ["metadataTripleShape"]
+    }
+  },
+  {
+    "id": "FT-HAPPY-12",
+    "api": "generateProposeFromText",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "feasibility", "propose", "confirm-request", "goal"],
+    "summary": "目标达成类可行性确认请求轮从自然语言生成可行性协商提议消息：抽取结果 feasibility_confirm_request 非空、action 为 REQUEST_FEASIBILITY_EVALUATION 且两个互斥板块全空，渲染仅含可行性协商概述与评估可行时的确认请求两个板块、携带目标可行固定措辞（en-US 渲染为英文模板骨架+中文数据，deviation 已记录）",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+    "input": {
+      "text": {
+        "zh-CN": "针对调整后的速率保障目标（由5Mbps下调至2Mbps），可行性评估已完成，结论为可行。评估目标可行，是否同意按照此目标继续执行？",
+        "en-US": "Regarding the adjusted rate guarantee target (lowered from 5Mbps to 2Mbps), the feasibility assessment has been completed and the conclusion is feasible. The target is assessed as feasible. Do you agree to proceed with this target?"
+      },
+      "data": {
+        "feasibility_negotiation_description": "针对调整后的速率保障目标，可行性评估已完成，结论为可行，请答复<评估可行时的确认请求>。",
+        "action": "REQUEST_FEASIBILITY_EVALUATION",
+        "contents_to_evaluate": null,
+        "infeasibility_details_and_proposal": null,
+        "feasibility_confirm_request": "评估目标可行，是否同意按照此目标继续执行？"
+      }
+    },
+    "llm": { "script": [ { "$ref": "responses/extract.feasibility.propose.confirm.goal" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "promptTextContains": ["评估目标可行，是否同意按照此目标继续执行？"],
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/feasibility-negotiation/propose/v1",
+        "contextEcho": true
+      },
+      "contracts": ["metadataTripleShape"]
+    }
+  },
+  {
+    "id": "FT-HAPPY-13",
+    "api": "generateProposeFromText",
+    "languages": ["zh-CN", "en-US"],
+    "priority": "P0",
+    "tags": ["happy", "feasibility", "propose", "confirm-request", "solution"],
+    "summary": "方案可行性类确认请求轮从自然语言生成可行性协商提议消息：抽取结果 feasibility_confirm_request 非空且互斥板块全空，渲染携带方案可行固定措辞，验证固定措辞在目标/方案两条中的二选一（en-US 渲染为英文模板骨架+中文数据，deviation 已记录）",
+    "context": { "id": "3dbc13b5-bd57-4c2b-b503-24e381b6c8d3", "round": 2, "maxRounds": 5 },
+    "templateUri": "Negotiation-T/feasibility-negotiation/propose/v1",
+    "input": {
+      "text": {
+        "zh-CN": "故障订阅任务履行过程中自诊断识别到的保活方案（心跳探测周期调整为60秒）评估已完成，结论为可行。评估方案可行，是否同意按照此方案继续执行？",
+        "en-US": "The assessment of the keepalive solution identified by self-diagnosis during the fault subscription task (heartbeat probing interval adjusted to 60 seconds) has been completed and the conclusion is feasible. The solution is assessed as feasible. Do you agree to proceed with this solution?"
+      },
+      "data": {
+        "feasibility_negotiation_description": "故障订阅任务履行过程中自诊断识别到的保活方案评估已完成，结论为可行，请答复<评估可行时的确认请求>。",
+        "action": "REQUEST_FEASIBILITY_EVALUATION",
+        "contents_to_evaluate": null,
+        "infeasibility_details_and_proposal": null,
+        "feasibility_confirm_request": "评估方案可行，是否同意按照此方案继续执行？"
+      }
+    },
+    "llm": { "script": [ { "$ref": "responses/extract.feasibility.propose.confirm.solution" } ] },
+    "expect": {
+      "outcome": "success",
+      "llmCalls": 1,
+      "promptTextContains": ["评估方案可行，是否同意按照此方案继续执行？"],
+      "metadata": {
+        "templateUriEcho": "Negotiation-T/feasibility-negotiation/propose/v1",
+        "contextEcho": true
+      },
+      "contracts": ["metadataTripleShape"]
+    }
   }
 ]

@@ -21,12 +21,15 @@
 1. 时间区间合法性：报文中出现的时间区间（如保障时段、生效时间段）必须可解析且区间顺序合法（开始时间不晚于结束时间）。
 2. 与既有约束不冲突：报文中的目标或承诺不得与报文内声明的既有约束（如停电时长保障、既有套餐限制、已确认的历史协商结论）直接冲突。
 3. 结论与内容匹配：结论为 Accept 的报文必须携带明确的确认内容（确认后的信息、意图或结论表述）；结论为 Reject 的报文必须携带明确的失败或拒绝原因。
+   目标协商结论报文若为回应对方目标澄清后的确认请求且同意继续执行，其结果内容回复同意（如“同意按照此目标继续执行”）即为合法的确认内容；可行性协商结论报文若为回应对方评估可行时的确认请求且同意继续执行，其结果内容回复同意（如“同意按照此目标（方案）继续执行”）亦为合法的确认内容。
    对信息协商 Reject，结果内容必须按每个无法提供的请求信息项逐项说明，使用“信息项名称：无法提供的原因”表达；仅提供一个汇总的“拒绝原因”而未覆盖请求项时，判定结果内容不完整。
 4. 字段取值自洽：同一报文内各字段取值不得自相矛盾（例如结论为 Accept 而正文表述为拒绝；同一数值目标前后不一致）。
 5. 结构语义：
    - 类型化协商模板的结论字段取值只能为 Accept 或 Reject；类型化模板的报文中出现 Abort 结论记结构语义错误。common abort 模板的报文必须携带 Abort 结论，并存在说明协商终止原因的终止原因板块。
    - 结论阶段（accept-reject）报文必须存在结果内容板块（信息协商结果内容 / 目标协商结果内容 / 可行性评估结果确认）。
-   - 可行性协商发起报文的两个条件板块（待评估内容说明 与 评估不可行时的详情和提案）互斥，不得同时出现。
+   - 可行性协商发起报文的三个条件板块（待评估内容说明、评估不可行时的详情和提案、评估可行时的确认请求）互斥，至多出现一个，且须与概述板块声明的消息类别对应：发起可行性评估对应待评估内容说明，评估不可行并提案对应评估不可行时的详情和提案，评估可行并请求确认对应评估可行时的确认请求。
+   - 目标协商发起报文中，目标澄清后的确认请求板块与意图理解陈述、理解对齐与疑问澄清、待澄清内容板块互斥：出现目标澄清后的确认请求时，其余板块不得出现。
+   - 确认请求板块的内容应为其固定措辞：目标澄清后的确认请求为“目标已经澄清，是否同意按照此目标继续执行？”；评估可行时的确认请求按评估类别二选一——目标达成为“评估目标可行，是否同意按照此目标继续执行？”，方案可行性为“评估方案可行，是否同意按照此方案继续执行？”。措辞存在轻微差异但语义等同时可容忍，由语义判断把握，不做精确匹配要求；仅当内容明显偏离确认请求语义（如夹带新疑问或评估过程细节）时记语义错误。
 6. 模板一致性：报文板块蕴含的协商类型与阶段，必须与用户提示词中声明的模板标识（template_uri）及其声明的协商类型一致。类型不一致记类型一致性错误；阶段不一致（如声明的模板标识为发起阶段而报文为结论报文，或反之）记阶段一致性错误。声明的模板为 common abort 模板时，报文必须是协商终止报文：携带 Abort 结论且不含类型化协商板块；协商终止报文声明为类型化模板，或类型化报文声明为 common abort 模板，均记模板一致性错误。
 
 ## 参数提取任务
@@ -46,11 +49,13 @@
 - section.target_intent：意图理解陈述（Intent Understanding Statement）
 - section.target_alignment：理解对齐与疑问澄清（Understanding Alignment and Clarification）
 - section.target_clarification：待澄清内容（Content to Clarify）
+- section.target_confirm_request：目标澄清后的确认请求（Target Clarification Confirmation Request）
 - section.target_conclusion：目标协商结果（Target Negotiation Result）
 - section.target_result_content：目标协商结果内容（Target Negotiation Result Content）
 - section.feasibility：可行性协商（Feasibility Negotiation）
 - section.feasibility_evaluate：待评估内容说明（Under Evaluation Description）
 - section.feasibility_infeasible：评估不可行时的详情和提案（Infeasible Evaluation Details and Proposal）
+- section.feasibility_confirm_request：评估可行时的确认请求（Feasible Evaluation Confirmation Request）
 - section.feasibility_conclusion：可行性协商结果（Feasibility Negotiation Result）
 - section.feasibility_confirm：可行性评估结果确认（Feasibility Assessment Result Confirmation）
 

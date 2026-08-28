@@ -116,6 +116,58 @@ class NegotiationErrorCodeUsageMatrixTest {
                         NegotiationGenerationException.class,
                         A2ATErrorCodes.NEGOTIATION_INVALID_INPUT),
                 row(
+                        "generation_target_confirm_request_round_with_conditional_sections_is_invalid_input",
+                        "{\"target_negotiation_description\":\"目标已经澄清，请确认。\",\"intent_understanding\":"
+                                + "[{\"name\":\"发起方理解\",\"value\":\"对方希望降低节能力度\"}],"
+                                + "\"target_confirm_request\":\"目标已经澄清，是否同意按照此目标继续执行？\"}",
+                        1,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .maxAttempts(3)
+                                .build()
+                                .generateProposeFromText(
+                                        "目标已经澄清，请确认。",
+                                        new NegotiationContext(UUID, 3, 5, NegotiationPerformative.PROPOSE),
+                                        StandardTemplates.TARGET_NEGOTIATION_PROPOSE),
+                        NegotiationGenerationException.class,
+                        A2ATErrorCodes.NEGOTIATION_INVALID_INPUT),
+                row(
+                        "generation_feasibility_confirm_request_round_with_infeasibility_details_is_invalid_input",
+                        "{\"feasibility_negotiation_description\":\"评估完成，结论可行，请确认。\",\"action\":"
+                                + "\"REQUEST_FEASIBILITY_EVALUATION\",\"infeasibility_details_and_proposal\":"
+                                + "[{\"name\":\"不应出现\",\"value\":\"值\"}],\"feasibility_confirm_request\":"
+                                + "\"目标评估为可行，是否同意按照此目标继续执行？\"}",
+                        1,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .maxAttempts(3)
+                                .build()
+                                .generateProposeFromText(
+                                        "评估完成，结论可行，请确认。",
+                                        new NegotiationContext(UUID, 3, 5, NegotiationPerformative.PROPOSE),
+                                        StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE),
+                        NegotiationGenerationException.class,
+                        A2ATErrorCodes.NEGOTIATION_INVALID_INPUT),
+                row(
+                        "generation_feasibility_confirm_request_round_with_alternative_action_is_invalid_input",
+                        "{\"feasibility_negotiation_description\":\"评估完成，结论可行，请确认。\",\"action\":"
+                                + "\"PROPOSE_ALTERNATIVE_ON_FAILURE\",\"feasibility_confirm_request\":"
+                                + "\"目标评估为可行，是否同意按照此目标继续执行？\"}",
+                        1,
+                        llm -> () -> NegotiationGenerationOrchestratorBuilder.builder()
+                                .language("zh-CN")
+                                .llmClient(llm)
+                                .maxAttempts(3)
+                                .build()
+                                .generateProposeFromText(
+                                        "评估完成，结论可行，请确认。",
+                                        new NegotiationContext(UUID, 3, 5, NegotiationPerformative.PROPOSE),
+                                        StandardTemplates.FEASIBILITY_NEGOTIATION_PROPOSE),
+                        NegotiationGenerationException.class,
+                        A2ATErrorCodes.NEGOTIATION_INVALID_INPUT),
+                row(
                         "generation_llm_infrastructure_failure_is_retryable",
                         null,
                         2,

@@ -98,7 +98,9 @@ public final class NegotiationContentService {
      * @param templateUri template URI whose performative segment must be {@code propose}
      * @return generated message carrying the template URI, the rendered message text and the negotiation extension URI
      * @throws NullPointerException if the data, its context or the template URI is null
-     * @throws IllegalArgumentException if the template URI's performative or type contradicts the method or the content type
+     * @throws IllegalArgumentException if the template URI's performative or type contradicts the method or the content
+     *     type, or the content combines a non-blank confirm request with conditional sections (target: the three
+     *     clarification lists; feasibility: either conditional list or the alternative action)
      * @throws NegotiationGenerationException with the code {@code template_not_found} or
      *     {@code negotiation_slot_missing} when loading or rendering the template fails
      */
@@ -170,8 +172,9 @@ public final class NegotiationContentService {
      * @throws NegotiationGenerationException with the code {@code template_not_found},
      *     {@code negotiation_content_extract_failed} or {@code negotiation_llm_infrastructure_error} when loading or
      *     extracting fails, {@code negotiation_slot_missing} when the extracted content misses a required field, or
-     *     {@code negotiation_invalid_input} when the text is blank or the extracted content contradicts the performative,
-     *     or {@code input_text_too_long} when the text exceeds the configured maximum length
+     *     {@code negotiation_invalid_input} when the text is blank, the extracted content contradicts the performative
+     *     or the extracted confirm request is combined with conditional sections or the wrong feasibility action, or
+     *     {@code input_text_too_long} when the text exceeds the configured maximum length
      */
     public MetadataContent generateProposeFromText(
             String text, @NonNull NegotiationContext context, @NonNull TemplateUri templateUri) {

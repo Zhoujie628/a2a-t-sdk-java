@@ -32,11 +32,13 @@ class VocabularyTest {
             "section.target_intent",
             "section.target_alignment",
             "section.target_clarification",
+            "section.target_confirm_request",
             "section.target_conclusion",
             "section.target_result_content",
             "section.feasibility",
             "section.feasibility_evaluate",
             "section.feasibility_infeasible",
+            "section.feasibility_confirm_request",
             "section.feasibility_conclusion",
             "section.feasibility_confirm",
             "slot.termination_reason",
@@ -48,10 +50,12 @@ class VocabularyTest {
             "slot.target_intent",
             "slot.target_alignment",
             "slot.target_clarification",
+            "slot.target_confirm_request",
             "slot.target_conclusion",
             "slot.target_result_content",
             "slot.feasibility_evaluate",
             "slot.feasibility_infeasible",
+            "slot.feasibility_confirm_request",
             "slot.feasibility_conclusion",
             "slot.feasibility_confirm",
             "label.relationship",
@@ -66,8 +70,8 @@ class VocabularyTest {
         assertEquals(CANONICAL_KEYS, enUs.canonicalKeys());
         assertEquals(Set.copyOf(Vocabulary.CANONICAL_KEYS), zhCn.canonicalKeys());
         assertEquals(new TreeSet<>(zhCn.canonicalKeys()), new TreeSet<>(enUs.canonicalKeys()));
-        assertEquals(33, zhCn.canonicalKeys().size());
-        assertEquals(33, Vocabulary.CANONICAL_KEYS.size());
+        assertEquals(37, zhCn.canonicalKeys().size());
+        assertEquals(37, Vocabulary.CANONICAL_KEYS.size());
     }
 
     @Test
@@ -113,6 +117,21 @@ class VocabularyTest {
         assertEquals("Target Negotiation Result Content", enUs.get("section.target_result_content"));
         assertEquals("可行性评估结果确认", zhCn.get("section.feasibility_confirm"));
         assertEquals("Feasibility Assessment Result Confirmation", enUs.get("section.feasibility_confirm"));
+    }
+
+    @Test
+    void confirmRequestSectionAndSlotKeysMatchTheNewTemplates() {
+        Vocabulary zhCn = Vocabulary.forLanguage("zh-CN");
+        Vocabulary enUs = Vocabulary.forLanguage("en-US");
+
+        assertEquals("目标澄清后的确认请求", zhCn.get("section.target_confirm_request"));
+        assertEquals("Target Clarification Confirmation Request", enUs.get("section.target_confirm_request"));
+        assertEquals("目标澄清后的确认请求", zhCn.get("slot.target_confirm_request"));
+        assertEquals("target_confirm_request", enUs.get("slot.target_confirm_request"));
+        assertEquals("评估可行时的确认请求", zhCn.get("section.feasibility_confirm_request"));
+        assertEquals("Feasible Evaluation Confirmation Request", enUs.get("section.feasibility_confirm_request"));
+        assertEquals("评估可行时的确认请求", zhCn.get("slot.feasibility_confirm_request"));
+        assertEquals("feasibility_confirm_request", enUs.get("slot.feasibility_confirm_request"));
     }
 
     @Test

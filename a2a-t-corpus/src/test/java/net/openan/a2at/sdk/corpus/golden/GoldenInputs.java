@@ -39,7 +39,8 @@ import net.openan.a2at.sdk.negotiation.resources.NegotiationReference;
  * <p>The fixture data deliberately exercises the known rendering pitfalls: a non-null relationship with an appended
  * line and a null-value item (information propose), the round-driven conditional sections with a non-empty
  * clarification list (target propose, round 1), the action-driven conditional section (feasibility propose, evaluation
- * request action), the accept and reject conclusion literals, the feasibility summary rendered into the
+ * request action), the confirm-request category rendering only the summary and the fixed confirm request (target and
+ * feasibility propose confirm), the accept and reject conclusion literals, the feasibility summary rendered into the
  * vocabulary-exception slot of the feasibility result confirmation section, and the common abort template rendering
  * the termination reason.
  */
@@ -141,7 +142,8 @@ public final class GoldenInputs {
                                             "is the average latency target within 20ms or within 50ms"),
                                     new NegotiationItem(
                                             "completion deadline",
-                                            "is the repair deadline 48 hours or 72 hours")));
+                                            "is the repair deadline 48 hours or 72 hours")),
+                            null);
                 }
                 return new TargetProposeContent(
                         "专线质差投诉的修复目标协商意图见<意图理解陈述>；时延目标与完成时限仍存在待澄清问题，见<待澄清内容>；请澄清并确认。",
@@ -152,7 +154,8 @@ public final class GoldenInputs {
                         null,
                         List.of(
                                 new NegotiationItem("时延目标", "平均时延目标是恢复至20ms以内还是50ms以内"),
-                                new NegotiationItem("完成时限", "修复完成时限是48小时内还是72小时内")));
+                                new NegotiationItem("完成时限", "修复完成时限是48小时内还是72小时内")),
+                        null);
             }
         },
 
@@ -176,6 +179,7 @@ public final class GoldenInputs {
                                             "existing constraint",
                                             "the cutover window is limited to 02:00-06:00 on 2026-05-30 with"
                                                     + " service interruption no longer than 30 minutes")),
+                            null,
                             null);
                 }
                 return new FeasibilityProposeContent(
@@ -185,7 +189,62 @@ public final class GoldenInputs {
                                 new NegotiationItem("扩容方案", "接入端口带宽由100Mbps扩容至1000Mbps"),
                                 new NegotiationItem(
                                         "既有约束", "割接窗口仅限2026年5月30日02:00-06:00，业务中断不超过30分钟")),
+                        null,
                         null);
+            }
+        },
+
+        /**
+         * Target propose confirm-request fixture of a later round: the clarification is complete, so the message
+         * carries only the summary and the fixed confirm request of the "target clarified and requesting
+         * confirmation" category.
+         */
+        TARGET_PROPOSE_CONFIRM(NegotiationPerformative.PROPOSE, "target-negotiation", "target_propose_confirm") {
+            @Override
+            public NegotiationContent content(String language) {
+                if (GoldenInputs.EN_US.equals(language)) {
+                    return new TargetProposeContent(
+                            "The clarification of the task target has been completed. Please reply to <Target"
+                                    + " Clarification Confirmation Request>.",
+                            null,
+                            null,
+                            null,
+                            "The target has been clarified. Do you agree to proceed with this target?");
+                }
+                return new TargetProposeContent(
+                        "任务目标澄清完成，请答复<目标澄清后的确认请求>。",
+                        null,
+                        null,
+                        null,
+                        "目标已经澄清，是否同意按照此目标继续执行？");
+            }
+        },
+
+        /**
+         * Feasibility propose confirm-request fixture of the "assessed as feasible and requesting confirmation"
+         * category: the assessment is complete, so the message carries only the summary and the fixed confirm
+         * request of the goal-achievement wording.
+         */
+        FEASIBILITY_PROPOSE_CONFIRM(
+                NegotiationPerformative.PROPOSE, "feasibility-negotiation", "feasibility_propose_confirm") {
+            @Override
+            public NegotiationContent content(String language) {
+                if (GoldenInputs.EN_US.equals(language)) {
+                    return new FeasibilityProposeContent(
+                            "Regarding the adjusted rate guarantee target, the feasibility assessment has been"
+                                    + " completed and the conclusion is feasible. Please reply to <Feasible Evaluation"
+                                    + " Confirmation Request>.",
+                            NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
+                            null,
+                            null,
+                            "The target is assessed as feasible. Do you agree to proceed with this target?");
+                }
+                return new FeasibilityProposeContent(
+                        "针对调整后的速率保障目标，可行性评估已完成，结论为可行，请答复<评估可行时的确认请求>。",
+                        NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
+                        null,
+                        null,
+                        "评估目标可行，是否同意按照此目标继续执行？");
             }
         },
 

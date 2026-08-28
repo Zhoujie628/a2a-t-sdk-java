@@ -81,6 +81,7 @@ final class NegotiationJsonSchemaBuilder {
         properties.put("intent_understanding", nullableItemArraySchema());
         properties.put("alignment_and_clarification", nullableItemArraySchema());
         properties.put("request_for_clarification", nullableItemArraySchema());
+        properties.put("target_confirm_request", nullableStringSchema());
         return objectSchema(properties, List.of("target_negotiation_description"));
     }
 
@@ -101,6 +102,7 @@ final class NegotiationJsonSchemaBuilder {
         properties.put("action", action);
         properties.put("contents_to_evaluate", nullableItemArraySchema());
         properties.put("infeasibility_details_and_proposal", nullableItemArraySchema());
+        properties.put("feasibility_confirm_request", nullableStringSchema());
         return objectSchema(properties, List.of("feasibility_negotiation_description", "action"));
     }
 

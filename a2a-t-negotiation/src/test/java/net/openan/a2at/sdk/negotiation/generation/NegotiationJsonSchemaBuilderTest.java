@@ -66,10 +66,12 @@ class NegotiationJsonSchemaBuilderTest {
                         "target_negotiation_description",
                         "intent_understanding",
                         "alignment_and_clarification",
-                        "request_for_clarification"),
+                        "request_for_clarification",
+                        "target_confirm_request"),
                 List.copyOf(properties.keySet()));
         assertEquals(List.of("target_negotiation_description"), schema.get("required"));
         assertEquals(List.of("array", "null"), ((Map<?, ?>) properties.get("intent_understanding")).get("type"));
+        assertEquals(List.of("string", "null"), ((Map<?, ?>) properties.get("target_confirm_request")).get("type"));
     }
 
     @Test
@@ -94,11 +96,13 @@ class NegotiationJsonSchemaBuilderTest {
                         "feasibility_negotiation_description",
                         "action",
                         "contents_to_evaluate",
-                        "infeasibility_details_and_proposal"),
+                        "infeasibility_details_and_proposal",
+                        "feasibility_confirm_request"),
                 List.copyOf(properties.keySet()));
         assertEquals(List.of("feasibility_negotiation_description", "action"), schema.get("required"));
         Map<?, ?> action = (Map<?, ?>) properties.get("action");
         assertEquals(List.of("REQUEST_FEASIBILITY_EVALUATION", "PROPOSE_ALTERNATIVE_ON_FAILURE"), action.get("enum"));
+        assertEquals(List.of("string", "null"), ((Map<?, ?>) properties.get("feasibility_confirm_request")).get("type"));
     }
 
     @Test

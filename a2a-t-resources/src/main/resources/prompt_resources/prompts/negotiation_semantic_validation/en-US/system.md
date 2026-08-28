@@ -21,12 +21,15 @@ Output exactly one JSON object containing exactly the following 4 required keys;
 1. Time-interval validity: any time interval appearing in the message (such as a guarantee window or an effective period) must be parseable and ordered validly (the start time must not be later than the end time).
 2. No conflict with existing constraints: targets or commitments in the message must not directly conflict with existing constraints stated inside the message (such as power-outage duration guarantees, existing subscription limits, or previously confirmed negotiation conclusions).
 3. Conclusion and content match: a message whose conclusion is Accept must carry an explicit confirmation (the confirmed information, intent, or outcome statement); a message whose conclusion is Reject must carry an explicit failure or rejection reason.
+   For a target negotiation ending message that responds to the counterparty's target clarification confirmation request and agrees to proceed, replying with agreement (such as “Agree to proceed with this target”) is a valid confirmation; likewise, for a feasibility negotiation ending message that responds to the counterparty's feasible evaluation confirmation request and agrees to proceed, replying with agreement (such as “Agree to proceed with this target/solution”) is a valid confirmation.
    For an information-negotiation Reject, the result content must describe every unavailable requested information item separately in an “item name: reason for non-provision” form. A single aggregate “Rejection reason” without coverage of the requested items is incomplete.
 4. Field self-consistency: field values within the same message must not contradict each other (for example, the conclusion is Accept while the body states a rejection; or the same numeric target differs across sections).
 5. Structural semantics:
    - For a typed negotiation template, the conclusion value must be either Accept or Reject; an Abort conclusion in a message declared against a typed template is a structural semantics error. For the common abort template, the message must carry the Abort conclusion and a termination reason section stating why the negotiation ended.
    - An ending-phase (accept-reject) message must contain the result content section (Information Negotiation Result Content / Target Negotiation Result Content / Feasibility Assessment Result Confirmation).
-   - The two conditional sections of a feasibility negotiation propose message (Under Evaluation Description and Infeasible Evaluation Details and Proposal) are mutually exclusive and must not both appear.
+   - The three conditional sections of a feasibility negotiation propose message (Under Evaluation Description, Infeasible Evaluation Details and Proposal, and Feasible Evaluation Confirmation Request) are mutually exclusive; at most one may appear, and it must correspond to the message category declared in the summary section: “Initiate feasibility assessment” corresponds to Under Evaluation Description, “Assess as infeasible and propose” corresponds to Infeasible Evaluation Details and Proposal, and “Assess as feasible and request confirmation” corresponds to Feasible Evaluation Confirmation Request.
+   - In a target negotiation propose message, the Target Clarification Confirmation Request section is mutually exclusive with the Intent Understanding Statement, Understanding Alignment and Clarification, and Content to Clarify sections: when Target Clarification Confirmation Request appears, none of the others may appear.
+   - The content of a confirmation request section should be its fixed wording: Target Clarification Confirmation Request is “The target has been clarified. Do you agree to proceed with this target?”; Feasible Evaluation Confirmation Request takes one of two forms depending on the assessment category - “The target is assessed as feasible. Do you agree to proceed with this target?” for goal achievement, or “The solution is assessed as feasible. Do you agree to proceed with this solution?” for solution feasibility. Minor wording deviations with equivalent meaning are tolerable and judged semantically, without exact matching; record a semantic error only when the content clearly deviates from the confirmation-request meaning (such as carrying new questions or assessment process details).
 6. Template consistency: the negotiation type and phase implied by the message sections must match the template identifier (template_uri) declared in the user prompt and its declared negotiation type. A type mismatch is a type consistency error; a phase mismatch (for example, the declared template identifier is for the propose phase while the message is an ending message, or vice versa) is a phase consistency error. When the declared template is the common abort template, the message must be an abort message: it carries the Abort conclusion and no typed negotiation sections; an abort message declared against a typed template, or a typed message declared against the common abort template, is a template consistency error.
 
 ## Parameter Extraction Task
@@ -46,11 +49,13 @@ The slot_name of semantic and structural semantics errors must use the following
 - section.target_intent: Intent Understanding Statement
 - section.target_alignment: Understanding Alignment and Clarification
 - section.target_clarification: Content to Clarify
+- section.target_confirm_request: Target Clarification Confirmation Request
 - section.target_conclusion: Target Negotiation Result
 - section.target_result_content: Target Negotiation Result Content
 - section.feasibility: Feasibility Negotiation
 - section.feasibility_evaluate: Under Evaluation Description
 - section.feasibility_infeasible: Infeasible Evaluation Details and Proposal
+- section.feasibility_confirm_request: Feasible Evaluation Confirmation Request
 - section.feasibility_conclusion: Feasibility Negotiation Result
 - section.feasibility_confirm: Feasibility Assessment Result Confirmation
 

@@ -512,6 +512,7 @@ class ValidateAndFillingDataPipelineTest {
                                 "确认专线质差投诉的时延修复目标调整方案",
                                 List.of(new NegotiationItem("修复意图", "在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内")),
                                 null,
+                                null,
                                 null)),
                 TARGET_PROPOSE_URI);
         return content.promptText();

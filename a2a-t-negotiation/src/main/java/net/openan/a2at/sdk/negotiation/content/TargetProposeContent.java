@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.negotiation.content;
 
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Content of a target negotiation propose message.
@@ -11,11 +12,16 @@ import java.util.List;
  * @param alignmentAndClarification alignment statements and clarifications; null or empty omits the section (later
  *     rounds only)
  * @param requestForClarification open clarification requests; null or empty omits the section
+ * @param targetConfirmRequest non-blank when this round's message category is "target clarified and requesting
+ *     confirmation from the counterpart"; the three conditional lists above must then all be null or empty, because a
+ *     confirm-request round carries only the summary and the confirm request (the fixed wording is not validated and
+ *     passes through verbatim)
  * @since 2026-08
  */
 public record TargetProposeContent(
         String targetNegotiationDescription,
-        List<NegotiationItem> intentUnderstanding,
-        List<NegotiationItem> alignmentAndClarification,
-        List<NegotiationItem> requestForClarification)
+        @Nullable List<NegotiationItem> intentUnderstanding,
+        @Nullable List<NegotiationItem> alignmentAndClarification,
+        @Nullable List<NegotiationItem> requestForClarification,
+        @Nullable String targetConfirmRequest)
         implements NegotiationProposeContent {}

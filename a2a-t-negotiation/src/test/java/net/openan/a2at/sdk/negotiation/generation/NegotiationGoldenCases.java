@@ -48,7 +48,8 @@ import net.openan.a2at.sdk.negotiation.generation.NegotiationGenerationOrchestra
  * <p>The fixture data deliberately exercises the known rendering pitfalls: a non-null relationship with an appended
  * line and a null-value item (information propose), the round-driven conditional sections with a non-empty
  * clarification list (target propose, round 1), the action-driven conditional section (feasibility propose, evaluation
- * request action), the accept and reject conclusion literals, the feasibility summary rendered into the
+ * request action), the confirm-request category rendering only the summary and the fixed confirm request (target and
+ * feasibility propose confirm), the accept and reject conclusion literals, the feasibility summary rendered into the
  * vocabulary-exception slot of the feasibility result confirmation section, and the common abort template rendering
  * the termination reason.
  */
@@ -84,8 +85,16 @@ public final class NegotiationGoldenCases {
     private static final String GOLDEN_zh_CN_TARGET_ACCEPT = "## 目标协商结果\nAccept\n\n## 目标协商结果内容\n最终确认的意图：在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内，高峰时段丢包率不高于1%。";
     /** Golden fixture text of zh-CN/target_propose. */
     private static final String GOLDEN_zh_CN_TARGET_PROPOSE = "## 目标协商\n专线质差投诉的修复目标协商意图见<意图理解陈述>；时延目标与完成时限仍存在待澄清问题，见<待澄清内容>；请澄清并确认。\n\n## 意图理解陈述\n1. 修复意图：在2026年5月15日前将深圳至广州专线的平均时延恢复至20ms以内\n2. 修复目标：高峰时段丢包率不高于1%\n\n## 待澄清内容\n1. 时延目标：平均时延目标是恢复至20ms以内还是50ms以内\n2. 完成时限：修复完成时限是48小时内还是72小时内";
+    /** Golden fixture text of zh-CN/target_propose_confirm. */
+    private static final String GOLDEN_zh_CN_TARGET_PROPOSE_CONFIRM = "## 目标协商\n任务目标澄清完成，请答复<目标澄清后的确认请求>。\n\n## 目标澄清后的确认请求\n目标已经澄清，是否同意按照此目标继续执行？";
+    /** Golden fixture text of zh-CN/feasibility_propose_confirm. */
+    private static final String GOLDEN_zh_CN_FEASIBILITY_PROPOSE_CONFIRM = "## 可行性协商\n针对调整后的速率保障目标，可行性评估已完成，结论为可行，请答复<评估可行时的确认请求>。\n\n## 评估可行时的确认请求\n评估目标可行，是否同意按照此目标继续执行？";
     /** Golden fixture text of zh-CN/target_reject. */
     private static final String GOLDEN_zh_CN_TARGET_REJECT = "## 目标协商结果\nReject\n\n## 目标协商结果内容\n因光缆割接窗口尚未确认，时延目标未能完全澄清。";
+    /** Golden fixture text of en-US/target_propose_confirm. */
+    private static final String GOLDEN_en_US_TARGET_PROPOSE_CONFIRM = "## Target Negotiation\nThe clarification of the task target has been completed. Please reply to <Target Clarification Confirmation Request>.\n\n## Target Clarification Confirmation Request\nThe target has been clarified. Do you agree to proceed with this target?";
+    /** Golden fixture text of en-US/feasibility_propose_confirm. */
+    private static final String GOLDEN_en_US_FEASIBILITY_PROPOSE_CONFIRM = "## Feasibility Negotiation\nRegarding the adjusted rate guarantee target, the feasibility assessment has been completed and the conclusion is feasible. Please reply to <Feasible Evaluation Confirmation Request>.\n\n## Feasible Evaluation Confirmation Request\nThe target is assessed as feasible. Do you agree to proceed with this target?";
     /** Golden fixture text of en-US/abort. */
     private static final String GOLDEN_en_US_ABORT = "## Negotiation Result\nAbort\n\n## Negotiation Termination Reason\nThe negotiation round limit is reached; this negotiation is confirmed as terminated.";
     /** Golden fixture text of en-US/feasibility_accept. */
@@ -111,22 +120,26 @@ public final class NegotiationGoldenCases {
             Map.entry("zh-CN/abort", GOLDEN_zh_CN_ABORT),
             Map.entry("zh-CN/feasibility_accept", GOLDEN_zh_CN_FEASIBILITY_ACCEPT),
             Map.entry("zh-CN/feasibility_propose", GOLDEN_zh_CN_FEASIBILITY_PROPOSE),
+            Map.entry("zh-CN/feasibility_propose_confirm", GOLDEN_zh_CN_FEASIBILITY_PROPOSE_CONFIRM),
             Map.entry("zh-CN/feasibility_reject", GOLDEN_zh_CN_FEASIBILITY_REJECT),
             Map.entry("zh-CN/information_accept", GOLDEN_zh_CN_INFORMATION_ACCEPT),
             Map.entry("zh-CN/information_propose", GOLDEN_zh_CN_INFORMATION_PROPOSE),
             Map.entry("zh-CN/information_reject", GOLDEN_zh_CN_INFORMATION_REJECT),
             Map.entry("zh-CN/target_accept", GOLDEN_zh_CN_TARGET_ACCEPT),
             Map.entry("zh-CN/target_propose", GOLDEN_zh_CN_TARGET_PROPOSE),
+            Map.entry("zh-CN/target_propose_confirm", GOLDEN_zh_CN_TARGET_PROPOSE_CONFIRM),
             Map.entry("zh-CN/target_reject", GOLDEN_zh_CN_TARGET_REJECT),
             Map.entry("en-US/abort", GOLDEN_en_US_ABORT),
             Map.entry("en-US/feasibility_accept", GOLDEN_en_US_FEASIBILITY_ACCEPT),
             Map.entry("en-US/feasibility_propose", GOLDEN_en_US_FEASIBILITY_PROPOSE),
+            Map.entry("en-US/feasibility_propose_confirm", GOLDEN_en_US_FEASIBILITY_PROPOSE_CONFIRM),
             Map.entry("en-US/feasibility_reject", GOLDEN_en_US_FEASIBILITY_REJECT),
             Map.entry("en-US/information_accept", GOLDEN_en_US_INFORMATION_ACCEPT),
             Map.entry("en-US/information_propose", GOLDEN_en_US_INFORMATION_PROPOSE),
             Map.entry("en-US/information_reject", GOLDEN_en_US_INFORMATION_REJECT),
             Map.entry("en-US/target_accept", GOLDEN_en_US_TARGET_ACCEPT),
             Map.entry("en-US/target_propose", GOLDEN_en_US_TARGET_PROPOSE),
+            Map.entry("en-US/target_propose_confirm", GOLDEN_en_US_TARGET_PROPOSE_CONFIRM),
             Map.entry("en-US/target_reject", GOLDEN_en_US_TARGET_REJECT));
 
     private NegotiationGoldenCases() {}
@@ -218,7 +231,8 @@ public final class NegotiationGoldenCases {
                                             "is the average latency target within 20ms or within 50ms"),
                                     new NegotiationItem(
                                             "completion deadline",
-                                            "is the repair deadline 48 hours or 72 hours")));
+                                            "is the repair deadline 48 hours or 72 hours")),
+                            null);
                 }
                 return new TargetProposeContent(
                         "专线质差投诉的修复目标协商意图见<意图理解陈述>；时延目标与完成时限仍存在待澄清问题，见<待澄清内容>；请澄清并确认。",
@@ -229,7 +243,34 @@ public final class NegotiationGoldenCases {
                         null,
                         List.of(
                                 new NegotiationItem("时延目标", "平均时延目标是恢复至20ms以内还是50ms以内"),
-                                new NegotiationItem("完成时限", "修复完成时限是48小时内还是72小时内")));
+                                new NegotiationItem("完成时限", "修复完成时限是48小时内还是72小时内")),
+                        null);
+            }
+        },
+
+        /**
+         * Target propose confirm-request fixture of a later round: the clarification is complete, so the message
+         * carries only the summary and the fixed confirm request of the "target clarified and requesting
+         * confirmation" category.
+         */
+        TARGET_PROPOSE_CONFIRM(NegotiationPerformative.PROPOSE, "target-negotiation", "target_propose_confirm") {
+            @Override
+            public NegotiationContent content(String language) {
+                if (NegotiationGoldenCases.EN_US.equals(language)) {
+                    return new TargetProposeContent(
+                            "The clarification of the task target has been completed. Please reply to <Target"
+                                    + " Clarification Confirmation Request>.",
+                            null,
+                            null,
+                            null,
+                            "The target has been clarified. Do you agree to proceed with this target?");
+                }
+                return new TargetProposeContent(
+                        "任务目标澄清完成，请答复<目标澄清后的确认请求>。",
+                        null,
+                        null,
+                        null,
+                        "目标已经澄清，是否同意按照此目标继续执行？");
             }
         },
 
@@ -258,6 +299,7 @@ public final class NegotiationGoldenCases {
                                             "existing constraint",
                                             "the cutover window is limited to 02:00-06:00 on 2026-05-30 with"
                                                     + " service interruption no longer than 30 minutes")),
+                            null,
                             null);
                 }
                 return new FeasibilityProposeContent(
@@ -267,7 +309,36 @@ public final class NegotiationGoldenCases {
                                 new NegotiationItem("扩容方案", "接入端口带宽由100Mbps扩容至1000Mbps"),
                                 new NegotiationItem(
                                         "既有约束", "割接窗口仅限2026年5月30日02:00-06:00，业务中断不超过30分钟")),
+                        null,
                         null);
+            }
+        },
+
+        /**
+         * Feasibility propose confirm-request fixture of the "assessed as feasible and requesting confirmation"
+         * category: the assessment is complete, so the message carries only the summary and the fixed confirm
+         * request of the goal-achievement wording.
+         */
+        FEASIBILITY_PROPOSE_CONFIRM(
+                NegotiationPerformative.PROPOSE, "feasibility-negotiation", "feasibility_propose_confirm") {
+            @Override
+            public NegotiationContent content(String language) {
+                if (NegotiationGoldenCases.EN_US.equals(language)) {
+                    return new FeasibilityProposeContent(
+                            "Regarding the adjusted rate guarantee target, the feasibility assessment has been"
+                                    + " completed and the conclusion is feasible. Please reply to <Feasible Evaluation"
+                                    + " Confirmation Request>.",
+                            NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
+                            null,
+                            null,
+                            "The target is assessed as feasible. Do you agree to proceed with this target?");
+                }
+                return new FeasibilityProposeContent(
+                        "针对调整后的速率保障目标，可行性评估已完成，结论为可行，请答复<评估可行时的确认请求>。",
+                        NegotiationAction.REQUEST_FEASIBILITY_EVALUATION,
+                        null,
+                        null,
+                        "评估目标可行，是否同意按照此目标继续执行？");
             }
         },
 
