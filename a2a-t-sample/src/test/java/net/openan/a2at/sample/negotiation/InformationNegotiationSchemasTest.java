@@ -1,4 +1,4 @@
-package net.openan.a2at.sample.private_line_complaint.negotiation;
+package net.openan.a2at.sample.negotiation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import net.openan.a2at.sample.private_line_complaint.negotiation.shared.InformationNegotiationSchemas;
+import net.openan.a2at.sample.negotiation.shared.InformationNegotiationSchemas;
 import org.junit.jupiter.api.Test;
 
 class InformationNegotiationSchemasTest {

@@ -2,7 +2,7 @@ package net.openan.a2at.sample.private_line_complaint.negotiation.server;
 
 import java.util.List;
 import java.util.Map;
-import net.openan.a2at.sample.private_line_complaint.negotiation.shared.InformationNegotiationSchemas;
+import net.openan.a2at.sample.negotiation.shared.InformationNegotiationSchemas;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationDecision;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationMetadataReader;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationSampleFlow;

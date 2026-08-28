@@ -14,7 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import net.openan.a2at.sample.private_line_complaint.negotiation.shared.InformationNegotiationSchemas;
+import net.openan.a2at.sample.negotiation.shared.InformationNegotiationSchemas;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationSampleEnvironment;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationSampleFlow;
 import net.openan.a2at.sdk.client.A2ATClient;

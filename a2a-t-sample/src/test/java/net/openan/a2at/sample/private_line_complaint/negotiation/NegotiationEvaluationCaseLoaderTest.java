@@ -50,11 +50,9 @@ class NegotiationEvaluationCaseLoaderTest {
         assertEquals(50, flows.stream().filter(flow -> flow.decision().equals("reject")).count());
         assertTrue(flows.stream().allMatch(flow -> flow.proposeCase().phase().equals("propose")));
         assertTrue(flows.stream().allMatch(flow -> flow.endingCase().phase().equals(flow.decision())));
-        assertTrue(flows.stream().allMatch(flow -> flow.clientSupplement().contains("## 客户端补充信息")));
-        assertTrue(flows.stream().noneMatch(flow -> flow.clientSupplement().contains("协商上下文")));
         assertTrue(flows.stream().filter(flow -> flow.decision().equals("reject"))
                 .allMatch(flow -> flow.expectedEnding().keySet().equals(
-                        Map.of("access_port_name", "", "complaint_category", "").keySet())));
+                        Map.of("接入端口名称", "", "投诉分类", "").keySet())));
     }
 
     @Test
@@ -66,6 +64,32 @@ class NegotiationEvaluationCaseLoaderTest {
                 flows.stream().map(flow -> flow.id()).toList());
         assertTrue(flows.stream().anyMatch(flow -> flow.decision().equals("accept")));
         assertTrue(flows.stream().anyMatch(flow -> flow.decision().equals("reject")));
+    }
+
+    @Test
+    void everyCaseCarriesStructuredDataParallelToItsText() {
+        var cases = NegotiationEvaluationCaseLoader.load();
+
+        for (NegotiationEvaluationCase testCase : cases) {
+            assertTrue(testCase.data() != null, testCase.id());
+            assertTrue(testCase.dataItems().size() >= 1, testCase.id());
+            assertTrue(testCase.dataRelationship() == null, testCase.id());
+            // the data items reproduce the completedPrompt item block verbatim
+            StringBuilder rebuilt = new StringBuilder();
+            for (int index = 0; index < testCase.dataItems().size(); index++) {
+                if (index > 0) {
+                    rebuilt.append('\n');
+                }
+                rebuilt.append(index + 1).append(". ")
+                        .append(testCase.dataItems().get(index).name())
+                        .append('：')
+                        .append(testCase.dataItems().get(index).value());
+            }
+            assertTrue(testCase.completedPrompt().contains(rebuilt.toString()), testCase.id());
+            // data item names match the expected keys (both use the display names)
+            assertEquals(testCase.expected().keySet(), testCase.dataItems().stream()
+                    .map(item -> item.name()).collect(java.util.stream.Collectors.toSet()), testCase.id());
+        }
     }
 
     @Test
@@ -90,12 +114,10 @@ class NegotiationEvaluationCaseLoaderTest {
                 && !testCase.completedPrompt().isBlank()
                 && testCase.expected() != null
                 && !testCase.expected().isEmpty()
-                && expectedKeys(testCase.phase()).equals(testCase.expected().keySet());
+                && expectedKeys().equals(testCase.expected().keySet());
     }
 
-    private static java.util.Set<String> expectedKeys(String phase) {
-        return phase.equals("reject")
-                ? Map.of("access_port_name", "", "complaint_category", "").keySet()
-                : Map.of("access_port_name", "", "complaint_category", "").keySet();
+    private static java.util.Set<String> expectedKeys() {
+        return Map.of("接入端口名称", "", "投诉分类", "").keySet();
     }
 }

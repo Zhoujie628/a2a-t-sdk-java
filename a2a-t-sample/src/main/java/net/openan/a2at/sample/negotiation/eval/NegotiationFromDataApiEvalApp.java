@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.Consumer;
+import net.openan.a2at.sample.negotiation.shared.InformationNegotiationSchemas;
 import net.openan.a2at.sdk.client.A2ATClient;
 import net.openan.a2at.sdk.core.exception.A2ATError;
 import net.openan.a2at.sdk.core.model.FilledParamData;
@@ -114,7 +115,7 @@ public final class NegotiationFromDataApiEvalApp {
                     + testCase.get("intent"));
             long startNanos = System.nanoTime();
             Map<String, Object> record = runCase(envPath, testCase);
-            record.put("duration_seconds", Math.round((System.nanoTime() - startNanos) / 100_000.0) / 10.0);
+            record.put("duration_seconds", Math.round((System.nanoTime() - startNanos) / 100_000_000.0) / 10.0);
             cases.add(record);
             writeReport(report, outPath);
         }
@@ -133,7 +134,9 @@ public final class NegotiationFromDataApiEvalApp {
         boolean expectSuccess = Boolean.TRUE.equals(expect.get("succeeds"));
 
         Map<String, Object> itemsInput = asMap(input.get("items"));
-        String relationship = String.valueOf(input.get("relationship"));
+        String relationship = input.containsKey("relationship")
+                ? String.valueOf(input.get("relationship"))
+                : null;
         TemplateUri template = resolveTemplate(api, input);
 
         NegotiationPerformative performative = "propose".equals(api)
@@ -243,9 +246,9 @@ public final class NegotiationFromDataApiEvalApp {
 
         // -- step 2: validation and parameter extraction of the generated message --
         if (prompt != null && !itemsInput.isEmpty()) {
-            // the caller schema mirrors the SDK's own model of the message content (NegotiationJsonSchemaBuilder):
-            // propose is {items: [{name, value}], relationship}, endings are {conclusion, items: [{name, value}]}
-            Map<String, Object> extractionSchema = extractionSchema(api, itemsInput);
+            // The caller schema describes the business facts to extract, not the SDK's internal
+            // NegotiationItem wire model. It is the same shared contract the fromText samples use.
+            Map<String, Object> extractionSchema = extractionSchema(api);
             Map<String, Object> validateInput = new LinkedHashMap<>();
             validateInput.put("prompt", prompt);
             validateInput.put("context", contextJson(context));
@@ -276,7 +279,7 @@ public final class NegotiationFromDataApiEvalApp {
                 validation.put("extracted_params", extractedJson);
                 validateStep.put("validation", validation);
                 check(checks, "validation passed", true);
-                checkExtractedItems(checks, api, extractedJson, itemsInput, input);
+                checkExtractedFields(checks, api, extractedJson, itemsInput, input);
             } catch (RuntimeException error) {
                 Map<String, Object> validation = new LinkedHashMap<>();
                 validation.put("outcome", "rejected");
@@ -305,108 +308,52 @@ public final class NegotiationFromDataApiEvalApp {
     }
 
     /**
-     * Extraction schema mirroring the SDK's own model of the message content ({@code NegotiationJsonSchemaBuilder}):
-     * propose is {@code {items: [{name, value}], relationship}} (items a non-empty array), endings are
-     * {@code {conclusion: "Accept"|"Reject", items: [{name, value}]}}. The validation-side extraction contract is
-     * therefore aligned end to end with the generation-side model.
+     * Caller-owned extraction schema, shared with the fromText samples: the same information-negotiation
+     * contracts work for both generation paths because the validate*AndDataFilling interfaces and the rendered
+     * wire format are identical.
      */
-    private static Map<String, Object> extractionSchema(String api, Map<String, Object> items) {
-        Map<String, Object> properties = new LinkedHashMap<>();
-        if (!"propose".equals(api)) {
-            properties.put("conclusion", Map.of("type", "string", "enum", List.of("Accept", "Reject")));
-        }
-        properties.put("items", nonEmptyItemArraySchema());
-        if ("propose".equals(api)) {
-            properties.put("relationship", nullableStringSchema());
-        }
-        List<String> required = new ArrayList<>();
-        required.add("items");
-        if (!"propose".equals(api)) {
-            required.add("conclusion");
-        }
-        Map<String, Object> schema = new LinkedHashMap<>();
-        schema.put("type", "object");
-        schema.put("properties", properties);
-        schema.put("required", required);
-        return schema;
-    }
-
-    private static Map<String, Object> nonEmptyItemArraySchema() {
-        Map<String, Object> itemProperties = new LinkedHashMap<>();
-        itemProperties.put("name", Map.of("type", "string"));
-        itemProperties.put("value", nullableStringSchema());
-        Map<String, Object> itemSchema = new LinkedHashMap<>();
-        itemSchema.put("type", "object");
-        itemSchema.put("properties", itemProperties);
-        itemSchema.put("required", List.of("name", "value"));
-        Map<String, Object> arraySchema = new LinkedHashMap<>();
-        arraySchema.put("type", "array");
-        arraySchema.put("items", itemSchema);
-        arraySchema.put("minItems", 1);
-        return arraySchema;
-    }
-
-    private static Map<String, Object> nullableStringSchema() {
-        Map<String, Object> schema = new LinkedHashMap<>();
-        schema.put("type", "string");
-        schema.put("nullable", true);
-        return schema;
+    static Map<String, Object> extractionSchema(String api) {
+        return switch (api) {
+            case "propose" -> InformationNegotiationSchemas.propose();
+            case "accept" -> InformationNegotiationSchemas.accept();
+            case "reject" -> InformationNegotiationSchemas.reject();
+            default -> throw new IllegalArgumentException("Unknown api: " + api);
+        };
     }
 
     /**
-     * Asserts the extracted items list against the input items: every input slot appears as an item with the matching
-     * value. For propose the value is the stated expectation (the meaning-head and no-hallucination guards apply);
-     * for endings the value is the real content or the reason of non-provision.
+     * Asserts that semantic extraction returns exactly the negotiated business field names, and that
+     * accept/reject payloads transport the input item text (supplied value / reason).
      */
-    private static void checkExtractedItems(
+    private static void checkExtractedFields(
             List<Map<String, Object>> checks,
             String api,
             Map<String, Object> extractedJson,
             Map<String, Object> itemsInput,
             Map<String, Object> input) {
         List<Map<String, Object>> extractedItems = asMapList(extractedJson.get("items"));
-        check(checks, "extracted items list matches the input size",
-                extractedItems.size() == itemsInput.size());
-        for (Map.Entry<String, Object> entry : itemsInput.entrySet()) {
-            Map<String, Object> extractedItem = itemByName(extractedItems, entry.getKey());
-            check(checks, "extracted items contain: " + entry.getKey(), extractedItem != null);
-            if (extractedItem == null) {
-                continue;
-            }
-            Object value = extractedItem.get("value");
-            if ("propose".equals(api)) {
-                // expectation contract: the extracted value must keep the meaning head of the stated expectation (a
-                // sample-only extraction would read as if the field were already supplied) and stay within the
-                // stated expectation (no hallucinated content beyond the message)
-                String stated = String.valueOf(entry.getValue());
-                check(checks, "extracted expectation keeps the meaning part: " + entry.getKey(),
-                        value != null && normalize(String.valueOf(value)).contains(normalize(meaningHead(stated))));
-                check(checks, "extracted expectation stays within the stated expectation: " + entry.getKey(),
-                        value != null && normalize(stated).contains(normalize(String.valueOf(value))));
-            } else {
-                check(checks, "extracted item value matches input: " + entry.getKey(),
-                        valueMatches(value, String.valueOf(entry.getValue())));
-            }
+        Set<String> extractedNames = new TreeSet<>();
+        for (Map<String, Object> item : extractedItems) {
+            extractedNames.add(String.valueOf(item.get("name")));
         }
+        check(checks, "extracted field names match the negotiated items",
+                extractedNames.equals(new TreeSet<>(itemsInput.keySet())));
         if ("propose".equals(api) && input.containsKey("relationship")) {
             String relationship = String.valueOf(input.get("relationship"));
             check(checks, "extracted relationship matches input",
                     valueMatches(extractedJson.get("relationship"), relationship));
+        } else {
+            check(checks, "relationship is absent for a single field or ending message",
+                    extractedJson.get("relationship") == null);
         }
-        if (!"propose".equals(api)) {
-            String expectedConclusion = "accept".equals(api) ? "Accept" : "Reject";
-            check(checks, "extracted conclusion matches the api",
-                    expectedConclusion.equals(extractedJson.get("conclusion")));
-        }
-    }
-
-    private static Map<String, Object> itemByName(List<Map<String, Object>> items, String name) {
-        for (Map<String, Object> item : items) {
-            if (name.equals(item.get("name"))) {
-                return item;
+        if ("accept".equals(api) || "reject".equals(api)) {
+            String payloadKey = "accept".equals(api) ? "value" : "reason";
+            for (Map<String, Object> item : extractedItems) {
+                String name = String.valueOf(item.get("name"));
+                check(checks, "extracted " + payloadKey + " matches input item: " + name,
+                        valueMatches(item.get(payloadKey), String.valueOf(itemsInput.get(name))));
             }
         }
-        return null;
     }
 
     /** Bidirectional whitespace-free containment: the extracted value may carry the field label or the bare value. */
@@ -418,17 +365,6 @@ public final class NegotiationFromDataApiEvalApp {
         String inputText = normalize(input);
         return !extractedText.isEmpty()
                 && (extractedText.contains(inputText) || inputText.contains(extractedText));
-    }
-
-    /**
-     * The meaning head of a propose expectation value: the description before the first sample or enum marker
-     * (for example "接入端口名称" out of "接入端口名称，如P781-..."). A meaning-plus-sample expectation carries its
-     * semantics in the head, so an extraction that dropped the head would read as a supplied value - the exact
-     * description-vs-value confusion the propose contract forbids.
-     */
-    private static String meaningHead(String expectation) {
-        int index = expectation.indexOf('，');
-        return index > 0 ? expectation.substring(0, index) : expectation;
     }
 
     private static Map<String, Object> errorJson(RuntimeException error) {

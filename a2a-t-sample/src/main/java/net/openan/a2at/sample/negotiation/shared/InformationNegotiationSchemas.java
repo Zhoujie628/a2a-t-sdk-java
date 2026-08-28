@@ -1,4 +1,4 @@
-package net.openan.a2at.sample.private_line_complaint.negotiation.shared;
+package net.openan.a2at.sample.negotiation.shared;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -10,6 +10,10 @@ import java.util.Map;
  *
  * <p>The three validation APIs intentionally use independent parameter contracts. The contracts describe the
  * shape of the extracted result while the information-item names and values come from the negotiation message.
+ *
+ * <p>Shared by every information-negotiation sample path — fromText (natural-language generation) and fromData
+ * (typed-record generation) — because the validate*AndDataFilling interfaces and the rendered wire format are
+ * identical for both.
  */
 public final class InformationNegotiationSchemas {
 

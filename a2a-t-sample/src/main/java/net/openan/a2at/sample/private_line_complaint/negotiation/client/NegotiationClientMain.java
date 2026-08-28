@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
-import net.openan.a2at.sample.private_line_complaint.negotiation.shared.InformationNegotiationSchemas;
+import net.openan.a2at.sample.negotiation.shared.InformationNegotiationSchemas;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationAgentCard;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationDecision;
 import net.openan.a2at.sample.private_line_complaint.negotiation.shared.NegotiationMetadataReader;

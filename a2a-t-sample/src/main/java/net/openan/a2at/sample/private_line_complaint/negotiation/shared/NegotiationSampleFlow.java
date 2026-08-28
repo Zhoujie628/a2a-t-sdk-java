@@ -10,6 +10,7 @@ import net.openan.a2at.sdk.core.model.TemplateUri;
 import net.openan.a2at.sdk.core.model.NegotiationContext;
 import net.openan.a2at.sdk.core.model.NegotiationPerformative;
 import net.openan.a2at.sdk.server.A2ATServer;
+import net.openan.a2at.sample.negotiation.shared.InformationNegotiationSchemas;
 
 /** Runs the six Negotiation-T APIs used by the private-line complaint sample. */
 public final class NegotiationSampleFlow {

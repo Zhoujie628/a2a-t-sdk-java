@@ -1,6 +1,6 @@
 {
   "suite": "negotiation-fromdata-api-eval",
-  "description": "Focused capability verification of the six Negotiation-T fromData interfaces: generateNegotiationProposePromptFromData, generateNegotiationAcceptPromptFromData, generateNegotiationRejectPromptFromData and their validate-and-extract counterparts. Inputs are traditional structured data - every item is one key (the slot name from the private-line-complaint Task-T template) with a value per the message type: propose carries the field expectation as a meaning-plus-sample description (the propose template's own requirement: name + meaning/format/sample), accept carries REAL field values (a live port name, an actual category value, a real event id), reject carries the unprovidable field name with its reason plus an explicit \"无法提供\" statement (the accept-reject template's own requirement: name + reason of non-provision). No natural-language passages, no format-spec placeholders, no template-error scenarios. The case matrix is built from the Task-T field model (required: 任务对象/投诉分类/OSS侧事件流水号; optional: 问题发生时间/投诉详情): propose carries every required/optional slot combination with real values (all required, each single required, dual required, required+optional, optional-only, empty boundary), accept supplies the filled values for the same combinations, reject carries the unprovidable fields with reasons. Generation is deterministic rendering (no LLM call); the validate-and-extract step asserts the extracted parameters carry back exactly the input key-value pairs.",
+  "description": "Focused capability verification of the six Negotiation-T fromData interfaces. The private-line complaint Task-T template is the business source of truth: 任务对象、投诉分类、OSS侧事件流水号 are required; 问题发生时间、投诉详情 are optional and their absence must never initiate negotiation. Propose covers all seven non-empty combinations of the three required fields plus the empty boundary. Multiple top-level fields have an AND relationship; a single field has a null relationship; the three alternative representations inside 任务对象 have an OR relationship. Accept returns real values for requested required fields, while Reject returns an itemized reason containing 无法提供. Generation checks message values; validation extracts the exact field-name list, accept/reject payloads, and relationship through the shared InformationNegotiationSchemas contracts (items:[{name, requirement|value|reason}]) also used by the fromText samples.",
   "scenario": "private-line-complaint",
   "fields": {
     "required": [
@@ -24,7 +24,7 @@
           "投诉分类": "投诉场景分类，取值专线中断或专线质差",
           "OSS侧事件流水号": "OSS侧事件流水号，如event-id-20260602-08841"
         },
-        "relationship": "以上参数均为必选，缺少无法启动诊断"
+        "relationship": "任务对象、投诉分类和OSS侧事件流水号三项均为必选，三项之间为AND关系；缺少任一项均无法启动诊断"
       },
       "expect": {
         "succeeds": true,
@@ -38,8 +38,7 @@
       "input": {
         "items": {
           "任务对象": "专线业务对象标识，三选一：专线业务名称（如SZ_汇聚专线业务_100M_SPN）、专线业务标识（如5571d707-5aad-11ea-8629-286ed488cff3）、接入端口名称（如P781-珠江新城-PTN7900-23-TPA1EG24-17）"
-        },
-        "relationship": "以上参数均为必选，缺少无法启动诊断"
+        }
       },
       "expect": {
         "succeeds": true,
@@ -53,8 +52,7 @@
       "input": {
         "items": {
           "投诉分类": "投诉场景分类，取值专线中断或专线质差"
-        },
-        "relationship": "以上参数均为必选，缺少无法启动诊断"
+        }
       },
       "expect": {
         "succeeds": true,
@@ -68,8 +66,7 @@
       "input": {
         "items": {
           "OSS侧事件流水号": "OSS侧事件流水号，如event-id-20260602-08841"
-        },
-        "relationship": "以上参数均为必选，缺少无法启动诊断"
+        }
       },
       "expect": {
         "succeeds": true,
@@ -85,7 +82,7 @@
           "任务对象": "专线业务对象标识，三选一：专线业务名称（如SZ_汇聚专线业务_100M_SPN）、专线业务标识（如5571d707-5aad-11ea-8629-286ed488cff3）、接入端口名称（如P781-珠江新城-PTN7900-23-TPA1EG24-17）",
           "投诉分类": "投诉场景分类，取值专线中断或专线质差"
         },
-        "relationship": "以上参数均为必选，缺少无法启动诊断"
+        "relationship": "任务对象和投诉分类均为必选，两项之间为AND关系；缺少任一项均无法启动诊断"
       },
       "expect": {
         "succeeds": true,
@@ -95,13 +92,13 @@
     {
       "id": "FD-P06",
       "api": "propose",
-      "intent": "propose：请求补充必选+可选槽位组合（OSS流水号+问题发生时间）",
+      "intent": "propose：请求补充双必选槽位（任务对象+OSS侧事件流水号）",
       "input": {
         "items": {
-          "OSS侧事件流水号": "OSS侧事件流水号，如event-id-20260602-08841",
-          "问题发生时间": "故障发生时间，如2026-06-02T14:30:00Z"
+          "任务对象": "专线业务对象标识，三选一：专线业务名称（如SZ_汇聚专线业务_100M_SPN）、专线业务标识（如5571d707-5aad-11ea-8629-286ed488cff3）、接入端口名称（如P781-珠江新城-PTN7900-23-TPA1EG24-17）",
+          "OSS侧事件流水号": "OSS侧事件流水号，如event-id-20260602-08841"
         },
-        "relationship": "以上参数为诊断所需，缺少影响定位效率"
+        "relationship": "任务对象和OSS侧事件流水号均为必选，两项之间为AND关系；缺少任一项均无法启动诊断"
       },
       "expect": {
         "succeeds": true,
@@ -111,13 +108,13 @@
     {
       "id": "FD-P07",
       "api": "propose",
-      "intent": "propose：请求补充仅可选槽位组合（问题发生时间+投诉详情），边界组合",
+      "intent": "propose：请求补充双必选槽位（投诉分类+OSS侧事件流水号）",
       "input": {
         "items": {
-          "问题发生时间": "故障发生时间，如2026-06-02T14:30:00Z",
-          "投诉详情": "故障现象文字描述"
+          "投诉分类": "投诉场景分类，取值专线中断或专线质差",
+          "OSS侧事件流水号": "OSS侧事件流水号，如event-id-20260602-08841"
         },
-        "relationship": "以上参数为可选补充信息"
+        "relationship": "投诉分类和OSS侧事件流水号均为必选，两项之间为AND关系；缺少任一项均无法启动诊断"
       },
       "expect": {
         "succeeds": true,
@@ -129,8 +126,7 @@
       "api": "propose",
       "intent": "propose：items 为空对象（数据边界；接口应拒绝零请求项——PR #151 修复验证用例）",
       "input": {
-        "items": {},
-        "relationship": "以上参数均为必选，缺少无法启动诊断"
+        "items": {}
       },
       "expect": {
         "succeeds": false
@@ -175,14 +171,10 @@
     {
       "id": "FD-A03",
       "api": "accept",
-      "intent": "accept：补齐全部字段（必选+可选共 5 字段）",
+      "intent": "accept：补齐单必选字段（投诉分类）",
       "input": {
         "items": {
-          "任务对象": "SZ_汇聚专线业务_100M_SPN",
-          "投诉分类": "专线中断",
-          "OSS侧事件流水号": "event-id-20260602-08841",
-          "问题发生时间": "2026-06-02T14:30:00Z",
-          "投诉详情": "深圳访问广州响应延迟骤升，交易接口频繁报连接超时"
+          "投诉分类": "专线中断"
         }
       },
       "expect": {
@@ -196,11 +188,10 @@
     {
       "id": "FD-A04",
       "api": "accept",
-      "intent": "accept：补齐可选字段（问题发生时间+投诉详情）",
+      "intent": "accept：补齐单必选字段（OSS侧事件流水号）",
       "input": {
         "items": {
-          "问题发生时间": "2026-06-02T14:30:00Z",
-          "投诉详情": "深圳访问广州响应延迟骤升，交易接口频繁报连接超时"
+          "OSS侧事件流水号": "event-id-20260602-08841"
         }
       },
       "expect": {
