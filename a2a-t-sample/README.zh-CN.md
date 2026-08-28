@@ -176,6 +176,62 @@ java @a2a-t-sample/target/eval.javaargs.txt --out eval-report-my-model.json /pat
 
 **换用其他模型测试**：只需在 env 文件里改 4 个 LLM 变量（`A2AT_LLM_PROVIDER` / `A2AT_LLM_MODEL` / `A2AT_LLM_API_KEY` / `A2AT_LLM_BASE_URL`），无需改任何代码或用例。报告的 `llm` 字段会记录当次使用的 provider / model / base_url，`negotiation_channel` 字段记录当次通道（`per-case` 或强制值），便于横向对比多个模型的报告。
 
+## 专线投诉信息协商 Qwen 评测
+
+入口 `NegotiationQwenEvaluationMain` 用于验证传输专线业务投诉诊断场景的信息协商闭环。每条用例按以下四个阶段执行：
+
+1. 生成 propose 协商报文
+2. 校验 propose 协商报文并提取参数
+3. 根据用例结论生成 accept 或 reject 协商报文
+4. 校验 accept 或 reject 协商报文并提取参数
+
+全量用例会覆盖三组生成/校验接口：propose、accept、reject。评测的通过条件是本条用例的四个阶段都成功返回；自然语言提取结果允许存在等义表述差异。
+
+### 运行 Qwen 评测
+
+先复制 `src/main/resources/sample/private-line-complaint-negotiation/evaluation/qwen.env.example` 到本地文件（例如 `qwen.env`），填写目标网络中的模型地址和 API key。环境文件已被 Git 忽略，不要将真实凭据提交到仓库。
+
+首次运行先打包，Maven 会生成 `target/negotiation-qwen-evaluation.javaargs.txt`：
+
+```bash
+mvn -pl a2a-t-sample -am -DskipTests package
+```
+
+评测入口参数依次为：环境文件、报告路径、过程日志路径、用例选择器。用例选择器支持 `smoke`（20 条）、`full`（100 条）或逗号分隔的用例 ID：
+
+```bash
+# 20 条 smoke 用例
+java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt \
+  /path/to/qwen.env \
+  a2a-t-sample/target/negotiation-qwen-smoke-report.json \
+  a2a-t-sample/target/negotiation-qwen-smoke-process.jsonl \
+  smoke
+
+# 100 条全量用例
+java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt \
+  /path/to/qwen.env \
+  a2a-t-sample/target/negotiation-qwen-report.json \
+  a2a-t-sample/target/negotiation-qwen-process.jsonl \
+  full
+
+# 只复现指定用例
+java @a2a-t-sample/target/negotiation-qwen-evaluation.javaargs.txt \
+  /path/to/qwen.env \
+  a2a-t-sample/target/negotiation-qwen-repro-report.json \
+  a2a-t-sample/target/negotiation-qwen-repro-process.jsonl \
+  P02,P14,R27
+```
+
+不传报告和过程日志路径时，默认写入 `a2a-t-sample/target/negotiation-qwen-report.json`，过程日志使用同名报告加 `-process.jsonl` 后缀；不传用例选择器时运行全量用例。
+
+### 评测产物
+
+- 报告 JSON 的 `cases` 保存每条用例的输入、四阶段结果、通过状态和错误信息。
+- 报告 JSON 的 `api_trace` 保存每次 SDK 接口调用的完整 request/response、接口名、阶段和耗时。
+- 过程日志是 JSONL，每行对应一次阶段调用，包含 `timestamp`、`case_id`、`step`、`api`、`request`、`response`、`elapsed_ms` 和 `outcome`；调用失败时额外记录 `error`。
+
+生成接口的 request 使用 `text`、`context`、`template_uri`，校验接口的 request 使用 `prompt`、`context`、`schema`、`template_uri`。生成接口的 response 包含生成的 prompt，校验接口的 response 包含 `filled_data`。这些字段可用于区分输入构造、模板渲染和校验提参环节的问题。
+
 **env 配置**：复制以下内容为 `eval.env`，填入你的模型信息即可（完整变量说明见根目录 `env.example`）：
 
 ```bash
