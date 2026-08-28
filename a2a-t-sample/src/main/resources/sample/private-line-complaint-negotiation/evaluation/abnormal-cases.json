@@ -1,0 +1,427 @@
+[
+  {
+    "id": "G-PROPOSE-BLANK-TEXT",
+    "api": "generate_propose",
+    "input": "",
+    "template": "propose",
+    "performative": "PROPOSE",
+    "expected_exception": "NegotiationGenerationException",
+    "expected_code": "negotiation_invalid_input",
+    "description": "生成协商发起报文时输入为空"
+  },
+  {
+    "id": "V-PROPOSE-BLANK-PROMPT",
+    "api": "validate_propose",
+    "input": "",
+    "template": "propose",
+    "performative": "PROPOSE",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "校验协商发起报文时输入为空"
+  },
+  {
+    "id": "G-ACCEPT-WRONG-TEMPLATE",
+    "api": "generate_accept",
+    "input": "接受协商，端口为 PE1-GZ-ETH-0/0/0.200，投诉分类为专线中断。",
+    "template": "propose",
+    "performative": "ACCEPT",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "接受生成接口误传 propose 模板"
+  },
+  {
+    "id": "V-ACCEPT-WRONG-TEMPLATE",
+    "api": "validate_accept",
+    "input": "## 信息协商\nAccept\n\n## 信息协商结果内容\n1. 接入端口名称：PE1-GZ-ETH-0/0/0.200\n2. 投诉分类：专线中断",
+    "template": "propose",
+    "performative": "ACCEPT",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "接受校验接口误传 propose 模板"
+  },
+  {
+    "id": "G-REJECT-WRONG-TEMPLATE",
+    "api": "generate_reject",
+    "input": "拒绝协商，原因是资源系统暂时无法查询。",
+    "template": "propose",
+    "performative": "REJECT",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "拒绝生成接口误传 propose 模板"
+  },
+  {
+    "id": "V-REJECT-WRONG-TEMPLATE",
+    "api": "validate_reject",
+    "input": "## 信息协商\nReject\n\n## 信息协商结果内容\n1. 接入端口名称：无法提供，原因：资源系统暂时无法查询\n2. 投诉分类：无法提供，原因：资源系统暂时无法查询",
+    "template": "propose",
+    "performative": "REJECT",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "拒绝校验接口误传 propose 模板"
+  },
+  {
+    "id": "G-PROPOSE-NULL-TEXT",
+    "api": "generate_propose",
+    "input": null,
+    "template": "propose",
+    "performative": "PROPOSE",
+    "expected_exception": "NegotiationGenerationException",
+    "expected_code": "negotiation_invalid_input",
+    "description": "生成协商发起报文时文本为 null"
+  },
+  {
+    "id": "G-PROPOSE-NULL-CONTEXT",
+    "api": "generate_propose",
+    "input": "请补充接入端口名称和投诉分类。",
+    "template": "propose",
+    "performative": "PROPOSE",
+    "context_mode": "null",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "生成协商发起报文时上下文为 null"
+  },
+  {
+    "id": "G-PROPOSE-NULL-TEMPLATE",
+    "api": "generate_propose",
+    "input": "请补充接入端口名称和投诉分类。",
+    "template": "null",
+    "performative": "PROPOSE",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "生成协商发起报文时模板 URI 为 null"
+  },
+  {
+    "id": "G-PROPOSE-UNKNOWN-TEMPLATE",
+    "api": "generate_propose",
+    "input": "请补充接入端口名称和投诉分类。",
+    "template": "unknown_propose",
+    "performative": "PROPOSE",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "生成协商发起报文时模板 URI 版本非法"
+  },
+  {
+    "id": "G-ACCEPT-BLANK-TEXT",
+    "api": "generate_accept",
+    "input": "",
+    "template": "ending",
+    "performative": "ACCEPT",
+    "expected_exception": "NegotiationGenerationException",
+    "expected_code": "negotiation_invalid_input",
+    "description": "接受生成接口输入为空"
+  },
+  {
+    "id": "G-ACCEPT-NULL-CONTEXT",
+    "api": "generate_accept",
+    "input": "接受协商，端口为 PE1-GZ-ETH-0/0/0.200，投诉分类为专线中断。",
+    "template": "ending",
+    "performative": "ACCEPT",
+    "context_mode": "null",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "接受生成接口上下文为 null"
+  },
+  {
+    "id": "G-ACCEPT-NULL-TEMPLATE",
+    "api": "generate_accept",
+    "input": "接受协商，端口为 PE1-GZ-ETH-0/0/0.200，投诉分类为专线中断。",
+    "template": "null",
+    "performative": "ACCEPT",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "接受生成接口模板 URI 为 null"
+  },
+  {
+    "id": "G-ACCEPT-UNKNOWN-TEMPLATE",
+    "api": "generate_accept",
+    "input": "接受协商，端口为 PE1-GZ-ETH-0/0/0.200，投诉分类为专线中断。",
+    "template": "unknown_ending",
+    "performative": "ACCEPT",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "接受生成接口模板 URI 版本非法"
+  },
+  {
+    "id": "G-REJECT-BLANK-TEXT",
+    "api": "generate_reject",
+    "input": "",
+    "template": "ending",
+    "performative": "REJECT",
+    "expected_exception": "NegotiationGenerationException",
+    "expected_code": "negotiation_invalid_input",
+    "description": "拒绝生成接口输入为空"
+  },
+  {
+    "id": "G-REJECT-NULL-CONTEXT",
+    "api": "generate_reject",
+    "input": "拒绝协商，原因是资源系统暂时无法查询。",
+    "template": "ending",
+    "performative": "REJECT",
+    "context_mode": "null",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "拒绝生成接口上下文为 null"
+  },
+  {
+    "id": "G-REJECT-NULL-TEMPLATE",
+    "api": "generate_reject",
+    "input": "拒绝协商，原因是资源系统暂时无法查询。",
+    "template": "null",
+    "performative": "REJECT",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "拒绝生成接口模板 URI 为 null"
+  },
+  {
+    "id": "G-REJECT-UNKNOWN-TEMPLATE",
+    "api": "generate_reject",
+    "input": "拒绝协商，原因是资源系统暂时无法查询。",
+    "template": "unknown_ending",
+    "performative": "REJECT",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "拒绝生成接口模板 URI 版本非法"
+  },
+  {
+    "id": "V-PROPOSE-NULL-PROMPT",
+    "api": "validate_propose",
+    "input": null,
+    "template": "propose",
+    "performative": "PROPOSE",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "校验协商发起报文时 prompt 为 null"
+  },
+  {
+    "id": "V-PROPOSE-NULL-CONTEXT",
+    "api": "validate_propose",
+    "input": "## 信息协商\n请根据<所需信息项>补充相关内容。",
+    "template": "propose",
+    "performative": "PROPOSE",
+    "context_mode": "null",
+    "expected_exception": "NegotiationParamExtractionException",
+    "expected_code": "negotiation_invalid_input",
+    "description": "校验协商发起报文时上下文为 null"
+  },
+  {
+    "id": "V-PROPOSE-NULL-SCHEMA",
+    "api": "validate_propose",
+    "input": "## 信息协商\n请根据<所需信息项>补充相关内容。",
+    "template": "propose",
+    "performative": "PROPOSE",
+    "schema_mode": "null",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "校验协商发起报文时业务 schema 为 null"
+  },
+  {
+    "id": "V-PROPOSE-NULL-TEMPLATE",
+    "api": "validate_propose",
+    "input": "## 信息协商\n请根据<所需信息项>补充相关内容。",
+    "template": "null",
+    "performative": "PROPOSE",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "校验协商发起报文时模板 URI 为 null"
+  },
+  {
+    "id": "V-PROPOSE-UNKNOWN-TEMPLATE",
+    "api": "validate_propose",
+    "input": "## 信息协商\n请根据<所需信息项>补充相关内容。",
+    "template": "unknown_propose",
+    "performative": "PROPOSE",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "校验协商发起报文时模板 URI 版本非法"
+  },
+  {
+    "id": "V-PROPOSE-INVALID-ID",
+    "api": "validate_propose",
+    "input": "## 信息协商\n请根据<所需信息项>补充相关内容。",
+    "template": "propose",
+    "performative": "PROPOSE",
+    "context_mode": "invalid_id",
+    "expected_exception": "NegotiationParamExtractionException",
+    "expected_code": "negotiation_rule_violation",
+    "description": "校验协商发起报文时上下文 id 不是 UUID"
+  },
+  {
+    "id": "V-PROPOSE-EXHAUSTED-ROUND",
+    "api": "validate_propose",
+    "input": "## 信息协商\n请根据<所需信息项>补充相关内容。",
+    "template": "propose",
+    "performative": "PROPOSE",
+    "context_mode": "exhausted",
+    "expected_exception": "NegotiationParamExtractionException",
+    "expected_code": "negotiation_rule_violation",
+    "description": "校验协商发起报文时 round 超过 maxRounds"
+  },
+  {
+    "id": "V-ACCEPT-BLANK-PROMPT",
+    "api": "validate_accept",
+    "input": "",
+    "template": "ending",
+    "performative": "ACCEPT",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "接受校验接口 prompt 为空"
+  },
+  {
+    "id": "V-ACCEPT-NULL-PROMPT",
+    "api": "validate_accept",
+    "input": null,
+    "template": "ending",
+    "performative": "ACCEPT",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "接受校验接口 prompt 为 null"
+  },
+  {
+    "id": "V-ACCEPT-NULL-CONTEXT",
+    "api": "validate_accept",
+    "input": "## 信息协商结果\nAccept\n\n## 信息协商结果内容\n1. 接入端口名称：PE1-GZ-ETH-0/0/0.200\n2. 投诉分类：专线中断",
+    "template": "ending",
+    "performative": "ACCEPT",
+    "context_mode": "null",
+    "expected_exception": "NegotiationParamExtractionException",
+    "expected_code": "negotiation_invalid_input",
+    "description": "接受校验接口上下文为 null"
+  },
+  {
+    "id": "V-ACCEPT-NULL-SCHEMA",
+    "api": "validate_accept",
+    "input": "## 信息协商结果\nAccept\n\n## 信息协商结果内容\n1. 接入端口名称：PE1-GZ-ETH-0/0/0.200\n2. 投诉分类：专线中断",
+    "template": "ending",
+    "performative": "ACCEPT",
+    "schema_mode": "null",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "接受校验接口业务 schema 为 null"
+  },
+  {
+    "id": "V-ACCEPT-NULL-TEMPLATE",
+    "api": "validate_accept",
+    "input": "## 信息协商结果\nAccept\n\n## 信息协商结果内容\n1. 接入端口名称：PE1-GZ-ETH-0/0/0.200\n2. 投诉分类：专线中断",
+    "template": "null",
+    "performative": "ACCEPT",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "接受校验接口模板 URI 为 null"
+  },
+  {
+    "id": "V-ACCEPT-UNKNOWN-TEMPLATE",
+    "api": "validate_accept",
+    "input": "## 信息协商结果\nAccept\n\n## 信息协商结果内容\n1. 接入端口名称：PE1-GZ-ETH-0/0/0.200\n2. 投诉分类：专线中断",
+    "template": "unknown_ending",
+    "performative": "ACCEPT",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "接受校验接口模板 URI 版本非法"
+  },
+  {
+    "id": "V-ACCEPT-INVALID-ID",
+    "api": "validate_accept",
+    "input": "## 信息协商结果\nAccept\n\n## 信息协商结果内容\n1. 接入端口名称：PE1-GZ-ETH-0/0/0.200\n2. 投诉分类：专线中断",
+    "template": "ending",
+    "performative": "ACCEPT",
+    "context_mode": "invalid_id",
+    "expected_exception": "NegotiationParamExtractionException",
+    "expected_code": "negotiation_rule_violation",
+    "description": "接受校验接口上下文 id 不是 UUID"
+  },
+  {
+    "id": "V-ACCEPT-EXHAUSTED-ROUND",
+    "api": "validate_accept",
+    "input": "## 信息协商结果\nAccept\n\n## 信息协商结果内容\n1. 接入端口名称：PE1-GZ-ETH-0/0/0.200\n2. 投诉分类：专线中断",
+    "template": "ending",
+    "performative": "ACCEPT",
+    "context_mode": "exhausted",
+    "expected_exception": "NegotiationParamExtractionException",
+    "expected_code": "negotiation_rule_violation",
+    "description": "接受校验接口 round 超过 maxRounds"
+  },
+  {
+    "id": "V-REJECT-BLANK-PROMPT",
+    "api": "validate_reject",
+    "input": "",
+    "template": "ending",
+    "performative": "REJECT",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "拒绝校验接口 prompt 为空"
+  },
+  {
+    "id": "V-REJECT-NULL-PROMPT",
+    "api": "validate_reject",
+    "input": null,
+    "template": "ending",
+    "performative": "REJECT",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "拒绝校验接口 prompt 为 null"
+  },
+  {
+    "id": "V-REJECT-NULL-CONTEXT",
+    "api": "validate_reject",
+    "input": "## 信息协商结果\nReject\n\n## 信息协商结果内容\n1. 接入端口名称：无法提供，原因：资源系统暂时无法查询\n2. 投诉分类：无法提供，原因：资源系统暂时无法查询",
+    "template": "ending",
+    "performative": "REJECT",
+    "context_mode": "null",
+    "expected_exception": "NegotiationParamExtractionException",
+    "expected_code": "negotiation_invalid_input",
+    "description": "拒绝校验接口上下文为 null"
+  },
+  {
+    "id": "V-REJECT-NULL-SCHEMA",
+    "api": "validate_reject",
+    "input": "## 信息协商结果\nReject\n\n## 信息协商结果内容\n1. 接入端口名称：无法提供，原因：资源系统暂时无法查询\n2. 投诉分类：无法提供，原因：资源系统暂时无法查询",
+    "template": "ending",
+    "performative": "REJECT",
+    "schema_mode": "null",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "拒绝校验接口业务 schema 为 null"
+  },
+  {
+    "id": "V-REJECT-NULL-TEMPLATE",
+    "api": "validate_reject",
+    "input": "## 信息协商结果\nReject\n\n## 信息协商结果内容\n1. 接入端口名称：无法提供，原因：资源系统暂时无法查询\n2. 投诉分类：无法提供，原因：资源系统暂时无法查询",
+    "template": "null",
+    "performative": "REJECT",
+    "expected_exception": "NullPointerException",
+    "expected_code": null,
+    "description": "拒绝校验接口模板 URI 为 null"
+  },
+  {
+    "id": "V-REJECT-UNKNOWN-TEMPLATE",
+    "api": "validate_reject",
+    "input": "## 信息协商结果\nReject\n\n## 信息协商结果内容\n1. 接入端口名称：无法提供，原因：资源系统暂时无法查询\n2. 投诉分类：无法提供，原因：资源系统暂时无法查询",
+    "template": "unknown_ending",
+    "performative": "REJECT",
+    "expected_exception": "IllegalArgumentException",
+    "expected_code": null,
+    "description": "拒绝校验接口模板 URI 版本非法"
+  },
+  {
+    "id": "V-REJECT-INVALID-ID",
+    "api": "validate_reject",
+    "input": "## 信息协商结果\nReject\n\n## 信息协商结果内容\n1. 接入端口名称：无法提供，原因：资源系统暂时无法查询\n2. 投诉分类：无法提供，原因：资源系统暂时无法查询",
+    "template": "ending",
+    "performative": "REJECT",
+    "context_mode": "invalid_id",
+    "expected_exception": "NegotiationParamExtractionException",
+    "expected_code": "negotiation_rule_violation",
+    "description": "拒绝校验接口上下文 id 不是 UUID"
+  },
+  {
+    "id": "V-REJECT-EXHAUSTED-ROUND",
+    "api": "validate_reject",
+    "input": "## 信息协商结果\nReject\n\n## 信息协商结果内容\n1. 接入端口名称：无法提供，原因：资源系统暂时无法查询\n2. 投诉分类：无法提供，原因：资源系统暂时无法查询",
+    "template": "ending",
+    "performative": "REJECT",
+    "context_mode": "exhausted",
+    "expected_exception": "NegotiationParamExtractionException",
+    "expected_code": "negotiation_rule_violation",
+    "description": "拒绝校验接口 round 超过 maxRounds"
+  }
+]
