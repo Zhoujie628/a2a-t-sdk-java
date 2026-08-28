@@ -16,7 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 public record InputLimitConfig(int maxTextChars) {
 
     /** Default maximum length in characters ({@link String#length()}) accepted for free-text inputs. */
-    public static final int DEFAULT_MAX_TEXT_CHARS = 12288;
+    public static final int DEFAULT_MAX_TEXT_CHARS = 16384;
 
     private static final String NON_NUMERIC_OR_NON_POSITIVE_LOG_FORMAT =
             "Input max text chars value is not a valid positive integer, falling back to default. key={} raw_value={}"

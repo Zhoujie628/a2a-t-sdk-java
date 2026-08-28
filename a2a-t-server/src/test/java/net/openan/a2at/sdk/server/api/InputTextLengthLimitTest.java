@@ -59,7 +59,7 @@ class InputTextLengthLimitTest {
     @Test
     void checkTaskPromptDoesNotFailForLengthWhenInputIsExactlyAtDefaultLimit() throws IOException {
         A2ATServer server = new A2ATServer(writeEnv(null));
-        String boundaryInput = "a".repeat(12288);
+        String boundaryInput = "a".repeat(16384);
 
         PromptComplianceResult result = server.checkTaskPrompt(boundaryInput);
 

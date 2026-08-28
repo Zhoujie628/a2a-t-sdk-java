@@ -20,7 +20,7 @@ class InputLimitConfigTest {
         InputLimitConfig config = InputLimitConfig.fromMap(Map.of());
 
         assertEquals(InputLimitConfig.DEFAULT_MAX_TEXT_CHARS, config.maxTextChars());
-        assertEquals(12288, config.maxTextChars());
+        assertEquals(16384, config.maxTextChars());
     }
 
     @Test
@@ -70,10 +70,10 @@ class InputLimitConfigTest {
 
     @Test
     void violationMessageStatesLengthLimitAndKey() {
-        String message = InputLimitConfig.violationMessage("a".repeat(13000), 12288);
+        String message = InputLimitConfig.violationMessage("a".repeat(13000), 16384);
 
         assertTrue(message.contains("13000"));
-        assertTrue(message.contains("12288"));
+        assertTrue(message.contains("16384"));
         assertTrue(message.contains(A2ATConfigKeys.Input.MAX_TEXT_CHARS));
     }
 }
