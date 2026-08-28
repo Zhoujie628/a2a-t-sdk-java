@@ -104,8 +104,19 @@ public final class AuthzScenarioLoader {
                     parseSlotErrors(serverRaw.get("slot_errors")),
                     params);
         }
+        Object validateSchemaObj = raw.get("validate_schema");
+        Map<String, Object> validateSchema = null;
+        if (validateSchemaObj instanceof Map<?, ?> validateSchemaRaw) {
+            if (validateSchemaRaw.isEmpty()) {
+                throw new IllegalStateException(
+                        "Scenario 'validate_schema' must be a non-empty object in: " + resourcePath);
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> validateSchemaMap = (Map<String, Object>) validateSchemaRaw;
+            validateSchema = validateSchemaMap;
+        }
         AuthzExpected expected = new AuthzExpected(client, server);
-        return new AuthzScenario(label, entry, inputMap, expected);
+        return new AuthzScenario(label, entry, inputMap, expected, validateSchema);
     }
 
     private static String asNullableString(Object raw) {

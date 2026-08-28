@@ -76,7 +76,9 @@ public final class AuthzScenarioRunner {
 
         FilledParamData filled;
         try {
-            filled = validator.validate(metadata.promptText(), paramSchema, templateUri);
+            Map<String, Object> effectiveSchema =
+                    scenario.validateSchema() != null ? scenario.validateSchema() : paramSchema;
+            filled = validator.validate(metadata.promptText(), effectiveSchema, templateUri);
         } catch (A2ATError e) {
             return buildServerErrorOutcome(scenario, e, metadata, clientPromptMatch, warnings);
         } catch (RuntimeException e) {

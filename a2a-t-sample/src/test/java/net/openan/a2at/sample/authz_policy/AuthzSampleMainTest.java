@@ -115,8 +115,8 @@ class AuthzSampleMainTest {
         assertNotNull(schema);
         assertTrue(schema.containsKey("properties"));
         Map<?, ?> properties = (Map<?, ?>) schema.get("properties");
-        assertTrue(properties.containsKey("操作类型"));
-        assertTrue(properties.containsKey("策略列表"));
+        assertTrue(properties.containsKey("operationType"));
+        assertTrue(properties.containsKey("policyList"));
     }
 
     @Test

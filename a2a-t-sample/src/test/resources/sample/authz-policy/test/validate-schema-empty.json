@@ -1,0 +1,1 @@
+{"scenarios": [{"label": "vs-empty", "entry": "from_text", "input": {"text": "新增一条授权策略"}, "expected": {"client": {"promptText": "## rendered prompt"}, "server": {"outcome": "success"}}, "validate_schema": {}}]}

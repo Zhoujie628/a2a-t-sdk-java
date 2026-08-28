@@ -16,9 +16,25 @@ import net.openan.a2at.sdk.core.exception.A2ATErrorCodes;
  * @param entry client entry point ({@code from_text} or {@code from_data_with_schema})
  * @param input scenario input data
  * @param expected staged expected outcome
+ * @param validateSchema optional scenario-level validation schema that overrides the suite-level
+ *     default parameter schema; {@code null} when the suite-level default applies
  * @since 2026-08
  */
-public record AuthzScenario(String label, String entry, Map<String, Object> input, AuthzExpected expected) {
+public record AuthzScenario(
+        String label, String entry, Map<String, Object> input, AuthzExpected expected,
+        Map<String, Object> validateSchema) {
+
+    /**
+     * Convenience constructor for scenarios without a scenario-level validation schema.
+     *
+     * @param label human-readable scenario label
+     * @param entry client entry point ({@code from_text} or {@code from_data_with_schema})
+     * @param input scenario input data
+     * @param expected staged expected outcome
+     */
+    public AuthzScenario(String label, String entry, Map<String, Object> input, AuthzExpected expected) {
+        this(label, entry, input, expected, null);
+    }
 
     static final String FROM_TEXT = "from_text";
     static final String FROM_DATA_WITH_SCHEMA = "from_data_with_schema";
@@ -93,6 +109,9 @@ public record AuthzScenario(String label, String entry, Map<String, Object> inpu
         }
         if (scenario.input == null) {
             throw new IllegalArgumentException("input must not be null");
+        }
+        if (scenario.validateSchema != null && scenario.validateSchema.isEmpty()) {
+            throw new IllegalArgumentException("validateSchema must be non-empty when set");
         }
         if (scenario.expected == null || scenario.expected.client() == null) {
             throw new IllegalArgumentException("expected.client must not be null");

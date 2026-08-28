@@ -3,6 +3,10 @@
 本目录是 Authorization-T 演示（`net.openan.a2at.sample.authz_policy.AuthzSampleMain`）的资源根。
 本文说明如何执行 demo、如何分析正确率报告，以及安全与判定约束。
 
+## 0. 冒烟留档
+
+最近一次冒烟 15 例的完整原始输入输出（用户入参 → 客户端生成 prompt → 客户端提参理由 → 服务端校验结果与理由 → 服务端提参结果）：[smoke-io-transcript.md](smoke-io-transcript.md)
+
 ## 1. 环境准备
 
 ### 1.1 构建
@@ -41,7 +45,7 @@ A2AT_LLM_API_KEY=<凭据>          # 绝不能提交、打印或写入任何产�
 以下命令均在仓库根目录执行，`<env文件路径>` 替换为上一步准备的 env 文件（单行命令，任何 shell 通用）：
 
 ```
-# 冒烟（默认题集，本目录 scenarios.json，12 例：a/b1-b5/c1-c4/c6 各组代表）
+# 冒烟（默认题集，本目录 scenarios.json，15 例 = 成功 8（含 2 个差分对：c1-varname 改键名、c3-varfields 字段精简）+ 拒绝 5（含 1 个差分对：b2-varreq 要求变异）+ 拦截 2（a 拦截对基线半 + 否定意图））
 java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 @a2a-t-sample/target/authz.javaargs.txt <env文件路径>
 
 # 全量（原题集 100 例，评分基线用）
@@ -52,8 +56,16 @@ java -Dauthz.scenarios=sample/authz-policy/scenarios-holdout-100.json -Dfile.enc
 ```
 
 env 路径也可省略：省略时按"当前目录 authz.env → classpath 模板"顺序回退（模板无凭据，仅占位）。
-退出码：0 = 全部匹配；非零 = 存在失败（注意：冒烟 11/12 属验收通过但退出码仍为非零，需按报告判读）。
+退出码：0 = 全部匹配；非零 = 存在失败（注意：冒烟 13/15 属验收通过但退出码仍为非零，需按报告判读）。
 控制台逐例输出 `[Client]/[Server]/[判定]` 三段式报告。
+
+### 1.4 题集结构与变异 schema 组
+
+全量集按组前缀划分：`a`（操作类型识别，含 1 个确定性拦截对）、`b1`（必填缺失）、`b2`（日期/日历格式）、`b3`（修改语义/取值冲突）、`b4`（非 UUID 裸值的语义重归因）、`b5`（其他校验）、`c1`-`c6`（增删改查/多条目/混合）。全量为配对制：44 个差分对（基线例 + 变异常例：同输入文本，变体挂客户 `validate_schema`）+ 1 个拦截对 + 10 个独立例 = 100。变体 label 后缀标注维度：`-varname`（改键名）/`-varfields`（字段增减）/`-varflat`（层级平铺）/`-varreq`（要求不同）/`-varsch`（from_data 的 input.schema 变异）/`-dual`（input.schema 与 validate_schema 双在场且互不同构）。
+
+变异 schema 通过场景级 `validate_schema` 字段注入（完整 JSON 内嵌，不引用外部文件），验证"调用方 param-schema 是服务端校验与提参的唯一契约"：params 键集必须与 validate_schema 声明的属性完全一致（不能多、不能少、不能改名；提取不到输出 null 或按类型约定输出空集合），报错 slot_name 归因到 validate_schema 的顶层参数名。`validate_schema` 是可选的场景级覆盖字段：缺省时使用 suite 级默认 `param-schema.json`；设置为非空对象时替代默认 schema 参与服务端校验。差分判读：基线✅变异✅=健康；基线✅变异❌=schema 映射问题；基线❌=内容理解问题；双❌=公共依赖问题。
+
+授权策略列表值行采用"编号 + 字段名是值"渲染格式（如 `1. 业务场景是校园专网，处置类型是紧急扩容，操作名称是天线调整，有效期是2026-08-01~2030-12-31`），字段间用全角逗号分隔，多个条目各自独立成行（换行分隔）并顺延编号；该口径在 `slot.json` 与 `param-schema.json` 的 description 中给出，服务端提参与客户端渲染据此归一。
 
 ## 2. 报告分析
 
@@ -65,7 +77,7 @@ JSON 报告写入 `eval-results/authz-demo/authz-report-<yyyyMMdd-HHmmss>.json`
 ```
 summary:    { total, match, mismatch }            # 总分
 scenarios[]:
-  label                    # 用例标识（组前缀 a/b1-b5/c1-c6）
+  label                    # 用例标识（组前缀 a/b1-b5/c1-c6，变体带 -varname 等维度后缀）
   match                    # 本例是否通过（布尔）
   assertions:
     client_prompt          # 客户端 promptText 比对：true/false=DRIFT（漂移，不计分）/null=客户端失败路径
@@ -135,7 +147,7 @@ for c in cs:
 
 | 模式 | 题集 | 通过线 |
 |---|---|---|
-| 冒烟 | `scenarios.json`（12 例） | ≥ 11/12，且无 `sdk_internal_error` 类异常 |
+| 冒烟 | `scenarios.json`（15 例） | ≥ 13/15，且无 `sdk_internal_error` 类异常 |
 | 全量 | `scenarios-100.json`（100 例） | 记录基线分数，失败例逐例归因（LLM 概率性 / 判据缺口 / 题集期望错误） |
 | 留出集 | `scenarios-holdout-100.json`（100 例） | 与全量分差 ≤5 视为无过拟合；分差扩大时优先排查 prompt/约束对原题集的过拟合 |
 
