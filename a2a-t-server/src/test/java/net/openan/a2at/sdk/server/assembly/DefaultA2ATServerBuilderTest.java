@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.openan.a2at.sdk.core.model.A2ATConfig;
+import net.openan.a2at.sdk.core.model.InputLimitConfig;
 import net.openan.a2at.sdk.core.model.LlmConfig;
 import net.openan.a2at.sdk.core.model.NegotiationConfig;
 import net.openan.a2at.sdk.core.model.PromptComplianceConfig;
@@ -99,6 +100,7 @@ class DefaultA2ATServerBuilderTest {
                         null,
                         3,
                         List.of()),
+                new InputLimitConfig(InputLimitConfig.DEFAULT_MAX_TEXT_CHARS),
                 new NegotiationConfig("in_memory"),
                 new PromptComplianceConfig(false));
 

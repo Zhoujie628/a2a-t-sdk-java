@@ -2,6 +2,7 @@ package net.openan.a2at.sdk.client.prompt.assembly;
 
 import java.util.List;
 import net.openan.a2at.sdk.client.prompt.orchestration.DefaultClientPromptGenerationOrchestrator;
+import net.openan.a2at.sdk.core.model.InputLimitConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.prompt.analysis.impl.DefaultStructuredPromptSlotValueExtractor;
 import net.openan.a2at.sdk.prompt.analysis.impl.PromptSlotValueExtractor;
@@ -47,6 +48,8 @@ public final class ClientPromptGenerationOrchestratorBuilder {
     private PromptSlotValueExtractor slotValueExtractor;
 
     private TaskPromptRenderer renderer;
+
+    private Integer maxTextChars;
 
     private ClasspathPromptResourceLoader resourceLoader;
 
@@ -193,6 +196,18 @@ public final class ClientPromptGenerationOrchestratorBuilder {
     }
 
     /**
+     * Configures the maximum accepted length in characters for free-text inputs.
+     *
+     * @param maxTextChars maximum accepted length in characters; unset falls back to
+     *     {@link InputLimitConfig#DEFAULT_MAX_TEXT_CHARS}
+     * @return current builder
+     */
+    public ClientPromptGenerationOrchestratorBuilder maxTextChars(int maxTextChars) {
+        this.maxTextChars = maxTextChars;
+        return this;
+    }
+
+    /**
      * Overrides the classpath resource loader shared by template and schema resolution.
      *
      * @param resourceLoader resource loader implementation
@@ -243,7 +258,8 @@ public final class ClientPromptGenerationOrchestratorBuilder {
                 effectiveTemplateLoader,
                 effectiveSlotValueExtractor,
                 effectiveRenderer,
-                effectiveSlotSchemaLoader);
+                effectiveSlotSchemaLoader,
+                maxTextChars == null ? InputLimitConfig.DEFAULT_MAX_TEXT_CHARS : maxTextChars);
     }
 
     private static void require(Object value, String message) {

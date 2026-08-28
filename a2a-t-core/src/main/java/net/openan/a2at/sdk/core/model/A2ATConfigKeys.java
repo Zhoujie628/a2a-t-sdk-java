@@ -78,6 +78,14 @@ public final class A2ATConfigKeys {
         public static final String STATE_STORE_TYPE = "A2AT_NEGOTIATION_STATE_STORE_TYPE";
     }
 
+    /** Input limit configuration keys. */
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class Input {
+
+        /** Maximum length in characters accepted for free-text inputs before they reach an LLM step. */
+        public static final String MAX_TEXT_CHARS = "A2AT_INPUT_TEXT_MAX_CHARS";
+    }
+
     /** Prompt compliance configuration keys. */
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class PromptCompliance {

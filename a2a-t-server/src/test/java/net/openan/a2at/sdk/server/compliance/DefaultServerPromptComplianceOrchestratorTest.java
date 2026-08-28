@@ -66,6 +66,39 @@ class DefaultServerPromptComplianceOrchestratorTest {
         assertEquals("slot_validation", result.failure().stage());
     }
 
+    @Test
+    void checkTaskPromptReturnsInputTooLongFailureWithoutRunningThePipelineWhenOverLimit() {
+        RecordingPromptMetadataExtractor extractor = new RecordingPromptMetadataExtractor(
+                new ProcessedPromptMetadata("ran-energy-saving", "en-US", "Site: {site}", Map.of("site", "Site A")));
+        RecordingPromptSemanticValidator validator = new RecordingPromptSemanticValidator(null);
+        DefaultServerPromptComplianceOrchestrator orchestrator =
+                new DefaultServerPromptComplianceOrchestrator(extractor, validator, 5);
+        String oversizedInput = "a".repeat(6);
+
+        PromptComplianceResult result = orchestrator.checkTaskPrompt(oversizedInput);
+
+        assertEquals(false, result.success());
+        assertEquals("input_text_too_long", result.failure().code());
+        assertEquals("input_gate", result.failure().stage());
+        assertEquals(null, extractor.lastProcessedPromptText, "Extractor must not run for an oversized input");
+        assertEquals(null, validator.lastProcessedPromptText, "Validator must not run for an oversized input");
+    }
+
+    @Test
+    void checkTaskPromptRunsThePipelineWhenInputIsExactlyAtLimit() {
+        RecordingPromptMetadataExtractor extractor = new RecordingPromptMetadataExtractor(
+                new ProcessedPromptMetadata("ran-energy-saving", "en-US", "Site: {site}", Map.of("site", "Site A")));
+        RecordingPromptSemanticValidator validator = new RecordingPromptSemanticValidator(null);
+        DefaultServerPromptComplianceOrchestrator orchestrator =
+                new DefaultServerPromptComplianceOrchestrator(extractor, validator, 5);
+        String boundaryInput = "a".repeat(5);
+
+        PromptComplianceResult result = orchestrator.checkTaskPrompt(boundaryInput);
+
+        assertTrue(result.success());
+        assertEquals(boundaryInput, extractor.lastProcessedPromptText);
+    }
+
     private static final class RecordingPromptMetadataExtractor implements ServerPromptMetadataExtractor {
         private final ProcessedPromptMetadata metadata;
         private final PromptComplianceCheckException exception;

@@ -13,6 +13,7 @@ import org.jspecify.annotations.NonNull;
 public record A2ATConfig(
         PromptRuntimeConfig prompt,
         LlmConfig llm,
+        InputLimitConfig inputLimits,
         NegotiationConfig negotiation,
         PromptComplianceConfig promptCompliance) {
 
@@ -27,6 +28,7 @@ public record A2ATConfig(
         return new A2ATConfig(
                 PromptRuntimeConfig.fromMap(values),
                 LlmConfig.fromMap(values),
+                InputLimitConfig.fromMap(values),
                 NegotiationConfig.fromMap(values),
                 PromptComplianceConfig.fromMap(values));
     }

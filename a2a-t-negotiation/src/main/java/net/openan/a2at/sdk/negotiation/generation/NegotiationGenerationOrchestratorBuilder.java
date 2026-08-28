@@ -1,6 +1,7 @@
 package net.openan.a2at.sdk.negotiation.generation;
 
 import java.nio.file.Path;
+import net.openan.a2at.sdk.core.model.InputLimitConfig;
 import net.openan.a2at.sdk.core.model.LlmConfig;
 import net.openan.a2at.sdk.llm.LLMClient;
 import net.openan.a2at.sdk.negotiation.content.Vocabulary;
@@ -34,6 +35,8 @@ public final class NegotiationGenerationOrchestratorBuilder {
     private LLMClient llmClient;
 
     private int maxAttempts = LlmConfig.DEFAULT_MAX_ATTEMPTS;
+
+    private int maxTextChars = InputLimitConfig.DEFAULT_MAX_TEXT_CHARS;
 
     private NegotiationTemplateLoader templateLoader;
 
@@ -98,6 +101,18 @@ public final class NegotiationGenerationOrchestratorBuilder {
      */
     public NegotiationGenerationOrchestratorBuilder maxAttempts(int maxAttempts) {
         this.maxAttempts = maxAttempts;
+        return this;
+    }
+
+    /**
+     * Configures the maximum length in characters accepted for free-text inputs before they reach an LLM step.
+     *
+     * @param maxTextChars maximum accepted length in characters, at least 1; oversized inputs fail fast with the code
+     *     {@code input_text_too_long} instead of overflowing the LLM context
+     * @return current builder
+     */
+    public NegotiationGenerationOrchestratorBuilder maxTextChars(int maxTextChars) {
+        this.maxTextChars = maxTextChars;
         return this;
     }
 
@@ -171,6 +186,10 @@ public final class NegotiationGenerationOrchestratorBuilder {
             throw new IllegalStateException(
                     "Negotiation LLM max attempts must be at least 1 but was " + maxAttempts + ".");
         }
+        if (maxTextChars < 1) {
+            throw new IllegalStateException(
+                    "Negotiation max text chars must be at least 1 but was " + maxTextChars + ".");
+        }
         Path localVocabularyRoot = localRootDir == null || localRootDir.isBlank() ? null : Path.of(localRootDir);
         Vocabulary vocabulary = Vocabulary.forLanguage(language, localVocabularyRoot);
         NegotiationTemplateLoader effectiveTemplateLoader =
@@ -186,6 +205,7 @@ public final class NegotiationGenerationOrchestratorBuilder {
         return new NegotiationGenerationOrchestrator(
                 language,
                 maxAttempts,
+                maxTextChars,
                 effectiveTemplateLoader,
                 effectiveContentExtractor,
                 paramExtractor,
